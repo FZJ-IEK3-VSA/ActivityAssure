@@ -1,0 +1,19 @@
+# directories
+.vscode/
+.idea/
+__pycache__/
+.ipynb_checkpoints/
+*.local/
+*.eggs/
+*.testing/
+*.examples/
+*.build/
+*.dist/
+*.docs/build/
+
+# file types to ignore
+*.pyc
+*.egg-info
+*.log
+*.glp
+.coverage
