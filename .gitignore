@@ -17,3 +17,6 @@ __pycache__/
 *.log
 *.glp
 .coverage
+
+# data directory
+data/
