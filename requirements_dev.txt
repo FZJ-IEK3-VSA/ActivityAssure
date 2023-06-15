@@ -1,3 +1,7 @@
 -r requirements.txt
 
+pytest
+
+# type annotations
 pandas-stubs
+types-setuptools
