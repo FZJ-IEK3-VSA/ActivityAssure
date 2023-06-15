@@ -1,5 +1,5 @@
 import pandas as pd
-from utils import HetusColumns
+import hetus_columns as col
 
 
 def compare_hh_size_and_participants(data: pd.DataFrame):
@@ -7,7 +7,7 @@ def compare_hh_size_and_participants(data: pd.DataFrame):
     Compares the household size fields with the number of HETUS particpants (different PIDs)
     to find out how many household members did not participate
     """
-    grouped = data.set_index(HetusColumns.HH.KEY).groupby(level=HetusColumns.HH.KEY)  # type: ignore
+    grouped = data.set_index(col.HH.KEY).groupby(level=col.HH.KEY)  # type: ignore
     hhdata = grouped.first()
     participants_per_hh = grouped.nunique()["PID"]
     merged = pd.concat([hhdata["HHC1"], hhdata["HHC3"], participants_per_hh], axis=1)
@@ -60,11 +60,11 @@ def analyze_inconsistent_households(data: pd.DataFrame):
     Some more or less unstructured code to analyze inconsistent households in the
     italian HETUS data.
     """
-    hhdata = data[HetusColumns.HH.COLUMNS]
-    num_values_per_hh = hhdata.groupby(HetusColumns.HH.KEY).nunique()
+    hhdata = data[col.HH.ALL]
+    num_values_per_hh = hhdata.groupby(col.HH.KEY).nunique()
     inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
     errors_per_hh = inconsistent_columns_per_hh[inconsistent_columns_per_hh > 0]
-    hhdata.set_index(HetusColumns.HH.KEY, inplace=True)
+    hhdata.set_index(col.HH.KEY, inplace=True)
     inconsistent_hh = hhdata.loc[(errors_per_hh.index)]
     grouped = inconsistent_hh.groupby(level="HID")
     # list all rows where the numbers of household members of different age classes

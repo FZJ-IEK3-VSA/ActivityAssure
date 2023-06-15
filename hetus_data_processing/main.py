@@ -4,7 +4,9 @@ from hetus_data_processing.data_analysis import compare_hh_size_and_participants
 import load_data
 import household_extraction
 import filter
-from utils import HetusColumns, HetusDayType
+
+import hetus_columns as col
+from utils import HetusDayType
 
 
 def main():
@@ -29,10 +31,10 @@ if __name__ == "__main__":
     compare_hh_size_and_participants(data)
 
     filters = {
-        HetusColumns.Diary.WEEKDAY: [1],
-        HetusColumns.Diary.MONTH: [6, 7, 8],
-        HetusColumns.General.COUNTRY: ["DE", "AT"],
-        HetusColumns.HH.SIZE: [1,2,3,4],
+        col.Diary.WEEKDAY: [1],
+        col.Diary.MONTH: [6, 7, 8],
+        col.Country.ID: ["DE", "AT"],
+        col.HH.SIZE: [1,2,3,4],
     }
     d = filter.filter_combined(data, filters)
     print(len(d))

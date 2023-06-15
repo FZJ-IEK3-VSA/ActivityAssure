@@ -7,7 +7,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from utils import HetusColumns
+import hetus_columns as col
 
 
 def extract_household_data(
@@ -28,7 +28,7 @@ def extract_household_data(
     """
     start = time.time()
     # select household level columns and set country and HID as index
-    grouped = data.groupby(HetusColumns.HH.KEY)
+    grouped = data.groupby(col.HH.KEY)
     if select_mode:
         # select the most frequent value out of each group; this is better if there are different values per
         # group; this method is much slower than the one below
@@ -39,7 +39,7 @@ def extract_household_data(
         # assume all values in the group are equal and simply select the first one
         grouped_data = grouped.first()
     logging.info(
-        f"Extracted {len(grouped_data)} household entries from {len(data)} entries in {time.time() - start:.1f} s"
+        f"Extracted {len(grouped_data)} households from {len(data)} entries in {time.time() - start:.1f} s"
     )
     return grouped_data
 
@@ -55,12 +55,12 @@ def remove_inconsistent_households(data: pd.DataFrame) -> pd.DataFrame:
     """
     assert (
         isinstance(data.index, pd.MultiIndex)
-        and list(data.index.names) == HetusColumns.HH.KEY
-    ), f"Data has to have the following index: {HetusColumns.HH.KEY}"
+        and list(data.index.names) == col.HH.KEY
+    ), f"Data has to have the following index: {col.HH.KEY}"
     # only keep columns on household level
-    hhdata = data[HetusColumns.HH.CONTENT_COLUMNS]
+    hhdata = data[col.HH.CONTENT]
     # get numbers of different values per household for each column
-    num_values_per_hh = hhdata.groupby(level=HetusColumns.HH.KEY).nunique()  # type: ignore
+    num_values_per_hh = hhdata.groupby(level=col.HH.KEY).nunique()  # type: ignore
     inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
     # create an index that contains all inconsistent households
     inconsistent_households = inconsistent_columns_per_hh[
@@ -86,7 +86,7 @@ def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:
     :rtype: pd.Index
     """
     # count how many different values for each column there are within a single household
-    num_values_per_hh = data.groupby(HetusColumns.HH.KEY).nunique()
+    num_values_per_hh = data.groupby(col.HH.KEY).nunique()
     # get the columns that always have the same value within a single household
     hh_data = (num_values_per_hh == 1).all(axis=0)  # type: ignore
     hh_data = hh_data.loc[hh_data == True]
@@ -102,8 +102,8 @@ def show_inconsistent_households(data: pd.DataFrame):
     :param data: the data to check
     :type data: pd.DataFrame
     """
-    hhdata = data[HetusColumns.HH.COLUMNS]
-    num_values_per_hh = hhdata.groupby(HetusColumns.HH.KEY).nunique()
+    hhdata = data[col.HH.ALL]
+    num_values_per_hh = hhdata.groupby(col.HH.KEY).nunique()
     inconsistent_hh_per_column = (num_values_per_hh != 1).sum(axis=0)  # type: ignore
     print(f"Inconsistencies per column: \n{inconsistent_hh_per_column}")
     inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
@@ -128,8 +128,7 @@ def get_household_data(data: pd.DataFrame) -> pd.DataFrame:
     :return: data set on households
     :rtype: pd.DataFrame
     """
-    data = data[HetusColumns.HH.COLUMNS].set_index(HetusColumns.HH.KEY)
+    data = data[col.HH.ALL].set_index(col.HH.KEY)
     data = remove_inconsistent_households(data)
     hhdata = extract_household_data(data, False)
-    logging.info(f"Extracted data on {len(hhdata)} households.")
     return hhdata
