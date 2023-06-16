@@ -4,7 +4,7 @@ Functions for loading HETUS data files.
 
 import os
 import time
-from typing import Dict
+from typing import Dict, Iterable
 import pandas as pd
 import logging
 
@@ -95,6 +95,19 @@ def load_hetus_file(country: str) -> pd.DataFrame:
     return load_hetus_file_from_path(filenames[country])
 
 
+def load_hetus_files(countries: Iterable[str]) -> pd.DataFrame:
+    """
+    Loads HETUS data of multiple countries.
+
+    :param countries: a list of country codes (e.g., "DE" for germany)
+    :type countries: Iterable[str]
+    :return: HETUS data for the countries
+    :rtype: pd.DataFrame
+    """
+    data = pd.concat(load_hetus_file(country) for country in countries)
+    return data
+
+
 def load_all_hetus_files(path: str = HETUS_PATH) -> pd.DataFrame:
     """
     Loads all available HETUS files.
@@ -106,7 +119,9 @@ def load_all_hetus_files(path: str = HETUS_PATH) -> pd.DataFrame:
     """
     start = time.time()
     filenames = get_hetus_file_names(path)
-    data = pd.concat(load_hetus_file_from_path(filename) for filename in filenames.values())
+    data = pd.concat(
+        load_hetus_file_from_path(filename) for filename in filenames.values()
+    )
     logging.info(
         f"Loaded all HETUS files with {len(data)} entries in {time.time() - start:.1f} s"
     )

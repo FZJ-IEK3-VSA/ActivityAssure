@@ -1,5 +1,11 @@
+"""
+Contains various rather prototyped functions that can be helpful for further examining
+specific aspects of the data if necessary.
+"""
+
 import pandas as pd
 import hetus_columns as col
+import household_extraction
 
 
 def compare_hh_size_and_participants(data: pd.DataFrame):
@@ -7,7 +13,8 @@ def compare_hh_size_and_participants(data: pd.DataFrame):
     Compares the household size fields with the number of HETUS particpants (different PIDs)
     to find out how many household members did not participate
     """
-    grouped = data.set_index(col.HH.KEY).groupby(level=col.HH.KEY)  # type: ignore
+    data = data.reset_index().set_index(col.HH.KEY)
+    grouped = data.groupby(level=col.HH.KEY)  # type: ignore
     hhdata = grouped.first()
     participants_per_hh = grouped.nunique()["PID"]
     merged = pd.concat([hhdata["HHC1"], hhdata["HHC3"], participants_per_hh], axis=1)
@@ -55,17 +62,41 @@ def compare_hh_size_and_participants(data: pd.DataFrame):
     )
 
 
-def analyze_inconsistent_households(data: pd.DataFrame):
+def show_inconsistent_households(data: pd.DataFrame):
     """
-    Some more or less unstructured code to analyze inconsistent households in the
-    italian HETUS data.
+    Analysis-function for showing inconsistencies in the data regarding households,
+    i.e. where several entries belonging to the same household contain different 
+    values for household-level columns.
+
+    :param data: the data to check
+    :type data: pd.DataFrame
     """
     hhdata = data[col.HH.ALL]
     num_values_per_hh = hhdata.groupby(col.HH.KEY).nunique()
+    inconsistent_hh_per_column = (num_values_per_hh != 1).sum(axis=0)  # type: ignore
+    print(f"Inconsistencies per column: \n{inconsistent_hh_per_column}")
+    inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
+    inconsistent_households = inconsistent_columns_per_hh[
+        inconsistent_columns_per_hh > 0
+    ]
+    print(
+        f"Households with inconsistencies: {len(inconsistent_households)} of {len(data)}"
+        f"\n{inconsistent_households}"
+    )
+    return inconsistent_hh_per_column, inconsistent_households
+
+
+def analyze_inconsistent_households(data: pd.DataFrame):
+    """
+    Some more or less unstructured code to analyze further inconsistencies in the
+    italian HETUS data on household level.
+    """
+    data = household_extraction.extract_household_columns(data)
+    num_values_per_hh = data.groupby(col.HH.KEY).nunique()
     inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
     errors_per_hh = inconsistent_columns_per_hh[inconsistent_columns_per_hh > 0]
-    hhdata.set_index(col.HH.KEY, inplace=True)
-    inconsistent_hh = hhdata.loc[(errors_per_hh.index)]
+    data.set_index(col.HH.KEY, inplace=True)
+    inconsistent_hh = data.loc[(errors_per_hh.index)]
     grouped = inconsistent_hh.groupby(level="HID")
     # list all rows where the numbers of household members of different age classes
     # don't add up to the total

@@ -10,17 +10,17 @@ import pandas as pd
 import hetus_columns as col
 
 
-def extract_household_data(
+def group_rows_by_household(
     data: pd.DataFrame, select_mode: bool = False
 ) -> pd.DataFrame:
     """
     Extracts the household-level data from the data set. Produces a
-    dataframe that uses country and HID as index.
+    dataframe that uses year, country and HID as index.
 
     :param data: general HETUS data set
     :type data: pd.DataFrame
-    :param select_mode: if True, uses the most frequent value for all 
-                        household level data, else the first value, 
+    :param select_mode: if True, uses the most frequent value for all
+                        household level data, else the first value,
                         defaults to False
     :type select_mode: bool, optional
     :return: household-level data set
@@ -44,38 +44,10 @@ def extract_household_data(
     return grouped_data
 
 
-def remove_inconsistent_households(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Removes entries with inconsistent household-level data
-
-    :param data: DataFrame with inconsistent household data
-    :type data: pd.DataFrame
-    :return: DataFrame containing only consistent households
-    :rtype: pd.DataFrame
-    """
-    assert (
-        isinstance(data.index, pd.MultiIndex)
-        and list(data.index.names) == col.HH.KEY
-    ), f"Data has to have the following index: {col.HH.KEY}"
-    # only keep columns on household level
-    hhdata = data[col.HH.CONTENT]
-    # get numbers of different values per household for each column
-    num_values_per_hh = hhdata.groupby(level=col.HH.KEY).nunique()  # type: ignore
-    inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
-    # create an index that contains all inconsistent households
-    inconsistent_households = inconsistent_columns_per_hh[
-        inconsistent_columns_per_hh > 0
-    ].index
-    entries_to_remove = hhdata.index.isin(inconsistent_households)
-    consistent_data = hhdata[~entries_to_remove]
-    logging.info(f"Removed {len(entries_to_remove)} inconsistent households")
-    return consistent_data
-
-
 def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:
     """
     Analysis-function for checking which columns are actually on household
-    level and thus always have the same value for all entries belonging to 
+    level and thus always have the same value for all entries belonging to
     the same household.
     Can be used to check for which hosehold level columns the data
     is acutally consistent acrossall entries.
@@ -93,42 +65,109 @@ def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:
     return hh_data.index
 
 
-def show_inconsistent_households(data: pd.DataFrame):
+def extract_household_columns(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Analysis-function for showing inconsistencies in the data regarding households,
-    i.e. where several entries belonging to the same household contain different 
-    values for household-level columns.
+    Resets the index and removes all columns that are below household level, but
+    keeps all rows (meaning there are multiple rows per household).
 
-    :param data: the data to check
+    :param data: general HETUS data set
     :type data: pd.DataFrame
+    :return: data set containing only columns on household level
+    :rtype: pd.DataFrame
     """
-    hhdata = data[col.HH.ALL]
-    num_values_per_hh = hhdata.groupby(col.HH.KEY).nunique()
-    inconsistent_hh_per_column = (num_values_per_hh != 1).sum(axis=0)  # type: ignore
-    print(f"Inconsistencies per column: \n{inconsistent_hh_per_column}")
+    assert (
+        data.index.names == col.Diary.KEY
+    ), "Invalid data: diary-level HETUS data required"
+    # remove index and content columns below HH level (person and diary level)
+    hhdata = data.reset_index().set_index(col.HH.KEY)[col.HH.CONTENT]
+    return hhdata
+
+
+def get_consistent_households(data: pd.DataFrame) -> pd.Index:
+    """
+    Returns households without inconsistent household-level data, e.g., where multiple
+    diary entries for the same household specify different household sizes.
+
+    :param data: DataFrame with inconsistent household data
+    :type data: pd.DataFrame
+    :return: Index containing only consistent households
+    :rtype: pd.Index
+    """
+    assert (
+        isinstance(data.index, pd.MultiIndex) and list(data.index.names) == col.HH.KEY
+    ), f"Data has to have the following index: {col.HH.KEY}"
+    # only keep columns on household level
+    data = data[col.HH.CONTENT]
+    # get numbers of different values per household for each column
+    num_values_per_hh = data.groupby(level=col.HH.KEY).nunique()  # type: ignore
     inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
-    inconsistent_households = inconsistent_columns_per_hh[
-        inconsistent_columns_per_hh > 0
-    ]
-    print(
-        f"Households with inconsistencies: {len(inconsistent_households)} of {len(data)}"
-        f"\n{inconsistent_households}"
+    # create an index that contains all consistent households
+    consistent_households = inconsistent_columns_per_hh[
+        inconsistent_columns_per_hh == 0
+    ].index
+    logging.info(
+        f"Out of {len(num_values_per_hh)} households, {len(num_values_per_hh) - len(consistent_households)} are inconsistent."
     )
-    return inconsistent_hh_per_column, inconsistent_households
-    
+    return consistent_households
 
 
-def get_household_data(data: pd.DataFrame) -> pd.DataFrame:
+def get_complete_households(data: pd.DataFrame) -> pd.Index:
+    """
+    Returns a new dataframe, containing only complete households, meaning
+    households where each inhabitant took part in the survey.
+
+    :param data: general HETUS data set
+    :type data: pd.DataFrame
+    :return: complete households
+    :rtype: pd.DataFrame
+    """
+    data = data.reset_index().set_index(col.HH.KEY)
+    # group by household
+    hhsizes = data[col.HH.SIZE].groupby(level=col.HH.KEY).first()  # type: ignore
+    # get the number of survey participants per household
+    participants_per_hh = data[col.Person.ID].groupby(level=col.HH.KEY).nunique()  # type: ignore
+    merged = pd.concat([hhsizes, participants_per_hh], axis=1)
+    # get households where the size matches the number of participants
+    complete = merged[merged[col.Person.ID] == merged[col.HH.SIZE]].index
+    logging.info(
+        f"Out of {len(merged)} households, {len(merged) - len(complete)} are incomplete."
+    )
+    return complete
+
+
+def filter_by_index(
+    data: pd.DataFrame, index: pd.Index, keep_entries: bool = True
+) -> pd.DataFrame:
+    """
+    Filters a data set using a separate index. The keep_entries parameter determines which part of
+    the data is kept.
+
+    :param data: the data to filter
+    :type data: pd.DataFrame
+    :param index: the index used as filter condition
+    :type index: pd.Index
+    :param keep_entries: True if the entries in index should be kept, else false; defaults to True
+    :type keep_entries: bool, optional
+    :return: the filtered data set
+    :rtype: pd.DataFrame
+    """
+    inindex = data.index.isin(index)
+    keep = inindex if keep_entries else ~inindex
+    return data.loc[keep]
+
+
+def get_usable_household_data(data: pd.DataFrame) -> pd.DataFrame:
     """
     Extracts the data on household-level from the specified data set.
-    Removes entries with inconsistent data.
+    Removes entries with incomplete or inconsistent data.
 
     :param data: general HETUS data set
     :type data: pd.DataFrame
     :return: data set on households
     :rtype: pd.DataFrame
     """
-    data = data[col.HH.ALL].set_index(col.HH.KEY)
-    data = remove_inconsistent_households(data)
-    hhdata = extract_household_data(data, False)
+    data = filter_by_index(data, get_complete_households(data))
+    data = extract_household_columns(data)
+    data = filter_by_index(data, get_consistent_households(data))
+    hhdata = group_rows_by_household(data, False)
     return hhdata
