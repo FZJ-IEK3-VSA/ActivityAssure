@@ -2,25 +2,29 @@
 Contains column names of HETUS data, ordered by level
 """
 
-# class Key:
-#     """
-#     General column names that together function as identifier
-#     """
-#     YEAR = "YEAR"
-#     COUNTRY = "COUNTRY"
-#     HID = "HID"
-#     PID = "PID"
-#     DIARY = "DIARY"
+import abc
+from typing import List
 
-class Year:
+class HetusLevel(abc.ABC):
+    NAME = ""
+    ID = ""
+    KEY: List[str] = []
+    CONTENT: List[str] = []
+
+
+class Year(HetusLevel):
+    NAME = "Year"
     ID = "YEAR"
     KEY = [ID]
 
-class Country:
+
+class Country(HetusLevel):
+    NAME = "Country"
     ID = "COUNTRY"
     KEY = Year.KEY + [ID]
 
-class HH:
+
+class HH(HetusLevel):
     """
     Column names on household level.
     This encompasses all columns that describe features of the
@@ -29,6 +33,8 @@ class HH:
     belonging to the same household (which is not the case in
     the actual data).
     """
+
+    NAME = "Household"
 
     #: ID of the household
     ID = "HID"
@@ -68,27 +74,39 @@ class HH:
     ALL = KEY + CONTENT
 
 
-class Person:
+class Person(HetusLevel):
     """
     Column names on personal level.
     This encompasses all columns with information on the respondent,
     e.g., sex or age
     """
-
+    NAME = "Person"
     ID = "PID"
     KEY = HH.KEY + [ID]
 
     SEX = "INC1"
     AGE_GROUP = "INC2"
     LIFECYCLE = "INC3"
-    STATUS = "INC4"
+    STATUS = "INC4_1"
+    PERSON_WEIGHT = "WGHT2"
 
 
-class Diary:
+    CONTENT = [
+        SEX,
+        AGE_GROUP,
+        LIFECYCLE,
+        STATUS,
+        PERSON_WEIGHT,
+    ]
+    #: all columns on person level
+    ALL = KEY + CONTENT
+
+
+class Diary(HetusLevel):
     """
     Metadata columns on the diary level (mostly date info)
     """
-
+    NAME = "Diary"
     ID = "DIARY"
     KEY = Person.KEY + [ID]
 

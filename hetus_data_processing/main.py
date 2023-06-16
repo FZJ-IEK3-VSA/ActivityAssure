@@ -15,10 +15,11 @@ def main():
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-def stats(data, hhdata = None):
+def stats(data, persondata = None, hhdata = None):
     """Print some basic statistics on HETUS data"""
     print(tabulate([
-        ["Number of diary entries", len(data)],
+        ["Number of diaries", len(data)],
+        ["Number of persons", len(persondata) if persondata is not None else []],
         ["Number of households", len(hhdata)] if hhdata is not None else [],
     ]))
 
@@ -26,23 +27,25 @@ def stats(data, hhdata = None):
 if __name__ == "__main__":
     main()
 
-    # data = load_data.load_all_hetus_files()
-    data = load_data.load_hetus_files(["AT", "LU"])
+    data = load_data.load_all_hetus_files()
+    # data = load_data.load_hetus_files(["AT", "LU"])
     # data = load_data.load_hetus_file("IT")
     data.set_index(col.Diary.KEY, inplace=True)
-    
     stats(data)
+
+    data, persondata = household_extraction.get_usable_person_data(data)
+    stats(data, persondata)
+
     data, hhdata = household_extraction.get_usable_household_data(data)
-    stats(data, hhdata)
+    stats(data, persondata, hhdata)
 
-
-    filters = {
-        col.Diary.WEEKDAY: [1],
-        col.Diary.MONTH: [6, 7, 8],
-        col.HH.SIZE: [1,2,3,4],
-    }
-    d = filter.filter_combined(data, filters)
-    print(len(d))
+    # filters = {
+    #     col.Diary.WEEKDAY: [1],
+    #     col.Diary.MONTH: [6, 7, 8],
+    #     col.HH.SIZE: [1,2,3,4],
+    # }
+    # d = filter.filter_combined(data, filters)
+    # print(len(d))
 
 
     pass
