@@ -19,7 +19,7 @@ def stats(data, persondata = None, hhdata = None):
     """Print some basic statistics on HETUS data"""
     print(tabulate([
         ["Number of diaries", len(data)],
-        ["Number of persons", len(persondata) if persondata is not None else []],
+        ["Number of persons", len(persondata)] if persondata is not None else [],
         ["Number of households", len(hhdata)] if hhdata is not None else [],
     ]))
 
@@ -27,9 +27,8 @@ def stats(data, persondata = None, hhdata = None):
 if __name__ == "__main__":
     main()
 
-    data = load_data.load_all_hetus_files()
-    # data = load_data.load_hetus_files(["AT", "LU"])
-    # data = load_data.load_hetus_file("IT")
+    # data = load_data.load_all_hetus_files()
+    data = load_data.load_hetus_files(["AT", "LU"])
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
 

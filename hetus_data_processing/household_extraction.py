@@ -12,7 +12,9 @@ import hetus_columns as col
 import filter
 
 
-def limit_to_columns_by_level(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd.DataFrame:
+def limit_to_columns_by_level(
+    data: pd.DataFrame, level: Type[col.HetusLevel]
+) -> pd.DataFrame:
     """
     Resets the index and removes all index and content columns that are
     below the specified level, but keeps all rows (meaning there can be
@@ -90,6 +92,28 @@ def get_consistent_groups(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd
     return consistent_households
 
 
+def get_usable_data_by_level(
+    data: pd.DataFrame, level: Type[col.HetusLevel]
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Extracts the usable data on the specified level. Exlcudes inconsistent entries.
+
+    :param data: general HETUS data
+    :type data: pd.DataFrame
+    :param level: the level on which the data will be extracted
+    :type level: Type[col.HetusLevel]
+    :return: the filtered general data and level-specific data
+    :rtype: Tuple[pd.DataFrame, pd.DataFrame]
+    """
+    data = filter.filter_by_index(data, get_consistent_groups(data, level))
+    persondata = limit_to_columns_by_level(data, level)
+    persondata = group_rows_by_level(persondata, level, False)
+    return data, persondata
+
+
+# --- Level Specific Functions ---
+
+
 def get_complete_households(data: pd.DataFrame) -> pd.Index:
     """
     Returns a new dataframe, containing only complete households, meaning
@@ -124,16 +148,9 @@ def get_usable_household_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Data
     :return: cleaned full data set and household data set
     :rtype: Tuple[pd.DataFrame, pd.DataFrame]
     """
-    level = col.HH
     data = filter.filter_by_index(data, get_complete_households(data))
-    data = filter.filter_by_index(data, get_consistent_groups(data, level))
-    hhdata = limit_to_columns_by_level(data, level)
-    hhdata = group_rows_by_level(hhdata, level, False)
-    return data, hhdata
+    return get_usable_data_by_level(data, col.HH)
+
 
 def get_usable_person_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    level = col.Person
-    data = filter.filter_by_index(data, get_consistent_groups(data, level))
-    persondata = limit_to_columns_by_level(data, level)
-    persondata = group_rows_by_level(persondata, level, False)
-    return data, persondata
+    return get_usable_data_by_level(data, col.Person)
