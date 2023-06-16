@@ -8,6 +8,27 @@ import hetus_columns as col
 import household_extraction
 
 
+def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:
+    """
+    Analysis-function for checking which columns are actually on household
+    level and thus always have the same value for all entries belonging to
+    the same household.
+    Can be used to check for which hosehold level columns the data
+    is acutally consistent across all entries.
+
+    :param data: hetus data
+    :type data: pd.DataFrame
+    :return: index containing all columns on household level
+    :rtype: pd.Index
+    """
+    # count how many different values for each column there are within a single household
+    num_values_per_hh = data.groupby(col.HH.KEY).nunique()
+    # get the columns that always have the same value within a single household
+    hh_data = (num_values_per_hh == 1).all(axis=0)  # type: ignore
+    hh_data = hh_data.loc[hh_data == True]
+    return hh_data.index
+
+
 def compare_hh_size_and_participants(data: pd.DataFrame):
     """
     Compares the household size fields with the number of HETUS particpants (different PIDs)
@@ -91,7 +112,7 @@ def analyze_inconsistent_households(data: pd.DataFrame):
     Some more or less unstructured code to analyze further inconsistencies in the
     italian HETUS data on household level.
     """
-    data = household_extraction.extract_household_columns(data)
+    data = household_extraction.remove_non_household_columns(data)
     num_values_per_hh = data.groupby(col.HH.KEY).nunique()
     inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
     errors_per_hh = inconsistent_columns_per_hh[inconsistent_columns_per_hh > 0]

@@ -44,7 +44,7 @@ def filter_by_index(
 ) -> pd.DataFrame:
     """
     Filters a data set using a separate index. The keep_entries parameter determines which part of
-    the data is kept.
+    the data is kept, either the part that is contained in the index, or the rest.
 
     :param data: the data to filter
     :type data: pd.DataFrame
@@ -58,8 +58,3 @@ def filter_by_index(
     inindex = data.index.isin(index)
     keep = inindex if keep_entries else ~inindex
     return data.loc[keep]
-
-
-#Klären: 25 % aller Mitglieder aus teilnehmenden Haushalte haben selbst nicht an der Umfrage teilgenommen (36 % der Haushalte sind 'unvollständig')
-# --> soll hier auf Haushaltsebene oder auf Personenebene validiert werden
-# Jannik validiert auf HH-Ebene (bspw. Wahrscheinlichkeitskurven); aber macht das Sinn, alle Aktivitäten einer Familie zu validieren, wenn nur der Earner an HETUS teilgenommen hat?

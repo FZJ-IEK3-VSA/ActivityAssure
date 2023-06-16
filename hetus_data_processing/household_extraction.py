@@ -4,11 +4,30 @@ Functions for extracting household-level data from a general HETUS data set
 
 import logging
 import time
+from typing import Tuple
 import numpy as np
 import pandas as pd
 
 import hetus_columns as col
 import filter
+
+
+def remove_non_household_columns(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Resets the index and removes all columns that are below household level, but
+    keeps all rows (meaning there are multiple rows per household).
+
+    :param data: general HETUS data set
+    :type data: pd.DataFrame
+    :return: data set containing only columns on household level
+    :rtype: pd.DataFrame
+    """
+    assert (
+        data.index.names == col.Diary.KEY
+    ), "Invalid data: diary-level HETUS data required"
+    # remove index and content columns below HH level (person and diary level)
+    hhdata = data.reset_index().set_index(col.HH.KEY)[col.HH.CONTENT]
+    return hhdata
 
 
 def group_rows_by_household(
@@ -45,45 +64,6 @@ def group_rows_by_household(
     return grouped_data
 
 
-def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:
-    """
-    Analysis-function for checking which columns are actually on household
-    level and thus always have the same value for all entries belonging to
-    the same household.
-    Can be used to check for which hosehold level columns the data
-    is acutally consistent acrossall entries.
-
-    :param data: hetus data
-    :type data: pd.DataFrame
-    :return: index containing all columns on household level
-    :rtype: pd.Index
-    """
-    # count how many different values for each column there are within a single household
-    num_values_per_hh = data.groupby(col.HH.KEY).nunique()
-    # get the columns that always have the same value within a single household
-    hh_data = (num_values_per_hh == 1).all(axis=0)  # type: ignore
-    hh_data = hh_data.loc[hh_data == True]
-    return hh_data.index
-
-
-def extract_household_columns(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Resets the index and removes all columns that are below household level, but
-    keeps all rows (meaning there are multiple rows per household).
-
-    :param data: general HETUS data set
-    :type data: pd.DataFrame
-    :return: data set containing only columns on household level
-    :rtype: pd.DataFrame
-    """
-    assert (
-        data.index.names == col.Diary.KEY
-    ), "Invalid data: diary-level HETUS data required"
-    # remove index and content columns below HH level (person and diary level)
-    hhdata = data.reset_index().set_index(col.HH.KEY)[col.HH.CONTENT]
-    return hhdata
-
-
 def get_consistent_households(data: pd.DataFrame) -> pd.Index:
     """
     Returns households without inconsistent household-level data, e.g., where multiple
@@ -94,9 +74,6 @@ def get_consistent_households(data: pd.DataFrame) -> pd.Index:
     :return: Index containing only consistent households
     :rtype: pd.Index
     """
-    assert (
-        isinstance(data.index, pd.MultiIndex) and list(data.index.names) == col.HH.KEY
-    ), f"Data has to have the following index: {col.HH.KEY}"
     # only keep columns on household level
     data = data[col.HH.CONTENT]
     # get numbers of different values per household for each column
@@ -136,18 +113,18 @@ def get_complete_households(data: pd.DataFrame) -> pd.Index:
     return complete
 
 
-def get_usable_household_data(data: pd.DataFrame) -> pd.DataFrame:
+def get_usable_household_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Extracts the data on household-level from the specified data set.
     Removes entries with incomplete or inconsistent data.
 
     :param data: general HETUS data set
     :type data: pd.DataFrame
-    :return: data set on households
-    :rtype: pd.DataFrame
+    :return: cleaned full data set and household data set
+    :rtype: Tuple[pd.DataFrame, pd.DataFrame]
     """
     data = filter.filter_by_index(data, get_complete_households(data))
-    data = extract_household_columns(data)
     data = filter.filter_by_index(data, get_consistent_households(data))
-    hhdata = group_rows_by_household(data, False)
-    return hhdata
+    hhdata = remove_non_household_columns(data)
+    hhdata = group_rows_by_household(hhdata, False)
+    return data, hhdata
