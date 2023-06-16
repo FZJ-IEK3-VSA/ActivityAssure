@@ -5,3 +5,4 @@ pytest
 # type annotations
 pandas-stubs
 types-setuptools
+types-tabulate
