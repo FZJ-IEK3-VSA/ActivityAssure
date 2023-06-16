@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 import hetus_columns as col
+import filter
 
 
 def group_rows_by_household(
@@ -135,27 +136,6 @@ def get_complete_households(data: pd.DataFrame) -> pd.Index:
     return complete
 
 
-def filter_by_index(
-    data: pd.DataFrame, index: pd.Index, keep_entries: bool = True
-) -> pd.DataFrame:
-    """
-    Filters a data set using a separate index. The keep_entries parameter determines which part of
-    the data is kept.
-
-    :param data: the data to filter
-    :type data: pd.DataFrame
-    :param index: the index used as filter condition
-    :type index: pd.Index
-    :param keep_entries: True if the entries in index should be kept, else false; defaults to True
-    :type keep_entries: bool, optional
-    :return: the filtered data set
-    :rtype: pd.DataFrame
-    """
-    inindex = data.index.isin(index)
-    keep = inindex if keep_entries else ~inindex
-    return data.loc[keep]
-
-
 def get_usable_household_data(data: pd.DataFrame) -> pd.DataFrame:
     """
     Extracts the data on household-level from the specified data set.
@@ -166,8 +146,8 @@ def get_usable_household_data(data: pd.DataFrame) -> pd.DataFrame:
     :return: data set on households
     :rtype: pd.DataFrame
     """
-    data = filter_by_index(data, get_complete_households(data))
+    data = filter.filter_by_index(data, get_complete_households(data))
     data = extract_household_columns(data)
-    data = filter_by_index(data, get_consistent_households(data))
+    data = filter.filter_by_index(data, get_consistent_households(data))
     hhdata = group_rows_by_household(data, False)
     return hhdata

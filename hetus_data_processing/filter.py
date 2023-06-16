@@ -30,11 +30,6 @@ def filter_combined(data: pd.DataFrame, conditions: Dict[str, List[int]]) -> pd.
     combined_mask = functools.reduce(lambda m1, m2: m1 & m2, masks)
     return data[combined_mask]
 
-# def filter_index(data: pd.DataFrame, conditions: Dict[str, List[Union[str, int]]]) -> pd.DataFrame:
-#     masks = [data.index.get_level_values(k) in v for k, v in conditions.items()] # TODO: does not work
-#     combined_mask = functools.reduce(lambda m1, m2: m1 & m2, masks)
-#     return data.loc[combined_mask]
-
 def filter_num_earners():
     # TODO: calculate total time spent working and categorize: >~6h --> full-time, <1h --> no worker, or similar
     pass
@@ -42,6 +37,27 @@ def filter_num_earners():
 
 def filter_family_status():
     pass
+
+
+def filter_by_index(
+    data: pd.DataFrame, index: pd.Index, keep_entries: bool = True
+) -> pd.DataFrame:
+    """
+    Filters a data set using a separate index. The keep_entries parameter determines which part of
+    the data is kept.
+
+    :param data: the data to filter
+    :type data: pd.DataFrame
+    :param index: the index used as filter condition
+    :type index: pd.Index
+    :param keep_entries: True if the entries in index should be kept, else false; defaults to True
+    :type keep_entries: bool, optional
+    :return: the filtered data set
+    :rtype: pd.DataFrame
+    """
+    inindex = data.index.isin(index)
+    keep = inindex if keep_entries else ~inindex
+    return data.loc[keep]
 
 
 #Klären: 25 % aller Mitglieder aus teilnehmenden Haushalte haben selbst nicht an der Umfrage teilgenommen (36 % der Haushalte sind 'unvollständig')
