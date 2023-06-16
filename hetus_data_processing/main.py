@@ -1,6 +1,6 @@
 import logging
 import load_data
-import household_extraction
+import level_extraction
 import filter
 
 from tabulate import tabulate
@@ -32,10 +32,10 @@ if __name__ == "__main__":
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
 
-    data, persondata = household_extraction.get_usable_person_data(data)
+    data, persondata = level_extraction.get_usable_person_data(data)
     stats(data, persondata)
 
-    data, hhdata = household_extraction.get_usable_household_data(data)
+    data, hhdata = level_extraction.get_usable_household_data(data)
     stats(data, persondata, hhdata)
 
     # filters = {

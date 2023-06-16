@@ -5,7 +5,7 @@ specific aspects of the data if necessary.
 
 import pandas as pd
 import hetus_columns as col
-import household_extraction
+import level_extraction
 
 
 def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:
@@ -112,7 +112,7 @@ def analyze_inconsistent_households(data: pd.DataFrame):
     Some more or less unstructured code to analyze further inconsistencies in the
     italian HETUS data on household level.
     """
-    data = household_extraction.limit_to_columns_by_level(data, col.HH)
+    data = level_extraction.limit_to_columns_by_level(data, col.HH)
     num_values_per_hh = data.groupby(col.HH.KEY).nunique()
     inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
     errors_per_hh = inconsistent_columns_per_hh[inconsistent_columns_per_hh > 0]
