@@ -1,5 +1,5 @@
 """
-Functions for extracting household-level data from a general HETUS data set
+Functions for extracting data on a specific level from a general HETUS data set
 """
 
 import logging
@@ -19,9 +19,14 @@ def limit_to_columns_by_level(
     Resets the index and removes all index and content columns that are
     below the specified level, but keeps all rows (meaning there can be
     multiple rows per group).
+    E.g., when choosing the household level, only keeps colums that
+    contain information on household level, removing information
+    on person and diary level.
 
     :param data: general HETUS data set
     :type data: pd.DataFrame
+    :param level: the desired level
+    :type level: Type[col.HetusLevel]
     :return: data set containing only columns that are relevant on the
              desired level
     :rtype: pd.DataFrame
@@ -32,14 +37,18 @@ def limit_to_columns_by_level(
 
 
 def group_rows_by_level(
-    data: pd.DataFrame, level: Type[col.HetusLevel], select_mode: bool = False
+    data: pd.DataFrame, level: Type[col.HetusLevel], agg_mode: bool = False
 ) -> pd.DataFrame:
     """
-    Extracts the household-level data from the data set. Produces a
-    dataframe that uses year, country and HID as index.
+    Groups the data by the specified level.
+    E.g., when choosing the household level, this creates a dataframe
+    with one entry per household. The aggregation method can be chosen
+    through the agg_mode parameter.
 
     :param data: general HETUS data set
     :type data: pd.DataFrame
+    :param level: the desired level
+    :type level: Type[col.HetusLevel]
     :param select_mode: if True, uses the most frequent value for all
                         household level data, else the first value,
                         defaults to False
@@ -50,7 +59,7 @@ def group_rows_by_level(
     start = time.time()
     # select household level columns and set country and HID as index
     grouped = data.groupby(level.KEY)
-    if select_mode:
+    if agg_mode:
         # select the most frequent value out of each group; this is better if there are different values per
         # group; this method is much slower than the one below
         grouped_data = grouped.agg(
@@ -68,11 +77,14 @@ def group_rows_by_level(
 
 def get_consistent_groups(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd.Index:
     """
-    Returns households without inconsistent household-level data, e.g., where multiple
-    diary entries for the same household specify different household sizes.
+    Returns only entries on the desired level without inconsistent data.
+    E.g., when choosing the household level, removes entries that specify
+    contradicting household sizes for the same household.
 
     :param data: DataFrame with inconsistent household data
     :type data: pd.DataFrame
+    :param level: the desired level
+    :type level: Type[col.HetusLevel]
     :return: Index containing only consistent households
     :rtype: pd.Index
     """
@@ -102,7 +114,7 @@ def get_usable_data_by_level(
     :type data: pd.DataFrame
     :param level: the level on which the data will be extracted
     :type level: Type[col.HetusLevel]
-    :return: the filtered general data and level-specific data
+    :return: filtered full data set and level-specific data set
     :rtype: Tuple[pd.DataFrame, pd.DataFrame]
     """
     data = filter.filter_by_index(data, get_consistent_groups(data, level))
@@ -145,7 +157,7 @@ def get_usable_household_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Data
 
     :param data: general HETUS data set
     :type data: pd.DataFrame
-    :return: cleaned full data set and household data set
+    :return: filtered full data set and household data set
     :rtype: Tuple[pd.DataFrame, pd.DataFrame]
     """
     data = filter.filter_by_index(data, get_complete_households(data))
@@ -153,4 +165,13 @@ def get_usable_household_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Data
 
 
 def get_usable_person_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Extracts the data on person-level from the data set.
+    Removes inconsisten entries.
+
+    :param data: general HETUS data set
+    :type data: pd.DataFrame
+    :return: filtered full data set and person data set
+    :rtype: Tuple[pd.DataFrame, pd.DataFrame]
+    """
     return get_usable_data_by_level(data, col.Person)
