@@ -1,4 +1,6 @@
 -r requirements.txt
+PyPDF2
+
 
 pytest
 
