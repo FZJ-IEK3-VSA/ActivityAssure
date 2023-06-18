@@ -85,8 +85,8 @@ if __name__ == "__main__":
     codes["900"] = codes["900"].replace("AUXILIARY CODES", "").strip()
 
     # store as json file
-    result_file = "./data/generated/hetus_activity_codes_2010.json"
-    with open(result_file, "w+") as f:
-        json.dump(codes, f, indent=4)
+    result_file_path = "./data/generated/hetus_activity_codes_2010.json"
+    with open(result_file_path, "w+") as result_file:
+        json.dump(codes, result_file, indent=4)
 
     print(f"Created result file {result_file}")

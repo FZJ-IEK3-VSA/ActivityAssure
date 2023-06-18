@@ -14,7 +14,7 @@ setuptools.setup(
     description="A validation framework for load profile generators",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="",  # TODO: Enter the URL of the project repository (Github or Gitlab)
+    url="https://jugit.fz-juelich.de/iek-3/groups/urbanmodels/personal/neuroth/lpg-validation-framework",
     include_package_data=True,
     packages=setuptools.find_packages(),
     install_requires=required_packages,
