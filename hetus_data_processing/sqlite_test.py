@@ -2,7 +2,7 @@
 Testing conversion of the HETUS data into an sqlite database and working with that.
 """
 
-import hetus_data_processing.load_data as load_data
+import load_data as load_data
 
 import sqlite3
 import sqlalchemy

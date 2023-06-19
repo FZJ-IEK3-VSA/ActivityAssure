@@ -9,6 +9,7 @@ import pandas as pd
 
 def read_lpg_profiles(path: str) -> Dict[str, pd.DataFrame]:
     pass
+    return {}
 
 
 def map_templates_to_hetus_households():
