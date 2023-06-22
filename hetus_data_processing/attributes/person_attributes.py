@@ -1,14 +1,16 @@
 """
-Calculates additional attributes for households, persons or diary entries which can then 
-be used for categorization
+Calculates additional attributes for persons which can then be used for categorization
 """
 
 import pandas as pd
 
 
-def calc_work_status_from_diaries(
-    data: pd.DataFrame, persondata: pd.DataFrame
-) -> pd.DataFrame:
+def calc_num_diaries(data: pd.DataFrame, persondata: pd.DataFrame):
+    # TODO: simple function for starting
+    pass
+
+
+def calc_work_status_from_diaries(data: pd.DataFrame, persondata: pd.DataFrame):
     data = data.copy()
     # Check other means beforehand: if num_earners = hh-size, then everyone is an earner
     
@@ -17,5 +19,3 @@ def calc_work_status_from_diaries(
     # determine the state out of all entries for a person: weekends etc. don't matter,
     # if there are days with work, the person is a worker, all other days are then assumed to be free
     # if the working times differ, use the most frequent one. In doubt, maybe the total share of worked time may help?
-
-    return data
