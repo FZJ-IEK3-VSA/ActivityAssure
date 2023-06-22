@@ -35,8 +35,8 @@ def stats(data, persondata=None, hhdata=None):
 if __name__ == "__main__":
     main()
 
-    data = load_data.load_all_hetus_files()
-    # data = load_data.load_hetus_files(["DE"])
+    # data = load_data.load_all_hetus_files()
+    data = load_data.load_hetus_files(["DE"])
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
 
@@ -48,10 +48,8 @@ if __name__ == "__main__":
 
     filters = {col.Diary.DAYTYPE: [DayType.sick]}
 
-    sick = filter.filter_combined(data, {col.Diary.DAYTYPE: [DayType.sick]})
-    print(f"Sick diary days: {len(sick)}")
-    no_day_type = filter.filter_combined(data, {col.Diary.DAYTYPE: DayType.no_data()})
-    print(f"Missing day type column: {len(no_day_type)}")
+    sick = filter.filter_stats(data, {col.Diary.DAYTYPE: [DayType.sick]})
+    no_day_type = filter.filter_stats(data, {col.Diary.DAYTYPE: DayType.no_data()}, "No day type specified")
 
     pass
 

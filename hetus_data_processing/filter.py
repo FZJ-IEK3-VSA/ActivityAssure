@@ -30,13 +30,13 @@ def filter_combined(data: pd.DataFrame, conditions: Dict[str, List[int]]) -> pd.
     combined_mask = functools.reduce(lambda m1, m2: m1 & m2, masks)
     return data[combined_mask]
 
-def filter_num_earners():
-    # TODO: calculate total time spent working and categorize: >~6h --> full-time, <1h --> no worker, or similar
-    pass
 
-
-def filter_family_status():
-    pass
+def filter_stats(data: pd.DataFrame, conditions: Dict[str, List[int]], name: str = None) -> pd.DataFrame:
+    """Calls filter_combined and prints some filter statistics"""
+    result = filter_combined(data, conditions)
+    print(f"Applied filter: {name or conditions}")
+    print(f"Matching: {len(result)} / {len(data)} ({100 * len(result) / len(data):.1f} %)")
+    return result
 
 
 def filter_by_index(
