@@ -1,4 +1,5 @@
 import logging
+from hetus_data_processing.utils import DayType
 import load_data
 import level_extraction
 import filter
@@ -15,20 +16,27 @@ def main():
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-def stats(data, persondata = None, hhdata = None):
+
+def stats(data, persondata=None, hhdata=None):
     """Print some basic statistics on HETUS data"""
-    print(tabulate([
-        ["Number of diaries", len(data)],
-        ["Number of persons", len(persondata)] if persondata is not None else [],
-        ["Number of households", len(hhdata)] if hhdata is not None else [],
-    ]))
+    print(
+        tabulate(
+            [
+                ["Number of diaries", len(data)],
+                ["Number of persons", len(persondata)]
+                if persondata is not None
+                else [],
+                ["Number of households", len(hhdata)] if hhdata is not None else [],
+            ]
+        )
+    )
 
 
 if __name__ == "__main__":
     main()
 
-    # data = load_data.load_all_hetus_files()
-    data = load_data.load_hetus_files(["AT", "LU"])
+    data = load_data.load_all_hetus_files()
+    # data = load_data.load_hetus_files(["DE"])
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
 
@@ -38,16 +46,13 @@ if __name__ == "__main__":
     data, hhdata = level_extraction.get_usable_household_data(data)
     stats(data, persondata, hhdata)
 
-    # filters = {
-    #     col.Diary.WEEKDAY: [1],
-    #     col.Diary.MONTH: [6, 7, 8],
-    #     col.HH.SIZE: [1,2,3,4],
-    # }
-    # d = filter.filter_combined(data, filters)
-    # print(len(d))
+    filters = {col.Diary.DAYTYPE: [DayType.sick]}
 
+    sick = filter.filter_combined(data, {col.Diary.DAYTYPE: [DayType.sick]})
+    print(f"Sick diary days: {len(sick)}")
+    no_day_type = filter.filter_combined(data, {col.Diary.DAYTYPE: DayType.no_data()})
+    print(f"Missing day type column: {len(no_day_type)}")
 
     pass
 
-
-    #TODO: check which percentage of the data has missing values in the relevant fields (filter fields and diaries)
+    # TODO: check which percentage of the data has missing values in the relevant fields (filter fields and diaries)

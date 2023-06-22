@@ -8,7 +8,7 @@ from typing import Dict, List, Union
 import pandas as pd
 
 import hetus_columns as col
-from utils import HetusDayType, timing
+from utils import DayType, timing
 
 #TODO: for separating dataframes instead of just dropping unmatching columns, groupby can be used
 
@@ -16,7 +16,7 @@ from utils import HetusDayType, timing
 def filter_discrete(data: pd.DataFrame, column: str, allowed_values: List[int]) -> pd.DataFrame:
     return data[data[column].isin(allowed_values)]
 
-def filter_by_weekday(data: pd.DataFrame, day_types: List[HetusDayType]) -> pd.DataFrame:
+def filter_by_weekday(data: pd.DataFrame, day_types: List[DayType]) -> pd.DataFrame:
     return filter_discrete(data, col.Diary.WEEKDAY, day_types)
 
 

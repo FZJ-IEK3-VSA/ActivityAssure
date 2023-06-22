@@ -8,3 +8,6 @@ import pandas as pd
 
 def calc_activity_group_frequencies(data: pd.DataFrame):
     pass
+    #TODO: determine statistics to calculate
+    # - mean and stddev/variance?
+    # - maybe range?

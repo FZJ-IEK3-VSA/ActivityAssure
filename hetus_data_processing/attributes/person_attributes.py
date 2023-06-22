@@ -12,6 +12,7 @@ def calc_num_diaries(data: pd.DataFrame, persondata: pd.DataFrame):
 
 def calc_work_status_from_diaries(data: pd.DataFrame, persondata: pd.DataFrame):
     data = data.copy()
+    # TODO: is there no HETUS attribute about this?
     # Check other means beforehand: if num_earners = hh-size, then everyone is an earner
     
     # For each row, count the number of Work code occurrences and multiply by 10 minutes
