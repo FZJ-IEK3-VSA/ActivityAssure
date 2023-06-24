@@ -1,5 +1,4 @@
 import logging
-from hetus_data_processing.utils import DayType
 import load_data
 import level_extraction
 import filter
@@ -7,6 +6,7 @@ import filter
 from tabulate import tabulate
 
 import hetus_columns as col
+from hetus_values import DayType, EmployedStudent
 
 
 def main():
@@ -32,11 +32,27 @@ def stats(data, persondata=None, hhdata=None):
     )
 
 
+def check_data_availabilty(data, persondata, hhdata):
+    d = filter.filter_stats(
+        filter.filter_combined, "sick", data, {col.Diary.DAYTYPE: [DayType.sick]}
+    )
+    d = filter.filter_stats(
+        filter.filter_no_data, "No day type specified", data, col.Diary.DAYTYPE
+    )
+    d = filter.filter_stats(
+        filter.filter_no_data,
+        "EmployedStudent no data",
+        data,
+        col.Diary.EMPLOYED_STUDENT,
+    )
+    d = filter.filter_stats(filter.filter_no_data, "", data, col.Person.WEEKLY_WORKING_HOURS)
+
+
 if __name__ == "__main__":
     main()
 
     # data = load_data.load_all_hetus_files()
-    data = load_data.load_hetus_files(["DE"])
+    data = load_data.load_hetus_files(["LU", "AT"])
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
 
@@ -46,10 +62,7 @@ if __name__ == "__main__":
     data, hhdata = level_extraction.get_usable_household_data(data)
     stats(data, persondata, hhdata)
 
-    filters = {col.Diary.DAYTYPE: [DayType.sick]}
-
-    sick = filter.filter_stats(data, {col.Diary.DAYTYPE: [DayType.sick]})
-    no_day_type = filter.filter_stats(data, {col.Diary.DAYTYPE: DayType.no_data()}, "No day type specified")
+    check_data_availabilty(data, persondata, hhdata)
 
     pass
 

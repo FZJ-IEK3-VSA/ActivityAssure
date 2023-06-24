@@ -1,5 +1,8 @@
 """
-Contains column names of HETUS data, ordered by level
+Contains column names of HETUS data, ordered by level.
+
+Remark: due to inconsistencies in the data, all column headers are
+converted to upper case after parsing.
 """
 
 import abc
@@ -43,14 +46,16 @@ class HH(HetusLevel):
 
     #: number of persons in the household
     SIZE = "HHC1"
+    HOUSE_TYPE = "HHQ3_1"
+    NUM_CARS = "HHQ6P"
 
     #: all columns on household level besides the key columns
     CONTENT = [
-        "HHC1",
+        SIZE,
         "HHC3",
         "HHC4",
         "HHC5",
-        "HHQ3_1",
+        HOUSE_TYPE,
         "HHQ4",
         "HHQ5",
         "HHQ6C",
@@ -65,7 +70,7 @@ class HH(HetusLevel):
         "HHQ6N",
         "HHQ6O",
         "HHQ6R",
-        "HHQ6P",
+        NUM_CARS,
         "HHQ9_1",
         "HHQ10A",
         "HHQ10F",
@@ -87,7 +92,14 @@ class Person(HetusLevel):
     SEX = "INC1"
     AGE_GROUP = "INC2"
     LIFECYCLE = "INC3"
-    STATUS = "INC4_1"
+    WORK_STATUS = "INC4_1"
+    WORK_LAST_WEEK = "IND1"
+    WYH_NOT_WORK_LAST_WEEK = "IND2"
+    EMPLOYMENT_STATUS = "IND6_1"
+    CONTRACT_TYPE = "IND44"
+    FULL_OR_PART_TIME = "IND7"
+    MULTIPLE_JOBS = "IND14"
+    WEEKLY_WORKING_HOURS = "IND38"
     PERSON_WEIGHT = "WGHT2"
 
 
@@ -95,7 +107,9 @@ class Person(HetusLevel):
         SEX,
         AGE_GROUP,
         LIFECYCLE,
-        STATUS,
+        WORK_STATUS,
+        WORK_LAST_WEEK,
+        EMPLOYMENT_STATUS,
         PERSON_WEIGHT,
     ]
     #: all columns on person level
@@ -112,4 +126,5 @@ class Diary(HetusLevel):
 
     WEEKDAY = "DDV1"
     MONTH = "DDV3"
+    EMPLOYED_STUDENT = "DDV6"
     DAYTYPE = "DDV7"
