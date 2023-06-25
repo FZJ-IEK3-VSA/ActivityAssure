@@ -32,8 +32,8 @@ def limit_to_columns_by_level(
     :rtype: pd.DataFrame
     """
     # remove index and content columns below the specified level
-    hhdata = data.reset_index().set_index(level.KEY)[level.CONTENT]
-    return hhdata
+    limited_data = data.reset_index().set_index(level.KEY)[level.CONTENT]
+    return limited_data
 
 
 def group_rows_by_level(
@@ -49,15 +49,15 @@ def group_rows_by_level(
     :type data: pd.DataFrame
     :param level: the desired level
     :type level: Type[col.HetusLevel]
-    :param select_mode: if True, uses the most frequent value for all
-                        household level data, else the first value,
+    :param agg_mode: if True, uses the mode (most frequent value) for all
+                        group level data, else the first value,
                         defaults to False
-    :type select_mode: bool, optional
-    :return: household-level data set
+    :type agg_mode: bool, optional
+    :return: group-level data set
     :rtype: pd.DataFrame
     """
     start = time.time()
-    # select household level columns and set country and HID as index
+    # select relevant columns and set country and HID as index
     grouped = data.groupby(level.KEY)
     if agg_mode:
         # select the most frequent value out of each group; this is better if there are different values per
@@ -88,20 +88,41 @@ def get_consistent_groups(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd
     :return: Index containing only consistent households
     :rtype: pd.Index
     """
-    # only keep columns on household level
+    # only keep columns on the specified level
     data = data[level.CONTENT]
-    # get numbers of different values per household for each column
-    num_values_per_hh = data.groupby(level=level.KEY).nunique()  # type: ignore
-    inconsistent_columns_per_hh = (num_values_per_hh != 1).sum(axis=1)  # type: ignore
-    # create an index that contains all consistent households
-    consistent_households = inconsistent_columns_per_hh[
-        inconsistent_columns_per_hh == 0
+    # get numbers of different values per group for each column
+    num_values_per_group = data.groupby(level=level.KEY).nunique(dropna=False)  # type: ignore
+    inconsistent_columns_per_group = (num_values_per_group != 1).sum(axis=1)  # type: ignore
+    
+    # create an index that contains all consistent groups
+    consistent_groups = inconsistent_columns_per_group[
+        inconsistent_columns_per_group == 0
     ].index
     logging.info(
-        f"Out of {len(num_values_per_hh)} groups on {level.NAME} level, "
-        f"{len(num_values_per_hh) - len(consistent_households)} are inconsistent."
+        f"Out of {len(num_values_per_group)} groups on {level.NAME} level, "
+        f"{len(num_values_per_group) - len(consistent_groups)} are inconsistent."
     )
-    return consistent_households
+    return consistent_groups
+
+
+def get_inconsistent_columns(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd.Series:
+    """
+    Returns the number of inconsistencies per column on the specified level. Removes
+    columns without inconsistencies.
+
+    :param data: general HETUS data
+    :type data: pd.DataFrame
+    :param level: the level to check for inconsistencies
+    :type level: Type[col.HetusLevel]
+    :return: a Series containing the number of groups with inconsistent per column
+    :rtype: pd.Series
+    """
+    data = data[level.CONTENT]
+    # get numbers of different values per household for each column
+    num_values_per_group = data.groupby(level=level.KEY).nunique()  # type: ignore
+    inconsistencies_per_col = (num_values_per_group != 1).sum()  # type: ignore
+    return inconsistencies_per_col[inconsistencies_per_col > 0]
+
 
 
 def get_usable_data_by_level(
