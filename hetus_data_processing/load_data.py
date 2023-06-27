@@ -72,7 +72,7 @@ def load_hetus_file_from_path(path: str) -> pd.DataFrame:
     start = time.time()
     data = pd.read_csv(path)
     logging.info(
-        f"Loaded HETUS file for {get_country(path)} with {len(data)} entries in {time.time() - start:.1f} s"
+        f"Loaded HETUS file for {get_country(path)} with {len(data)} entries and {len(data.columns)} columns in {time.time() - start:.1f} s"
     )
     column_names_to_capitals(data)
     # assert len(data.columns) == NUM_COLUMNS, f"Unexpected number of columns: found {len(data.columns)} instead of 1939 columns"
