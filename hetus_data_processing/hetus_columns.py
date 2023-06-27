@@ -100,6 +100,7 @@ class Person(HetusLevel):
     FULL_OR_PART_TIME = "IND7"
     MULTIPLE_JOBS = "IND14"
     WEEKLY_WORKING_HOURS = "IND38"
+    SELF_DECL_LABOUR_STATUS = "IND17_1"
     PERSON_WEIGHT = "WGHT2"
 
 
@@ -110,6 +111,11 @@ class Person(HetusLevel):
         WORK_STATUS,
         WORK_LAST_WEEK,
         EMPLOYMENT_STATUS,
+        CONTRACT_TYPE,
+        FULL_OR_PART_TIME,
+        MULTIPLE_JOBS,
+        WEEKLY_WORKING_HOURS,
+        SELF_DECL_LABOUR_STATUS,
         PERSON_WEIGHT,
     ]
     #: all columns on person level
@@ -126,5 +132,9 @@ class Diary(HetusLevel):
 
     WEEKDAY = "DDV1"
     MONTH = "DDV3"
+    YEAR = "DDV4"
     EMPLOYED_STUDENT = "DDV6"
     DAYTYPE = "DDV7"
+
+    MAIN_ACTIVITIES_PATTERN = "MACT"
+    MAIN_ACTIVITIES_AGG_PATTERN = "PACT"

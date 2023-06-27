@@ -1,4 +1,5 @@
 from functools import wraps
+import logging
 from time import time
 
 
@@ -14,7 +15,7 @@ def timing(f):
         ts = time()
         result = f(*args, **kw)
         te = time()
-        print("func:%r took: %2.4f sec" % (f.__name__, te - ts))
+        logging.debug("Timing: %r took: %2.4f sec" % (f.__name__, te - ts))
         return result
 
     return wrap

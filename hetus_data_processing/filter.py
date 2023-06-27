@@ -64,7 +64,7 @@ def filter_no_data(data: pd.DataFrame, columns: Union[str, Iterable[str]], inver
 
 
 def filter_by_index(
-    data: pd.DataFrame, index: pd.Index, invert: bool = True
+    data: pd.DataFrame, index: pd.Index, invert: bool = False
 ) -> pd.DataFrame:
     """
     Filters a data set using a separate index. The keep_entries parameter determines which part of
@@ -80,5 +80,5 @@ def filter_by_index(
     :rtype: pd.DataFrame
     """
     inindex = data.index.isin(index)
-    keep = inindex if invert else ~inindex
+    keep = ~inindex if invert else inindex
     return data.loc[keep]
