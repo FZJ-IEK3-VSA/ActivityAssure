@@ -8,6 +8,7 @@ from typing import Dict, Iterable
 import pandas as pd
 import logging
 
+
 HETUS_PATH = r"D:\Daten\HETUS Data\HETUS 2010 full set\DATA"
 HETUS_FILENAME_PREFIX = "TUS_SUF_A_"
 HETUS_FILENAME_SUFFIX = "_2010.csv"
@@ -58,6 +59,37 @@ def get_hetus_file_names(path: str = HETUS_PATH) -> Dict[str, str]:
     return filenames_by_country
 
 
+def build_dtype_dict() -> Dict[str, type]:
+    """
+    Generates a dictionary of dtypes for pandas.
+    Sets all diary columns to str so that leading zeros in the diary
+    codes are not lost
+
+    :return: dtype dictionary for parsing with pandas
+    :rtype: Dict[str, type]
+    """
+    columns = [
+        "Mact",
+        "Pact",
+        "Sactn",
+        "Sact",
+        "Wherep",
+        "Alone",
+        "Wpartner",
+        "Wparent",
+        "Wchild",
+        "Wotherh",
+        "Wotherp",
+        "Mcom",
+        "Scom",
+    ]
+    return {c + str(i): str for c in columns for i in range(1, 145)}
+
+
+#: dictionary specifying the correct data types for some columns
+DTYPE_DICT = build_dtype_dict()
+
+
 def load_hetus_file_from_path(path: str) -> pd.DataFrame:
     """
     Loads a single HETUS file
@@ -70,7 +102,7 @@ def load_hetus_file_from_path(path: str) -> pd.DataFrame:
     assert os.path.isfile(path), f"File not found: {path}"
     logging.debug(f"Loading HETUS file for {get_country(path)}")
     start = time.time()
-    data = pd.read_csv(path)
+    data = pd.read_csv(path, dtype=DTYPE_DICT)
     logging.info(
         f"Loaded HETUS file for {get_country(path)} with {len(data)} entries and {len(data.columns)} columns in {time.time() - start:.1f} s"
     )
