@@ -1,18 +1,23 @@
+import json
 import logging
-import load_data
-import level_extraction
-import filter
+from typing import Dict
+import pandas as pd
 
 from tabulate import tabulate
 
+import load_data
+import level_extraction
+import filter
 import hetus_columns as col
+import data_checks
 from hetus_values import DayType, EmployedStudent
+from attributes import person_attributes, diary_attributes, hh_attributes
 
 
 def main():
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.INFO,
+        level=logging.DEBUG,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
@@ -32,38 +37,24 @@ def stats(data, persondata=None, hhdata=None):
     )
 
 
-def check_data_availabilty(data, persondata, hhdata):
-    d = filter.filter_stats(
-        filter.filter_combined, "sick", data, {col.Diary.DAYTYPE: [DayType.sick]}
-    )
-    d = filter.filter_stats(
-        filter.filter_no_data, "No day type specified", data, col.Diary.DAYTYPE
-    )
-    d = filter.filter_stats(
-        filter.filter_no_data,
-        "EmployedStudent no data",
-        data,
-        col.Diary.EMPLOYED_STUDENT,
-    )
-    d = filter.filter_stats(filter.filter_no_data, "", data, col.Person.WEEKLY_WORKING_HOURS)
-
-
 if __name__ == "__main__":
     main()
-
+    data = None
     # data = load_data.load_all_hetus_files()
-    data = load_data.load_hetus_files(["LU", "AT"])
+    if data is None:
+        data = load_data.load_hetus_files(["DE", "AT"])
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
 
-    data, persondata = level_extraction.get_usable_person_data(data)
-    stats(data, persondata)
+    # extract households and persons
+    data_valid_persons, persondata = level_extraction.get_usable_person_data(data)
+    stats(data_valid_persons, persondata)
+    data_valid_hhs, hhdata = level_extraction.get_usable_household_data(data)
+    stats(data, data_valid_persons, data_valid_hhs)
 
-    data, hhdata = level_extraction.get_usable_household_data(data)
-    stats(data, persondata, hhdata)
+    person_attributes.determine_work_statuses(persondata)
+    diary_attributes.calc_day_type(data)
 
-    check_data_availabilty(data, persondata, hhdata)
+    data_checks.all_data_checks(data, persondata, hhdata)
 
     pass
-
-    # TODO: check which percentage of the data has missing values in the relevant fields (filter fields and diaries)

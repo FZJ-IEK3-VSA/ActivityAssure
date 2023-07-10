@@ -3,6 +3,8 @@ Contains various rather prototyped functions that can be helpful for further exa
 specific aspects of the data if necessary.
 """
 
+import json
+from typing import Dict
 import pandas as pd
 import hetus_columns as col
 import level_extraction
@@ -40,7 +42,9 @@ def compare_hh_size_and_participants(data: pd.DataFrame):
     participants_per_hh = grouped.nunique()["PID"]
     merged = pd.concat([hhdata["HHC1"], hhdata["HHC3"], participants_per_hh], axis=1)
 
-    print("--- Comparing the HH size column (HHC1) to the number of respondents per household")
+    print(
+        "--- Comparing the HH size column (HHC1) to the number of respondents per household"
+    )
     # this Diff column shows how many household members did not take part in the survey
     merged["Diff"] = merged["HHC1"] - merged["PID"]
     total_hh_members = merged["HHC1"].sum()
@@ -71,7 +75,9 @@ def compare_hh_size_and_participants(data: pd.DataFrame):
     print(
         f"Participation rate (without children): {round((total_without_child - missing_without_child)/total_without_child, 2)}"
     )
-    print(f"Rate of incomplete households (without children): {round(incomplete_hh_without_child / len(hhdata), 2)}")
+    print(
+        f"Rate of incomplete households (without children): {round(incomplete_hh_without_child / len(hhdata), 2)}"
+    )
 
     merged_lt_0 = merged[merged["Diff"] < 0]
     # HHC1 is topped at 5
@@ -86,7 +92,7 @@ def compare_hh_size_and_participants(data: pd.DataFrame):
 def show_inconsistent_households(data: pd.DataFrame):
     """
     Analysis-function for showing inconsistencies in the data regarding households,
-    i.e. where several entries belonging to the same household contain different 
+    i.e. where several entries belonging to the same household contain different
     values for household-level columns.
 
     :param data: the data to check
@@ -145,3 +151,64 @@ def analyze_inconsistent_households(data: pd.DataFrame):
     #   - are there households without any valid entry?
     #   - are there households where valid entries are in the minority?
     # Depending on that, I might be able to determine the correct values for all columns
+
+
+def load_hetus_activity_codes() -> Dict[str, str]:
+    """
+    Imports the HETUS Activity Coding List from json.
+    Contains 1, 2 and 3-digit codes.
+
+    :return: dict mapping each code with its description
+    :rtype: Dict[str, str]
+    """
+    filename = "data/generated/hetus_activity_codes_2010.json"
+    with open(filename, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def compare_mact_and_pact(a2: pd.DataFrame, a3: pd.DataFrame):
+    """
+    The fields Mact (main activity) and Pact (main aggregated activity)
+    don't always match. This function analyzes differences.
+    """
+    # get the 2-digit codes that correspond to the 3-digit codes
+    a2_check = a3.applymap(lambda x: x[:2] if isinstance(x, str) else x)
+    a2_check.columns = a2.columns
+
+    # check if the 2-digit codes in the database (a2) and the 2-digit codes
+    # obtained from the 2-digit codes (a2_check) match
+    diff = a2 != a2_check
+    equal_per_col = diff.sum(axis=0)  # type: ignore
+    equal_per_entry = diff.sum(axis=1)  # type: ignore
+
+    combinations = pd.DataFrame(
+        {"Combinations": zip(a2.values.flatten(), a2_check.values.flatten())}
+    )
+    print(combinations.value_counts())
+
+
+def activity_frequencies(data: pd.DataFrame):
+    # extract main activity columns (normal and aggregated)
+    a2 = data.filter(like=col.Diary.MAIN_ACTIVITIES_AGG_PATTERN)
+    a3 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+
+    a2_frequency = a2.stack().value_counts()
+    a3_frequency = a3.stack().value_counts()
+
+    a1 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).applymap(
+        lambda x: x[0] if isinstance(x, str) else x
+    )
+    a1_frequency = a1.stack().value_counts()
+
+    # convert to average time per diary in minutes
+    time_factor = 10 / len(data)
+    a1_frequency = a1_frequency * time_factor
+    a2_frequency = a2_frequency * time_factor
+    a3_frequency = a3_frequency * time_factor
+
+    codes = load_hetus_activity_codes()
+    a1_frequency.index = a1_frequency.index.map(lambda x: codes.get(x, x))
+    a2_frequency.index = a2_frequency.index.map(lambda x: codes.get(x, x))
+    a3_frequency.index = a3_frequency.index.map(lambda x: codes.get(x, x))
+
+    print(a1_frequency)
