@@ -101,6 +101,16 @@ def check_personal_data(persondata):
         col.Person.AGE_GROUP,
     )
 
+def check_activity_data(data):
+    print("--- Data availability on activity level ---")
+    a3 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+    non_na_share = a3.count().sum() / (len(a3) * len(a3.columns))
+    print(f"Share of missing 10 min activity entries in total: {(1 - non_na_share)*100:.1f} %")
+    non_na_per_row = a3.count(axis=1)
+    rows_with_na = len(non_na_per_row[non_na_per_row < 144])  / len(a3)
+    print(f"Share of incomplete diary entries: {rows_with_na * 100:.1f} %")
+
+
 
 def all_data_checks(data, persondata, hhdata):
     check_employment_data(persondata)
@@ -108,3 +118,4 @@ def all_data_checks(data, persondata, hhdata):
     check_daytype_data(data)
     check_seasonal_data(data)
     special_entries(data, persondata)
+    check_activity_data(data)
