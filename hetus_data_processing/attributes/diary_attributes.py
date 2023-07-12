@@ -2,7 +2,7 @@
 Calculates additional attributes for diary entries which can then be used for categorization
 """
 
-from enum import IntEnum, StrEnum
+from enum import IntEnum, StrEnum  # type: ignore
 import logging
 import pandas as pd
 
@@ -13,8 +13,10 @@ import hetus_values as val
 
 class Categories(StrEnum):
     """Column names for self-defined categories"""
+
     work_status = "Work Status"
     day_type = "Day Type"
+
 
 class DayType(IntEnum):
     work = 0
@@ -40,16 +42,18 @@ MAP_EMPLOYEDSTUDENT = {
     val.EmployedStudent.no: DayType.no_work,
 }
 
+
 def determine_day_type(row: pd.Series) -> DayType:
     # get values of the relevant columns and map them to the destination enum
     if row[col.Diary.DAYTYPE] >= 0:
         return MAP_DAYTYPE[row[col.Diary.DAYTYPE]]
     if row[col.Diary.EMPLOYED_STUDENT] >= 0:
         return MAP_EMPLOYEDSTUDENT[row[col.Diary.EMPLOYED_STUDENT]]
-    
+
     # TODO: if necessary, check working time on this diary entry
     # assert False, "Not implemented"
     return DayType.undetermined
+
 
 def print_day_type_weekday_overview(data: pd.DataFrame, day_types: pd.Series):
     """
@@ -70,7 +74,7 @@ def print_day_type_weekday_overview(data: pd.DataFrame, day_types: pd.Series):
 
 
 @utils.timing
-def calc_day_type(data: pd.DataFrame) -> pd.Series:
+def determine_day_types(data: pd.DataFrame) -> pd.Series:
     """
     Determines the day type for each diary entry
 
@@ -87,5 +91,5 @@ def calc_day_type(data: pd.DataFrame) -> pd.Series:
         f"Determined day type for {determined} out of "
         f"{len(data)} diary entries ({100 * determined / len(data):.1f} %)"
     )
-    print_day_type_weekday_overview(data, day_types)
+    # print_day_type_weekday_overview(data, day_types)
     return day_types
