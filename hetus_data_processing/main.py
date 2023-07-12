@@ -1,17 +1,21 @@
 import json
 import logging
 from typing import Dict
-import pandas as pd
 
+import pandas as pd
 from tabulate import tabulate
 
-import load_data
-import level_extraction
+import data_checks
 import filter
 import hetus_columns as col
-import data_checks
+import level_extraction
+import load_data
+from attributes import diary_attributes, hh_attributes, person_attributes
+from categorize import (categorize, get_diary_categorization_data,
+                        get_hh_categorization_data,
+                        get_person_categorization_data)
 from hetus_values import DayType, EmployedStudent
-from attributes import person_attributes, diary_attributes, hh_attributes
+from visualizations.availability_heatmap import plot_heatmap
 
 
 def main():
@@ -40,9 +44,10 @@ def stats(data, persondata=None, hhdata=None):
 if __name__ == "__main__":
     main()
     data = None
-    # data = load_data.load_all_hetus_files()
+    data = load_data.load_all_hetus_files()
     if data is None:
         data = load_data.load_hetus_files(["DE", "AT"])
+    assert data is not None
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
 
@@ -52,9 +57,15 @@ if __name__ == "__main__":
     data_valid_hhs, hhdata = level_extraction.get_usable_household_data(data)
     stats(data, data_valid_persons, data_valid_hhs)
 
-    person_attributes.determine_work_statuses(persondata)
-    diary_attributes.calc_day_type(data)
+    cat_persondata = get_person_categorization_data(persondata)
+    key = [col.Country.ID, col.Person.SEX, diary_attributes.Categories.work_status]
+    categorize(cat_persondata, key)
+    cat_data = get_diary_categorization_data(data, persondata)
+    key += [diary_attributes.Categories.day_type]
+    categorize(cat_data, key)
+    # cat_hhdata = get_hh_categorization_data(hhdata, persondata)
 
-    data_checks.all_data_checks(data, persondata, hhdata)
+
+    # data_checks.all_data_checks(data, persondata, hhdata)
 
     pass

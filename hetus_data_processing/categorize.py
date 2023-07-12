@@ -5,10 +5,11 @@ different criteria
 
 from enum import StrEnum  # type: ignore
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 import pandas as pd
 
 import hetus_columns as col
+import hetus_values as val
 from attributes import diary_attributes, person_attributes
 import utils
 
@@ -55,8 +56,10 @@ def categorize(data: pd.DataFrame, key: List[str]) -> Dict[Any, pd.DataFrame]:
     # create separate index without country for a better overview
     cat_index = key.copy()
     cat_index.remove(col.Country.ID)
-    category_sizes = categories.size().reset_index().pivot(index=cat_index, columns=col.Country.ID)
+    category_sizes = categories.size().reset_index().pivot(index=cat_index, columns=col.Country.ID, values=0)
     logging.info(f"Sorted {len(data)} entries into {category_sizes.count().sum()} categories.")
     print(category_sizes)
-    # category_sizes.to_csv(f"./dataframe_{key[-1]}.csv")
+    utils.translate_column(category_sizes, col.Person.SEX, "SEX", val.Sex)
+    utils.translate_column(category_sizes, diary_attributes.Categories.work_status, "Work Status", person_attributes.WorkStatus)
+    category_sizes.to_csv(f"./dataframe_{key[-1]}.csv")
     return {g: categories.get_group(g) for g in categories.groups}
