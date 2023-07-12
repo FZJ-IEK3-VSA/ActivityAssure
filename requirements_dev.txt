@@ -1,5 +1,7 @@
 -r requirements.txt
 PyPDF2
+matplotlib
+seaborn
 
 
 pytest
