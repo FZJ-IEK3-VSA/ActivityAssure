@@ -153,19 +153,6 @@ def analyze_inconsistent_households(data: pd.DataFrame):
     # Depending on that, I might be able to determine the correct values for all columns
 
 
-def load_hetus_activity_codes() -> Dict[str, str]:
-    """
-    Imports the HETUS Activity Coding List from json.
-    Contains 1, 2 and 3-digit codes.
-
-    :return: dict mapping each code with its description
-    :rtype: Dict[str, str]
-    """
-    filename = "data/generated/hetus_activity_codes_2010.json"
-    with open(filename, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 def compare_mact_and_pact(a2: pd.DataFrame, a3: pd.DataFrame):
     """
     The fields Mact (main activity) and Pact (main aggregated activity)
