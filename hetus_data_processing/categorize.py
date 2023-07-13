@@ -59,7 +59,7 @@ def categorize(data: pd.DataFrame, key: List[str]) -> Dict[Any, pd.DataFrame]:
     category_sizes = categories.size().reset_index().pivot(index=cat_index, columns=col.Country.ID, values=0)
     logging.info(f"Sorted {len(data)} entries into {category_sizes.count().sum()} categories.")
     print(category_sizes)
-    utils.translate_column(category_sizes, col.Person.SEX, "SEX", val.Sex)
+    utils.translate_column(category_sizes, col.Person.SEX, "Sex", val.Sex)
     utils.translate_column(category_sizes, diary_attributes.Categories.work_status, "Work Status", person_attributes.WorkStatus)
     category_sizes.to_csv(f"./dataframe_{key[-1]}.csv")
     return {g: categories.get_group(g) for g in categories.groups}

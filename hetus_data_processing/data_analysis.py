@@ -170,6 +170,9 @@ def compare_mact_and_pact(a2: pd.DataFrame, a3: pd.DataFrame):
     """
     The fields Mact (main activity) and Pact (main aggregated activity)
     don't always match. This function analyzes differences.
+
+    Response from Eurostat: Pact uses a different coding. Researchers
+    should only use Mact.
     """
     # get the 2-digit codes that correspond to the 3-digit codes
     a2_check = a3.applymap(lambda x: x[:2] if isinstance(x, str) else x)
