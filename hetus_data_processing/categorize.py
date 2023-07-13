@@ -63,6 +63,7 @@ def categorize(data: pd.DataFrame, key: List[str]) -> Dict[Any, pd.DataFrame]:
     print(category_sizes)
     hetus_translations.translate_column(category_sizes, col.Person.SEX, "Sex", val.Sex)
     hetus_translations.translate_column(category_sizes, diary_attributes.Categories.work_status, "Work Status", person_attributes.WorkStatus)
+    # store categorization as a file
     path = f"./data/categories/categories {key[-1]}.csv"
     category_sizes.to_csv(path)
     logging.info(f"Created categorization file: {path}")

@@ -53,7 +53,7 @@ if __name__ == "__main__":
     data = None
     # data = load_data.load_all_hetus_files()
     if data is None:
-        data = load_data.load_hetus_files(["DE", "AT"])
+        data = load_data.load_hetus_files(["DE"])
     assert data is not None
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     categories = categorize(cat_data, key)
     # cat_hhdata = get_hh_categorization_data(hhdata, persondata)
 
-    category_statistics.calc_probability_profiles(categories)
+    probabilities = category_statistics.calc_probability_profiles(categories)
 
     # check_entries_per_hh(data)
 
