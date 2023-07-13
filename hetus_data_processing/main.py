@@ -16,7 +16,6 @@ from categorize import (categorize, get_diary_categorization_data,
                         get_person_categorization_data)
 from hetus_values import DayType, EmployedStudent
 import category_statistics
-from visualizations.availability_heatmap import plot_heatmap
 
 
 def main():
