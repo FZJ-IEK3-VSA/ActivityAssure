@@ -10,6 +10,7 @@ import seaborn as sns
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+import matplotlib.dates
 import numpy as np
 
 
@@ -17,32 +18,41 @@ def plot_stacked_probability_curves(name: str, dir: str) -> None:
     path = os.path.join(dir, name+".csv")
     data = pd.read_csv(path, index_col=0)
 
-    data = data.transpose()
+    # change capitalization of category names
+    data.index = data.index.map(lambda s: s.title())
+
+    print(data)
+
+    # create time values for x axis
     start_time = datetime.strptime('00:00', '%H:%M')
     end_time = datetime.strptime('23:50', '%H:%M')
-    index = pd.date_range(start_time, end_time, freq=timedelta(minutes=10)).time
-    index = pd.RangeIndex(1, 145)  # TODO: try other time formats?
-    assert len(index) == len(data.index)
-    data.index = index  # type: ignore
-    print(data)
+    time_values = pd.date_range(start_time, end_time, freq=timedelta(minutes=10))
+    # time_values = [(x/6) % 24 for x in range(0, 145)]
 
     sns.set_theme()
     
-    fig, ax = plt.subplots(figsize=(8, 3))
-    fig.subplots_adjust(left=0.3)
+    fig, ax = plt.subplots(figsize=(5, 6))
+    fig.subplots_adjust(left=0.2, top=0.95, bottom=0.5, right=0.95)
 
-    plt.stackplot(data.index, data.values.transpose(), labels=data.columns)
+    plt.stackplot(time_values, data.values, labels=data.index)
+
+    # change x-tick labels
+    hours_fmt = matplotlib.dates.DateFormatter('%#H')
+    hours = matplotlib.dates.HourLocator(byhour=range(0, 24, 3))
+    ax.xaxis.set_major_locator(hours)
+    ax.xaxis.set_major_formatter(hours_fmt)
     
     # Shrink current axis by 20%
-    box = ax.get_position()
-    ax.set_position([box.x0 * 0.3, box.y0 * 1.5, box.width * 0.8, box.height * 0.9])
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    # box = ax.get_position()
+    # ax.set_position([box.x0 * 0.3, box.y0 * 1.5, box.width, box.height * 0.5])
 
+    # place legend below figure
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2))
 
-    plt.xlabel("10 min Timestep")
+    plt.xlabel("Time [h]")
     plt.ylabel("Probability")
 
-    plt.savefig(os.path.join(dir, f"probability_{name}.png"), transparent=True)
+    plt.savefig(os.path.join(dir, f"probability_{name}.svg"), transparent=True)
     plt.show()
 
 

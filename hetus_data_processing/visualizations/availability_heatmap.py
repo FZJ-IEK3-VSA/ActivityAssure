@@ -82,6 +82,8 @@ def plot_heatmap_person(name: str, dir: str):
     # plt.xticks(rotation=0)
 
     # create hierarchical tick labels
+    # Remark: the following link might help to create actual hierarchical tick labels
+    # https://stackoverflow.com/questions/71048752/adding-multi-level-x-axis
     tick_labels: List[Tuple[Any]] = [data.index[0]]
     for i in range(1, len(data.index)):
         a,b = data.index[i]
