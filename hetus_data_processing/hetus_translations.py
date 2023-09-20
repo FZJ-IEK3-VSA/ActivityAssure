@@ -1,5 +1,5 @@
 """
-This module provides functions for translating HETUS columns and codes to readable 
+This module provides functions for translating HETUS columns and codes to readable names
 """
 
 import json
@@ -52,7 +52,7 @@ def translate_column(
 ) -> None:
     """
     Renames a column and changes all values according to a specified enum or dict.
-    Can handle normal and multiindex columns.
+    Can handle normal and (multi-)index columns.
 
     :param data: the data to translate
     :type data: pd.DataFrame

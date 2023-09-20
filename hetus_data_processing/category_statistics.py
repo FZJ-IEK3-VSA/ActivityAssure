@@ -19,7 +19,7 @@ def calc_activity_group_frequencies(data: pd.DataFrame):
     # - maybe range?
 
 
-def calc_probability_profiles(categories: Dict[Any, pd.DataFrame]) -> pd.DataFrame:
+def calc_probability_profiles(categories: Dict[Any, pd.DataFrame]) -> None:
     for cat, data in categories.items():
         # TODO when country is AT, there are only 96 timesteps
         # map to
@@ -29,10 +29,11 @@ def calc_probability_profiles(categories: Dict[Any, pd.DataFrame]) -> pd.DataFra
         probabilities.fillna(0.0, inplace=True)
         assert (
             np.isclose(probabilities.sum(), 1.0) | np.isclose(probabilities.sum(), 0.0)
-        ).all(), "Calculation error: probabilities are not always 100 % (or 0 % vor AT)"
+        ).all(), "Calculation error: probabilities are not always 100 % (or 0 % for AT)"
 
         # save probability profiles to file
         path = f"./data/probability_profiles/probabilities {cat}.csv"
         probabilities.to_csv(path)
-        logging.info(f"Created probability profile file: {path}")
-        return probabilities
+        logging.debug(f"Created probability profile file: {path}")
+    logging.info(f"Created {len(categories)} probability profile files")
+

@@ -48,7 +48,8 @@ def get_hh_categorization_data(hhdata: pd.DataFrame, persondata: pd.DataFrame) -
     persondata = get_person_categorization_data(persondata)
     persondata.loc[:,[col.Person.SEX, diary_attributes.Categories.work_status]].groupby(col.HH.KEY).apply(list)
 
-    # TODO: how do I treat diaries from one household, but from different days? Is this even useful?
+    # TODO: how do I treat diaries from one household, but from different days?
+    # --> ignore at first and check if there are weird statistics later
     return None
 
 
