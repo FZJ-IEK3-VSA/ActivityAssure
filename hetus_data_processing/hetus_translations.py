@@ -70,14 +70,19 @@ def translate_column(
         value_map = value_translation
     if column in data.index.names:
         # column is part of the (multi-)index
-        i = data.index.names.index(column)
-        new_index_level = data.index.levels[i].map(value_map)
-        new_index = data.index.set_levels(new_index_level, level=i)
+        if value_map is not None:
+            i = data.index.names.index(column)
+            new_index_level = data.index.levels[i].map(value_map)
+            new_index = data.index.set_levels(new_index_level, level=i)
+            data.index = new_index
         if column_new:
             # change name of the index level
-            new_index.rename({column: column_new}, inplace=True)
-        data.index = new_index
-    else:
-        assert False, "Not implemented"
+            data.index.rename({column: column_new}, inplace=True)
+    elif column in data.columns:
+        # column is a normal column of the dataframe
+        if value_map is not None:
+            data[column].replace(value_map, inplace=True)
         if column_new:
-            data.rename({column: column_new}, inplace=True)
+            data.rename(columns={column: column_new}, inplace=True)
+    else:
+        assert False, "Column not found"
