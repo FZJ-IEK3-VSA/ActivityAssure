@@ -73,7 +73,7 @@ if __name__ == "__main__":
     categories = categorize(cat_data, key)
     # cat_hhdata = get_hh_categorization_data(hhdata, persondata)
 
-    category_statistics.calc_probability_profiles(categories)
+    category_statistics.calc_statistics_per_category(categories)
 
     # check_entries_per_hh(data)
 
