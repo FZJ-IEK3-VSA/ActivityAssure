@@ -3,17 +3,16 @@ Functions for categorizing all persons or households in HETUS data sets using
 different criteria
 """
 
-from enum import StrEnum  # type: ignore
 import logging
+from enum import StrEnum  # type: ignore
 from typing import Any, Dict, List
 import pandas as pd
 
 import hetus_columns as col
-import hetus_values as val
-from attributes import diary_attributes, person_attributes
-import utils
 import hetus_translations
-
+import hetus_values as val
+import utils
+from attributes import diary_attributes, person_attributes
 
 
 class CategoryColumn(StrEnum):
@@ -64,8 +63,6 @@ def categorize(data: pd.DataFrame, key: List[str]) -> Dict[Any, pd.DataFrame]:
     print(category_sizes)
     hetus_translations.translate_column(category_sizes, col.Person.SEX, "Sex", val.Sex)
     hetus_translations.translate_column(category_sizes, diary_attributes.Categories.work_status, "Work Status", person_attributes.WorkStatus)
-    # store categorization as a file
-    path = f"./data/categories/categories {key[-1]}.csv"
-    category_sizes.to_csv(path)
-    logging.info(f"Created categorization file: {path}")
+    # store category sizes as a file
+    utils.save_file(category_sizes, "categories", "cat", key)
     return {g: categories.get_group(g) for g in categories.groups}
