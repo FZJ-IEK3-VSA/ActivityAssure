@@ -11,11 +11,15 @@ import hetus_columns as col
 from hetus_values import DayType
 from utils import timing
 
-#TODO: for separating dataframes instead of just dropping unmatching columns, groupby can be used
+# TODO: for separating dataframes instead of just dropping unmatching columns, groupby can be used
+
 
 @timing
-def filter_discrete(data: pd.DataFrame, column: str, allowed_values: List[int]) -> pd.DataFrame:
+def filter_discrete(
+    data: pd.DataFrame, column: str, allowed_values: List[int]
+) -> pd.DataFrame:
     return data[data[column].isin(allowed_values)]
+
 
 def filter_by_weekday(data: pd.DataFrame, day_types: List[DayType]) -> pd.DataFrame:
     return filter_discrete(data, col.Diary.WEEKDAY, day_types)
@@ -26,7 +30,9 @@ def filter_by_month(data: pd.DataFrame, months: List[int]) -> pd.DataFrame:
 
 
 # @timing
-def filter_combined(data: pd.DataFrame, conditions: Dict[str, List[Any]]) -> pd.DataFrame:
+def filter_combined(
+    data: pd.DataFrame, conditions: Dict[str, List[Any]]
+) -> pd.DataFrame:
     masks = [data[k].isin(v) for k, v in conditions.items()]
     combined_mask = functools.reduce(lambda m1, m2: m1 & m2, masks)
     return data[combined_mask]
@@ -35,11 +41,15 @@ def filter_combined(data: pd.DataFrame, conditions: Dict[str, List[Any]]) -> pd.
 def filter_stats(func: Callable, name, data, *args, **kwargs) -> pd.DataFrame:
     """Calls filter_combined and prints some filter statistics"""
     result = func(data, *args, **kwargs)
-    print(f"Filter {name}: {len(result)} / {len(data)} ({100 * len(result) / len(data):.1f} %)")
+    print(
+        f"Filter {name}: {len(result)} / {len(data)} ({100 * len(result) / len(data):.1f} %)"
+    )
     return result
 
 
-def filter_no_data(data: pd.DataFrame, columns: Union[str, Iterable[str]], invert: bool = False) -> pd.DataFrame:
+def filter_no_data(
+    data: pd.DataFrame, columns: Union[str, Iterable[str]], invert: bool = False
+) -> pd.DataFrame:
     """
     Removes all entries with mnissing data (negative values) in any of the specified columns.
     Alternatively, only returns values with missing data if invert is set to True.
@@ -60,7 +70,6 @@ def filter_no_data(data: pd.DataFrame, columns: Union[str, Iterable[str]], inver
     if invert:
         combined_mask = ~combined_mask
     return data[combined_mask]
-
 
 
 def filter_by_index(

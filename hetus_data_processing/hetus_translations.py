@@ -35,8 +35,9 @@ def aggregate_activities(data: pd.DataFrame, digits: int = 1):
 
 def extract_activity_names(data: pd.DataFrame) -> pd.DataFrame:
     codes = load_hetus_activity_codes()
-    return data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).applymap(lambda x: codes.get(x, x))
-
+    return data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).applymap(
+        lambda x: codes.get(x, x)
+    )
 
 
 def translate_activity_codes_index(data: pd.DataFrame) -> None:

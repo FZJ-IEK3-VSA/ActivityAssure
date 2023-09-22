@@ -11,9 +11,12 @@ import hetus_columns as col
 import level_extraction
 import load_data
 from attributes import diary_attributes, hh_attributes, person_attributes
-from categorize import (categorize, get_diary_categorization_data,
-                        get_hh_categorization_data,
-                        get_person_categorization_data)
+from categorize import (
+    categorize,
+    get_diary_categorization_data,
+    get_hh_categorization_data,
+    get_person_categorization_data,
+)
 from hetus_values import DayType, EmployedStudent
 import category_statistics
 
@@ -76,8 +79,6 @@ if __name__ == "__main__":
     category_statistics.calc_statistics_per_category(categories)
 
     # check_entries_per_hh(data)
-
-
 
     # data_checks.all_data_checks(data, persondata, hhdata)
 

@@ -8,6 +8,7 @@ converted to upper case after parsing.
 import abc
 from typing import List
 
+
 class HetusLevel(abc.ABC):
     NAME = ""
     ID = ""
@@ -85,6 +86,7 @@ class Person(HetusLevel):
     This encompasses all columns with information on the respondent,
     e.g., sex or age
     """
+
     NAME = "Person"
     ID = "PID"
     KEY = HH.KEY + [ID]
@@ -102,7 +104,6 @@ class Person(HetusLevel):
     WEEKLY_WORKING_HOURS = "IND38"
     SELF_DECL_LABOUR_STATUS = "IND17_1"
     PERSON_WEIGHT = "WGHT2"
-
 
     CONTENT = [
         SEX,
@@ -126,6 +127,7 @@ class Diary(HetusLevel):
     """
     Metadata columns on the diary level (mostly date info)
     """
+
     NAME = "Diary"
     ID = "DIARY"
     KEY = Person.KEY + [ID]

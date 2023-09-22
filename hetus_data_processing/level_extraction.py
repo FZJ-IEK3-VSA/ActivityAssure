@@ -93,7 +93,7 @@ def get_consistent_groups(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd
     # get numbers of different values per group for each column
     num_values_per_group = data.groupby(level=level.KEY).nunique(dropna=False)  # type: ignore
     inconsistent_columns_per_group = (num_values_per_group != 1).sum(axis=1)  # type: ignore
-    
+
     # create an index that contains all consistent groups
     consistent_groups = inconsistent_columns_per_group[
         inconsistent_columns_per_group == 0
@@ -105,7 +105,9 @@ def get_consistent_groups(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd
     return consistent_groups
 
 
-def get_inconsistent_columns(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd.Series:
+def get_inconsistent_columns(
+    data: pd.DataFrame, level: Type[col.HetusLevel]
+) -> pd.Series:
     """
     Returns the number of inconsistencies per column on the specified level. Removes
     columns without inconsistencies.
@@ -122,7 +124,6 @@ def get_inconsistent_columns(data: pd.DataFrame, level: Type[col.HetusLevel]) ->
     num_values_per_group = data.groupby(level=level.KEY).nunique()  # type: ignore
     inconsistencies_per_col = (num_values_per_group != 1).sum()  # type: ignore
     return inconsistencies_per_col[inconsistencies_per_col > 0]
-
 
 
 def get_usable_data_by_level(

@@ -14,15 +14,16 @@ def special_entries(data, persondata):
         filter.filter_combined, "sick days", data, {col.Diary.DAYTYPE: [DayType.sick]}
     )
     d = filter.filter_stats(
-        filter.filter_combined, "second job", persondata, {col.Person.MULTIPLE_JOBS: [1]}
+        filter.filter_combined,
+        "second job",
+        persondata,
+        {col.Person.MULTIPLE_JOBS: [1]},
     )
 
 
 def check_daytype_data(data):
     print("--- Data availability on day type ---")
-    d = filter.filter_stats(
-        filter.filter_no_data, "Day type", data, col.Diary.DAYTYPE
-    )
+    d = filter.filter_stats(filter.filter_no_data, "Day type", data, col.Diary.DAYTYPE)
     d = filter.filter_stats(
         filter.filter_no_data,
         "EmployedStudent",
@@ -35,6 +36,7 @@ def check_daytype_data(data):
         data,
         col.Diary.WEEKDAY,
     )
+
 
 def check_seasonal_data(data):
     print("--- Data availability on season ---")
@@ -86,6 +88,7 @@ def check_employment_data(persondata):
         col.Person.WEEKLY_WORKING_HOURS,
     )
 
+
 def check_personal_data(persondata):
     print("--- Data availability on person level ---")
     d = filter.filter_stats(
@@ -101,15 +104,17 @@ def check_personal_data(persondata):
         col.Person.AGE_GROUP,
     )
 
+
 def check_activity_data(data):
     print("--- Data availability on activity level ---")
     a3 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
     non_na_share = a3.count().sum() / (len(a3) * len(a3.columns))
-    print(f"Share of missing 10 min activity entries in total: {(1 - non_na_share)*100:.1f} %")
+    print(
+        f"Share of missing 10 min activity entries in total: {(1 - non_na_share)*100:.1f} %"
+    )
     non_na_per_row = a3.count(axis=1)
-    rows_with_na = len(non_na_per_row[non_na_per_row < 144])  / len(a3)
+    rows_with_na = len(non_na_per_row[non_na_per_row < 144]) / len(a3)
     print(f"Share of incomplete diary entries: {rows_with_na * 100:.1f} %")
-
 
 
 def all_data_checks(data, persondata, hhdata):
