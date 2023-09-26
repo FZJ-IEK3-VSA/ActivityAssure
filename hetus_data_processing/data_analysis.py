@@ -7,6 +7,7 @@ import json
 from typing import Dict
 import pandas as pd
 import hetus_columns as col
+from hetus_data_processing.hetus_translations import load_hetus_activity_codes
 import level_extraction
 
 
