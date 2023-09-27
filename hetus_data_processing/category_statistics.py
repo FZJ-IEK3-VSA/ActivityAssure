@@ -89,6 +89,7 @@ def calc_activity_group_frequencies(
     # pass
 
 
+@utils.timing
 def calc_activity_group_durations(
     category: Tuple[Any], activity_profiles: Dict[Any, List[Activity]]
 ) -> None:
@@ -109,6 +110,7 @@ def calc_activity_group_durations(
     utils.save_file(durations.describe(), "activity_durations", "dur", category)
 
 
+@utils.timing
 def calc_probability_profiles(category: Tuple[Any], data: pd.DataFrame) -> None:
     """
     Calculates activity probability profiles for the occurring activity types
@@ -122,6 +124,7 @@ def calc_probability_profiles(category: Tuple[Any], data: pd.DataFrame) -> None:
     utils.save_file(probabilities, "probability_profiles", "prob", category)
 
 
+@utils.timing
 def calc_statistics_per_category(categories: Dict[Any, pd.DataFrame]) -> None:
     """
     Calculates all required characteristics for each diary category in the

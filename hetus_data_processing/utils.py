@@ -58,7 +58,7 @@ def save_file(
 
     path = os.path.join(directory, filename)
     data.to_csv(path)
-    logging.debug(f"Created file {directory}")
+    logging.debug(f"Created file {path}")
 
 
 def timing(f):

@@ -10,6 +10,7 @@ import filter
 import hetus_columns as col
 import level_extraction
 import load_data
+import utils
 from attributes import diary_attributes, hh_attributes, person_attributes
 from categorize import (
     categorize,
@@ -19,14 +20,6 @@ from categorize import (
 )
 from hetus_values import DayType, EmployedStudent
 import category_statistics
-
-
-def main():
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.DEBUG,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
 
 
 def stats(data, persondata=None, hhdata=None):
@@ -51,12 +44,18 @@ def check_entries_per_hh(data):
     pass
 
 
-if __name__ == "__main__":
-    main()
+@utils.timing
+def main():
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
     data = None
-    # data = load_data.load_all_hetus_files()
+    # data = load_data.load_all_hetus_files_except_AT()
     if data is None:
-        data = load_data.load_hetus_files(["DE"])
+        data = load_data.load_hetus_files(["AT"])
     assert data is not None
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)
@@ -83,3 +82,7 @@ if __name__ == "__main__":
     # data_checks.all_data_checks(data, persondata, hhdata)
 
     pass
+
+
+if __name__ == "__main__":
+    main()
