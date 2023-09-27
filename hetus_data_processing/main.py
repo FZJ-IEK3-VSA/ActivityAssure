@@ -55,7 +55,7 @@ def main():
     data = None
     # data = load_data.load_all_hetus_files_except_AT()
     if data is None:
-        data = load_data.load_hetus_files(["AT"])
+        data = load_data.load_hetus_files(["DE"])
     assert data is not None
     data.set_index(col.Diary.KEY, inplace=True)
     stats(data)

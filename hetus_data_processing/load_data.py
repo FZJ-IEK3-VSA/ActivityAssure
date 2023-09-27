@@ -158,3 +158,26 @@ def load_all_hetus_files(path: str = HETUS_PATH) -> pd.DataFrame:
         f"Loaded all HETUS files with {len(data)} entries in {time.time() - start:.1f} s"
     )
     return data
+
+
+def load_all_hetus_files_except_AT(path: str = HETUS_PATH) -> pd.DataFrame:
+    """
+    Loads all available HETUS files, except for the Austrian file.
+    Austria uses 15 minute time slots instead of the usual 10 minute time slots, 
+    which can cause problems.
+
+    :param path: the HETUS data folder, defaults to HETUS_PATH
+    :type path: str, optional
+    :return: HETUS data for all available countries except for Austria
+    :rtype: pd.DataFrame
+    """
+    start = time.time()
+    filenames = get_hetus_file_names(path)
+    del filenames["AT"]
+    data = pd.concat(
+        load_hetus_file_from_path(filename) for filename in filenames.values()
+    )
+    logging.info(
+        f"Loaded all HETUS files except for AT with {len(data)} entries in {time.time() - start:.1f} s"
+    )
+    return data
