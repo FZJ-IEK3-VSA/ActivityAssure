@@ -7,11 +7,11 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from hetus_data_processing.datastructures import (
+from activity_profile_validator.hetus_data_processing.datastructures import (
     ActivityProfileEntryTime,
     ActivityProfile,
 )
-import hetus_data_processing.utils
+import activity_profile_validator.hetus_data_processing.utils as utils
 
 
 def load_activity_profile_from_db(file: str):
@@ -42,7 +42,7 @@ def load_activity_profile_from_db(file: str):
 
     parent_dir = pathlib.Path(file).parent.absolute()
     result_dir = os.path.join(parent_dir, "processed")
-    hetus_data_processing.utils.ensure_dir_exists(result_dir)
+    utils.ensure_dir_exists(result_dir)
     for person, activity_profile in profiles_per_person.items():
         profile = ActivityProfile(activity_profile, person)
         profile.calc_durations()
@@ -50,7 +50,7 @@ def load_activity_profile_from_db(file: str):
         short_name = person.split(" ")[1]
         result_path = os.path.join(parent_dir, "processed", short_name + ".json")
         with open(result_path, "w+", encoding="utf-8") as f:
-            f.write(profile.to_json())
+            f.write(profile.to_json(indent=4))
 
 
 if __name__ == "__main__":

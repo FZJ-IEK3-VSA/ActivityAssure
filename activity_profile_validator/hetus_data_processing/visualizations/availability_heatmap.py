@@ -42,7 +42,7 @@ def plot_heatmap_diary(name: str, dir: str):
         elif data.index[i-1][1] != b:
             l = b,c
         tick_labels.append(l)
-    tick_labels = [" - ".join([y.replace("_", " ") for y in x]) for x in tick_labels]
+    tick_labels = [" - ".join([str(y).replace("_", " ") for y in x]) for x in tick_labels]
     # tick_labels = [f"{a:>11} {b:>8} {c:>6}" for a,b,c in data.index] # does not work due to proportional font
 
     heatmap.set_yticks(np.arange(0.5, len(data.index)), tick_labels)
@@ -53,7 +53,7 @@ def plot_heatmap_diary(name: str, dir: str):
     heatmap.set_xlabel("Country")
     # heatmap.set_title("Number of Diary Entries")
 
-    plt.savefig(os.path.join(dir, f"categories/{name}.svg"), transparent=True)
+    plt.savefig(os.path.join(dir, f"{name}.svg"), transparent=True)
     plt.show()
 
 
@@ -104,11 +104,11 @@ def plot_heatmap_person(name: str, dir: str):
     heatmap.set_xlabel("Country")
     # heatmap.set_title("Number of Diary Entries")
 
-    plt.savefig(os.path.join(dir, f"categories/{name}.svg"), transparent=True)
+    plt.savefig(os.path.join(dir, f"{name}.svg"), transparent=True)
     plt.show()
 
 
 if __name__ == "__main__":
     dir = ".\\data\\validation\\categories"
-    name = "person_categories"
-    plot_heatmap_person(name, dir)
+    name = "cat_COUNTRY_INC1_Work Status_Day Type"
+    plot_heatmap_diary(name, dir)
