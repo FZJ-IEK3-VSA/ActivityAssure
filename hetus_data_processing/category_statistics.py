@@ -6,8 +6,6 @@ These can then be used for validation.
 from collections import Counter
 import itertools
 import logging
-from dataclasses import dataclass
-import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import hetus_columns as col
@@ -16,25 +14,11 @@ import hetus_constants
 import numpy as np
 import pandas as pd
 import utils
-
-
-@dataclass
-class Activity:
-    """
-    Simple class for storing an activity, i.e. a consecutive block
-    of diary time slots with the same code.
-    """
-
-    #: activity name or code
-    name: str
-    #: 0-based index of activity start
-    start: int
-    #: lenght of activity in time slots
-    length: int
+from datastructures import ActivityProfileEntry
 
 
 @utils.timing
-def collect_activities(data: pd.DataFrame) -> Dict[Any, List[Activity]]:
+def collect_activities(data: pd.DataFrame) -> Dict[Any, List[ActivityProfileEntry]]:
     """
     Finds activities in each diary entry, meaning all blocks of time slots with
     the same activity code.
@@ -45,7 +29,7 @@ def collect_activities(data: pd.DataFrame) -> Dict[Any, List[Activity]]:
              activities
     :rtype: Dict[pd.Label, List[Activity]]
     """
-    activity_profiles: Dict[Any, List[Activity]] = {}
+    activity_profiles: Dict[Any, List[ActivityProfileEntry]] = {}
     # iterate through all diary entries
     for index, row in data.iterrows():
         activity_profile = []
@@ -54,14 +38,14 @@ def collect_activities(data: pd.DataFrame) -> Dict[Any, List[Activity]]:
         for code, group in itertools.groupby(row):
             l = list(group)
             length = len(l)
-            activity_profile.append(Activity(code, start, length))
+            activity_profile.append(ActivityProfileEntry(code, start, length))
             start += length
         activity_profiles[index] = activity_profile
     return activity_profiles
 
 
 def calc_activity_group_frequencies(
-    category: Tuple[Any], activity_profiles: Dict[Any, List[Activity]]
+    category: Tuple[Any], activity_profiles: Dict[Any, List[ActivityProfileEntry]]
 ) -> None:
     """
     Counts the numbers of occurrences of each activity type per day and calculates
@@ -91,7 +75,7 @@ def calc_activity_group_frequencies(
 
 @utils.timing
 def calc_activity_group_durations(
-    category: Tuple[Any], activity_profiles: Dict[Any, List[Activity]]
+    category: Tuple[Any], activity_profiles: Dict[Any, List[ActivityProfileEntry]]
 ) -> None:
     """Calculates activity duration statistics per activity type"""
     # get an iterable of all activities
@@ -102,7 +86,7 @@ def calc_activity_group_durations(
         # collect durations by activity type, and convert from number of time slots
         # to Timedelta
         durations_by_activity.setdefault(a.name, []).append(
-            pd.Timedelta(minutes=a.length * hetus_constants.MIN_PER_TIME_SLOT)
+            pd.Timedelta(minutes=a.duration * hetus_constants.MIN_PER_TIME_SLOT)
         )
     # turn into a DataFrame to calculate statistics
     durations_series = [pd.Series(d, name=k) for k, d in durations_by_activity.items()]

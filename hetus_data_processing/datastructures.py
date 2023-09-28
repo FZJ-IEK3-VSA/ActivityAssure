@@ -1,14 +1,16 @@
+"""
+Defines classes for activity profiles
+"""
+
 from datetime import datetime, timedelta
-import re
 from typing import List, Optional
 from dataclasses import dataclass, field
-import dataclasses_json
 from dataclasses_json import dataclass_json, config
 
 
 # TODO: does not work for some reason
 # dataclasses_json.cfg.global_config.encoders[timedelta] = str
-# dataclasses_json.global_config.decoders[timedelta] = 
+# dataclasses_json.global_config.decoders[timedelta] =
 
 
 def parse_timedelta(s: str) -> timedelta:
@@ -40,7 +42,9 @@ class ActivityProfileEntryTime:
     #: 0-based index of activity start
     start: datetime
     #: duration of activity in time steps
-    duration: Optional[timedelta] = field(default=None, metadata=config(encoder=str, decoder=parse_timedelta))
+    duration: Optional[timedelta] = field(
+        default=None, metadata=config(encoder=str, decoder=parse_timedelta)
+    )
 
 
 @dataclass_json
@@ -74,7 +78,7 @@ class ActivityProfile:
     person: Optional[str] = None
     daytype: Optional[str] = None
 
-    def calc_durations(self, profile_end = None) -> None:
+    def calc_durations(self, profile_end=None) -> None:
         """
         Calculates and sets the duration for each contained activity.
 
