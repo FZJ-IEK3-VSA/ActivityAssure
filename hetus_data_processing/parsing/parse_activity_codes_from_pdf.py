@@ -11,7 +11,7 @@ import re
 import PyPDF2
 
 if __name__ == "__main__":
-    filepath = r".\data\auxiliary documents\Harmonised European time use surveys.pdf"
+    filepath = r".\data\input\Harmonised European time use surveys.pdf"
     start_page = 158
     stop_page = 161
     header = "Eurostat ■ Harmonised European Time Use Surveys"
@@ -83,9 +83,13 @@ if __name__ == "__main__":
     codes["9"] = codes["9"].replace("TRAVEL BY PURPOSE", "").strip()
     assert "AUXILIARY CODES" in codes["900"], "Special case different than expected"
     codes["900"] = codes["900"].replace("AUXILIARY CODES", "").strip()
+    assert codes["910"] == "Travel to", "Special case different than expected"
+    codes["910"] = "Travel to/from work"
+    assert codes["6"] == "SPORTS AND OUTD OOR ACTIVITIES", "Special case different than expected"
+    codes["6"] = "SPORTS AND OUTDOOR ACTIVITIES"
 
     # store as json file
-    result_file_path = "./data/generated/hetus_activity_codes_2010.json"
+    result_file_path = "./data/input/hetus_activity_codes_2010.json"
     with open(result_file_path, "w+") as result_file:
         json.dump(codes, result_file, indent=4)
 

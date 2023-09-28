@@ -8,7 +8,7 @@ from typing import Any, Iterable, List
 import pandas as pd
 
 #: path for result data # TODO: move to config file
-DATA_PATH = "./data"
+DATA_PATH = "./data/validation"
 
 
 def ensure_dir_exists(path: str) -> None:

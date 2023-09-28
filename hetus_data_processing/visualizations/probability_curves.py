@@ -58,7 +58,7 @@ def plot_stacked_probability_curves(name: str, directory: str) -> None:
 
 
 if __name__ == "__main__":
-    dir = ".\\data\\probability_profiles"
+    dir = ".\\data\\validation\\probability_profiles"
     for name in os.listdir(dir):
         if os.path.isfile(os.path.join(dir, name)):
             # name = "probabilities ('DE', 1, 0.0, 0)"

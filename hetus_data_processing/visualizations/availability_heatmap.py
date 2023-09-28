@@ -109,6 +109,6 @@ def plot_heatmap_person(name: str, dir: str):
 
 
 if __name__ == "__main__":
-    dir = ".\\data\\categories"
+    dir = ".\\data\\validation\\categories"
     name = "person_categories"
     plot_heatmap_person(name, dir)

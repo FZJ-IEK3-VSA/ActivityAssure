@@ -3,7 +3,8 @@ This module provides functions for translating HETUS columns and codes to readab
 """
 
 import json
-from enum import EnumType  # type: ignore
+from enum import EnumType
+import os  # type: ignore
 from typing import Dict, Optional, Union
 
 import pandas as pd
@@ -19,7 +20,9 @@ def load_hetus_activity_codes() -> Dict[str, str]:
     :return: dict mapping each code with its description
     :rtype: Dict[str, str]
     """
-    filename = "data/generated/hetus_activity_codes_2010.json"
+    filename = "data/input/hetus_activity_codes_2010.json"
+    if not os.path.isfile(filename):
+        raise RuntimeError(f"The HETUS activity code list is missing: {filename}")
     with open(filename, "r", encoding="utf-8") as f:
         return json.load(f)
 
