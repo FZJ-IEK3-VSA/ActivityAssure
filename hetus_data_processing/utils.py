@@ -8,7 +8,7 @@ from typing import Any, Iterable, List
 import pandas as pd
 
 #: path for result data # TODO: move to config file
-DATA_PATH = "./data/validation"
+VALIDATION_DATA_PATH = "./data/validation"
 
 
 def ensure_dir_exists(path: str) -> None:
@@ -53,7 +53,7 @@ def save_file(
     filename += f".{ext}"
     # turn subdir into a list if it is not already one
     subdir = subdir if isinstance(subdir, List) else [subdir]
-    directory = os.path.join(DATA_PATH, *subdir)
+    directory = os.path.join(VALIDATION_DATA_PATH, *subdir)
     ensure_dir_exists(directory)
 
     path = os.path.join(directory, filename)

@@ -15,6 +15,7 @@ import hetus_data_processing.utils
 
 
 def load_activity_profile_from_db(file: str):
+    assert os.path.isfile(file), f"File does not exist: {file}"
     con = sqlite3.connect(file)
     cur = con.cursor()
 
@@ -53,7 +54,7 @@ def load_activity_profile_from_db(file: str):
 
 
 if __name__ == "__main__":
-    directory = "C:\\users\\david-arbeit\\downloads"
+    directory = ".\\data\\lpg"
     file = "Results.HH1.sqlite"
     path = os.path.join(directory, file)
     load_activity_profile_from_db(path)
