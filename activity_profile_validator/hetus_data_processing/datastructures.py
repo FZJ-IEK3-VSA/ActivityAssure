@@ -99,8 +99,8 @@ class ActivityProfile:
     #: list of activity objects
     activities: List[ActivityProfileEntry | ActivityProfileEntryTime]
 
-    person: Optional[Dict[str, str]] = field(default_factory=dict())
-    daytype: Optional[Dict[str, str]] = field(default_factory=dict())
+    person: Optional[Dict[str, str]] = field(default_factory=dict)
+    daytype: Optional[Dict[str, str]] = field(default_factory=dict)
 
     def calc_durations(self, profile_end=None) -> None:
         """
