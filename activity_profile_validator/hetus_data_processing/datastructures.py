@@ -99,8 +99,8 @@ class ActivityProfile:
     #: list of activity objects
     activities: List[ActivityProfileEntry | ActivityProfileEntryTime]
 
-    person: Optional[str] = None
-    daytype: Optional[str] = None
+    person: Optional[Dict[str, str]] = field(default_factory=dict())
+    daytype: Optional[Dict[str, str]] = field(default_factory=dict())
 
     def calc_durations(self, profile_end=None) -> None:
         """
@@ -112,7 +112,7 @@ class ActivityProfile:
         """
         assert self.activities, "Empty activity list"
         for i, a in enumerate(self.activities[:-1]):
-            assert a.duration is None
+            assert a.duration is None, f"Duration was already set: {a.duration}"
             a.duration = self.activities[i + 1].start - a.start
         if profile_end is not None:
             # if the overall end is specified, the duration of the last

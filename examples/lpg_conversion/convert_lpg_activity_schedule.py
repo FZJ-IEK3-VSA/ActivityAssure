@@ -32,6 +32,7 @@ def load_activity_profile_from_db(file: str):
         activity = ActivityProfileEntryTime(activity_name, start_date)
         profiles_per_person.setdefault(person, []).append(activity)
 
+    # TODO remove dummy time steps
     # TODO apply activity mapping
 
     # Calculate the simulation end: simulation always ends at midnight
