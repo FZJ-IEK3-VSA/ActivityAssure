@@ -3,7 +3,7 @@ Defines classes for activity profiles
 """
 
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 
@@ -13,19 +13,42 @@ from dataclasses_json import dataclass_json, config
 # dataclasses_json.global_config.decoders[timedelta] =
 
 
+def write_timedelta(d: Optional[timedelta]) -> Optional[str]:
+    """
+    Converts a timedelta into a str. Necessary to correctly
+    represent None as null in json.
+
+    :param d: timedelta to write
+    :type d: Optional[timedelta]
+    :return: str representation of the timedelta
+    :rtype: str
+    """
+    return str(d) if d else None
+
+
 def parse_timedelta(s: str) -> timedelta:
     """
-    Parses a timedelta object from a string. Does not
-    support timedeltas >= 24 h, and only supports hours,
-    minutes and seconds.
+    Parses a timedelta object from a string. Only supports a
+    resolution up to seconds.
 
     :param s: the string to parse the timedelta from
     :type s: str
     :return: parsed timedelta object
     :rtype: timedelta
     """
-    t = datetime.strptime(s, "%H:%M:%S")
-    return timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
+    days = 0
+    if "day" in s:
+        # s has the format 'X days, XX:XX:XX'
+        i1 = s.find("day")
+        days = int(s[:i1].strip())
+        assert "," in s, f"Unexpected timedelta format: {s}"
+        i2 = s.find(",")
+        time_str = s[i2 + 1 :].strip()
+    else:
+        # s has the format 'XX:XX:XX'
+        time_str = s
+    t = datetime.strptime(time_str, "%H:%M:%S")
+    return timedelta(days=days, hours=t.hour, minutes=t.minute, seconds=t.second)
 
 
 @dataclass_json
@@ -43,7 +66,8 @@ class ActivityProfileEntryTime:
     start: datetime
     #: duration of activity in time steps
     duration: Optional[timedelta] = field(
-        default=None, metadata=config(encoder=str, decoder=parse_timedelta)
+        default=None,
+        metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
     )
 
 
@@ -73,7 +97,7 @@ class ActivityProfile:
     """
 
     #: list of activity objects
-    activities: List[ActivityProfileEntry]
+    activities: List[ActivityProfileEntry | ActivityProfileEntryTime]
 
     person: Optional[str] = None
     daytype: Optional[str] = None
@@ -95,3 +119,15 @@ class ActivityProfile:
             # activity can be calculated
             last_activity = self.activities[-1]
             last_activity.duration = profile_end - last_activity.start
+
+
+@dataclass_json
+@dataclass
+class HHActivityProfiles:
+    """
+    Bundles the activity profiles from all people in one household
+    """
+
+    activity_profiles: Dict[str, ActivityProfile] = field(default_factory=dict)
+
+    household: Optional[str] = None
