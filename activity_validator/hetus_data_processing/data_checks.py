@@ -3,9 +3,9 @@ Functions for checking availability of data in some columns and share of certain
 special cases.
 """
 
-import filter
-import hetus_columns as col
-from hetus_values import DayType
+import activity_validator.hetus_data_processing.hetus_columns as col
+from activity_validator.hetus_data_processing import filter
+from activity_validator.hetus_data_processing.hetus_values import DayType
 
 
 def special_entries(data, persondata):

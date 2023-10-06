@@ -3,12 +3,11 @@ Contains various rather prototyped functions that can be helpful for further exa
 specific aspects of the data if necessary.
 """
 
-import json
-from typing import Dict
 import pandas as pd
+
 import hetus_columns as col
-from hetus_data_processing.hetus_translations import load_hetus_activity_codes
-import level_extraction
+from activity_validator.hetus_data_processing.hetus_translations import load_hetus_activity_codes
+from activity_validator.hetus_data_processing import level_extraction
 
 
 def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:

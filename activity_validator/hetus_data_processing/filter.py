@@ -7,9 +7,9 @@ import functools
 from typing import Any, Callable, Dict, Iterable, List, Union
 import pandas as pd
 
-import hetus_columns as col
-from hetus_values import DayType
-from utils import timing
+import activity_validator.hetus_data_processing.hetus_columns as col
+from activity_validator.hetus_data_processing.hetus_values import DayType
+from activity_validator.hetus_data_processing.utils import timing
 
 # TODO: for separating dataframes instead of just dropping unmatching columns, groupby can be used
 

@@ -8,8 +8,8 @@ from typing import List, Tuple, Type
 import numpy as np
 import pandas as pd
 
-import hetus_columns as col
-import filter
+import activity_validator.hetus_data_processing.hetus_columns as col
+from activity_validator.hetus_data_processing import filter
 
 
 def limit_to_columns_by_level(

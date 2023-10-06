@@ -9,7 +9,7 @@ from typing import Dict, Optional, Union
 
 import pandas as pd
 
-import hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_columns as col
 
 
 def load_hetus_activity_codes() -> Dict[str, str]:

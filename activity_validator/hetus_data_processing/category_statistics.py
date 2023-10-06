@@ -6,15 +6,14 @@ These can then be used for validation.
 from collections import Counter
 import itertools
 import logging
-from typing import Any, Dict, List, Optional, Tuple
-
-import hetus_columns as col
-import hetus_translations
-import hetus_constants
+from typing import Any, Dict, List, Tuple
 import numpy as np
 import pandas as pd
-import utils
-from datastructures import ActivityProfileEntry
+
+from activity_validator.hetus_data_processing import hetus_translations
+from activity_validator.hetus_data_processing import hetus_constants
+from activity_validator.hetus_data_processing import utils
+from activity_validator.hetus_data_processing.datastructures import ActivityProfileEntry
 
 
 @utils.timing

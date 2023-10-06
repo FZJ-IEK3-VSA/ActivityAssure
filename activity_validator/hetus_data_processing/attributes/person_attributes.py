@@ -6,10 +6,10 @@ from enum import Enum, IntEnum
 import logging
 import pandas as pd
 
-import utils
-import hetus_columns as col
-import hetus_values as val
-from attributes.diary_attributes import Categories
+from activity_validator.hetus_data_processing import utils
+import activity_validator.hetus_data_processing.hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_values as val
+from activity_validator.hetus_data_processing.attributes.diary_attributes import Categories
 
 
 class WorkStatus(IntEnum):

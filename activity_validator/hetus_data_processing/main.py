@@ -1,25 +1,17 @@
-import json
 import logging
-from typing import Dict
 
-import pandas as pd
 from tabulate import tabulate
 
-import data_checks
-import filter
-import hetus_columns as col
-import level_extraction
-import load_data
-import utils
-from attributes import diary_attributes, hh_attributes, person_attributes
-from categorize import (
+import activity_validator.hetus_data_processing.hetus_columns as col
+from activity_validator.hetus_data_processing import level_extraction
+from activity_validator.hetus_data_processing import load_data
+from activity_validator.hetus_data_processing import utils
+from activity_validator.hetus_data_processing.attributes import diary_attributes
+from activity_validator.hetus_data_processing.categorize import (
     categorize,
     get_diary_categorization_data,
-    get_hh_categorization_data,
-    get_person_categorization_data,
 )
-from hetus_values import DayType, EmployedStudent
-import category_statistics
+from activity_validator.hetus_data_processing import category_statistics
 
 
 def stats(data, persondata=None, hhdata=None):

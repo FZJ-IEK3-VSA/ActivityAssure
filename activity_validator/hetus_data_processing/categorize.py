@@ -8,11 +8,11 @@ from enum import StrEnum  # type: ignore
 from typing import Any, Dict, List
 import pandas as pd
 
-import hetus_columns as col
-import hetus_translations
-import hetus_values as val
-import utils
-from attributes import diary_attributes, person_attributes
+import activity_validator.hetus_data_processing.hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_values as val
+from activity_validator.hetus_data_processing import hetus_translations
+from activity_validator.hetus_data_processing import utils
+from activity_validator.hetus_data_processing.attributes import diary_attributes, person_attributes
 
 
 class CategoryColumn(StrEnum):
