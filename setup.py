@@ -7,11 +7,11 @@ with open(os.path.join(dir_path, "README.md"), "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="lpgvalidation",
+    name="activity_validator",
     version="0.1.0",
     author="David Neuroth",
     author_email="d.neuroth@fz-juelich.de",
-    description="A validation framework for load profile generators",
+    description="An activity profile validation framework",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://jugit.fz-juelich.de/iek-3/groups/urbanmodels/personal/neuroth/lpg-validation-framework",
