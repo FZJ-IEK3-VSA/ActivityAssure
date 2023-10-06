@@ -5,7 +5,7 @@ from typing import Dict, List
 
 import pandas as pd
 
-from activity_profile_validator.hetus_data_processing.datastructures import (
+from activity_validator.hetus_data_processing.datastructures import (
     ActivityProfileEntryTime,
     ActivityProfile,
 )

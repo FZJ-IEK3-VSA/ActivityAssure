@@ -3,12 +3,12 @@ Example script for validation the LoadProfileGenerator
 """
 
 from datetime import timedelta
-from activity_profile_validator.hetus_data_processing.datastructures import (
+from activity_validator.hetus_data_processing.datastructures import (
     ActivityProfileEntryTime,
     ActivityProfile,
 )
-import activity_profile_validator.hetus_data_processing.utils
-from activity_profile_validator.lpgvalidation import lpgvalidation
+import activity_validator.hetus_data_processing.utils
+from activity_validator.lpgvalidation import lpgvalidation
 
 # load LPG activity profiles
 path = ".\\data\\lpg\\processed"

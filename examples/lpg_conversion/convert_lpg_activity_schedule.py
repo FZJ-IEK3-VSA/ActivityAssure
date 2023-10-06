@@ -7,11 +7,11 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from activity_profile_validator.hetus_data_processing.datastructures import (
+from activity_validator.hetus_data_processing.datastructures import (
     ActivityProfileEntryTime,
     ActivityProfile,
 )
-import activity_profile_validator.hetus_data_processing.utils as utils
+import activity_validator.hetus_data_processing.utils as utils
 
 
 def load_activity_profile_from_db(file: str):

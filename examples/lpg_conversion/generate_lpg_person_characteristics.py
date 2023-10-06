@@ -1,7 +1,7 @@
 import json
 import os
-from activity_profile_validator.hetus_data_processing.attributes.person_attributes import Categories, WorkStatus
-from activity_profile_validator.hetus_data_processing.hetus_values import Sex
+from activity_validator.hetus_data_processing.attributes.person_attributes import Categories, WorkStatus
+from activity_validator.hetus_data_processing.hetus_values import Sex
 
 # the available person categories and characteristics are assumed to be fixed as follows:
 # available_characteristics = {
