@@ -3,7 +3,7 @@ Example script for validation the LoadProfileGenerator
 """
 
 from datetime import timedelta
-from activity_validator.hetus_data_processing.datastructures import (
+from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfileEntryTime,
     ActivityProfile,
 )

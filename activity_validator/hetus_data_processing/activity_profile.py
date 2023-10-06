@@ -3,7 +3,7 @@ Defines classes for activity profiles
 """
 
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Optional
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 
@@ -97,10 +97,10 @@ class ActivityProfile:
     """
 
     #: list of activity objects
-    activities: List[ActivityProfileEntry | ActivityProfileEntryTime]
+    activities: list[ActivityProfileEntry|ActivityProfileEntryTime]
 
-    person: Optional[Dict[str, str]] = field(default_factory=dict)
-    daytype: Optional[Dict[str, str]] = field(default_factory=dict)
+    person: Optional[dict[str, str]] = field(default_factory=dict)
+    daytype: Optional[dict[str, str]] = field(default_factory=dict)
 
     def calc_durations(self, profile_end=None) -> None:
         """
@@ -128,6 +128,6 @@ class HHActivityProfiles:
     Bundles the activity profiles from all people in one household
     """
 
-    activity_profiles: Dict[str, ActivityProfile] = field(default_factory=dict)
+    activity_profiles: dict[str, ActivityProfile] = field(default_factory=dict)
 
     household: Optional[str] = None

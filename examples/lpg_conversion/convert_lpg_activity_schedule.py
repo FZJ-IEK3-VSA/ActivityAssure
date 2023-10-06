@@ -7,7 +7,7 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from activity_validator.hetus_data_processing.datastructures import (
+from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfileEntryTime,
     ActivityProfile,
 )
@@ -26,7 +26,7 @@ def load_activity_profile_from_db(file: str):
     activity_info_list = [
         (j["PersonName"], j["AffordanceName"], j["DateTime"]) for j in parsed_json_list
     ]
-    profiles_per_person: Dict[str, List[str]] = {}
+    profiles_per_person: Dict[str, List[ActivityProfileEntryTime]] = {}
     for person, activity_name, start_date_str in activity_info_list:
         start_date = datetime.fromisoformat(start_date_str)
         activity = ActivityProfileEntryTime(activity_name, start_date)
@@ -51,7 +51,7 @@ def load_activity_profile_from_db(file: str):
         short_name = person.split(" ")[1]
         result_path = os.path.join(parent_dir, "processed", short_name + ".json")
         with open(result_path, "w+", encoding="utf-8") as f:
-            f.write(profile.to_json(indent=4))
+            f.write(profile.to_json(indent=4))  # type: ignore
 
 
 if __name__ == "__main__":

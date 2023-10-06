@@ -13,7 +13,7 @@ import pandas as pd
 from activity_validator.hetus_data_processing import hetus_translations
 from activity_validator.hetus_data_processing import hetus_constants
 from activity_validator.hetus_data_processing import utils
-from activity_validator.hetus_data_processing.datastructures import ActivityProfileEntry
+from activity_validator.hetus_data_processing.activity_profile import ActivityProfileEntry
 
 
 @utils.timing

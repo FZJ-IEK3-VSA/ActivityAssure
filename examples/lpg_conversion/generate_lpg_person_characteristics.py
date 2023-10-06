@@ -9,7 +9,7 @@ from activity_validator.hetus_data_processing.hetus_values import Sex
 #     "work status": ["full_time", "part_time", "unemployed", "retired", "student"]
 # }
 
-def save_person_mapping(directory: str):
+def save_person_mapping(path: str):
     #TODO: (automatically?) create complete mapping for all persons/households
     mapping = {
         "CHR01 Rubi (23/Female)": {
@@ -22,12 +22,12 @@ def save_person_mapping(directory: str):
         }
     }
 
-    path = os.path.join(directory, "person_traits.json")
+    path = os.path.join(path)
     with open(path, "w+", encoding="utf-8") as f:
         json.dump(mapping, f)
 
 
 
 if __name__ == "__main__":
-    directory = ".\\data\\lpg"
-    save_person_mapping(directory)
+    path = ".\\data\\lpg\\person_traits.json"
+    save_person_mapping(path)
