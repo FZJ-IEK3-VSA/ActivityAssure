@@ -2,7 +2,7 @@ import errno
 import logging
 import os
 from functools import wraps
-from time import time
+import time
 from typing import Any, Iterable, List
 
 import pandas as pd
@@ -70,9 +70,9 @@ def timing(f):
 
     @wraps(f)
     def wrap(*args, **kw):
-        ts = time()
+        ts = time.time()
         result = f(*args, **kw)
-        te = time()
+        te = time.time()
         logging.debug("Timing: %r took: %2.4f sec" % (f.__name__, te - ts))
         return result
 

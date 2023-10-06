@@ -10,11 +10,18 @@ import pandas as pd
 from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfileEntryTime,
     ActivityProfile,
+    Traits,
 )
 import activity_validator.hetus_data_processing.utils as utils
 
 
+
 def load_activity_profile_from_db(file: str):
+    # load person mapping file
+    mapping_file = ".\\data\\lpg\\person_traits.json"
+    with open(mapping_file, encoding="utf-8") as f:
+        mapping: dict[str, dict[str, str]] = json.load(f)
+
     assert os.path.isfile(file), f"File does not exist: {file}"
     con = sqlite3.connect(file)
     cur = con.cursor()
@@ -45,7 +52,9 @@ def load_activity_profile_from_db(file: str):
     result_dir = os.path.join(parent_dir, "processed")
     utils.ensure_dir_exists(result_dir)
     for person, activity_profile in profiles_per_person.items():
-        profile = ActivityProfile(activity_profile, person)
+        assert person in mapping, f"No traits found for person {person}"
+        persontraits = Traits(mapping[person])
+        profile = ActivityProfile(activity_profile, persontraits)
         profile.calc_durations()
         # extract the actual person name (e.g. 'Rubi')
         short_name = person.split(" ")[1]
