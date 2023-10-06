@@ -2,7 +2,7 @@
 Defines classes for activity profiles
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from typing import Optional
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
@@ -11,6 +11,13 @@ from dataclasses_json import dataclass_json, config
 # TODO: does not work for some reason
 # dataclasses_json.cfg.global_config.encoders[timedelta] = str
 # dataclasses_json.global_config.decoders[timedelta] =
+
+
+@dataclass_json
+@dataclass
+class Traits:
+    traits: dict[str, str] = field(default_factory=dict)
+    name: Optional[str] = None
 
 
 def write_timedelta(d: Optional[timedelta]) -> Optional[str]:
@@ -70,6 +77,38 @@ class ActivityProfileEntryTime:
         metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
     )
 
+    def split(self, split_time: time) -> list["ActivityProfileEntryTime"]:
+        """
+        Divides this ActivityProfileEntry into multiple entries, splitting at the
+        specified time on each day (for multi-day activities).
+
+        :return: the list of activity profile entries
+        :rtype: list[ActivityProfileEntryTime]
+        """
+        if self.duration is None:
+            # duration is unknown, so splitting is not possible
+            return [self]
+        split_date = datetime.combine(self.start.date(), split_time)
+        if split_date < self.start:
+            # no split on first calendar day of activity
+            split_date += timedelta(days=1)
+        end_date = self.start + self.duration
+        current_start = self.start
+        day_profiles = []
+        while split_date < end_date:
+            # for each day, add a new activity entry
+            day_profiles.append(
+                ActivityProfileEntryTime(
+                    self.name, current_start, split_date - current_start
+                )
+            )
+            current_start = split_date
+            split_date += timedelta(days=1)
+        day_profiles.append(
+            ActivityProfileEntryTime(self.name, current_start, end_date - current_start)
+        )
+        return day_profiles
+
 
 @dataclass_json
 @dataclass
@@ -97,9 +136,9 @@ class ActivityProfile:
     """
 
     #: list of activity objects
-    activities: list[ActivityProfileEntry|ActivityProfileEntryTime]
+    activities: list[ActivityProfileEntry | ActivityProfileEntryTime]
 
-    person: Optional[dict[str, str]] = field(default_factory=dict)
+    persontype: Optional[Traits] = None
     daytype: Optional[dict[str, str]] = field(default_factory=dict)
 
     def calc_durations(self, profile_end=None) -> None:
