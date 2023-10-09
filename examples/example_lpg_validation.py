@@ -13,6 +13,8 @@ from activity_validator.lpgvalidation import lpgvalidation
 
 # TODO: some general todos
 # - replace all old type annotations like Dict, List, Tuple, etc. with lowercase variants (dict etc.)
+# - activity profile in time-step format: no resampling, time step size needs to be specified;
+#   class needs additional attributes for resolution and start time
 
 # load LPG activity profiles
 path = ".\\data\\lpg\\processed"
@@ -22,3 +24,7 @@ total_duration = activity_profiles[0].total_duration()
 assert total_duration > timedelta(
     days=364
 ), f"The total duration of all activities is too short: {total_duration}"
+
+activity_profile = activity_profiles[0]
+# for activity_profile in activity_profiles:
+lpgvalidation.extract_day_profiles(activity_profile)

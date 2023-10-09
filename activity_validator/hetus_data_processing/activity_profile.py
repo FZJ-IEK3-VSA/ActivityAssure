@@ -18,8 +18,18 @@ from dataclasses_json import dataclass_json, config
 @dataclass_json
 @dataclass
 class Traits:
+    """
+    A set of characteristics that defines the type of person
+    or household, and which category of validation data it
+    can be compared to
+    """
+
     traits: dict[str, str] = field(default_factory=dict)
     name: Optional[str] = None
+
+    def add_trait(self, name, value):
+        assert name not in self.traits, f"Trait already exists: {self.traits[name]}"
+        self.traits[name] = value
 
 
 def write_timedelta(d: Optional[timedelta]) -> Optional[str]:
@@ -148,9 +158,8 @@ class ActivityProfile:
 
     #: list of activity objects
     activities: list[ActivityProfileEntry | ActivityProfileEntryTime]
-
-    persontype: Optional[Traits] = None
-    daytype: dict[str, str] = field(default_factory=dict)
+    #: characteristics of the person this profile belongs to
+    traits: Traits = field(default_factory=Traits)
 
     def calc_durations(self, profile_end=None) -> None:
         """
@@ -216,7 +225,7 @@ class ActivityProfile:
             ), "An activity was not correctly split at day switch"
             # day switch
             current_day_profile.append(activity)
-            day_profiles.append(ActivityProfile(current_day_profile))
+            day_profiles.append(ActivityProfile(current_day_profile, self.traits))
             current_day_profile = []
             next_split += timedelta(days=1)
         return day_profiles
