@@ -15,7 +15,6 @@ from activity_validator.hetus_data_processing.activity_profile import (
 import activity_validator.hetus_data_processing.utils as utils
 
 
-
 def load_activity_profile_from_db(file: str):
     # load person mapping file
     mapping_file = ".\\data\\lpg\\person_traits.json"
@@ -50,7 +49,7 @@ def load_activity_profile_from_db(file: str):
 
     parent_dir = pathlib.Path(file).parent.absolute()
     result_dir = os.path.join(parent_dir, "processed")
-    utils.ensure_dir_exists(result_dir)
+    os.makedirs(result_dir, exist_ok=True)
     for person, activity_profile in profiles_per_person.items():
         assert person in mapping, f"No traits found for person {person}"
         persontraits = Traits(mapping[person])

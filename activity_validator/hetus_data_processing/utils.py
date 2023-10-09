@@ -11,21 +11,6 @@ import pandas as pd
 VALIDATION_DATA_PATH = "./data/validation"
 
 
-def ensure_dir_exists(path: str) -> None:
-    """
-    Ensures that the specified path exists. If not, creates
-    the path including all subdirectories.
-
-    :param path: the path to check or create
-    :type path: str
-    """
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-
 def save_file(
     data: pd.DataFrame,
     subdir: str | List[str],
@@ -54,7 +39,7 @@ def save_file(
     # turn subdir into a list if it is not already one
     subdir = subdir if isinstance(subdir, List) else [subdir]
     directory = os.path.join(VALIDATION_DATA_PATH, *subdir)
-    ensure_dir_exists(directory)
+    os.makedirs(directory, exist_ok=True)
 
     path = os.path.join(directory, filename)
     data.to_csv(path)
