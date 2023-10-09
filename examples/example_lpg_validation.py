@@ -18,13 +18,15 @@ from activity_validator.lpgvalidation import lpgvalidation
 
 # load LPG activity profiles
 path = ".\\data\\lpg\\processed"
-activity_profiles = lpgvalidation.load_activity_profiles(path)
+full_year_profiles = lpgvalidation.load_activity_profiles(path)
 
-total_duration = activity_profiles[0].total_duration()
+total_duration = full_year_profiles[0].total_duration()
 assert total_duration > timedelta(
     days=364
 ), f"The total duration of all activities is too short: {total_duration}"
 
-activity_profile = activity_profiles[0]
+full_year_profile = full_year_profiles[0]
 # for activity_profile in activity_profiles:
-lpgvalidation.extract_day_profiles(activity_profile)
+
+# get single-day profiles
+selected_day_profiles = lpgvalidation.extract_day_profiles(full_year_profile)

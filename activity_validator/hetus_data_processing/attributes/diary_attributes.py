@@ -25,10 +25,6 @@ class DayType(IntEnum):
     undetermined = -1
 
 
-def get_working_time(row: pd.Series) -> int:
-    pass
-
-
 MAP_DAYTYPE = {
     val.DayType.work: DayType.work,
     val.DayType.school: DayType.work,

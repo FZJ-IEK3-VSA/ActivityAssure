@@ -11,6 +11,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfile,
     Traits,
 )
+from activity_validator.hetus_data_processing.attributes import diary_attributes
 
 #: activities that should be counted as work for determining work days
 WORK_ACTIVITIES = ["1"]
@@ -83,8 +84,12 @@ def determine_day_type(activity_profile: ActivityProfile) -> None:
         work_sum is not None
     ), "Cannot determine day type for profiles with missing durations"
     # TODO: adapt/extend for time step profiles
-    day_type = "work" if work_sum >= WORKTIME_THRESHOLD else "no work"
-    activity_profile.traits.add_trait("day type", day_type)
+    day_type = (
+        diary_attributes.DayType.work
+        if work_sum >= WORKTIME_THRESHOLD
+        else diary_attributes.DayType.no_work
+    )
+    activity_profile.traits.add_trait(diary_attributes.Categories.day_type, day_type)
 
 
 def categorize_day_profile(activity_profile: ActivityProfile) -> None:
@@ -93,7 +98,7 @@ def categorize_day_profile(activity_profile: ActivityProfile) -> None:
 
 def extract_day_profiles(
     activity_profile: ActivityProfile, day_change_time: time = DAY_CHANGE_TIME
-) -> None:
+) -> list[ActivityProfile]:
     day_profiles = activity_profile.split_day_profiles(day_change_time)
     # this also removes profiles with missing activity durations
     day_profiles = filter_complete_day_profiles(day_profiles)
@@ -101,6 +106,7 @@ def extract_day_profiles(
     day_profiles = filter_min_activity_count(day_profiles, 1)
     for profile in day_profiles:
         determine_day_type(profile)
+    return day_profiles
 
 
 def filter_relevant_validation_data():
