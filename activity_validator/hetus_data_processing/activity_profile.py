@@ -3,6 +3,8 @@ Defines classes for activity profiles
 """
 
 from datetime import datetime, time, timedelta
+import functools
+import operator
 from typing import Optional
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
@@ -69,13 +71,22 @@ class ActivityProfileEntryTime:
 
     #: activity name or code
     name: str
-    #: 0-based index of activity start
+    #: activity start
     start: datetime
-    #: duration of activity in time steps
+    #: duration of activity
     duration: Optional[timedelta] = field(
         default=None,
         metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
     )
+
+    def end(self) -> datetime | None:
+        """
+        Returns the end date of the activity
+
+        :return: end date of the activity
+        :rtype: datetime
+        """
+        return self.start + self.duration if self.duration else None
 
     def split(self, split_time: time) -> list["ActivityProfileEntryTime"]:
         """
@@ -139,7 +150,7 @@ class ActivityProfile:
     activities: list[ActivityProfileEntry | ActivityProfileEntryTime]
 
     persontype: Optional[Traits] = None
-    daytype: Optional[dict[str, str]] = field(default_factory=dict)
+    daytype: dict[str, str] = field(default_factory=dict)
 
     def calc_durations(self, profile_end=None) -> None:
         """
@@ -158,6 +169,57 @@ class ActivityProfile:
             # activity can be calculated
             last_activity = self.activities[-1]
             last_activity.duration = profile_end - last_activity.start
+
+    def total_duration(self) -> float | timedelta | None:
+        # calculate the sum of activity durations without having to
+        # specify a starting value
+        return functools.reduce(operator.add, (a.duration for a in self.activities))
+
+    def split_day_profiles(
+        self,
+        day_change_time: time,
+    ) -> list["ActivityProfile"]:
+        """
+        Splits this activity profile into a separate profile for each day.
+
+        :param day_change_time: the date switch time to use for splitting,
+                                defaults to DAY_CHANGE_TIME
+        :type day_change_time: time, optional
+        :return: a list of single-day activity profiles
+        :rtype: list[ActivityProfile]
+        """
+        # split all activities that cross day switch time and put them in one list
+        all_split_activities = [
+            sa for a in self.activities for sa in a.split(day_change_time)
+        ]
+        start = all_split_activities[0].start
+        # determine datetime of first day switch
+        next_split = datetime.combine(start.date(), day_change_time)
+        if next_split < start:
+            # no split on first calendar day of activity
+            next_split += timedelta(days=1)
+        day_profiles = []
+        current_day_profile = []
+        for i, activity in enumerate(all_split_activities):
+            if activity.duration is None:
+                assert (
+                    i == len(self.activities) - 1
+                ), "No duration for other than the last activity"
+                break
+
+            if activity.end() < next_split:
+                # activity still ends on the previous day
+                current_day_profile.append(activity)
+                continue
+            assert (
+                activity.end() == next_split
+            ), "An activity was not correctly split at day switch"
+            # day switch
+            current_day_profile.append(activity)
+            day_profiles.append(ActivityProfile(current_day_profile))
+            current_day_profile = []
+            next_split += timedelta(days=1)
+        return day_profiles
 
 
 @dataclass_json
