@@ -12,7 +12,10 @@ import activity_validator.hetus_data_processing.hetus_columns as col
 import activity_validator.hetus_data_processing.hetus_values as val
 from activity_validator.hetus_data_processing import hetus_translations
 from activity_validator.hetus_data_processing import utils
-from activity_validator.hetus_data_processing.attributes import diary_attributes, person_attributes
+from activity_validator.hetus_data_processing.attributes import (
+    diary_attributes,
+    person_attributes,
+)
 
 
 class CategoryColumn(StrEnum):
@@ -81,5 +84,5 @@ def categorize(data: pd.DataFrame, key: List[str]) -> Dict[Any, pd.DataFrame]:
         person_attributes.WorkStatus,
     )
     # store category sizes as a file
-    utils.save_file(category_sizes, "categories", "cat", key)
+    utils.save_df(category_sizes, "categories", "cat", key)
     return {g: categories.get_group(g) for g in categories.groups}

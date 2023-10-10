@@ -13,7 +13,9 @@ import pandas as pd
 from activity_validator.hetus_data_processing import hetus_translations
 from activity_validator.hetus_data_processing import hetus_constants
 from activity_validator.hetus_data_processing import utils
-from activity_validator.hetus_data_processing.activity_profile import ActivityProfileEntry
+from activity_validator.hetus_data_processing.activity_profile import (
+    ActivityProfileEntry,
+)
 
 
 @utils.timing
@@ -62,7 +64,7 @@ def calc_activity_group_frequencies(
     # not occur in some diary entries
     frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype).fillna(0)
     # save frequency statistics to file
-    utils.save_file(frequencies.describe(), "activity_frequencies", "freq", category)
+    utils.save_df(frequencies.describe(), "activity_frequencies", "freq", category)
 
     # Debug: show a boxplot for the frequencies
     # from matplotlib import pyplot as plt
@@ -90,7 +92,7 @@ def calc_activity_group_durations(
     # turn into a DataFrame to calculate statistics
     durations_series = [pd.Series(d, name=k) for k, d in durations_by_activity.items()]
     durations = pd.concat(durations_series, axis=1)
-    utils.save_file(durations.describe(), "activity_durations", "dur", category)
+    utils.save_df(durations.describe(), "activity_durations", "dur", category)
 
 
 @utils.timing
@@ -104,7 +106,7 @@ def calc_probability_profiles(category: Tuple[Any], data: pd.DataFrame) -> None:
         np.isclose(probabilities.sum(), 1.0) | np.isclose(probabilities.sum(), 0.0)
     ).all(), "Calculation error: probabilities are not always 100 % (or 0 % for AT)"
     # save probability profiles to file
-    utils.save_file(probabilities, "probability_profiles", "prob", category)
+    utils.save_df(probabilities, "probability_profiles", "prob", category)
 
 
 @utils.timing

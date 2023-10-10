@@ -11,7 +11,7 @@ import pandas as pd
 VALIDATION_DATA_PATH = "./data/validation"
 
 
-def save_file(
+def save_df(
     data: pd.DataFrame,
     subdir: str | List[str],
     name: str,
@@ -19,7 +19,8 @@ def save_file(
     ext: str = "csv",
 ) -> None:
     """
-    Saves a result file within the main data directory
+    Saves a result data frame to a csv file within the
+    main data directory.
 
     :param data: data to save
     :type data: pd.DataFrame
