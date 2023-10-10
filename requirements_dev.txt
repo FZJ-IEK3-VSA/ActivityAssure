@@ -1,8 +1,10 @@
+# includes additional requirements needed for development of this project
+
 -r requirements.txt
+
 PyPDF2
 matplotlib
 seaborn
-
 
 pytest
 
