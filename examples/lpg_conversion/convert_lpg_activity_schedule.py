@@ -10,14 +10,14 @@ import pandas as pd
 from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfileEntryTime,
     ActivityProfile,
-    Traits,
+    ProfileType,
 )
 import activity_validator.hetus_data_processing.utils as utils
 
 
 def load_activity_profile_from_db(file: str):
     # load person mapping file
-    mapping_file = ".\\data\\lpg\\person_traits.json"
+    mapping_file = ".\\data\\lpg\\person_types.json"
     with open(mapping_file, encoding="utf-8") as f:
         mapping: dict[str, dict[str, str]] = json.load(f)
 
@@ -38,22 +38,15 @@ def load_activity_profile_from_db(file: str):
         activity = ActivityProfileEntryTime(activity_name, start_date)
         profiles_per_person.setdefault(person, []).append(activity)
 
-    # TODO remove dummy time steps
     # TODO apply activity mapping
-
-    # Calculate the simulation end: simulation always ends at midnight
-    # and no activity lasts a whole day, the end is the next midnight after
-    # the last activity start date
-    # Remark: this is not necessarily the end of the last activity
-    simulation_end = start_date.date() + timedelta(days=1)
 
     parent_dir = pathlib.Path(file).parent.absolute()
     result_dir = os.path.join(parent_dir, "processed")
     os.makedirs(result_dir, exist_ok=True)
     for person, activity_profile in profiles_per_person.items():
-        assert person in mapping, f"No traits found for person {person}"
-        persontraits = Traits(mapping[person])
-        profile = ActivityProfile(activity_profile, persontraits)
+        assert person in mapping, f"No person type found for person {person}"
+        person_type = ProfileType.from_dict(mapping[person])  # type: ignore
+        profile = ActivityProfile(activity_profile, person_type)
         profile.calc_durations()
         # extract the actual person name (e.g. 'Rubi')
         short_name = person.split(" ")[1]

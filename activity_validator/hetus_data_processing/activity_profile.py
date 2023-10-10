@@ -11,6 +11,12 @@ from typing import Optional
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 
+from activity_validator.hetus_data_processing.hetus_values import Sex
+from activity_validator.hetus_data_processing.attributes import (
+    diary_attributes,
+    person_attributes,
+)
+
 
 # TODO: does not work for some reason
 # dataclasses_json.cfg.global_config.encoders[timedelta] = str
@@ -18,26 +24,18 @@ from dataclasses_json import dataclass_json, config
 
 
 @dataclass_json
-@dataclass
-class Traits:
+@dataclass(unsafe_hash=True)  # TODO: better make it frozen?
+class ProfileType:
     """
-    A set of characteristics that defines the type of person
-    or household, and which category of validation data it
-    can be compared to
+    A set of characteristics that defines the type of a
+    sinlge-day activity profile and identifies matching
+    validation data.
     """
 
-    traits: dict[str, str] = field(default_factory=dict)
-    name: Optional[str] = None
-
-    def add_trait(self, name, value):
-        assert name not in self.traits, f"Trait already exists: {name}"
-        self.traits[name] = value
-
-    def __getitem__(self, arg):
-        """
-        Implements [] operator
-        """
-        return self.traits[arg]
+    country: str | None = None
+    sex: Sex | None = None
+    work_status: person_attributes.WorkStatus | None = None
+    day_type: diary_attributes.DayType | None = None
 
 
 def write_timedelta(d: Optional[timedelta]) -> Optional[str]:
@@ -169,7 +167,7 @@ class ActivityProfile:
     #: list of activity objects
     activities: list[ActivityProfileEntryTime | ActivityProfileEntry]
     #: characteristics of the person this profile belongs to
-    traits: Traits = field(default_factory=Traits)
+    profile_type: ProfileType = field(default_factory=ProfileType)
 
     def calc_durations(self, profile_end=None) -> None:
         """
@@ -240,7 +238,7 @@ class ActivityProfile:
             # day switch
             current_day_profile.append(activity)
             day_profiles.append(
-                ActivityProfile(current_day_profile, copy.deepcopy(self.traits))
+                ActivityProfile(current_day_profile, copy.deepcopy(self.profile_type))
             )
             current_day_profile = []
             next_split += timedelta(days=1)

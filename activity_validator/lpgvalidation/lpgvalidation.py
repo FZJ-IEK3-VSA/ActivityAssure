@@ -10,7 +10,9 @@ from typing import Iterable, List
 
 from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfile,
+    ActivityProfileEntry,
     ActivityProfileEntryTime,
+    ProfileType,
 )
 from activity_validator.hetus_data_processing.attributes import diary_attributes
 from activity_validator.hetus_data_processing import utils
@@ -71,13 +73,21 @@ def filter_min_activity_count(
     return [a for a in activity_profiles if len(a.activities) >= min_activities]
 
 
-def is_work_activity(activity: ActivityProfileEntryTime) -> bool:
+def is_work_activity(activity: ActivityProfileEntryTime | ActivityProfileEntry) -> bool:
+    """
+    Checks if an activity is a work activity.
+
+    :param activity: the activity to check
+    :type activity: ActivityProfileEntryTime | ActivityProfileEntry
+    :return: True if the activity is a work activity, else False
+    :rtype: bool
+    """
     return activity.name in WORK_ACTIVITIES
 
 
 def determine_day_type(activity_profile: ActivityProfile) -> None:
     """
-    Determines and sets the 'day type' trait for the activity profile by checking
+    Determines and sets the day type for the activity profile by checking
     the total time spent with work activities.
 
     :param activity_profile: the activity profile to check
@@ -92,18 +102,19 @@ def determine_day_type(activity_profile: ActivityProfile) -> None:
         )
     else:
         # no work at all
+        # TODO adapt for time step profiles
         work_sum = timedelta()
     assert (
         work_sum is not None
     ), "Cannot determine day type for profiles with missing durations"
-    # TODO: adapt/extend for time step profiles
     # set the day type depending on the total working time
+    # TODO: adapt for time step profiles
     day_type = (
         diary_attributes.DayType.work
         if work_sum >= WORKTIME_THRESHOLD
         else diary_attributes.DayType.no_work
     )
-    activity_profile.traits.add_trait(diary_attributes.Categories.day_type, day_type)
+    activity_profile.profile_type.day_type = day_type
 
 
 def extract_day_profiles(
@@ -114,22 +125,39 @@ def extract_day_profiles(
     day_profiles = filter_complete_day_profiles(day_profiles)
     # filter days with only a single activity (e.g., vacation)
     day_profiles = filter_min_activity_count(day_profiles, 1)
-    for profile in day_profiles:
-        determine_day_type(profile)
-    work_days = sum(
-        1
-        for a in day_profiles
-        if a.traits[diary_attributes.Categories.day_type]
-        == diary_attributes.DayType.work
-    )
-    logging.info(
-        f"Extracted {len(day_profiles)} single-day activity profiles "
-        f"({work_days} work days)"
-    )
+    logging.info(f"Extracted {len(day_profiles)} single-day activity profiles")
     return day_profiles
 
 
-def filter_relevant_validation_data():
+def group_profiles_by_type(
+    activity_profiles: list[ActivityProfile],
+) -> dict[ProfileType, list[ActivityProfile]]:
+    """
+    Determines day type for each day profile and groups
+    the profiles by their overall type.
+
+    :param activity_profiles: the activity profiles to group
+    :type activity_profiles: list[ActivityProfile]
+    :return: a dict mapping each profile type to the respective
+             profiles
+    :rtype: dict[ProfileType, list[ActivityProfile]]
+    """
+    profiles_by_type: dict[ProfileType, list[ActivityProfile]] = {}
+    for profile in activity_profiles:
+        # set day type property
+        determine_day_type(profile)
+        profiles_by_type.setdefault(profile.profile_type, []).append(profile)
+    logging.info(
+        f"Grouped {len(activity_profiles)} into {len(profiles_by_type)} categories"
+    )
+    return profiles_by_type
+
+
+def load_validation_data(path: str = utils.VALIDATION_DATA_PATH):
+    pass
+
+
+def filter_relevant_validation_data(validation_data, activity_profiles):
     pass
 
 
