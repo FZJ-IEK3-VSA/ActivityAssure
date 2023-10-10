@@ -2,8 +2,10 @@
 Defines classes for activity profiles
 """
 
+import copy
 from datetime import datetime, time, timedelta
 import functools
+import logging
 import operator
 from typing import Optional
 from dataclasses import dataclass, field
@@ -28,8 +30,14 @@ class Traits:
     name: Optional[str] = None
 
     def add_trait(self, name, value):
-        assert name not in self.traits, f"Trait already exists: {self.traits[name]}"
+        assert name not in self.traits, f"Trait already exists: {name}"
         self.traits[name] = value
+
+    def __getitem__(self, arg):
+        """
+        Implements [] operator
+        """
+        return self.traits[arg]
 
 
 def write_timedelta(d: Optional[timedelta]) -> Optional[str]:
@@ -82,9 +90,11 @@ class ActivityProfileEntryTime:
     #: activity name or code
     name: str
     #: activity start
-    start: datetime
+    start: datetime = field(
+        metadata=config(encoder=lambda d: d.isoformat(), decoder=datetime.fromisoformat)
+    )
     #: duration of activity
-    duration: Optional[timedelta] = field(
+    duration: timedelta | None = field(
         default=None,
         metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
     )
@@ -109,7 +119,7 @@ class ActivityProfileEntryTime:
         if self.duration is None:
             # duration is unknown, so splitting is not possible
             return [self]
-        split_date = datetime.combine(self.start.date(), split_time)
+        split_date = datetime.combine(self.start.date(), split_time, self.start.tzinfo)
         if split_date < self.start:
             # no split on first calendar day of activity
             split_date += timedelta(days=1)
@@ -157,7 +167,7 @@ class ActivityProfile:
     """
 
     #: list of activity objects
-    activities: list[ActivityProfileEntry | ActivityProfileEntryTime]
+    activities: list[ActivityProfileEntryTime | ActivityProfileEntry]
     #: characteristics of the person this profile belongs to
     traits: Traits = field(default_factory=Traits)
 
@@ -203,7 +213,7 @@ class ActivityProfile:
         ]
         start = all_split_activities[0].start
         # determine datetime of first day switch
-        next_split = datetime.combine(start.date(), day_change_time)
+        next_split = datetime.combine(start.date(), day_change_time, start.tzinfo)
         if next_split < start:
             # no split on first calendar day of activity
             next_split += timedelta(days=1)
@@ -212,8 +222,12 @@ class ActivityProfile:
         for i, activity in enumerate(all_split_activities):
             if activity.duration is None:
                 assert (
-                    i == len(self.activities) - 1
+                    i == len(all_split_activities) - 1
                 ), "No duration for other than the last activity"
+                # last activity of the whole profile
+                logging.info(
+                    "Skipped last day during splitting due to missing duration of last activity"
+                )
                 break
 
             if activity.end() < next_split:
@@ -225,7 +239,9 @@ class ActivityProfile:
             ), "An activity was not correctly split at day switch"
             # day switch
             current_day_profile.append(activity)
-            day_profiles.append(ActivityProfile(current_day_profile, self.traits))
+            day_profiles.append(
+                ActivityProfile(current_day_profile, copy.deepcopy(self.traits))
+            )
             current_day_profile = []
             next_split += timedelta(days=1)
         return day_profiles

@@ -1,7 +1,8 @@
 """Main module"""
 
-from datetime import datetime, time, timedelta
+from datetime import time, timedelta
 import functools
+import logging
 import operator
 import os
 from typing import Iterable, List
@@ -9,12 +10,13 @@ from typing import Iterable, List
 
 from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfile,
-    Traits,
+    ActivityProfileEntryTime,
 )
 from activity_validator.hetus_data_processing.attributes import diary_attributes
+from activity_validator.hetus_data_processing import utils
 
 #: activities that should be counted as work for determining work days
-WORK_ACTIVITIES = ["1"]
+WORK_ACTIVITIES = ["1", "work as teacher"]
 #: minimum working time for a day to be counted as working day
 WORKTIME_THRESHOLD = timedelta(hours=3)
 
@@ -22,6 +24,7 @@ WORKTIME_THRESHOLD = timedelta(hours=3)
 DAY_CHANGE_TIME = time(4)
 
 
+@utils.timing
 def load_activity_profiles(dir: str) -> List[ActivityProfile]:
     """Loads the activity profiles in json format from the specified folder"""
     # TODO: alternatively load from csvs (compact or expanded format)
@@ -33,6 +36,7 @@ def load_activity_profiles(dir: str) -> List[ActivityProfile]:
                 file_content = f.read()
                 activity_profile = ActivityProfile.from_json(file_content)  # type: ignore
                 activity_profiles.append(activity_profile)
+    logging.info(f"Loaded {len(activity_profiles)} activity profiles")
     return activity_profiles
 
 
@@ -67,6 +71,10 @@ def filter_min_activity_count(
     return [a for a in activity_profiles if len(a.activities) >= min_activities]
 
 
+def is_work_activity(activity: ActivityProfileEntryTime) -> bool:
+    return activity.name in WORK_ACTIVITIES
+
+
 def determine_day_type(activity_profile: ActivityProfile) -> None:
     """
     Determines and sets the 'day type' trait for the activity profile by checking
@@ -75,25 +83,27 @@ def determine_day_type(activity_profile: ActivityProfile) -> None:
     :param activity_profile: the activity profile to check
     :type activity_profile: ActivityProfile
     """
+    durations = [a.duration for a in activity_profile.activities if is_work_activity(a)]
     # calculate total working time on this day
-    work_sum = functools.reduce(
-        operator.add,
-        (a.duration for a in activity_profile.activities if a.name in WORK_ACTIVITIES),
-    )
+    if len(durations) > 0:
+        work_sum = functools.reduce(
+            operator.add,
+            durations,
+        )
+    else:
+        # no work at all
+        work_sum = timedelta()
     assert (
         work_sum is not None
     ), "Cannot determine day type for profiles with missing durations"
     # TODO: adapt/extend for time step profiles
+    # set the day type depending on the total working time
     day_type = (
         diary_attributes.DayType.work
         if work_sum >= WORKTIME_THRESHOLD
         else diary_attributes.DayType.no_work
     )
     activity_profile.traits.add_trait(diary_attributes.Categories.day_type, day_type)
-
-
-def categorize_day_profile(activity_profile: ActivityProfile) -> None:
-    determine_day_type(activity_profile)
 
 
 def extract_day_profiles(
@@ -106,6 +116,16 @@ def extract_day_profiles(
     day_profiles = filter_min_activity_count(day_profiles, 1)
     for profile in day_profiles:
         determine_day_type(profile)
+    work_days = sum(
+        1
+        for a in day_profiles
+        if a.traits[diary_attributes.Categories.day_type]
+        == diary_attributes.DayType.work
+    )
+    logging.info(
+        f"Extracted {len(day_profiles)} single-day activity profiles "
+        f"({work_days} work days)"
+    )
     return day_profiles
 
 
