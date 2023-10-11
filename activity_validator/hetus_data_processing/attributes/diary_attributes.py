@@ -2,7 +2,7 @@
 Calculates additional attributes for diary entries which can then be used for categorization
 """
 
-from enum import IntEnum, StrEnum  # type: ignore
+from enum import StrEnum  # type: ignore
 import logging
 import pandas as pd
 
@@ -11,18 +11,19 @@ import activity_validator.hetus_data_processing.hetus_values as val
 from activity_validator.hetus_data_processing import utils
 
 
-class Categories(StrEnum):
-    """Column names for self-defined categories"""
+class DayType(StrEnum):
+    """
+    Specifies the day type of a diary entry
+    """
 
-    work_status = "Work Status"
-    day_type = "Day Type"
+    work = "work"
+    no_work = "no work"
 
+    undetermined = "undetermined"
 
-class DayType(IntEnum):
-    work = 0
-    no_work = 1
-
-    undetermined = -1
+    @staticmethod
+    def title() -> str:
+        return "day type"
 
 
 MAP_DAYTYPE = {
@@ -47,7 +48,6 @@ def determine_day_type(row: pd.Series) -> DayType:
         return MAP_EMPLOYEDSTUDENT[row[col.Diary.EMPLOYED_STUDENT]]
 
     # TODO: if necessary, check working time on this diary entry
-    # assert False, "Not implemented"
     return DayType.undetermined
 
 
@@ -66,7 +66,7 @@ def print_day_type_weekday_overview(data: pd.DataFrame, day_types: pd.Series):
     weekday_map[7] = "saturday"
     weekdays = data[col.Diary.WEEKDAY].map(weekday_map)
     merged = pd.concat([weekdays, day_types], axis=1)
-    print(merged.groupby([col.Diary.WEEKDAY, Categories.day_type]).size())
+    print(merged.groupby([col.Diary.WEEKDAY, DayType.title()]).size())
 
 
 @utils.timing
@@ -80,9 +80,9 @@ def determine_day_types(data: pd.DataFrame) -> pd.Series:
     :rtype: pd.Series
     """
     day_types = data.apply(determine_day_type, axis=1)
-    day_types.name = Categories.day_type
+    day_types.name = DayType.title()
     counts = day_types.value_counts()
-    determined = counts[counts.index >= 0].sum()
+    determined = counts[counts.index != DayType.undetermined].sum()
     logging.info(
         f"Determined day type for {determined} out of "
         f"{len(data)} diary entries ({100 * determined / len(data):.1f} %)"
