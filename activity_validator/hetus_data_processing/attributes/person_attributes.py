@@ -9,7 +9,9 @@ import pandas as pd
 from activity_validator.hetus_data_processing import utils
 import activity_validator.hetus_data_processing.hetus_columns as col
 import activity_validator.hetus_data_processing.hetus_values as val
-from activity_validator.hetus_data_processing.attributes.diary_attributes import Categories
+from activity_validator.hetus_data_processing.attributes.diary_attributes import (
+    Categories,
+)
 
 
 class WorkStatus(IntEnum):
@@ -22,11 +24,6 @@ class WorkStatus(IntEnum):
     undetermined = -1
     work_full_or_part = -2
     unemployed_or_retired = -3
-
-
-def calc_num_diaries(data: pd.DataFrame, persondata: pd.DataFrame):
-    # TODO: simple function for starting
-    pass
 
 
 MAP_WORKSTATUS = {

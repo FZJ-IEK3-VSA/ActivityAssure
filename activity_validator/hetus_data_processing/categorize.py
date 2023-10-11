@@ -18,12 +18,6 @@ from activity_validator.hetus_data_processing.attributes import (
 )
 
 
-class CategoryColumn(StrEnum):
-    household = "Household Category"
-    person = "Person Category"
-    diary = "Diary Category"
-
-
 def get_person_categorization_data(persondata: pd.DataFrame) -> pd.DataFrame:
     # calculate additionaly attributes and combine them with the data
     work = person_attributes.determine_work_statuses(persondata)
@@ -44,7 +38,9 @@ def get_diary_categorization_data(
     # calculate additional attributes
     daytype = diary_attributes.determine_day_types(data)
     data = pd.concat([data, daytype], axis=1)
-    data = data[data[diary_attributes.Categories.day_type] >= 0]
+    data = data[
+        data[diary_attributes.DayType.title()] != diary_attributes.DayType.undetermined
+    ]
     return data
 
 

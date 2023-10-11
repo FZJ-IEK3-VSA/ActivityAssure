@@ -52,7 +52,7 @@ def translate_column(
     data: pd.DataFrame,
     column: str,
     column_new: Optional[str] = None,
-    value_translation: Union[EnumType, Dict] = None,
+    value_translation: EnumType | dict | None = None,
 ) -> None:
     """
     Renames a column and changes all values according to a specified enum or dict.
