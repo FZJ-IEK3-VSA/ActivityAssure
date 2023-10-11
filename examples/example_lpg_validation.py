@@ -4,6 +4,7 @@ Example script for validation the LoadProfileGenerator
 
 from datetime import timedelta
 import logging
+import pathlib
 from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfileEntryTime,
     ActivityProfile,
@@ -24,7 +25,7 @@ logging.basicConfig(
 )
 
 # load LPG activity profiles
-path = ".\\data\\lpg\\processed"
+path = pathlib.Path() / "data" / "lpg" / "processed"
 full_year_profiles = lpgvalidation.load_activity_profiles(path)
 
 full_year_profile = full_year_profiles[0]
@@ -39,8 +40,10 @@ assert str(selected_day_profiles[-1].activities[-1].start) == "2021-12-30 22:11:
 
 profiles_by_type = lpgvalidation.group_profiles_by_type(selected_day_profiles)
 
-validation_data = lpgvalidation.load_validation_data()
-relevant_validation_data = lpgvalidation.filter_relevant_validation_data(
-    validation_data
-)
-lpgvalidation.compare_to_validation_data(selected_day_profiles)
+validation_data_dict = lpgvalidation.load_validation_data()
+pass
+
+# relevant_validation_data = lpgvalidation.filter_relevant_validation_data(
+#     validation_data
+# )
+# lpgvalidation.compare_to_validation_data(selected_day_profiles)

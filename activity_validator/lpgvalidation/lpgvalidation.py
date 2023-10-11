@@ -5,7 +5,10 @@ import functools
 import logging
 import operator
 import os
+import pathlib
 from typing import Iterable, List
+
+import pandas as pd
 
 
 from activity_validator.hetus_data_processing.activity_profile import (
@@ -16,9 +19,10 @@ from activity_validator.hetus_data_processing.activity_profile import (
 )
 from activity_validator.hetus_data_processing.attributes import diary_attributes
 from activity_validator.hetus_data_processing import utils
+from activity_validator.lpgvalidation.validation_data import ValidationData
 
 #: activities that should be counted as work for determining work days
-WORK_ACTIVITIES = ["1", "work as teacher"]
+WORK_ACTIVITIES = ["EMPLOYMENT", "work as teacher"]
 #: minimum working time for a day to be counted as working day
 WORKTIME_THRESHOLD = timedelta(hours=3)
 
@@ -153,8 +157,43 @@ def group_profiles_by_type(
     return profiles_by_type
 
 
-def load_validation_data(path: str = utils.VALIDATION_DATA_PATH):
-    pass
+def load_validation_data_subdir(path: pathlib.Path) -> dict[tuple, pd.DataFrame]:
+    return dict(utils.load_df(p) for p in path.iterdir() if p.is_file())
+
+
+def load_validation_data(
+    path: pathlib.Path = utils.VALIDATION_DATA_PATH,
+) -> dict[ProfileType, ValidationData]:
+    subdir_path = path / "probability_profiles"
+    probability_profile_data = load_validation_data_subdir(subdir_path)
+    logging.info(
+        f"Loaded probability profiles for {len(probability_profile_data)} profile types"
+    )
+    subdir_path = path / "activity_frequencies"
+    activity_frequency_data = load_validation_data_subdir(subdir_path)
+    logging.info(
+        f"Loaded activity frequencies for {len(activity_frequency_data)} profile types"
+    )
+    subdir_path = path / "activity_durations"
+    activity_duration_data = load_validation_data_subdir(subdir_path)
+    logging.info(
+        f"Loaded activity durations for {len(activity_duration_data)} profile types"
+    )
+    assert (
+        probability_profile_data.keys()
+        == activity_frequency_data.keys()
+        == activity_duration_data.keys()
+    ), "Missing data for some of the profile types"
+    # TODO: convert profile_type from tuple to class ProfileType
+    return {
+        profile_type: ValidationData(
+            profile_type,
+            prob_data,
+            activity_frequency_data[profile_type],
+            activity_duration_data[profile_type],
+        )
+        for profile_type, prob_data in probability_profile_data.items()
+    }
 
 
 def filter_relevant_validation_data(validation_data, activity_profiles):
