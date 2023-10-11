@@ -7,11 +7,10 @@ from datetime import datetime, time, timedelta
 import functools
 import logging
 import operator
-from typing import Optional
+from typing import Iterable, Optional
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 
-from activity_validator.hetus_data_processing.hetus_values import Sex
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
     person_attributes,
@@ -33,9 +32,31 @@ class ProfileType:
     """
 
     country: str | None = None
-    sex: Sex | None = None
+    sex: person_attributes.Sex | None = None
     work_status: person_attributes.WorkStatus | None = None
     day_type: diary_attributes.DayType | None = None
+
+    def from_strs(values: Iterable[str]) -> "ProfileType":
+        """
+        Creates a ProfileType object from an iterable containing
+        the characteristics as strings.
+
+        :param values: the characteristics as strs
+        :type values: Iterable[str]
+        :return: the corresponding ProfileType object
+        :rtype: ProfileType
+        """
+        country, sex, work_status, day_type = values
+        try:
+            profile_type = ProfileType(
+                country,
+                person_attributes.Sex(sex),
+                person_attributes.WorkStatus(work_status),
+                diary_attributes.DayType(day_type),
+            )
+        except KeyError as e:
+            assert False, f"Invalid key: {e}"
+        return profile_type
 
 
 def write_timedelta(d: Optional[timedelta]) -> Optional[str]:

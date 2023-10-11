@@ -1,18 +1,16 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import os
 import pathlib
 import sqlite3
 from typing import Dict, List, Tuple
 
-import pandas as pd
 
 from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfileEntryTime,
     ActivityProfile,
     ProfileType,
 )
-import activity_validator.hetus_data_processing.utils as utils
 
 
 def load_activity_profile_from_db(file: str):
