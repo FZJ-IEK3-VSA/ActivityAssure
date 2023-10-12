@@ -5,6 +5,7 @@ import time
 from typing import Iterable
 
 import pandas as pd
+import tabulate
 
 #: path for result data # TODO: move to config file
 VALIDATION_DATA_PATH = pathlib.Path() / "data" / "validation"
@@ -53,6 +54,21 @@ def load_df(path: str | pathlib.Path) -> tuple[tuple, pd.DataFrame]:
     data = pd.read_csv(path, index_col=0)
     logging.debug(f"Loaded DataFrame from {path}")
     return profile_type, data
+
+
+def stats(data, persondata=None, hhdata=None):
+    """Print some basic statistics on HETUS data"""
+    print(
+        tabulate(
+            [
+                ["Number of diaries", len(data)],
+                ["Number of persons", len(persondata)]
+                if persondata is not None
+                else [],
+                ["Number of households", len(hhdata)] if hhdata is not None else [],
+            ]
+        )
+    )
 
 
 def timing(f):
