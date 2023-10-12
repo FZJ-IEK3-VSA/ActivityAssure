@@ -205,6 +205,12 @@ def compare_to_validation_data(
     profiles: list[ActivityProfile], validation_data: ValidationData
 ):
     # TODO: calculator class, die die calc-Methoden erhählt und den Result path speichert
-    category_statistics.calc_activity_group_frequencies(
-        profiles[0].profile_type.to_tuple(), (p.activities for p in profiles)
+    activity_profile_list = [p.activities for p in profiles]
+    frequencies = category_statistics.calc_activity_group_frequencies(
+        activity_profile_list
     )
+    durations = category_statistics.calc_activity_group_durations(activity_profile_list)
+
+    # TODO convert to dataframe
+    probabilities = category_statistics.calc_probability_profiles()
+    ValidationData(profiles[0].profile_type)
