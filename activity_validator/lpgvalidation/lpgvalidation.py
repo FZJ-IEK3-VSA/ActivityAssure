@@ -18,7 +18,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ProfileType,
 )
 from activity_validator.hetus_data_processing.attributes import diary_attributes
-from activity_validator.hetus_data_processing import utils
+from activity_validator.hetus_data_processing import category_statistics, utils
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
 #: activities that should be counted as work for determining work days
@@ -201,5 +201,10 @@ def filter_relevant_validation_data(
     pass
 
 
-def compare_to_validation_data(activity_profile):
-    pass
+def compare_to_validation_data(
+    profiles: list[ActivityProfile], validation_data: ValidationData
+):
+    # TODO: calculator class, die die calc-Methoden erhählt und den Result path speichert
+    category_statistics.calc_activity_group_frequencies(
+        profiles[0].profile_type.to_tuple(), (p.activities for p in profiles)
+    )

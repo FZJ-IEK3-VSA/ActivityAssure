@@ -36,8 +36,6 @@ def load_activity_profile_from_db(file: str):
         activity = ActivityProfileEntryTime(activity_name, start_date)
         profiles_per_person.setdefault(person, []).append(activity)
 
-    # TODO apply activity mapping
-
     parent_dir = pathlib.Path(file).parent.absolute()
     result_dir = os.path.join(parent_dir, "processed")
     os.makedirs(result_dir, exist_ok=True)

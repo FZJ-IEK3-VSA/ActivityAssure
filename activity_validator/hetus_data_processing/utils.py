@@ -5,7 +5,7 @@ import time
 from typing import Iterable
 
 import pandas as pd
-import tabulate
+from tabulate import tabulate
 
 #: path for result data # TODO: move to config file
 VALIDATION_DATA_PATH = pathlib.Path() / "data" / "validation"

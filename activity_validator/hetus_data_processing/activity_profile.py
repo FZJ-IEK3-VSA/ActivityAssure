@@ -36,6 +36,15 @@ class ProfileType:
     work_status: person_attributes.WorkStatus | None = None
     day_type: diary_attributes.DayType | None = None
 
+    def to_tuple(self) -> tuple[str, str, str, str]:
+        return (
+            str(self.country),
+            str(self.sex),
+            str(self.work_status),
+            str(self.day_type),
+        )
+
+    @staticmethod
     def from_strs(values: Iterable[str]) -> "ProfileType":
         """
         Creates a ProfileType object from an iterable containing

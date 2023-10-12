@@ -6,7 +6,7 @@ These can then be used for validation.
 from collections import Counter
 import itertools
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Iterable
 import numpy as np
 import pandas as pd
 
@@ -19,18 +19,16 @@ from activity_validator.hetus_data_processing.activity_profile import (
 
 
 @utils.timing
-def collect_activities(data: pd.DataFrame) -> Dict[Any, List[ActivityProfileEntry]]:
+def collect_activities(data: pd.DataFrame) -> dict[Any, list[ActivityProfileEntry]]:
     """
     Finds activities in each diary entry, meaning all blocks of time slots with
     the same activity code.
 
     :param data: HETSU diary data
-    :type data: pd.DataFrame
     :return: a dict mapping each diary entry index to the corresponding list of
              activities
-    :rtype: Dict[pd.Label, List[Activity]]
     """
-    activity_profiles: Dict[Any, List[ActivityProfileEntry]] = {}
+    activity_profiles: dict[Any, list[ActivityProfileEntry]] = {}
     # iterate through all diary entries
     for index, row in data.iterrows():
         activity_profile = []
@@ -46,20 +44,18 @@ def collect_activities(data: pd.DataFrame) -> Dict[Any, List[ActivityProfileEntr
 
 
 def calc_activity_group_frequencies(
-    category: Tuple[Any], activity_profiles: Dict[Any, List[ActivityProfileEntry]]
+    category: tuple, activity_profiles: Iterable[list[ActivityProfileEntry]]
 ) -> None:
     """
     Counts the numbers of occurrences of each activity type per day and calculates
     some statistics on this.
 
     :param category: data category
-    :type category: Tuple[Any]
     :param data: HETUS diary data
-    :type data: pd.DataFrame
     """
 
     # count number of activity name occurrences for each diary entry
-    counters = [Counter(a.name for a in p) for p in activity_profiles.values()]
+    counters = [Counter(a.name for a in p) for p in activity_profiles]
     # create a DataFrame with all frequencies, using 0 for activities that did
     # not occur in some diary entries
     frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype()).fillna(0)
@@ -76,13 +72,13 @@ def calc_activity_group_frequencies(
 
 @utils.timing
 def calc_activity_group_durations(
-    category: Tuple[Any], activity_profiles: Dict[Any, List[ActivityProfileEntry]]
+    category: tuple, activity_profiles: Iterable[list[ActivityProfileEntry]]
 ) -> None:
     """Calculates activity duration statistics per activity type"""
     # get an iterable of all activities
     # TODO: calculate AT data separately (different timestep duration)
-    activities = itertools.chain.from_iterable(activity_profiles.values())
-    durations_by_activity: Dict[str, List[pd.Timedelta]] = {}
+    activities = itertools.chain.from_iterable(activity_profiles)
+    durations_by_activity: dict[str, list[pd.Timedelta]] = {}
     for a in activities:
         # collect durations by activity type, and convert from number of time slots
         # to Timedelta
@@ -96,7 +92,7 @@ def calc_activity_group_durations(
 
 
 @utils.timing
-def calc_probability_profiles(category: Tuple[Any], data: pd.DataFrame) -> None:
+def calc_probability_profiles(category: tuple, data: pd.DataFrame) -> None:
     """
     Calculates activity probability profiles for the occurring activity types
     """
@@ -110,13 +106,12 @@ def calc_probability_profiles(category: Tuple[Any], data: pd.DataFrame) -> None:
 
 
 @utils.timing
-def calc_statistics_per_category(categories: Dict[Any, pd.DataFrame]) -> None:
+def calc_statistics_per_category(categories: dict[Any, pd.DataFrame]) -> None:
     """
     Calculates all required characteristics for each diary category in the
     HETUS data separately
 
     :param categories: a dict containing DataFrames with HETUS diary data
-    :type categories: Dict[Any, pd.DataFrame]
     """
     for cat, data in categories.items():
         # TODO when country is AT, there are only 96 timesteps
@@ -127,7 +122,7 @@ def calc_statistics_per_category(categories: Dict[Any, pd.DataFrame]) -> None:
         calc_probability_profiles(cat, a1)
 
         activity_profiles = collect_activities(a1)
-        calc_activity_group_frequencies(cat, activity_profiles)
-        calc_activity_group_durations(cat, activity_profiles)
+        calc_activity_group_frequencies(cat, activity_profiles.values())
+        calc_activity_group_durations(cat, activity_profiles.values())
 
     logging.info(f"Created result files for {len(categories)} categories")

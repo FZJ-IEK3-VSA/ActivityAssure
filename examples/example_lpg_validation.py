@@ -39,7 +39,7 @@ if __name__ == "__main__":
         for profile_type, profiles in profiles_by_type.items():
             validation_data = validation_data_dict[profile_type]
 
-            lpgvalidation.compare_to_validation_data(selected_day_profiles)
+            lpgvalidation.compare_to_validation_data(profiles, validation_data)
 
             break
         break
