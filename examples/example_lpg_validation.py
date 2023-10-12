@@ -22,6 +22,8 @@ if __name__ == "__main__":
     path = pathlib.Path() / "data" / "lpg" / "processed"
     full_year_profiles = lpgvalidation.load_activity_profiles(path)
 
+    # TODO: activity mapping
+
     for full_year_profile in full_year_profiles:
         # split the full year profiles into single-day profiles
         selected_day_profiles = lpgvalidation.extract_day_profiles(full_year_profile)
