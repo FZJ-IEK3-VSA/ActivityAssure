@@ -196,7 +196,12 @@ def load_validation_data(
     }
 
 
-def filter_relevant_validation_data(validation_data, activity_profiles):
+def filter_relevant_validation_data(
+    validation_data_dict: dict[ProfileType, ValidationData],
+    activity_profiles: ActivityProfile,
+):
+    # TODO: if necessary, also  filter validation data that does not match the
+    # ProfileType exactly, but is e.g. from another country
     pass
 
 

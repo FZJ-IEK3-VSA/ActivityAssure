@@ -9,6 +9,7 @@ import pandas as pd
 import logging
 
 
+# TODO: move or remove default path
 HETUS_PATH = r"D:\Daten\HETUS Data\HETUS 2010 full set\DATA"
 HETUS_FILENAME_PREFIX = "TUS_SUF_A_"
 HETUS_FILENAME_SUFFIX = "_2010.csv"
@@ -163,7 +164,7 @@ def load_all_hetus_files(path: str = HETUS_PATH) -> pd.DataFrame:
 def load_all_hetus_files_except_AT(path: str = HETUS_PATH) -> pd.DataFrame:
     """
     Loads all available HETUS files, except for the Austrian file.
-    Austria uses 15 minute time slots instead of the usual 10 minute time slots, 
+    Austria uses 15 minute time slots instead of the usual 10 minute time slots,
     which can cause problems.
 
     :param path: the HETUS data folder, defaults to HETUS_PATH
