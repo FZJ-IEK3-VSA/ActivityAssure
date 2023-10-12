@@ -5,8 +5,10 @@ specific aspects of the data if necessary.
 
 import pandas as pd
 
-import hetus_columns as col
-from activity_validator.hetus_data_processing.hetus_translations import load_hetus_activity_codes
+import activity_validator.hetus_data_processing.hetus_columns as col
+from activity_validator.hetus_data_processing.hetus_translations import (
+    load_hetus_activity_codes,
+)
 from activity_validator.hetus_data_processing import level_extraction
 
 

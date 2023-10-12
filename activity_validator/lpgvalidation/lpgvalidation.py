@@ -68,11 +68,8 @@ def filter_min_activity_count(
     Get only all day profiles with a minimum number of activities
 
     :param activity_profiles: the profiles to filter
-    :type activity_profiles: Iterable[ActivityProfile]
     :param min_activities: the minimum number of activities, defaults to 1
-    :type min_activities: int, optional
     :return: the profiles that match the condition
-    :rtype: list[ActivityProfile]
     """
     return [a for a in activity_profiles if len(a.activities) >= min_activities]
 
@@ -95,7 +92,6 @@ def determine_day_type(activity_profile: ActivityProfile) -> None:
     the total time spent with work activities.
 
     :param activity_profile: the activity profile to check
-    :type activity_profile: ActivityProfile
     """
     durations = [a.duration for a in activity_profile.activities if is_work_activity(a)]
     # calculate total working time on this day
@@ -152,7 +148,7 @@ def group_profiles_by_type(
         determine_day_type(profile)
         profiles_by_type.setdefault(profile.profile_type, []).append(profile)
     logging.info(
-        f"Grouped {len(activity_profiles)} into {len(profiles_by_type)} categories"
+        f"Grouped {len(activity_profiles)} into {len(profiles_by_type)} profile types"
     )
     return profiles_by_type
 
