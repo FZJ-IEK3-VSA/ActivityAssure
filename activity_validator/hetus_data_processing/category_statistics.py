@@ -62,7 +62,7 @@ def calc_activity_group_frequencies(
     counters = [Counter(a.name for a in p) for p in activity_profiles.values()]
     # create a DataFrame with all frequencies, using 0 for activities that did
     # not occur in some diary entries
-    frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype).fillna(0)
+    frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype()).fillna(0)
     # save frequency statistics to file
     utils.save_df(frequencies.describe(), "activity_frequencies", "freq", category)
 

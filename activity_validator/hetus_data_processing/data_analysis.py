@@ -164,7 +164,7 @@ def compare_mact_and_pact(a2: pd.DataFrame, a3: pd.DataFrame):
     should only use Mact.
     """
     # get the 2-digit codes that correspond to the 3-digit codes
-    a2_check = a3.applymap(lambda x: x[:2] if isinstance(x, str) else x)
+    a2_check = a3.map(lambda x: x[:2] if isinstance(x, str) else x)
     a2_check.columns = a2.columns
 
     # check if the 2-digit codes in the database (a2) and the 2-digit codes
@@ -187,7 +187,7 @@ def activity_frequencies(data: pd.DataFrame):
     a2_frequency = a2.stack().value_counts()
     a3_frequency = a3.stack().value_counts()
 
-    a1 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).applymap(
+    a1 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).map(
         lambda x: x[0] if isinstance(x, str) else x
     )
     a1_frequency = a1.stack().value_counts()

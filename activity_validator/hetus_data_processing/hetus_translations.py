@@ -32,13 +32,13 @@ def aggregate_activities(data: pd.DataFrame, digits: int = 1):
     # filter activity columns (Mact1-144)
     a3 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
     # map to the target level
-    target = a3.applymap(lambda x: x[:digits] if isinstance(x, str) else x)
+    target = a3.map(lambda x: x[:digits] if isinstance(x, str) else x)
     return target
 
 
 def extract_activity_names(data: pd.DataFrame) -> pd.DataFrame:
     codes = load_hetus_activity_codes()
-    return data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).applymap(
+    return data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).map(
         lambda x: codes.get(x, x)
     )
 
