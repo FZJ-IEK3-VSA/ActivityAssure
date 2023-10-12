@@ -16,6 +16,7 @@ def save_df(
     subdir: str,
     name: str,
     category: Iterable,
+    base_path: pathlib.Path = VALIDATION_DATA_PATH,
     ext: str = "csv",
 ) -> None:
     """
@@ -23,21 +24,17 @@ def save_df(
     main data directory.
 
     :param data: data to save
-    :type data: pd.DataFrame
     :param subdir: subdirectory to save the file at
-    :type subdir: str
     :param name: name of the file
-    :type name: str
     :param category: data category, if applicable
-    :type category: Any
+    :param base_path: _description_, defaults to VALIDATION_DATA_PATH
     :param ext: file extension, defaults to "csv"
-    :type ext: str, optional
     """
     if category is not None:
         # add category to filename
         filename = f"{name}_{'_'.join(str(c) for c in category)}"
     filename += f".{ext}"
-    directory = VALIDATION_DATA_PATH / subdir
+    directory = base_path / subdir
     directory.mkdir(parents=True, exist_ok=True)
 
     path = directory / filename

@@ -182,13 +182,13 @@ def load_validation_data(
     ), "Missing data for some of the profile types"
     # TODO: convert profile_type from tuple to class ProfileType
     return {
-        ProfileType.from_strs(profile_type): ValidationData(
-            profile_type,
+        (p := ProfileType.from_strs(category)): ValidationData(
+            p,
             prob_data,
-            activity_frequency_data[profile_type],
-            activity_duration_data[profile_type],
+            activity_frequency_data[category],
+            activity_duration_data[category],
         )
-        for profile_type, prob_data in probability_profile_data.items()
+        for category, prob_data in probability_profile_data.items()
     }
 
 
