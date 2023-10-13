@@ -2,14 +2,13 @@
 Defines classes for activity profiles
 """
 
-import copy
 from datetime import datetime, time, timedelta
-import functools
-import logging
-import operator
+from pathlib import Path
 from typing import Iterable, Optional
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
+import pandas as pd
+from activity_validator.hetus_data_processing import hetus_constants
 
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
@@ -17,9 +16,7 @@ from activity_validator.hetus_data_processing.attributes import (
 )
 
 
-# TODO: does not work for some reason
-# dataclasses_json.cfg.global_config.encoders[timedelta] = str
-# dataclasses_json.global_config.decoders[timedelta] =
+DEFAULT_RESOLUTION = timedelta(minutes=1)
 
 
 @dataclass_json
@@ -108,69 +105,6 @@ def parse_timedelta(s: str) -> timedelta:
 
 @dataclass_json
 @dataclass
-class ActivityProfileEntryTime:
-    """
-    Simple class for storing an activity, i.e. a single entry in
-    an activity profile. For HETUS data this corresponds to a
-    consecutive block of diary time slots with the same code.
-    """
-
-    #: activity name or code
-    name: str
-    #: activity start
-    start: datetime = field(
-        metadata=config(encoder=lambda d: d.isoformat(), decoder=datetime.fromisoformat)
-    )
-    #: duration of activity
-    duration: timedelta | None = field(
-        default=None,
-        metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
-    )
-
-    def end(self) -> datetime | None:
-        """
-        Returns the end date of the activity
-
-        :return: end date of the activity
-        :rtype: datetime
-        """
-        return self.start + self.duration if self.duration else None
-
-    def split(self, split_time: time) -> list["ActivityProfileEntryTime"]:
-        """
-        Divides this ActivityProfileEntry into multiple entries, splitting at the
-        specified time on each day (for multi-day activities).
-
-        :return: the list of activity profile entries
-        :rtype: list[ActivityProfileEntryTime]
-        """
-        if self.duration is None:
-            # duration is unknown, so splitting is not possible
-            return [self]
-        split_date = datetime.combine(self.start.date(), split_time, self.start.tzinfo)
-        if split_date < self.start:
-            # no split on first calendar day of activity
-            split_date += timedelta(days=1)
-        end_date = self.start + self.duration
-        current_start = self.start
-        day_profiles = []
-        while split_date < end_date:
-            # for each day, add a new activity entry
-            day_profiles.append(
-                ActivityProfileEntryTime(
-                    self.name, current_start, split_date - current_start
-                )
-            )
-            current_start = split_date
-            split_date += timedelta(days=1)
-        day_profiles.append(
-            ActivityProfileEntryTime(self.name, current_start, end_date - current_start)
-        )
-        return day_profiles
-
-
-@dataclass_json
-@dataclass
 class ActivityProfileEntry:
     """
     Simple class for storing an activity, i.e. a single entry in
@@ -183,23 +117,135 @@ class ActivityProfileEntry:
     #: 0-based index of activity start
     start: int
     #: duration of activity in time steps
-    duration: Optional[int] = None
+    duration: int = -1
+
+    def end(self) -> int:
+        """
+        Returns the end timestep of the activity
+
+        :return: end timestep of the activity
+        """
+        assert self.duration > 0, f"Invalid duration: {self.duration}"
+        return self.start + self.duration
+
+    def split(
+        self, first_split: int, timesteps_per_day: int
+    ) -> list["ActivityProfileEntry"]:
+        """
+        Divides this ActivityProfileEntry into multiple entries, splitting at the specified
+        timestep and, for activities >24 h, at the same timestep 24 h later.
+
+        :return: the list of activity entries
+        """
+        assert (
+            self.start <= first_split <= self.end()
+        ), "Split timestep is outside of activity time frame"
+
+        # the section until the first split
+        first_section = ActivityProfileEntry(
+            self.name, self.start, first_split - self.start
+        )
+        # the remaining sections
+        entries = [first_section] + [
+            ActivityProfileEntry(self.name, start, timesteps_per_day)
+            for start in range(first_split, self.end(), timesteps_per_day)
+        ]
+        # fix duration of last section
+        entries[-1].duration = self.end() - entries[-1].start
+        return entries
+
+
+def get_person_traits(
+    person_traits: dict[str, ProfileType], filepath: str
+) -> ProfileType:
+    """
+    Extracts the person name from the path of an activity profile file
+    and returns the matching ProfileType object with the person
+    characteristics.
+
+    :param person_traits: the person trait dict
+    :param filepath: path of the activity profile file, contains the
+                     name of the person
+    :raises RuntimeError: when no characteristics for the person were
+                          found
+    :return: the characteristics of the person
+    """
+    name = Path(filepath).stem
+    if name not in person_traits:
+        raise RuntimeError(f"No person characteristics found for '{name}'")
+    return person_traits[name]
 
 
 @dataclass_json
 @dataclass
 class ActivityProfile:
+    # TODO rename to SparseProfile
     """
     Class for storing a single activity profile, of a single person
     on a single day.
     """
 
     #: list of activity objects
-    activities: list[ActivityProfileEntryTime | ActivityProfileEntry]
+    activities: list[ActivityProfileEntry]
+    #: time offset from midnight
+    offset: timedelta = field(
+        metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
+    )
+    #: duration of one timestep
+    resolution: timedelta = field(
+        metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
+    )
     #: characteristics of the person this profile belongs to
     profile_type: ProfileType = field(default_factory=ProfileType)
 
-    def calc_durations(self, profile_end=None) -> None:
+    @staticmethod
+    def load_from_csv(
+        path,
+        person_traits: dict[str, ProfileType],
+        resolution: timedelta = DEFAULT_RESOLUTION,
+    ) -> "ActivityProfile":
+        """
+        Loads an ActivityProfile from a csv file.
+
+        :param path: path to the csv file
+        :param timestep: timestep resolution of the profile, defaults to DEFAULT_RESOLUTION
+        :return: the loaded ActivityProfile
+        """
+        assert timedelta(days=1) % resolution == timedelta(
+            0
+        ), "Resolution has to be a divisor of 1 day"
+        data = pd.read_csv(path)
+        # pd.to_datetime(data["Date"])
+        entries = [
+            ActivityProfileEntry(row["Activity"], row["Timestep"])
+            for _, row in data.iterrows()
+        ]
+        # calculate offset (timedelta since last midnight)
+        first_date = datetime.fromisoformat(data["Date"][0])
+        offset = first_date - datetime.combine(first_date.date(), time())
+        assert offset % resolution == timedelta(
+            0
+        ), "Start time has to be a divisor of the resolution"
+        profile_type = get_person_traits(person_traits, path)
+        profile = ActivityProfile(entries, offset, resolution, profile_type)
+        profile.remove_timestep_offset()
+        profile.calc_durations()
+        # remove the last activity (duration is unknown)
+        profile.activities.pop()
+        return profile
+
+    def remove_timestep_offset(self) -> None:
+        """
+        Removes any timestep offset, so that the first activity
+        starts at timestep 0.
+        """
+        offset = self.activities[0].start
+        if offset == 0:
+            return
+        for activity in self.activities:
+            activity.start -= offset
+
+    def calc_durations(self, profile_end: int | None = None) -> None:
         """
         Calculates and sets the duration for each contained activity.
 
@@ -209,7 +255,7 @@ class ActivityProfile:
         """
         assert self.activities, "Empty activity list"
         for i, a in enumerate(self.activities[:-1]):
-            assert a.duration is None, f"Duration was already set: {a.duration}"
+            assert a.duration == -1, f"Duration was already set: {a.duration}"
             a.duration = self.activities[i + 1].start - a.start
         if profile_end is not None:
             # if the overall end is specified, the duration of the last
@@ -217,61 +263,77 @@ class ActivityProfile:
             last_activity = self.activities[-1]
             last_activity.duration = profile_end - last_activity.start
 
-    def total_duration(self) -> float | timedelta | None:
-        # calculate the sum of activity durations without having to
-        # specify a starting value
-        return functools.reduce(operator.add, (a.duration for a in self.activities))
+    def start(self) -> int:
+        return self.activities[0].start
 
-    def split_day_profiles(
+    def end(self) -> int:
+        return self.activities[-1].end()
+
+    def length(self) -> int:
+        return self.end() - self.start()
+
+    def duration(self) -> timedelta:
+        return self.length() * self.resolution
+
+    def split_into_day_profiles(
         self,
-        day_change_time: time,
+        split_offset: timedelta = hetus_constants.PROFILE_OFFSET,
     ) -> list["ActivityProfile"]:
         """
-        Splits this activity profile into a separate profile for each day.
+        Splits this activity profile into multiple single-day profiles using the
+        specified split_offset as splitting time for each day.
 
-        :param day_change_time: the date switch time to use for splitting,
-                                defaults to DAY_CHANGE_TIME
-        :type day_change_time: time, optional
+        :param split_offset: the offset from midnight to the date switch time
         :return: a list of single-day activity profiles
-        :rtype: list[ActivityProfile]
         """
-        # split all activities that cross day switch time and put them in one list
-        all_split_activities = [
-            sa for a in self.activities for sa in a.split(day_change_time)
-        ]
-        start = all_split_activities[0].start
-        # determine datetime of first day switch
-        next_split = datetime.combine(start.date(), day_change_time, start.tzinfo)
-        if next_split < start:
-            # no split on first calendar day of activity
-            next_split += timedelta(days=1)
-        day_profiles = []
-        current_day_profile = []
-        for i, activity in enumerate(all_split_activities):
-            if activity.duration is None:
-                assert (
-                    i == len(all_split_activities) - 1
-                ), "No duration for other than the last activity"
-                # last activity of the whole profile
-                logging.info(
-                    "Skipped last day during splitting due to missing duration of last activity"
-                )
-                break
+        assert timedelta(1) % self.resolution == timedelta(
+            0
+        ), f"Invalid resolution: {self.resolution}"
+        timesteps_per_day = int(timedelta(days=1) / self.resolution)
+        # calculate timestep of first split
+        next_split = int((split_offset - self.offset) / self.resolution)
+        assert split_offset % self.resolution == timedelta(
+            0
+        ), f"Invalid split offset: {split_offset}"
+        if next_split <= 0:
+            # first split is on the next day
+            next_split += timesteps_per_day
 
-            if activity.end() < next_split:
-                # activity still ends on the previous day
+        day_profiles: list[ActivityProfile] = []
+        current_day_profile: list[ActivityProfileEntry] = []
+        for activity in self.activities:
+            if activity.end() >= next_split:
+                # the activity lasts over the specified day switch time
+                split_sections = activity.split(next_split, timesteps_per_day)
+                assert len(split_sections) > 0, "Invalid split"
+                # add the profile for the past day
+                current_day_profile.append(split_sections[0])
+                day_profiles.append(
+                    ActivityProfile(
+                        current_day_profile,
+                        split_offset,
+                        self.resolution,
+                        self.profile_type,
+                    )
+                )
+                # add intermediate 24 h split sections as separate profile
+                day_profiles.extend(
+                    ActivityProfile(
+                        [a],
+                        split_offset,
+                        self.resolution,
+                        self.profile_type,
+                    )
+                    for a in split_sections[1:-1]
+                )
+                # add the last section to the list for the following day
+                current_day_profile = [split_sections[-1]]
+                # increment the timestep for the next split
+                next_split += timesteps_per_day * (len(split_sections) - 1)
+            else:
+                # the activity does not need to be split
                 current_day_profile.append(activity)
-                continue
-            assert (
-                activity.end() == next_split
-            ), "An activity was not correctly split at day switch"
-            # day switch
-            current_day_profile.append(activity)
-            day_profiles.append(
-                ActivityProfile(current_day_profile, copy.deepcopy(self.profile_type))
-            )
-            current_day_profile = []
-            next_split += timedelta(days=1)
+        # TODO if necessary, call remove_timestep_offset on each new profile
         return day_profiles
 
 

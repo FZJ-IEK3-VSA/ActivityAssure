@@ -10,12 +10,8 @@ from activity_validator.hetus_data_processing.attributes.person_attributes impor
 def define_person_mapping(path: str):
     # TODO: (automatically?) create complete mapping for all persons/households
     mapping = {
-        "CHR01 Rubi (23/Female)": activity_profile.ProfileType(
-            "DE", Sex.female, WorkStatus.full_time
-        ),
-        "CHR01 Sami (25/Male)": activity_profile.ProfileType(
-            "DE", Sex.male, WorkStatus.full_time
-        ),
+        "Rubi": activity_profile.ProfileType("DE", Sex.female, WorkStatus.full_time),
+        "Sami": activity_profile.ProfileType("DE", Sex.male, WorkStatus.full_time),
     }
     dict_mapping = {n: p.to_dict() for n, p in mapping.items()}  # type: ignore
 
@@ -25,5 +21,5 @@ def define_person_mapping(path: str):
 
 
 if __name__ == "__main__":
-    path = ".\\data\\lpg\\person_types.json"
+    path = ".\\data\\lpg\\person_characteristics.json"
     define_person_mapping(path)

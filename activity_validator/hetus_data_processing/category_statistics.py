@@ -87,6 +87,7 @@ def calc_activity_group_durations(
     for a in activities:
         # collect durations by activity type, and convert from number of time slots
         # to Timedelta
+        # TODO: replace parameter with activity profile and use correct resolution here
         durations_by_activity.setdefault(a.name, []).append(
             pd.Timedelta(minutes=a.duration * hetus_constants.MIN_PER_TIME_SLOT)
         )

@@ -20,7 +20,10 @@ if __name__ == "__main__":
 
     # load LPG activity profiles
     path = pathlib.Path() / "data" / "lpg" / "processed"
-    full_year_profiles = lpgvalidation.load_activity_profiles(path)
+    person_trait_file = pathlib.Path() / "data" / "lpg" / "person_characteristics.json"
+    full_year_profiles = lpgvalidation.load_activity_profiles_from_csv(
+        path, person_trait_file
+    )
 
     # TODO: activity mapping
 
@@ -31,8 +34,8 @@ if __name__ == "__main__":
         # Tests
         assert len(selected_day_profiles) == 363, "Unexpected number of day profiles"
         assert (
-            str(selected_day_profiles[-1].activities[-1].start) == "2021-12-30 22:11:00"
-        )
+            selected_day_profiles[-1].activities[-1].start == 524051 - 377
+        ), "Start of last activity is incorrect"
 
         profiles_by_type = lpgvalidation.group_profiles_by_type(selected_day_profiles)
 

@@ -2,6 +2,7 @@
 
 from datetime import time, timedelta
 import functools
+import json
 import logging
 import operator
 import os
@@ -12,13 +13,14 @@ import pandas as pd
 
 
 from activity_validator.hetus_data_processing.activity_profile import (
+    DEFAULT_RESOLUTION,
     ActivityProfile,
     ActivityProfileEntry,
-    ActivityProfileEntryTime,
     ProfileType,
 )
 from activity_validator.hetus_data_processing.attributes import diary_attributes
 from activity_validator.hetus_data_processing import category_statistics, utils
+from activity_validator.hetus_data_processing.hetus_constants import PROFILE_OFFSET
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
 #: activities that should be counted as work for determining work days
@@ -26,22 +28,43 @@ WORK_ACTIVITIES = ["EMPLOYMENT", "work as teacher"]
 #: minimum working time for a day to be counted as working day
 WORKTIME_THRESHOLD = timedelta(hours=3)
 
-#: default time for splitting
-DAY_CHANGE_TIME = time(4)
+
+def load_person_characteristics(path: str) -> dict:
+    with open(path, encoding="utf-8") as f:
+        traits: dict[str, dict] = json.load(f)
+    return {name: ProfileType.from_dict(d) for name, d in traits.items()}  # type: ignore
 
 
 @utils.timing
-def load_activity_profiles(dir: str) -> List[ActivityProfile]:
+def load_activity_profiles_from_csv(
+    dir: str, person_trait_file: str, resolution: timedelta = DEFAULT_RESOLUTION
+) -> List[ActivityProfile]:
     """Loads the activity profiles in json format from the specified folder"""
-    # TODO: alternatively load from csvs (compact or expanded format)
+    person_traits = load_person_characteristics(person_trait_file)
     activity_profiles = []
+    for filename in os.listdir(dir):
+        path = os.path.join(dir, filename)
+        if os.path.isfile(path):
+            activity_profile = ActivityProfile.load_from_csv(
+                path, person_traits, resolution
+            )
+            activity_profiles.append(activity_profile)
+    logging.info(f"Loaded {len(activity_profiles)} activity profiles")
+    return activity_profiles
+
+
+@utils.timing
+def load_activity_profiles_from_json(dir: str) -> List[ActivityProfile]:
+    """Loads the activity profiles in json format from the specified folder"""
+    activity_profiles = []
+    # collect all files in the directory
     for filename in os.listdir(dir):
         path = os.path.join(dir, filename)
         if os.path.isfile(path):
             with open(path, encoding="utf-8") as f:
                 file_content = f.read()
                 activity_profile = ActivityProfile.from_json(file_content)  # type: ignore
-                activity_profiles.append(activity_profile)
+            activity_profiles.append(activity_profile)
     logging.info(f"Loaded {len(activity_profiles)} activity profiles")
     return activity_profiles
 
@@ -57,7 +80,7 @@ def filter_complete_day_profiles(
     :return: the profiles that match the condition
     :rtype: list[ActivityProfile]
     """
-    return [a for a in activity_profiles if a.total_duration() == timedelta(days=1)]
+    return [a for a in activity_profiles if a.duration() == timedelta(days=1)]
 
 
 def filter_min_activity_count(
@@ -74,7 +97,7 @@ def filter_min_activity_count(
     return [a for a in activity_profiles if len(a.activities) >= min_activities]
 
 
-def is_work_activity(activity: ActivityProfileEntryTime | ActivityProfileEntry) -> bool:
+def is_work_activity(activity: ActivityProfileEntry) -> bool:
     """
     Checks if an activity is a work activity.
 
@@ -102,25 +125,24 @@ def determine_day_type(activity_profile: ActivityProfile) -> None:
         )
     else:
         # no work at all
-        # TODO adapt for time step profiles
-        work_sum = timedelta()
+        work_sum = 0
     assert (
         work_sum is not None
     ), "Cannot determine day type for profiles with missing durations"
     # set the day type depending on the total working time
-    # TODO: adapt for time step profiles
     day_type = (
         diary_attributes.DayType.work
-        if work_sum >= WORKTIME_THRESHOLD
+        if work_sum * activity_profile.resolution >= WORKTIME_THRESHOLD
         else diary_attributes.DayType.no_work
     )
+    # set the determined day type for the profile
     activity_profile.profile_type.day_type = day_type
 
 
 def extract_day_profiles(
-    activity_profile: ActivityProfile, day_change_time: time = DAY_CHANGE_TIME
+    activity_profile: ActivityProfile, day_offset: timedelta = PROFILE_OFFSET
 ) -> list[ActivityProfile]:
-    day_profiles = activity_profile.split_day_profiles(day_change_time)
+    day_profiles = activity_profile.split_into_day_profiles(day_offset)
     # this also removes profiles with missing activity durations
     day_profiles = filter_complete_day_profiles(day_profiles)
     # filter days with only a single activity (e.g., vacation)
@@ -212,5 +234,8 @@ def compare_to_validation_data(
     durations = category_statistics.calc_activity_group_durations(activity_profile_list)
 
     # TODO convert to dataframe
-    probabilities = category_statistics.calc_probability_profiles()
-    ValidationData(profiles[0].profile_type)
+    data = None
+    probabilities = category_statistics.calc_probability_profiles(data)
+    input_data = ValidationData(
+        profiles[0].profile_type, probabilities, frequencies, durations
+    )
