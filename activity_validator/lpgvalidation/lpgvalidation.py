@@ -7,7 +7,7 @@ import logging
 import operator
 import os
 import pathlib
-from typing import Iterable, list
+from typing import Iterable
 
 import pandas as pd
 
