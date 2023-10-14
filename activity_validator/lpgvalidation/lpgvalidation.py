@@ -76,9 +76,7 @@ def filter_complete_day_profiles(
     Get only all complete day profiles, which are actually 24 h long
 
     :param activity_profiles: the profiles to filter
-    :type activity_profiles: Iterable[ActivityProfile]
     :return: the profiles that match the condition
-    :rtype: list[ActivityProfile]
     """
     return [a for a in activity_profiles if a.duration() == timedelta(days=1)]
 
@@ -102,9 +100,7 @@ def is_work_activity(activity: ActivityProfileEntry) -> bool:
     Checks if an activity is a work activity.
 
     :param activity: the activity to check
-    :type activity: ActivityProfileEntryTime | ActivityProfileEntry
     :return: True if the activity is a work activity, else False
-    :rtype: bool
     """
     return activity.name in WORK_ACTIVITIES
 
@@ -159,10 +155,8 @@ def group_profiles_by_type(
     the profiles by their overall type.
 
     :param activity_profiles: the activity profiles to group
-    :type activity_profiles: list[ActivityProfile]
     :return: a dict mapping each profile type to the respective
              profiles
-    :rtype: dict[ProfileType, list[ActivityProfile]]
     """
     profiles_by_type: dict[ProfileType, list[ActivityProfile]] = {}
     for profile in activity_profiles:

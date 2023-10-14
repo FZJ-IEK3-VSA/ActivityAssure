@@ -17,7 +17,6 @@ def load_hetus_activity_codes() -> dict[str, str]:
     Contains 1, 2 and 3-digit codes.
 
     :return: dict mapping each code with its description
-    :rtype: dict[str, str]
     """
     filename = "data/input/hetus_activity_codes_2010.json"
     if not os.path.isfile(filename):
@@ -58,13 +57,9 @@ def translate_column(
     Can handle normal and (multi-)index columns.
 
     :param data: the data to translate
-    :type data: pd.DataFrame
     :param column: old name of the column to change
-    :type column: str
     :param column_new: optional new name of the column, defaults to None
-    :type column_new: Optional[str], optional
     :param value_translation: translation for the column values; can be an enum type or a dict, defaults to None
-    :type value_translation: Union[EnumType, dict], optional
     """
     if isinstance(value_translation, EnumType):
         # create a dict that maps all enum int values to names

@@ -48,9 +48,7 @@ class ProfileType:
         the characteristics as strings.
 
         :param values: the characteristics as strs
-        :type values: Iterable[str]
         :return: the corresponding ProfileType object
-        :rtype: ProfileType
         """
         country, sex, work_status, day_type = values
         try:
@@ -71,9 +69,7 @@ def write_timedelta(d: timedelta | None) -> str | None:
     represent None as null in json.
 
     :param d: timedelta to write
-    :type d: Optional[timedelta]
     :return: str representation of the timedelta
-    :rtype: str
     """
     return str(d) if d else None
 
@@ -84,9 +80,7 @@ def parse_timedelta(s: str) -> timedelta:
     resolution up to seconds.
 
     :param s: the string to parse the timedelta from
-    :type s: str
     :return: parsed timedelta object
-    :rtype: timedelta
     """
     days = 0
     if "day" in s:

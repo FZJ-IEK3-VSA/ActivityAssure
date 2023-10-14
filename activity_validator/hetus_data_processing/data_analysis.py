@@ -21,9 +21,7 @@ def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:
     is acutally consistent across all entries.
 
     :param data: hetus data
-    :type data: pd.DataFrame
     :return: index containing all columns on household level
-    :rtype: pd.Index
     """
     # count how many different values for each column there are within a single household
     num_values_per_hh = data.groupby(col.HH.KEY).nunique()
@@ -98,7 +96,6 @@ def show_inconsistent_households(data: pd.DataFrame):
     values for household-level columns.
 
     :param data: the data to check
-    :type data: pd.DataFrame
     """
     hhdata = data[col.HH.ALL]
     num_values_per_hh = hhdata.groupby(col.HH.KEY).nunique()

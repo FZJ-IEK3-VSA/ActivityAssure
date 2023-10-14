@@ -57,9 +57,7 @@ def print_day_type_weekday_overview(data: pd.DataFrame, day_types: pd.Series):
     on the weekday.
 
     :param data: HETUS data
-    :type data: pd.DataFrame
     :param day_types: determined day types
-    :type day_types: pd.Series
     """
     weekday_map = {i: "weekday" for i in range(2, 7)}
     weekday_map[1] = "sunday"
@@ -75,9 +73,7 @@ def determine_day_types(data: pd.DataFrame) -> pd.Series:
     Determines the day type for each diary entry
 
     :param data: HETUS data
-    :type data: pd.DataFrame
     :return: day type for each diary entry
-    :rtype: pd.Series
     """
     day_types = data.apply(determine_day_type, axis=1)
     day_types.name = DayType.title()

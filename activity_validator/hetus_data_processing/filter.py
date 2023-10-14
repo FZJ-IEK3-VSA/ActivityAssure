@@ -55,13 +55,9 @@ def filter_no_data(
     Alternatively, only returns values with missing data if invert is set to True.
 
     :param data: general HETUS data
-    :type data: pd.DataFrame
     :param columns: the columns to check for missing data
-    :type columns: Union[str, Iterable[str]]
     :param invert: if True, keeps only entries with missing data instead, defaults to False
-    :type invert: bool, optional
     :return: the filtered data
-    :rtype: pd.DataFrame
     """
     if isinstance(columns, str):
         columns = [columns]
@@ -80,13 +76,9 @@ def filter_by_index(
     the data is kept, either the part that is contained in the index, or the rest.
 
     :param data: the data to filter
-    :type data: pd.DataFrame
     :param index: the index used as filter condition
-    :type index: pd.Index
     :param invert: True if the entries in index should be kept, else false; defaults to True
-    :type invert: bool, optional
     :return: the filtered data set
-    :rtype: pd.DataFrame
     """
     inindex = data.index.isin(index)
     keep = ~inindex if invert else inindex

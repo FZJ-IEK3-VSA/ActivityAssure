@@ -20,7 +20,6 @@ def column_names_to_capitals(data: pd.DataFrame) -> None:
     Changes all column headers to capitals only. Works inplace.
 
     :param data: dataframe with headers in changing cases
-    :type data: pd.DataFrame
     """
     column_translations = {c: c.upper() for c in data.columns}
     data.rename(columns=column_translations, inplace=True)
@@ -31,9 +30,7 @@ def get_country(path: str) -> str:
     Given an HETUS file path or name, returns the respective country code
 
     :param path: name or path of an HETUS file
-    :type path: str
     :return: country code of the file
-    :rtype: str
     """
     name = os.path.basename(path)
     return name.removeprefix(HETUS_FILENAME_PREFIX).removesuffix(HETUS_FILENAME_SUFFIX)
@@ -45,9 +42,7 @@ def get_hetus_file_names(path: str = HETUS_PATH) -> dict[str, str]:
     file paths.
 
     :param path: path to the HETUS directory, defaults to HETUS_PATH
-    :type path: str, optional
     :return: dict containing contry codes and file paths
-    :rtype: dict[str, str]
     """
     filenames = os.listdir(path)
     filenames_by_country = {}
@@ -67,7 +62,6 @@ def build_dtype_dict() -> dict[str, type]:
     codes are not lost
 
     :return: dtype dictionary for parsing with pandas
-    :rtype: dict[str, type]
     """
     columns = [
         "Mact",
@@ -96,9 +90,7 @@ def load_hetus_file_from_path(path: str) -> pd.DataFrame:
     Loads a single HETUS file
 
     :param path: the path of the file
-    :type path: str
     :return: HETUS data from the file
-    :rtype: pd.DataFrame
     """
     assert os.path.isfile(path), f"File not found: {path}"
     logging.debug(f"Loading HETUS file for {get_country(path)}")
@@ -117,10 +109,8 @@ def load_hetus_file(country: str) -> pd.DataFrame:
     Loads HETUS data of a sinlge country
 
     :param country: the country code (e.g., "DE" for germany)
-    :type country: str
     :raises RuntimeError: invalid country code
     :return: HETUS data for the country
-    :rtype: pd.DataFrame
     """
     filenames = get_hetus_file_names()
     if country.upper() not in filenames.keys():
@@ -133,9 +123,7 @@ def load_hetus_files(countries: Iterable[str]) -> pd.DataFrame:
     Loads HETUS data of multiple countries.
 
     :param countries: a list of country codes (e.g., "DE" for germany)
-    :type countries: Iterable[str]
     :return: HETUS data for the countries
-    :rtype: pd.DataFrame
     """
     data = pd.concat(load_hetus_file(country) for country in countries)
     return data
@@ -146,9 +134,7 @@ def load_all_hetus_files(path: str = HETUS_PATH) -> pd.DataFrame:
     Loads all available HETUS files.
 
     :param path: the HETUS data folder, defaults to HETUS_PATH
-    :type path: str, optional
     :return: HETUS data for all available countries
-    :rtype: pd.DataFrame
     """
     start = time.time()
     filenames = get_hetus_file_names(path)
@@ -168,9 +154,7 @@ def load_all_hetus_files_except_AT(path: str = HETUS_PATH) -> pd.DataFrame:
     which can cause problems.
 
     :param path: the HETUS data folder, defaults to HETUS_PATH
-    :type path: str, optional
     :return: HETUS data for all available countries except for Austria
-    :rtype: pd.DataFrame
     """
     start = time.time()
     filenames = get_hetus_file_names(path)

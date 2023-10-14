@@ -24,12 +24,9 @@ def limit_to_columns_by_level(
     on person and diary level.
 
     :param data: general HETUS data set
-    :type data: pd.DataFrame
     :param level: the desired level
-    :type level: Type[col.HetusLevel]
     :return: data set containing only columns that are relevant on the
              desired level
-    :rtype: pd.DataFrame
     """
     # remove index and content columns below the specified level
     limited_data = data.reset_index().set_index(level.KEY)[level.CONTENT]
@@ -46,15 +43,11 @@ def group_rows_by_level(
     through the agg_mode parameter.
 
     :param data: general HETUS data set
-    :type data: pd.DataFrame
     :param level: the desired level
-    :type level: Type[col.HetusLevel]
     :param agg_mode: if True, uses the mode (most frequent value) for all
                         group level data, else the first value,
                         defaults to False
-    :type agg_mode: bool, optional
     :return: group-level data set
-    :rtype: pd.DataFrame
     """
     start = time.time()
     # select relevant columns and set country and HID as index
@@ -82,11 +75,8 @@ def get_consistent_groups(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd
     contradicting household sizes for the same household.
 
     :param data: DataFrame with inconsistent household data
-    :type data: pd.DataFrame
     :param level: the desired level
-    :type level: Type[col.HetusLevel]
     :return: Index containing only consistent households
-    :rtype: pd.Index
     """
     # only keep columns on the specified level
     data = data[level.CONTENT]
@@ -113,11 +103,8 @@ def get_inconsistent_columns(
     columns without inconsistencies.
 
     :param data: general HETUS data
-    :type data: pd.DataFrame
     :param level: the level to check for inconsistencies
-    :type level: Type[col.HetusLevel]
     :return: a Series containing the number of groups with inconsistent per column
-    :rtype: pd.Series
     """
     data = data[level.CONTENT]
     # get numbers of different values per household for each column
@@ -133,11 +120,8 @@ def get_usable_data_by_level(
     Extracts the usable data on the specified level. Exlcudes inconsistent entries.
 
     :param data: general HETUS data
-    :type data: pd.DataFrame
     :param level: the level on which the data will be extracted
-    :type level: Type[col.HetusLevel]
     :return: filtered full data set and level-specific data set
-    :rtype: tuple[pd.DataFrame, pd.DataFrame]
     """
     data = filter.filter_by_index(data, get_consistent_groups(data, level))
     persondata = limit_to_columns_by_level(data, level)
@@ -154,9 +138,7 @@ def get_complete_households(data: pd.DataFrame) -> pd.Index:
     households where each inhabitant took part in the survey.
 
     :param data: general HETUS data set
-    :type data: pd.DataFrame
     :return: complete households
-    :rtype: pd.DataFrame
     """
     data = data.reset_index().set_index(col.HH.KEY)
     # group by household
@@ -178,9 +160,7 @@ def get_usable_household_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Data
     Removes entries with incomplete or inconsistent data.
 
     :param data: general HETUS data set
-    :type data: pd.DataFrame
     :return: filtered full data set and household data set
-    :rtype: tuple[pd.DataFrame, pd.DataFrame]
     """
     data = filter.filter_by_index(data, get_complete_households(data))
     return get_usable_data_by_level(data, col.HH)
@@ -192,8 +172,6 @@ def get_usable_person_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFra
     Removes inconsisten entries.
 
     :param data: general HETUS data set
-    :type data: pd.DataFrame
     :return: filtered full data set and person data set
-    :rtype: tuple[pd.DataFrame, pd.DataFrame]
     """
     return get_usable_data_by_level(data, col.Person)
