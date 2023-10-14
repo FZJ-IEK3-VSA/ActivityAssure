@@ -111,5 +111,5 @@ def plot_heatmap_person(name: str, dir: str):
 
 if __name__ == "__main__":
     dir = ".\\data\\validation\\categories"
-    name = "cat_COUNTRY_INC1_Work Status_Day Type"
+    name = "cat_COUNTRY_sex_work status_day type"
     plot_heatmap_diary(name, dir)

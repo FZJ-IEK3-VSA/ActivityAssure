@@ -48,7 +48,9 @@ def plot_stacked_probability_curves(name: str, directory: str) -> None:
     plt.xlabel("Time [h]")
     plt.ylabel("Probability")
 
-    plot_filename = os.path.join(directory, "plots", f"{name}.svg")
+    plot_dir = os.path.join(directory, "plots")
+    os.makedirs(plot_dir, exist_ok=True)
+    plot_filename = os.path.join(plot_dir, f"{name}.svg")
     plt.savefig(plot_filename, transparent=True)
     plt.show()
 
