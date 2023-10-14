@@ -4,7 +4,7 @@ Functions for loading HETUS data files.
 
 import os
 import time
-from typing import Dict, Iterable
+from typing import Iterable
 import pandas as pd
 import logging
 
@@ -39,7 +39,7 @@ def get_country(path: str) -> str:
     return name.removeprefix(HETUS_FILENAME_PREFIX).removesuffix(HETUS_FILENAME_SUFFIX)
 
 
-def get_hetus_file_names(path: str = HETUS_PATH) -> Dict[str, str]:
+def get_hetus_file_names(path: str = HETUS_PATH) -> dict[str, str]:
     """
     Returns a dict containing all available HETUS countries and the respective
     file paths.
@@ -47,7 +47,7 @@ def get_hetus_file_names(path: str = HETUS_PATH) -> Dict[str, str]:
     :param path: path to the HETUS directory, defaults to HETUS_PATH
     :type path: str, optional
     :return: dict containing contry codes and file paths
-    :rtype: Dict[str, str]
+    :rtype: dict[str, str]
     """
     filenames = os.listdir(path)
     filenames_by_country = {}
@@ -60,14 +60,14 @@ def get_hetus_file_names(path: str = HETUS_PATH) -> Dict[str, str]:
     return filenames_by_country
 
 
-def build_dtype_dict() -> Dict[str, type]:
+def build_dtype_dict() -> dict[str, type]:
     """
     Generates a dictionary of dtypes for pandas.
     Sets all diary columns to str so that leading zeros in the diary
     codes are not lost
 
     :return: dtype dictionary for parsing with pandas
-    :rtype: Dict[str, type]
+    :rtype: dict[str, type]
     """
     columns = [
         "Mact",

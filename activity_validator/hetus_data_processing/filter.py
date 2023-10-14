@@ -4,7 +4,7 @@ Functions for filtering HETUS data based on various criteria
 
 
 import functools
-from typing import Any, Callable, Dict, Iterable, List, Union
+from typing import Any, Callable, Iterable
 import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_columns as col
@@ -16,22 +16,22 @@ from activity_validator.hetus_data_processing.utils import timing
 
 @timing
 def filter_discrete(
-    data: pd.DataFrame, column: str, allowed_values: List[int]
+    data: pd.DataFrame, column: str, allowed_values: list[int]
 ) -> pd.DataFrame:
     return data[data[column].isin(allowed_values)]
 
 
-def filter_by_weekday(data: pd.DataFrame, day_types: List[DayType]) -> pd.DataFrame:
+def filter_by_weekday(data: pd.DataFrame, day_types: list[DayType]) -> pd.DataFrame:
     return filter_discrete(data, col.Diary.WEEKDAY, day_types)
 
 
-def filter_by_month(data: pd.DataFrame, months: List[int]) -> pd.DataFrame:
+def filter_by_month(data: pd.DataFrame, months: list[int]) -> pd.DataFrame:
     return filter_discrete(data, col.Diary.MONTH, months)
 
 
 # @timing
 def filter_combined(
-    data: pd.DataFrame, conditions: Dict[str, List[Any]]
+    data: pd.DataFrame, conditions: dict[str, list[Any]]
 ) -> pd.DataFrame:
     masks = [data[k].isin(v) for k, v in conditions.items()]
     combined_mask = functools.reduce(lambda m1, m2: m1 & m2, masks)
@@ -48,7 +48,7 @@ def filter_stats(func: Callable, name, data, *args, **kwargs) -> pd.DataFrame:
 
 
 def filter_no_data(
-    data: pd.DataFrame, columns: Union[str, Iterable[str]], invert: bool = False
+    data: pd.DataFrame, columns: str | Iterable[str], invert: bool = False
 ) -> pd.DataFrame:
     """
     Removes all entries with mnissing data (negative values) in any of the specified columns.

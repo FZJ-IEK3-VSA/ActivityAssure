@@ -4,7 +4,7 @@ Functions for extracting data on a specific level from a general HETUS data set
 
 import logging
 import time
-from typing import List, Tuple, Type
+from typing import Type
 import numpy as np
 import pandas as pd
 
@@ -128,7 +128,7 @@ def get_inconsistent_columns(
 
 def get_usable_data_by_level(
     data: pd.DataFrame, level: Type[col.HetusLevel]
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Extracts the usable data on the specified level. Exlcudes inconsistent entries.
 
@@ -137,7 +137,7 @@ def get_usable_data_by_level(
     :param level: the level on which the data will be extracted
     :type level: Type[col.HetusLevel]
     :return: filtered full data set and level-specific data set
-    :rtype: Tuple[pd.DataFrame, pd.DataFrame]
+    :rtype: tuple[pd.DataFrame, pd.DataFrame]
     """
     data = filter.filter_by_index(data, get_consistent_groups(data, level))
     persondata = limit_to_columns_by_level(data, level)
@@ -172,7 +172,7 @@ def get_complete_households(data: pd.DataFrame) -> pd.Index:
     return complete
 
 
-def get_usable_household_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def get_usable_household_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Extracts the data on household-level from the specified data set.
     Removes entries with incomplete or inconsistent data.
@@ -180,13 +180,13 @@ def get_usable_household_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Data
     :param data: general HETUS data set
     :type data: pd.DataFrame
     :return: filtered full data set and household data set
-    :rtype: Tuple[pd.DataFrame, pd.DataFrame]
+    :rtype: tuple[pd.DataFrame, pd.DataFrame]
     """
     data = filter.filter_by_index(data, get_complete_households(data))
     return get_usable_data_by_level(data, col.HH)
 
 
-def get_usable_person_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def get_usable_person_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Extracts the data on person-level from the data set.
     Removes inconsisten entries.
@@ -194,6 +194,6 @@ def get_usable_person_data(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFra
     :param data: general HETUS data set
     :type data: pd.DataFrame
     :return: filtered full data set and person data set
-    :rtype: Tuple[pd.DataFrame, pd.DataFrame]
+    :rtype: tuple[pd.DataFrame, pd.DataFrame]
     """
     return get_usable_data_by_level(data, col.Person)

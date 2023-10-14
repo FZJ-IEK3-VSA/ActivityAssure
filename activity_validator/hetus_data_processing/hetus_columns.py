@@ -6,14 +6,13 @@ converted to upper case after parsing.
 """
 
 import abc
-from typing import List
 
 
 class HetusLevel(abc.ABC):
     NAME = ""
     ID = ""
-    KEY: List[str] = []
-    CONTENT: List[str] = []
+    KEY: list[str] = []
+    CONTENT: list[str] = []
 
 
 class Year(HetusLevel):

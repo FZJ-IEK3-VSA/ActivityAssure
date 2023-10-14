@@ -6,7 +6,7 @@ These can then be used for validation.
 from collections import Counter
 import itertools
 import logging
-from typing import Any, Iterable
+from typing import Iterable
 import numpy as np
 import pandas as pd
 
@@ -21,7 +21,7 @@ from activity_validator.lpgvalidation.validation_data import ValidationData
 
 
 @utils.timing
-def collect_activities(data: pd.DataFrame) -> dict[Any, list[ActivityProfileEntry]]:
+def collect_activities(data: pd.DataFrame) -> dict[tuple, list[ActivityProfileEntry]]:
     """
     Finds activities in each diary entry, meaning all blocks of time slots with
     the same activity code.
@@ -30,7 +30,7 @@ def collect_activities(data: pd.DataFrame) -> dict[Any, list[ActivityProfileEntr
     :return: a dict mapping each diary entry index to the corresponding list of
              activities
     """
-    activity_profiles: dict[Any, list[ActivityProfileEntry]] = {}
+    activity_profiles: dict[tuple, list[ActivityProfileEntry]] = {}
     # iterate through all diary entries
     for index, row in data.iterrows():
         activity_profile = []
@@ -41,7 +41,7 @@ def collect_activities(data: pd.DataFrame) -> dict[Any, list[ActivityProfileEntr
             length = len(l)
             activity_profile.append(ActivityProfileEntry(code, start, length))
             start += length
-        activity_profiles[index] = activity_profile
+        activity_profiles[index] = activity_profile  # type: ignore
     return activity_profiles
 
 
@@ -114,7 +114,7 @@ def calc_probability_profiles(data: pd.DataFrame) -> pd.DataFrame:
 
 
 @utils.timing
-def calc_statistics_per_category(categories: dict[Any, pd.DataFrame]) -> None:
+def calc_statistics_per_category(categories: dict[tuple, pd.DataFrame]) -> None:
     """
     Calculates all required characteristics for each diary category in the
     HETUS data separately
@@ -132,7 +132,7 @@ def calc_statistics_per_category(categories: dict[Any, pd.DataFrame]) -> None:
         activity_profiles = collect_activities(a1)
         frequencies = calc_activity_group_frequencies(activity_profiles.values())
         durations = calc_activity_group_durations(activity_profiles.values())
-        profile_type = ProfileType.from_strs(cat)
+        profile_type = ProfileType.from_iterable(cat)
         vd = ValidationData(profile_type, probabilities, frequencies, durations)
         vd.save(utils.VALIDATION_DATA_PATH)
 

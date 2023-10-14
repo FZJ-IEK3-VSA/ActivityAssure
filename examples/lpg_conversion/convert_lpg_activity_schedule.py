@@ -3,7 +3,6 @@ import json
 import os
 import pathlib
 import sqlite3
-from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -18,11 +17,11 @@ def load_activity_profile_from_db(file: str):
     cur = con.cursor()
     query = "SELECT * FROM PerformedActions"
     results = cur.execute(query)
-    activity_list: List[Tuple[str, str]] = results.fetchall()
+    activity_list: list[tuple[str, str]] = results.fetchall()
     # parse the json info column for each activity
     parsed_json_list = [json.loads(act) for name, act in activity_list]
     # sort activities by person
-    rows_by_person: Dict[str, list[tuple[int, datetime, str]]] = {}
+    rows_by_person: dict[str, list[tuple[int, datetime, str]]] = {}
     for entry in parsed_json_list:
         start_date = datetime.fromisoformat(entry["DateTime"])
         affordance = entry["AffordanceName"]

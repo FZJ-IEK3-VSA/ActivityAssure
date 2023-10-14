@@ -4,21 +4,20 @@ This module provides functions for translating HETUS columns and codes to readab
 
 import json
 from enum import EnumType
-import os  # type: ignore
-from typing import Dict, Optional, Union
+import os
 
 import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 
 
-def load_hetus_activity_codes() -> Dict[str, str]:
+def load_hetus_activity_codes() -> dict[str, str]:
     """
-    Imports the HETUS Activity Coding List from json.
+    Imports the HETUS Activity Coding list from json.
     Contains 1, 2 and 3-digit codes.
 
     :return: dict mapping each code with its description
-    :rtype: Dict[str, str]
+    :rtype: dict[str, str]
     """
     filename = "data/input/hetus_activity_codes_2010.json"
     if not os.path.isfile(filename):
@@ -51,7 +50,7 @@ def translate_activity_codes_index(data: pd.DataFrame) -> None:
 def translate_column(
     data: pd.DataFrame,
     column: str,
-    column_new: Optional[str] = None,
+    column_new: str | None = None,
     value_translation: EnumType | dict | None = None,
 ) -> None:
     """
@@ -65,7 +64,7 @@ def translate_column(
     :param column_new: optional new name of the column, defaults to None
     :type column_new: Optional[str], optional
     :param value_translation: translation for the column values; can be an enum type or a dict, defaults to None
-    :type value_translation: Union[EnumType, Dict], optional
+    :type value_translation: Union[EnumType, dict], optional
     """
     if isinstance(value_translation, EnumType):
         # create a dict that maps all enum int values to names

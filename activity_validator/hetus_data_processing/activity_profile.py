@@ -4,7 +4,7 @@ Defines classes for activity profiles
 
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 import pandas as pd
@@ -42,7 +42,7 @@ class ProfileType:
         )
 
     @staticmethod
-    def from_strs(values: Iterable[str]) -> "ProfileType":
+    def from_iterable(values: Iterable[str]) -> "ProfileType":
         """
         Creates a ProfileType object from an iterable containing
         the characteristics as strings.
@@ -65,7 +65,7 @@ class ProfileType:
         return profile_type
 
 
-def write_timedelta(d: Optional[timedelta]) -> Optional[str]:
+def write_timedelta(d: timedelta | None) -> str | None:
     """
     Converts a timedelta into a str. Necessary to correctly
     represent None as null in json.
@@ -346,4 +346,4 @@ class HHActivityProfiles:
 
     activity_profiles: dict[str, ActivityProfile] = field(default_factory=dict)
 
-    household: Optional[str] = None
+    household: str | None = None

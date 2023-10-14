@@ -4,7 +4,6 @@ different criteria
 """
 
 import logging
-from typing import Any, Dict, List
 import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_columns as col
@@ -62,7 +61,7 @@ def get_hh_categorization_data(
 
 
 @utils.timing
-def categorize(data: pd.DataFrame, key: List[str]) -> Dict[Any, pd.DataFrame]:
+def categorize(data: pd.DataFrame, key: list[str]) -> dict[tuple, pd.DataFrame]:
     categories = data.groupby(key)
     # create separate index without country for a better overview
     cat_index = key.copy()

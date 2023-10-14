@@ -7,7 +7,7 @@ import logging
 import operator
 import os
 import pathlib
-from typing import Iterable, List
+from typing import Iterable, list
 
 import pandas as pd
 
@@ -38,7 +38,7 @@ def load_person_characteristics(path: str) -> dict:
 @utils.timing
 def load_activity_profiles_from_csv(
     dir: str, person_trait_file: str, resolution: timedelta = DEFAULT_RESOLUTION
-) -> List[ActivityProfile]:
+) -> list[ActivityProfile]:
     """Loads the activity profiles in json format from the specified folder"""
     person_traits = load_person_characteristics(person_trait_file)
     activity_profiles = []
@@ -54,7 +54,7 @@ def load_activity_profiles_from_csv(
 
 
 @utils.timing
-def load_activity_profiles_from_json(dir: str) -> List[ActivityProfile]:
+def load_activity_profiles_from_json(dir: str) -> list[ActivityProfile]:
     """Loads the activity profiles in json format from the specified folder"""
     activity_profiles = []
     # collect all files in the directory
@@ -204,7 +204,7 @@ def load_validation_data(
     ), "Missing data for some of the profile types"
     # TODO: convert profile_type from tuple to class ProfileType
     return {
-        (p := ProfileType.from_strs(category)): ValidationData(
+        (p := ProfileType.from_iterable(category)): ValidationData(
             p,
             prob_data,
             activity_frequency_data[category],

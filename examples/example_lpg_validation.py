@@ -8,7 +8,6 @@ from activity_validator.lpgvalidation import lpgvalidation
 
 if __name__ == "__main__":
     # TODO: some general todos
-    # - replace all old type annotations like Dict, List, Tuple, etc. with lowercase variants (dict etc.)
     # - remove all type info from docstrings (not needed anymore)
     # - activity profile in time-step format: no resampling, time step size needs to be specified;
     #   class needs additional attributes for resolution and start time

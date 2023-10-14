@@ -4,7 +4,6 @@ Defines classes for storing and handling activity profile validation data.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 import pandas as pd
 

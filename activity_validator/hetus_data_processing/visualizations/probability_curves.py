@@ -2,16 +2,12 @@
 Plots probability profiles for activity groups
 """
 
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 import os
-from typing import Any, List, Tuple
 import pandas as pd
 import seaborn as sns
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 import matplotlib.dates
-import numpy as np
 
 
 def plot_stacked_probability_curves(name: str, directory: str) -> None:
