@@ -11,7 +11,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
 )
 
 import activity_validator.hetus_data_processing.hetus_columns as col
-from activity_validator.hetus_data_processing import utils
+from activity_validator.hetus_data_processing import hetus_constants, utils
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
     person_attributes,
@@ -90,6 +90,10 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
     print(category_sizes)
     utils.save_df(category_sizes, "categories", "cat", key)
     return [
-        ExpandedActivityProfiles(categories.get_group(g), ProfileType.from_iterable(g))
+        ExpandedActivityProfiles(
+            categories.get_group(g),
+            ProfileType.from_iterable(g),  # type: ignore
+            hetus_constants.PROFILE_OFFSET,
+        )
         for g in categories.groups
     ]

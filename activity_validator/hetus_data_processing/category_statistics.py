@@ -18,7 +18,6 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
     ActivityProfileEntry,
-    ProfileType,
 )
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
@@ -110,7 +109,7 @@ def calc_activity_group_durations(
         # TODO: replace parameter with activity profile and use correct resolution here
         durations_by_activity.setdefault(a.name, []).append(a.duration * resolution)
     # turn into a DataFrame to calculate statistics (list comprehension is necessary
-    # due to unequal list lengths)
+    # due to different list lengths)
     durations_series = [pd.Series(d, name=k) for k, d in durations_by_activity.items()]
     durations = pd.concat(durations_series, axis=1)
     return durations.describe()

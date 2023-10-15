@@ -3,6 +3,7 @@ Defines classes for activity profiles
 """
 
 from datetime import datetime, time, timedelta
+import itertools
 from pathlib import Path
 from typing import Collection
 from dataclasses import dataclass, field
@@ -65,6 +66,27 @@ class ProfileType:
         return profile_type
 
 
+def get_person_traits(
+    person_traits: dict[str, ProfileType], filename: str
+) -> ProfileType:
+    """
+    Extracts the person name from the path of an activity profile file
+    and returns the matching ProfileType object with the person
+    characteristics.
+
+    :param person_traits: the person trait dict
+    :param filepath: path of the activity profile file, contains the
+                     name of the person
+    :raises RuntimeError: when no characteristics for the person were
+                          found
+    :return: the characteristics of the person
+    """
+    name = Path(filename).stem
+    if name not in person_traits:
+        raise RuntimeError(f"No person characteristics found for '{name}'")
+    return person_traits[name]
+
+
 def write_timedelta(d: timedelta | None) -> str | None:
     """
     Converts a timedelta into a str. Necessary to correctly
@@ -124,6 +146,16 @@ class ActivityProfileEntry:
         assert self.duration > 0, f"Invalid duration: {self.duration}"
         return self.start + self.duration
 
+    def expand(self) -> list[str]:
+        """
+        Provides this activity in expanded format: a list of fixed length
+        time slots with the same code, corresponding to the duration of the
+        activity.
+
+        :return: activity in expanded format
+        """
+        return [self.name] * self.duration
+
     def split(
         self, first_split: int, timesteps_per_day: int
     ) -> list["ActivityProfileEntry"]:
@@ -149,27 +181,6 @@ class ActivityProfileEntry:
         # fix duration of last section
         entries[-1].duration = self.end() - entries[-1].start
         return entries
-
-
-def get_person_traits(
-    person_traits: dict[str, ProfileType], filepath: str
-) -> ProfileType:
-    """
-    Extracts the person name from the path of an activity profile file
-    and returns the matching ProfileType object with the person
-    characteristics.
-
-    :param person_traits: the person trait dict
-    :param filepath: path of the activity profile file, contains the
-                     name of the person
-    :raises RuntimeError: when no characteristics for the person were
-                          found
-    :return: the characteristics of the person
-    """
-    name = Path(filepath).stem
-    if name not in person_traits:
-        raise RuntimeError(f"No person characteristics found for '{name}'")
-    return person_traits[name]
 
 
 @dataclass_json
@@ -270,6 +281,18 @@ class SparseActivityProfile:
     def duration(self) -> timedelta:
         return self.length() * self.resolution
 
+    def expand(self) -> list[str]:
+        """
+        Provides this activity profile in expanded format.
+
+        :return: expanded activity profile
+        """
+        profile = list(
+            itertools.chain.from_iterable(a.expand() for a in self.activities)
+        )
+        assert len(profile) == self.length()
+        return profile
+
     def split_into_day_profiles(
         self,
         split_offset: timedelta = hetus_constants.PROFILE_OFFSET,
@@ -338,12 +361,44 @@ class ExpandedActivityProfiles:
     of one category
     """
 
-    data: pd.DataFrame
-    profile_type: ProfileType
-
-    def __init__(self, data: pd.DataFrame, profile_type: ProfileType) -> None:
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        profile_type: ProfileType,
+        offset: timedelta = hetus_constants.PROFILE_OFFSET,
+    ) -> None:
         self.data = data
         self.profile_type = profile_type
+        self.offset = offset
+
+    @staticmethod
+    def from_sparse_profiles(profiles: list[SparseActivityProfile]):
+        """
+        Converts a list of activity profiles from sparse to expanded
+        format. Stores all profiles in a single object. All profiles
+        must be of the same category.
+
+        :param profiles: list of sparse profiles to convert
+        :return: profile set in expanded format
+        """
+        offset = profiles[0].offset
+        profile_type = profiles[0].profile_type
+        # check that all profiles have the same properties
+        assert all(
+            p.offset == offset for p in profiles
+        ), "Profiles have different offsets"
+        assert all(
+            p.profile_type == profile_type for p in profiles
+        ), "Profiles have different profile types"
+        # expand the profiles
+        rows = [p.expand() for p in profiles]
+        length = len(rows[0])
+        assert all(
+            len(row) == length for row in rows
+        ), "Profiles have different lengths"
+        column_names = [f"Timestep {i}" for i in range(1, length)]
+        data = pd.DataFrame(rows, columns=column_names)
+        return ExpandedActivityProfiles(data, profile_type, offset)
 
 
 @dataclass_json

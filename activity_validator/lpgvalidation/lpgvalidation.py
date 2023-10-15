@@ -1,6 +1,6 @@
 """Main module"""
 
-from datetime import time, timedelta
+from datetime import timedelta
 import functools
 import json
 import logging
@@ -14,6 +14,7 @@ import pandas as pd
 
 from activity_validator.hetus_data_processing.activity_profile import (
     DEFAULT_RESOLUTION,
+    ExpandedActivityProfiles,
     SparseActivityProfile,
     ActivityProfileEntry,
     ProfileType,
@@ -222,9 +223,11 @@ def compare_to_validation_data(
     frequencies = category_statistics.calc_activity_group_frequencies(profiles)
     durations = category_statistics.calc_activity_group_durations(profiles)
 
-    # TODO convert to dataframe
-    data = None
-    probabilities = category_statistics.calc_probability_profiles(data)
+    # convert to expanded format
+    profile_set = ExpandedActivityProfiles.from_sparse_profiles(profiles)
+    probabilities = category_statistics.calc_probability_profiles(profile_set.data)
     input_data = ValidationData(
         profiles[0].profile_type, probabilities, frequencies, durations
     )
+    # TODO save results
+    # TODO calc comparison metrics
