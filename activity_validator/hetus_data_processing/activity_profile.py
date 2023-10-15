@@ -4,7 +4,7 @@ Defines classes for activity profiles
 
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import Iterable
+from typing import Collection
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 import pandas as pd
@@ -42,7 +42,7 @@ class ProfileType:
         )
 
     @staticmethod
-    def from_iterable(values: Iterable[str]) -> "ProfileType":
+    def from_iterable(values: Collection[str]) -> "ProfileType":
         """
         Creates a ProfileType object from an iterable containing
         the characteristics as strings.
@@ -50,6 +50,8 @@ class ProfileType:
         :param values: the characteristics as strs
         :return: the corresponding ProfileType object
         """
+        assert len(values) == 4, f"Invalid number of characteristics: {values}"
+        # extract characteristics
         country, sex, work_status, day_type = values
         try:
             profile_type = ProfileType(
@@ -59,7 +61,7 @@ class ProfileType:
                 diary_attributes.DayType(day_type),
             )
         except KeyError as e:
-            assert False, f"Invalid key: {e}"
+            assert False, f"Invalid enum key: {e}"
         return profile_type
 
 
@@ -172,8 +174,7 @@ def get_person_traits(
 
 @dataclass_json
 @dataclass
-class ActivityProfile:
-    # TODO rename to SparseProfile
+class SparseActivityProfile:
     """
     Class for storing a single activity profile, of a single person
     on a single day.
@@ -197,7 +198,7 @@ class ActivityProfile:
         path,
         person_traits: dict[str, ProfileType],
         resolution: timedelta = DEFAULT_RESOLUTION,
-    ) -> "ActivityProfile":
+    ) -> "SparseActivityProfile":
         """
         Loads an ActivityProfile from a csv file.
 
@@ -221,7 +222,7 @@ class ActivityProfile:
             0
         ), "Start time has to be a divisor of the resolution"
         profile_type = get_person_traits(person_traits, path)
-        profile = ActivityProfile(entries, offset, resolution, profile_type)
+        profile = SparseActivityProfile(entries, offset, resolution, profile_type)
         profile.remove_timestep_offset()
         profile.calc_durations()
         # remove the last activity (duration is unknown)
@@ -272,7 +273,7 @@ class ActivityProfile:
     def split_into_day_profiles(
         self,
         split_offset: timedelta = hetus_constants.PROFILE_OFFSET,
-    ) -> list["ActivityProfile"]:
+    ) -> list["SparseActivityProfile"]:
         """
         Splits this activity profile into multiple single-day profiles using the
         specified split_offset as splitting time for each day.
@@ -293,7 +294,7 @@ class ActivityProfile:
             # first split is on the next day
             next_split += timesteps_per_day
 
-        day_profiles: list[ActivityProfile] = []
+        day_profiles: list[SparseActivityProfile] = []
         current_day_profile: list[ActivityProfileEntry] = []
         for activity in self.activities:
             if activity.end() >= next_split:
@@ -303,7 +304,7 @@ class ActivityProfile:
                 # add the profile for the past day
                 current_day_profile.append(split_sections[0])
                 day_profiles.append(
-                    ActivityProfile(
+                    SparseActivityProfile(
                         current_day_profile,
                         split_offset,
                         self.resolution,
@@ -312,7 +313,7 @@ class ActivityProfile:
                 )
                 # add intermediate 24 h split sections as separate profile
                 day_profiles.extend(
-                    ActivityProfile(
+                    SparseActivityProfile(
                         [a],
                         split_offset,
                         self.resolution,
@@ -331,6 +332,20 @@ class ActivityProfile:
         return day_profiles
 
 
+class ExpandedActivityProfiles:
+    """
+    Contains multiple activity profiles in expanded format (HETUS-like)
+    of one category
+    """
+
+    data: pd.DataFrame
+    profile_type: ProfileType
+
+    def __init__(self, data: pd.DataFrame, profile_type: ProfileType) -> None:
+        self.data = data
+        self.profile_type = profile_type
+
+
 @dataclass_json
 @dataclass
 class HHActivityProfiles:
@@ -338,6 +353,6 @@ class HHActivityProfiles:
     Bundles the activity profiles from all people in one household
     """
 
-    activity_profiles: dict[str, ActivityProfile] = field(default_factory=dict)
+    activity_profiles: dict[str, SparseActivityProfile] = field(default_factory=dict)
 
     household: str | None = None

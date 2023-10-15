@@ -5,6 +5,10 @@ different criteria
 
 import logging
 import pandas as pd
+from activity_validator.hetus_data_processing.activity_profile import (
+    ExpandedActivityProfiles,
+    ProfileType,
+)
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import utils
@@ -61,7 +65,16 @@ def get_hh_categorization_data(
 
 
 @utils.timing
-def categorize(data: pd.DataFrame, key: list[str]) -> dict[tuple, pd.DataFrame]:
+def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfiles]:
+    """
+    Groups all entries into categories, depending on the categorization
+    keys. Each value combination of the specified key columns results in a
+    separate category.
+
+    :param data: the data to categorize
+    :param key: the column names to use for categorization
+    :return: the separated data sets for all categories
+    """
     categories = data.groupby(key)
     # create separate index without country for a better overview
     cat_index = key.copy()
@@ -76,4 +89,7 @@ def categorize(data: pd.DataFrame, key: list[str]) -> dict[tuple, pd.DataFrame]:
     )
     print(category_sizes)
     utils.save_df(category_sizes, "categories", "cat", key)
-    return {g: categories.get_group(g) for g in categories.groups}
+    return [
+        ExpandedActivityProfiles(categories.get_group(g), ProfileType.from_iterable(g))
+        for g in categories.groups
+    ]

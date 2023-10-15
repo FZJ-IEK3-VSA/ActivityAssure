@@ -14,7 +14,7 @@ import pandas as pd
 
 from activity_validator.hetus_data_processing.activity_profile import (
     DEFAULT_RESOLUTION,
-    ActivityProfile,
+    SparseActivityProfile,
     ActivityProfileEntry,
     ProfileType,
 )
@@ -38,14 +38,14 @@ def load_person_characteristics(path: str) -> dict:
 @utils.timing
 def load_activity_profiles_from_csv(
     dir: str, person_trait_file: str, resolution: timedelta = DEFAULT_RESOLUTION
-) -> list[ActivityProfile]:
+) -> list[SparseActivityProfile]:
     """Loads the activity profiles in json format from the specified folder"""
     person_traits = load_person_characteristics(person_trait_file)
     activity_profiles = []
     for filename in os.listdir(dir):
         path = os.path.join(dir, filename)
         if os.path.isfile(path):
-            activity_profile = ActivityProfile.load_from_csv(
+            activity_profile = SparseActivityProfile.load_from_csv(
                 path, person_traits, resolution
             )
             activity_profiles.append(activity_profile)
@@ -54,7 +54,7 @@ def load_activity_profiles_from_csv(
 
 
 @utils.timing
-def load_activity_profiles_from_json(dir: str) -> list[ActivityProfile]:
+def load_activity_profiles_from_json(dir: str) -> list[SparseActivityProfile]:
     """Loads the activity profiles in json format from the specified folder"""
     activity_profiles = []
     # collect all files in the directory
@@ -63,15 +63,15 @@ def load_activity_profiles_from_json(dir: str) -> list[ActivityProfile]:
         if os.path.isfile(path):
             with open(path, encoding="utf-8") as f:
                 file_content = f.read()
-                activity_profile = ActivityProfile.from_json(file_content)  # type: ignore
+                activity_profile = SparseActivityProfile.from_json(file_content)  # type: ignore
             activity_profiles.append(activity_profile)
     logging.info(f"Loaded {len(activity_profiles)} activity profiles")
     return activity_profiles
 
 
 def filter_complete_day_profiles(
-    activity_profiles: Iterable[ActivityProfile],
-) -> list[ActivityProfile]:
+    activity_profiles: Iterable[SparseActivityProfile],
+) -> list[SparseActivityProfile]:
     """
     Get only all complete day profiles, which are actually 24 h long
 
@@ -82,9 +82,9 @@ def filter_complete_day_profiles(
 
 
 def filter_min_activity_count(
-    activity_profiles: Iterable[ActivityProfile],
+    activity_profiles: Iterable[SparseActivityProfile],
     min_activities: int = 1,
-) -> list[ActivityProfile]:
+) -> list[SparseActivityProfile]:
     """
     Get only all day profiles with a minimum number of activities
 
@@ -105,7 +105,7 @@ def is_work_activity(activity: ActivityProfileEntry) -> bool:
     return activity.name in WORK_ACTIVITIES
 
 
-def determine_day_type(activity_profile: ActivityProfile) -> None:
+def determine_day_type(activity_profile: SparseActivityProfile) -> None:
     """
     Determines and sets the day type for the activity profile by checking
     the total time spent with work activities.
@@ -136,8 +136,8 @@ def determine_day_type(activity_profile: ActivityProfile) -> None:
 
 
 def extract_day_profiles(
-    activity_profile: ActivityProfile, day_offset: timedelta = PROFILE_OFFSET
-) -> list[ActivityProfile]:
+    activity_profile: SparseActivityProfile, day_offset: timedelta = PROFILE_OFFSET
+) -> list[SparseActivityProfile]:
     day_profiles = activity_profile.split_into_day_profiles(day_offset)
     # this also removes profiles with missing activity durations
     day_profiles = filter_complete_day_profiles(day_profiles)
@@ -148,8 +148,8 @@ def extract_day_profiles(
 
 
 def group_profiles_by_type(
-    activity_profiles: list[ActivityProfile],
-) -> dict[ProfileType, list[ActivityProfile]]:
+    activity_profiles: list[SparseActivityProfile],
+) -> dict[ProfileType, list[SparseActivityProfile]]:
     """
     Determines day type for each day profile and groups
     the profiles by their overall type.
@@ -158,7 +158,7 @@ def group_profiles_by_type(
     :return: a dict mapping each profile type to the respective
              profiles
     """
-    profiles_by_type: dict[ProfileType, list[ActivityProfile]] = {}
+    profiles_by_type: dict[ProfileType, list[SparseActivityProfile]] = {}
     for profile in activity_profiles:
         # set day type property
         determine_day_type(profile)
@@ -196,7 +196,6 @@ def load_validation_data(
         == activity_frequency_data.keys()
         == activity_duration_data.keys()
     ), "Missing data for some of the profile types"
-    # TODO: convert profile_type from tuple to class ProfileType
     return {
         (p := ProfileType.from_iterable(category)): ValidationData(
             p,
@@ -210,7 +209,7 @@ def load_validation_data(
 
 def filter_relevant_validation_data(
     validation_data_dict: dict[ProfileType, ValidationData],
-    activity_profiles: ActivityProfile,
+    activity_profiles: SparseActivityProfile,
 ):
     # TODO: if necessary, also  filter validation data that does not match the
     # ProfileType exactly, but is e.g. from another country
@@ -218,14 +217,10 @@ def filter_relevant_validation_data(
 
 
 def compare_to_validation_data(
-    profiles: list[ActivityProfile], validation_data: ValidationData
+    profiles: list[SparseActivityProfile], validation_data: ValidationData
 ):
-    # TODO: calculator class, die die calc-Methoden erhählt und den Result path speichert
-    activity_profile_list = [p.activities for p in profiles]
-    frequencies = category_statistics.calc_activity_group_frequencies(
-        activity_profile_list
-    )
-    durations = category_statistics.calc_activity_group_durations(activity_profile_list)
+    frequencies = category_statistics.calc_activity_group_frequencies(profiles)
+    durations = category_statistics.calc_activity_group_durations(profiles)
 
     # TODO convert to dataframe
     data = None
