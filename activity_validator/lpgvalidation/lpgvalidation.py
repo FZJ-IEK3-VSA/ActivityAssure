@@ -170,12 +170,12 @@ def group_profiles_by_type(
     return profiles_by_type
 
 
-def load_validation_data_subdir(path: pathlib.Path) -> dict[tuple, pd.DataFrame]:
+def load_validation_data_subdir(path: Path) -> dict[tuple, pd.DataFrame]:
     return dict(utils.load_df(p) for p in path.iterdir() if p.is_file())
 
 
 def load_validation_data(
-    path: pathlib.Path = utils.VALIDATION_DATA_PATH,
+    path: Path = utils.VALIDATION_DATA_PATH,
 ) -> dict[ProfileType, ValidationData]:
     subdir_path = path / "probability_profiles"
     probability_profile_data = load_validation_data_subdir(subdir_path)

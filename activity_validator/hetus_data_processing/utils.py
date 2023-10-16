@@ -1,6 +1,6 @@
 import logging
 from functools import wraps
-import pathlib
+from pathlib import Path
 import time
 from typing import Iterable
 
@@ -8,7 +8,7 @@ import pandas as pd
 from tabulate import tabulate
 
 #: path for result data # TODO: move to config file
-VALIDATION_DATA_PATH = pathlib.Path() / "data" / "validation"
+VALIDATION_DATA_PATH = Path() / "data" / "validation"
 
 
 def save_df(
@@ -16,7 +16,7 @@ def save_df(
     subdir: str,
     name: str,
     category: Iterable,
-    base_path: pathlib.Path = VALIDATION_DATA_PATH,
+    base_path: Path = VALIDATION_DATA_PATH,
     ext: str = "csv",
 ) -> None:
     """
@@ -42,9 +42,9 @@ def save_df(
     logging.debug(f"Created DataFrame file {path}")
 
 
-def load_df(path: str | pathlib.Path) -> tuple[tuple, pd.DataFrame]:
+def load_df(path: str | Path) -> tuple[tuple, pd.DataFrame]:
     if isinstance(path, str):
-        path = pathlib.Path(path)
+        path = Path(path)
     components = tuple(path.stem.split("_"))
     basename = components[0]
     profile_type = components[1:]

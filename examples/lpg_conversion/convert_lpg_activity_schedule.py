@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import json
 import os
-import pathlib
+from pathlib import Path
 import sqlite3
 
 import pandas as pd
@@ -31,7 +31,7 @@ def load_activity_profile_from_db(file: str):
         rows_by_person.setdefault(person, []).append(activity_entry)
 
     # store the activities in a DataFrame
-    parent_dir = pathlib.Path(file).parent / "processed"
+    parent_dir = Path(file).parent / "processed"
     parent_dir.mkdir(parents=True, exist_ok=True)
     for person, rows in rows_by_person.items():
         data = pd.DataFrame(rows, columns=["Timestep", "Date", "Activity"])
