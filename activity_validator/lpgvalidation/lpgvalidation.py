@@ -6,7 +6,7 @@ import json
 import logging
 import operator
 import os
-import pathlib
+from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
@@ -218,7 +218,9 @@ def filter_relevant_validation_data(
 
 
 def compare_to_validation_data(
-    profiles: list[SparseActivityProfile], validation_data: ValidationData
+    profiles: list[SparseActivityProfile],
+    validation_data: ValidationData,
+    result_path: Path,
 ):
     frequencies = category_statistics.calc_activity_group_frequencies(profiles)
     durations = category_statistics.calc_activity_group_durations(profiles)
@@ -229,5 +231,5 @@ def compare_to_validation_data(
     input_data = ValidationData(
         profiles[0].profile_type, probabilities, frequencies, durations
     )
-    # TODO save results
+    input_data.save(result_path)
     # TODO calc comparison metrics

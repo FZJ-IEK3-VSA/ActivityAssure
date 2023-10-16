@@ -92,8 +92,9 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
     return [
         ExpandedActivityProfiles(
             categories.get_group(g),
-            ProfileType.from_iterable(g),  # type: ignore
+            (p := ProfileType.from_iterable(g)),  # type: ignore
             hetus_constants.PROFILE_OFFSET,
+            hetus_constants.get_resolution(p.country),
         )
         for g in categories.groups
     ]

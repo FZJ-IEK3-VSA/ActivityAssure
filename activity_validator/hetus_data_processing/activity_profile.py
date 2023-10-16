@@ -9,7 +9,7 @@ from typing import Collection
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 import pandas as pd
-from activity_validator.hetus_data_processing import hetus_constants
+from activity_validator.hetus_data_processing import hetus_constants, utils
 
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
@@ -365,12 +365,15 @@ class ExpandedActivityProfiles:
         self,
         data: pd.DataFrame,
         profile_type: ProfileType,
-        offset: timedelta = hetus_constants.PROFILE_OFFSET,
+        offset: timedelta,
+        resolution: timedelta,
     ) -> None:
         self.data = data
         self.profile_type = profile_type
         self.offset = offset
+        self.resolution = resolution
 
+    @utils.timing
     @staticmethod
     def from_sparse_profiles(profiles: list[SparseActivityProfile]):
         """
@@ -383,6 +386,7 @@ class ExpandedActivityProfiles:
         """
         offset = profiles[0].offset
         profile_type = profiles[0].profile_type
+        resolution = profiles[0].resolution
         # check that all profiles have the same properties
         assert all(
             p.offset == offset for p in profiles
@@ -390,6 +394,9 @@ class ExpandedActivityProfiles:
         assert all(
             p.profile_type == profile_type for p in profiles
         ), "Profiles have different profile types"
+        assert all(
+            p.resolution == resolution for p in profiles
+        ), "Profiles have different resolution"
         # expand the profiles
         rows = [p.expand() for p in profiles]
         length = len(rows[0])
@@ -398,7 +405,39 @@ class ExpandedActivityProfiles:
         ), "Profiles have different lengths"
         column_names = [f"Timestep {i}" for i in range(1, length)]
         data = pd.DataFrame(rows, columns=column_names)
-        return ExpandedActivityProfiles(data, profile_type, offset)
+        return ExpandedActivityProfiles(data, profile_type, offset, resolution)
+
+    @utils.timing
+    def create_sparse_profiles(self) -> list[SparseActivityProfile]:
+        """
+        Converts this set of activity profiles from expanded to sparse
+        format, i.e. each activity is represented by a single
+        activity profile entry object instead of a list of successive
+        time slots.
+
+        :return: list of activity profiles in sparse format
+        """
+        profiles: list[SparseActivityProfile] = []
+        # iterate through all diary entries
+        for index, row in self.data.iterrows():
+            entries = []
+            start = 0
+            # iterate through groups of consecutive slots with the same code
+            for code, group in itertools.groupby(row):
+                l = list(group)
+                length = len(l)
+                entries.append(ActivityProfileEntry(code, start, length))
+                start += length
+            # create ActivityProfile objects out of the activity entries
+            profiles.append(
+                SparseActivityProfile(
+                    entries,
+                    self.offset,
+                    self.resolution,
+                    self.profile_type,
+                )
+            )
+        return profiles
 
 
 @dataclass_json

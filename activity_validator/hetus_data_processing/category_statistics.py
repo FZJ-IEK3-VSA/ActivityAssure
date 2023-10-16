@@ -12,53 +12,15 @@ import numpy as np
 import pandas as pd
 
 from activity_validator.hetus_data_processing import hetus_translations
-from activity_validator.hetus_data_processing import hetus_constants
 from activity_validator.hetus_data_processing import utils
 from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
-    ActivityProfileEntry,
 )
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
 
 @utils.timing
-def expanded_to_sparse_profiles(
-    profile_set: ExpandedActivityProfiles,
-) -> list[SparseActivityProfile]:
-    """
-    Converts a set of activity profiles from expanded to sparse
-    format, i.e. each activity is represented by a single
-    activity profile entry object instead of a list of successive
-    time slots.
-
-    :param profile_set: activity profile set in expanded format
-    :return: list of activity profiles in sparse format
-    """
-    resolution = hetus_constants.get_resolution(profile_set.profile_type.country)
-    profiles: list[SparseActivityProfile] = []
-    # iterate through all diary entries
-    for index, row in profile_set.data.iterrows():
-        entries = []
-        start = 0
-        # iterate through groups of consecutive slots with the same code
-        for code, group in itertools.groupby(row):
-            l = list(group)
-            length = len(l)
-            entries.append(ActivityProfileEntry(code, start, length))
-            start += length
-        # create ActivityProfile objects out of the activity entries
-        profiles.append(
-            SparseActivityProfile(
-                entries,
-                hetus_constants.PROFILE_OFFSET,
-                resolution,
-                profile_set.profile_type,
-            )
-        )
-    return profiles
-
-
 def calc_activity_group_frequencies(
     activity_profiles: Iterable[SparseActivityProfile],
 ) -> pd.DataFrame:
@@ -148,7 +110,7 @@ def calc_statistics_per_category(profile_sets: list[ExpandedActivityProfiles]) -
 
         probabilities = calc_probability_profiles(a1)
 
-        activity_profiles = expanded_to_sparse_profiles(profile_set)
+        activity_profiles = profile_set.create_sparse_profiles()
         frequencies = calc_activity_group_frequencies(activity_profiles)
         durations = calc_activity_group_durations(activity_profiles)
         vd = ValidationData(
