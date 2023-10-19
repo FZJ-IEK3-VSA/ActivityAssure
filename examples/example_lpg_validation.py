@@ -4,7 +4,7 @@ Example script for validation the LoadProfileGenerator
 
 import logging
 from pathlib import Path
-from activity_validator.lpgvalidation import lpgvalidation
+from activity_validator.lpgvalidation import comparison_metrics, lpgvalidation
 
 if __name__ == "__main__":
     # TODO: some general todos
@@ -41,10 +41,8 @@ if __name__ == "__main__":
 
         for profile_type, profiles in profiles_by_type.items():
             validation_data = validation_data_dict[profile_type]
-
-            lpgvalidation.compare_to_validation_data(
-                profiles, validation_data, output_path
-            )
+            input_data = lpgvalidation.calc_input_data_statistics(profiles, output_path)
+            comparison_metrics.calc_comparison_metrics(input_data, validation_data)
 
             break
         break

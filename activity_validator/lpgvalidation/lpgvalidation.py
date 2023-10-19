@@ -217,11 +217,18 @@ def filter_relevant_validation_data(
     pass
 
 
-def compare_to_validation_data(
+def calc_input_data_statistics(
     profiles: list[SparseActivityProfile],
-    validation_data: ValidationData,
     result_path: Path,
-):
+) -> ValidationData:
+    """
+    Calculates statistics for the input data of a specific profile type
+
+    :param profiles: sparse activity profiles of the same type
+    :param result_path: the base path where to store the statistics files
+    :return: the calculated statistics
+    """
+
     frequencies = category_statistics.calc_activity_group_frequencies(profiles)
     durations = category_statistics.calc_activity_group_durations(profiles)
 
@@ -232,4 +239,4 @@ def compare_to_validation_data(
         profiles[0].profile_type, probabilities, frequencies, durations
     )
     input_data.save(result_path)
-    # TODO calc comparison metrics
+    return input_data

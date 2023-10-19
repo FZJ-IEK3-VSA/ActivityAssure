@@ -55,6 +55,11 @@ def plot_stacked_probability_curves(name: str, directory: str) -> None:
     plt.show()
 
 
+def plot_probability_curve_difference(path_input, path_validation):
+    # TODO: get paths or dataframes as parameters? maybe allow both?
+    pass
+
+
 if __name__ == "__main__":
     dir = ".\\data\\validation\\probability_profiles"
     for name in os.listdir(dir):
