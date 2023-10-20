@@ -10,19 +10,19 @@
     },
     "wilke": {
         "other": "other",
-        "other leisure": "other leisure",
-        "conversation/entertain friends": "social",
-        "relax": "relax",
-        "read": "read",
-        "study, homework": "study",
+        "other leisure": "other",
+        "conversation/entertain friends": "other",
+        "relax": "other",
+        "read": "other",
+        "study, homework": "education",
         "watch television or video": "tv",
         "listen to music": "radio/music",
-        "dances or parties": "social",
-        "religious/civic activities": "other at home",
+        "dances or parties": "other",
+        "religious/civic activities": "other",
         "sleep": "sleep",
         "meals and snacks": "eat",
         "dress/personal care": "personal care",
-        "childcare": "other at home",
+        "childcare": "other",
         "gardening": "other",
         "odd jobs": "work",
         "housework": [
@@ -33,51 +33,54 @@
             "cook",
             "dishwashing"
         ],
-        "school, classes": "school & university",
+        "school, classes": "education",
         "paid work": "work"
     },
     "fischer": {
         "vacuuming": "clean",
         "cooking": "cook",
-        "cooling": "cooling",
+        "cooling": "other",
         "radio": "radio/music",
         "ironing": "iron",
         "washing dishes": "dishwashing",
         "laundry": "laundry",
         "tv": "tv",
-        "surf web": "surf web",
+        "surf web": "pc",
         "pc": "pc"
     },
     "reynaud": {
         "sleep": "sleep",
         "work": "work",
-        "hygiene": "hygiene",
+        "hygiene": [
+            "personal care",
+            "clean"
+        ],
         "tv": "tv",
         "laundry": "laundry",
         "dishwashing": "dishwashing",
         "cook lunch": "cook"
     },
     "bottaccioli": {
-        "not using any device": "other no device",
+        "not using any device": "other",
         "sleep": "sleep",
         "study": "education",
         "tv": "tv",
         "radio": "radio/music",
         "pc": "pc",
-        "read": "read",
+        "read": "other",
         "cook": "cook",
         "eat": "eat",
         "dishwashing": "dishwashing",
         "clean": "clean",
         "ironing": "iron",
-        "bathroom": "bathroom"
+        "bathroom": "personal care"
     },
     "mueller": {
         "sleeping": "sleep",
         "eating": "eat",
         "hygiene and dressing": "personal care",
         "meal preparation": "cook",
-        "baking": "baking",
+        "baking": "cook",
         "dish-washing": "dishwashing",
         "cleaning up home": "clean",
         "doing the laundry": "laundry",
@@ -85,19 +88,19 @@
         "watching tv": "tv",
         "listening to the radio": "radio/music",
         "using the computer": "pc",
-        "other activities at home": "other at home",
+        "other activities at home": "other",
         "working": "work",
         "education": "education",
-        "social contacts": "social",
+        "social contacts": "other",
         "other activities": "other",
-        "not at home": "away",
-        "other journey": "other journey",
-        "commute": "commute"
+        "not at home": "not at home",
+        "other journey": "not at home",
+        "commute": "not at home"
     },
     "ziegler": {
         "away (work)": "work",
-        "away (leisure)": "away (leisure)",
-        "away (shopping)": "away (shopping)",
+        "away (leisure)": "not at home",
+        "away (shopping)": "not at home",
         "sleeping": "sleep",
         "cooking": "cook",
         "using dishwashing": "dishwashing",
@@ -108,16 +111,16 @@
         "ironing": "iron",
         "listening to music": "radio/music",
         "vacuuming": "clean",
-        "other (no-power activities)": "other no device"
+        "other (no-power activities)": "other"
     },
     "chen": {
         "sleep": "sleep",
-        "being away from home": "away",
+        "being away from home": "not at home",
         "laundry": "laundry",
         "dishwashing": "dishwashing",
         "personal hygiene": "personal care",
         "cooking": "cook",
-        "other home/active activities": "other at home"
+        "other home/active activities": "other"
     },
     "baetens": {
         "prepare food": "cook",
