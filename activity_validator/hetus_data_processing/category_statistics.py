@@ -56,19 +56,17 @@ def calc_activity_group_durations(
     :param activity_profiles: Iterable of activty lists
     :return: activty duration statistics
     """
-    # TODO: calculate AT data separately (different timestep duration)
-    # determine the profile resolution (should be the same for all profiles)
+    # determine the profile resolution (must be the same for all profiles)
     resolution = activity_profiles[0].resolution
     assert all(
         p.resolution == resolution for p in activity_profiles
-    ), "All profiles must have the same resolution"
+    ), "Not all profiles have the same resolution"
     # get an iterable of all activities
     activities = itertools.chain.from_iterable(p.activities for p in activity_profiles)
     durations_by_activity: dict[str, list[timedelta]] = {}
     for a in activities:
         # collect durations by activity type, and convert from number of time slots
         # to Timedelta
-        # TODO: replace parameter with activity profile and use correct resolution here
         durations_by_activity.setdefault(a.name, []).append(a.duration * resolution)
     # turn into a DataFrame to calculate statistics (list comprehension is necessary
     # due to different list lengths)
@@ -103,12 +101,11 @@ def calc_statistics_per_category(profile_sets: list[ExpandedActivityProfiles]) -
                        one category
     """
     for profile_set in profile_sets:
-        # TODO when country is AT, there are only 96 timesteps
-        # map to desired activity code level
-        a1 = hetus_translations.aggregate_activities(profile_set.data, 1)
-        a1 = hetus_translations.extract_activity_names(a1)
+        # translate the activity codes to the target activity types
+        mapped_data = hetus_translations.get_translated_activity_data(profile_set.data)
+        profile_set.data = mapped_data
 
-        probabilities = calc_probability_profiles(a1)
+        probabilities = calc_probability_profiles(mapped_data)
 
         activity_profiles = profile_set.create_sparse_profiles()
         frequencies = calc_activity_group_frequencies(activity_profiles)
