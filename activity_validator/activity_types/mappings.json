@@ -1,0 +1,132 @@
+{
+    "richardson": {
+        "cooking": "cook",
+        "tv": "tv",
+        "laundry": "laundry",
+        "cleaning": "clean",
+        "ironing": "iron",
+        "washing/dressing": "personal care",
+        "other": "other"
+    },
+    "wilke": {
+        "other": "other",
+        "other leisure": "other leisure",
+        "conversation/entertain friends": "social",
+        "relax": "relax",
+        "read": "read",
+        "study, homework": "study",
+        "watch television or video": "tv",
+        "listen to music": "radio/music",
+        "dances or parties": "social",
+        "religious/civic activities": "other at home",
+        "sleep": "sleep",
+        "meals and snacks": "eat",
+        "dress/personal care": "personal care",
+        "childcare": "other at home",
+        "gardening": "other",
+        "odd jobs": "work",
+        "housework": [
+            "clean",
+            "laundry"
+        ],
+        "cook, wash up": [
+            "cook",
+            "dishwashing"
+        ],
+        "school, classes": "school & university",
+        "paid work": "work"
+    },
+    "fischer": {
+        "vacuuming": "clean",
+        "cooking": "cook",
+        "cooling": "cooling",
+        "radio": "radio/music",
+        "ironing": "iron",
+        "washing dishes": "dishwashing",
+        "laundry": "laundry",
+        "tv": "tv",
+        "surf web": "surf web",
+        "pc": "pc"
+    },
+    "reynaud": {
+        "sleep": "sleep",
+        "work": "work",
+        "hygiene": "hygiene",
+        "tv": "tv",
+        "laundry": "laundry",
+        "dishwashing": "dishwashing",
+        "cook lunch": "cook"
+    },
+    "bottaccioli": {
+        "not using any device": "other no device",
+        "sleep": "sleep",
+        "study": "education",
+        "tv": "tv",
+        "radio": "radio/music",
+        "pc": "pc",
+        "read": "read",
+        "cook": "cook",
+        "eat": "eat",
+        "dishwashing": "dishwashing",
+        "clean": "clean",
+        "ironing": "iron",
+        "bathroom": "bathroom"
+    },
+    "mueller": {
+        "sleeping": "sleep",
+        "eating": "eat",
+        "hygiene and dressing": "personal care",
+        "meal preparation": "cook",
+        "baking": "baking",
+        "dish-washing": "dishwashing",
+        "cleaning up home": "clean",
+        "doing the laundry": "laundry",
+        "ironing": "iron",
+        "watching tv": "tv",
+        "listening to the radio": "radio/music",
+        "using the computer": "pc",
+        "other activities at home": "other at home",
+        "working": "work",
+        "education": "education",
+        "social contacts": "social",
+        "other activities": "other",
+        "not at home": "away",
+        "other journey": "other journey",
+        "commute": "commute"
+    },
+    "ziegler": {
+        "away (work)": "work",
+        "away (leisure)": "away (leisure)",
+        "away (shopping)": "away (shopping)",
+        "sleeping": "sleep",
+        "cooking": "cook",
+        "using dishwashing": "dishwashing",
+        "doing laundry": "laundry",
+        "watching tv": "tv",
+        "using pc": "pc",
+        "personal hygiene": "personal care",
+        "ironing": "iron",
+        "listening to music": "radio/music",
+        "vacuuming": "clean",
+        "other (no-power activities)": "other no device"
+    },
+    "chen": {
+        "sleep": "sleep",
+        "being away from home": "away",
+        "laundry": "laundry",
+        "dishwashing": "dishwashing",
+        "personal hygiene": "personal care",
+        "cooking": "cook",
+        "other home/active activities": "other at home"
+    },
+    "baetens": {
+        "prepare food": "cook",
+        "vacuum cleaning": "clean",
+        "ironing": "iron",
+        "doing the dishes": "dishwashing",
+        "doing laundry": "laundry",
+        "using a computer": "pc",
+        "watching television": "tv",
+        "listening to music": "radio/music"
+    }
+}
