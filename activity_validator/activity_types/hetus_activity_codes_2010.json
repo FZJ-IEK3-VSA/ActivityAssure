@@ -8,14 +8,12 @@
     "03": "OTHER PERSONAL CARE",
     "031": "Washing and dressing",
     "039": "Other or unspecified personal care",
-
     "1": "EMPLOYMENT",
     "11": "MAIN JOB AND SECOND JOB",
     "111": "Working time in main and second job",
     "12": "ACTIVITIES RELATED TO EMPLOYMENT",
     "121": "Lunch break",
     "129": "Other or unspecified activities related to employment",
-
     "2": "STUDY",
     "20": "UNSPECIFIED STUDY",
     "200": "Unspecified study",
@@ -24,7 +22,6 @@
     "212": "Homework",
     "22": "FREE TIME STUDY",
     "221": "Free time study",
-
     "3": "HOUSEHOLD AND FAMILY CARE",
     "30": "UNSPECIFIED HOUSEHOLD AND FAMILY CARE",
     "300": "Unspecified household and family care",
@@ -51,7 +48,7 @@
     "35": "CONSTRUCTION AND REPAIRS",
     "351": "House construction and renovation",
     "352": "Repairs to dwelling",
-    "353": "Making",
+    "353": "Making, repairing and maintaining equipment",
     "354": "Vehicle maintenance",
     "359": "Other or unspecified construction and repairs",
     "36": "SHOPPING AND SERVICES",
@@ -71,7 +68,6 @@
     "392": "Other help of a dependent adult household member",
     "391": "Physical care of a dependent adult household member",
     "399": "Help to a non dependent adult household member",
-
     "4": "VOLUNTARY WORK AND MEETINGS",
     "41": "ORGANISATIONAL WORK",
     "411": "Organisational work",
@@ -86,7 +82,6 @@
     "431": "Meetings",
     "432": "Religious activities",
     "439": "Other or unspecified participatory activities",
-
     "5": "SOCIAL LIFE AND ENTERTAINMENT",
     "51": "SOCIAL LIFE",
     "511": "Socialising with family",
@@ -103,7 +98,6 @@
     "529": "Other or unspecified entertainment and culture",
     "53": "RESTING",
     "531": "Resting",
-
     "6": "SPORTS AND OUTDOOR ACTIVITIES",
     "61": "PHYSICAL EXERCISE",
     "611": "Walking and hiking",
@@ -117,7 +111,6 @@
     "621": "Productive exercise",
     "63": "SPORTS RELATED ACTIVITIES",
     "631": "Sports related activities",
-
     "7": "HOBBIES AND COMPUTING",
     "71": "ARTS AND HOBBIES",
     "711": "Arts",
@@ -125,7 +118,7 @@
     "713": "Correspondence",
     "719": "Other or unspecified hobbies",
     "72": "COMPUTING",
-    "721": "Computing",
+    "721": "Computing - programming",
     "722": "Information by computing",
     "723": "Communication by computing",
     "729": "Other or unspecified computing",
@@ -134,7 +127,6 @@
     "732": "Parlour games and play",
     "733": "Computer games",
     "739": "Other or unspecified games",
-
     "8": "MASS MEDIA",
     "81": "READING",
     "811": "Reading periodicals",
@@ -144,7 +136,6 @@
     "821": "Watching TV",
     "83": "RADIO AND RECORDINGS",
     "831": "Listening to radio or recordings",
-
     "9": "TRAVEL AND UNSPECIFIED TIME USE",
     "910": "Travel to/from work",
     "920": "Travel related to study",
