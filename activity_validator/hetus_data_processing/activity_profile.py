@@ -293,6 +293,19 @@ class SparseActivityProfile:
         assert len(profile) == self.length()
         return profile
 
+    @utils.timing
+    def apply_activity_mapping(self, activity_mapping: dict[str, str]) -> None:
+        """
+        Maps all activity names according to the provided dict.
+
+        :param activity_mapping: the activity name mapping to use
+        """
+        for activity in self.activities:
+            activity.name = activity_mapping[activity.name]
+        # TODO: should consecutive activities that were mapped to the same name
+        # be merged? Would be more similar to HETUS data.
+
+    @utils.timing
     def split_into_day_profiles(
         self,
         split_offset: timedelta = hetus_constants.PROFILE_OFFSET,
@@ -403,7 +416,7 @@ class ExpandedActivityProfiles:
         assert all(
             len(row) == length for row in rows
         ), "Profiles have different lengths"
-        column_names = [f"Timestep {i}" for i in range(1, length)]
+        column_names = [f"Timestep {i}" for i in range(1, length + 1)]
         data = pd.DataFrame(rows, columns=column_names)
         return ExpandedActivityProfiles(data, profile_type, offset, resolution)
 

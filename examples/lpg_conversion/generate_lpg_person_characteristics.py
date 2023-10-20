@@ -51,6 +51,9 @@ def generate_raw_activity_mapping(database_path: str, output_file):
     }
     affordances = [(row[0], row[1]) for row in rows]
     mapping = {name: category_mapping[category] for name, category in affordances}
+    # manually add vacation affordance
+    mapping["taking a vacation"] = "not at home"
+
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(mapping, f, indent=4)
 
