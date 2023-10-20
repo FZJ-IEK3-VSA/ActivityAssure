@@ -2,6 +2,7 @@ import json
 
 
 path = r"activity_validator\activity_types\hetus_list.json"
+path = r"activity_validator\activity_types\hetus_activity_codes_2010.json"
 with open(path) as f:
     data = json.load(f)
 
@@ -9,7 +10,7 @@ with open(path) as f:
 # with open(path) as f:
 #     data2 = json.load(f)
 
-result = {k: None for k in data}
+result = {v: None for k, v in data.items() if len(k) == 3}
 
 # result = {}
 # for author, a_old in data.items():

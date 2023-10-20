@@ -12,7 +12,12 @@ with open(path, "r") as f:
 
 all_activities: list[str] = []
 for d in content.values():
-    all_activities.extend(d.values())
+    for v in d.values():
+        if isinstance(v, str):
+            all_activities.append(v)
+        else:
+            all_activities.extend(v)
+
 # all_tuples = dict(itertools.chain.from_iterable(content.values()))
 # all_activities = [v for k, v in all_tuples]
 print(f"{len(all_activities)} activities")
@@ -34,7 +39,7 @@ duplicates = {
 print(f"\n{len(duplicates)} Duplicates:")
 print(
     "\n".join(
-        f"{item:<30} {count}   {used_by[item]}" for item, count in duplicates.items()
+        f"{item:<15} {count:>2}   {used_by[item]}" for item, count in duplicates.items()
     )
 )
 
