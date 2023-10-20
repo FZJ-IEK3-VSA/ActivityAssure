@@ -4,7 +4,7 @@ This module provides functions for translating HETUS columns and codes to readab
 
 import json
 from enum import EnumType
-import os
+from pathlib import Path
 
 import pandas as pd
 
@@ -18,10 +18,15 @@ def load_hetus_activity_codes() -> dict[str, str]:
 
     :return: dict mapping each code with its description
     """
-    filename = "data/input/hetus_activity_codes_2010.json"
-    if not os.path.isfile(filename):
-        raise RuntimeError(f"The HETUS activity code list is missing: {filename}")
-    with open(filename, "r", encoding="utf-8") as f:
+    path = (
+        Path()
+        / "activity_validator"
+        / "activity_types"
+        / "hetus_activity_codes_2010.json"
+    )
+    if not path.exists():
+        raise RuntimeError(f"The HETUS activity code list is missing: {path}")
+    with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -36,8 +41,12 @@ def aggregate_activities(data: pd.DataFrame, digits: int = 1):
 
 def extract_activity_names(data: pd.DataFrame) -> pd.DataFrame:
     codes = load_hetus_activity_codes()
+    # In general, the codes are hierarchical and complete, meaning that if
+    # code 811 exists, then code 81 is its supergroup. However, for group 9
+    # there are no two-digit codes. Therefore, if the code is not found, just
+    # fall back to the corresponding one-digit code.
     return data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).map(
-        lambda x: codes.get(x, x)
+        lambda x: codes.get(x, codes[x[0]])
     )
 
 
