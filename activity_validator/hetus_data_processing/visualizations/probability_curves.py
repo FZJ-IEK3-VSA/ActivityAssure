@@ -20,9 +20,11 @@ def plot_stacked_probability_curves(name: str, directory: str) -> None:
     print(data)
 
     # create time values for x axis
-    start_time = datetime.strptime("00:00", "%H:%M")
-    end_time = datetime.strptime("23:50", "%H:%M")
-    time_values = pd.date_range(start_time, end_time, freq=timedelta(minutes=10))
+    resolution = timedelta(days=1) / len(data.columns)
+    print(f"Assuming a resolution of {resolution}")
+    start_time = datetime.strptime("04:00", "%H:%M")
+    end_time = start_time + timedelta(days=1) - resolution
+    time_values = pd.date_range(start_time, end_time, freq=resolution)
     # time_values = [(x/6) % 24 for x in range(0, 145)]
 
     sns.set_theme()
@@ -34,7 +36,7 @@ def plot_stacked_probability_curves(name: str, directory: str) -> None:
 
     # change x-tick labels
     hours_fmt = matplotlib.dates.DateFormatter("%#H")
-    hours = matplotlib.dates.HourLocator(byhour=range(0, 24, 3))
+    hours = matplotlib.dates.HourLocator(byhour=range(1, 24, 3))
     ax.xaxis.set_major_locator(hours)
     ax.xaxis.set_major_formatter(hours_fmt)
 
@@ -62,6 +64,7 @@ def plot_probability_curve_difference(path_input, path_validation):
 
 if __name__ == "__main__":
     dir = ".\\data\\validation\\probability_profiles"
+    dir = r"D:\Git-Repositories\lpg-validation-framework\data\lpg\results with & without resampling\probability_profiles"
     for name in os.listdir(dir):
         if os.path.isfile(os.path.join(dir, name)):
             # name = "probabilities ('DE', 1, 0.0, 0)"
