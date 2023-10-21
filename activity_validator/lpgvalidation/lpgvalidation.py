@@ -174,6 +174,7 @@ def load_validation_data_subdir(path: Path) -> dict[tuple, pd.DataFrame]:
     return dict(utils.load_df(p) for p in path.iterdir() if p.is_file())
 
 
+@utils.timing
 def load_validation_data(
     path: Path = utils.VALIDATION_DATA_PATH,
 ) -> dict[ProfileType, ValidationData]:

@@ -4,7 +4,7 @@ Example script for validation the LoadProfileGenerator
 
 import logging
 from pathlib import Path
-from activity_validator.hetus_data_processing import hetus_translations
+from activity_validator.hetus_data_processing import hetus_constants, hetus_translations
 from activity_validator.lpgvalidation import comparison_metrics, lpgvalidation
 
 if __name__ == "__main__":
@@ -25,8 +25,6 @@ if __name__ == "__main__":
         input_path, person_trait_file
     )
 
-    # resample profiles to validation data resolution
-
     # load activity mapping
     custom_mapping_path = Path("examples/activity_mapping_lpg.json")
     activity_mapping = hetus_translations.load_mapping(custom_mapping_path)
@@ -39,6 +37,8 @@ if __name__ == "__main__":
     output_path = Path("data/lpg/results")
     # validate each full-year profile individually
     for full_year_profile in full_year_profiles:
+        # resample profiles to validation data resolution
+        full_year_profile.resample(hetus_constants.RESOLUTION)
         # translate activities to the common set of activity types
         full_year_profile.apply_activity_mapping(activity_mapping)
         # split the full year profiles into single-day profiles
@@ -46,9 +46,6 @@ if __name__ == "__main__":
 
         # Tests
         assert len(selected_day_profiles) == 336, "Unexpected number of day profiles"
-        assert (
-            selected_day_profiles[-1].activities[-1].start == 524051 - 377
-        ), "Start of last activity is incorrect"
 
         # categorize single-day profiles according to country, person and day type
         profiles_by_type = lpgvalidation.group_profiles_by_type(selected_day_profiles)

@@ -4,10 +4,12 @@ Defines classes for activity profiles
 
 from datetime import datetime, time, timedelta
 import itertools
+import logging
 from pathlib import Path
 from typing import Collection
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
+import numpy as np
 import pandas as pd
 from activity_validator.hetus_data_processing import hetus_constants, utils
 
@@ -304,6 +306,102 @@ class SparseActivityProfile:
             activity.name = activity_mapping[activity.name]
         # TODO: should consecutive activities that were mapped to the same name
         # be merged? Would be more similar to HETUS data.
+
+    @utils.timing
+    def resample(self, resolution: timedelta) -> None:
+        """
+        Resamples this activity profile to a decreased resolution.
+        Only permits new resolutions that are an integer multiple of
+        the current one.
+
+        :param resolution: the target resolution
+        """
+        assert resolution % self.resolution == timedelta(0) and timedelta(
+            1
+        ) % resolution == timedelta(0), (
+            f"Invalid target resolution: {resolution}. The target resolution "
+            "must be a divisor of one day and an integer multiple of the "
+            "current resolution"
+        )
+        assert self.start() == 0, "Timesteps must start at 0 for resampling"
+        original_length = len(self.activities)
+        # determine length of time frame that will be merged
+        # into a single timestep with the new resolution
+        frame_length = int(resolution / self.resolution)
+        # determine the new end timestep (must be a multiple of frame_length)
+        end = self.length() // frame_length * frame_length
+        index = 0
+        new_activities: list[ActivityProfileEntry] = []
+        # iterate through all time frames to merge their activities
+        for frame_start in range(0, end, frame_length):
+            frame_end = frame_start + frame_length
+            # collect all activities intersecting the current time frame
+            activities: list[ActivityProfileEntry] = [self.activities[index]]
+            while activities[-1].end() < frame_end:
+                index += 1
+                if index >= len(self.activities):
+                    assert (
+                        frame_start + frame_length >= self.length()
+                    ), "This should only happen in the last frame"
+                    # set the end of the frame correctly
+                    frame_end = activities[-1].end()
+                    break
+                activities.append(self.activities[index])
+            if activities[-1].end() == frame_end:
+                # this activity ends in this frame and is not
+                # relevant anymore for the next one
+                index += 1
+            # determine which activity receives the time frame
+            if len(activities) == 1:
+                if len(new_activities) == 0 or activities[0] is not new_activities[-1]:
+                    new_activities.append(activities[0])
+                continue
+            # find activity with largest time share in this time frame
+            d = [a.duration for a in activities]
+            # subtract duration share outside of this time frame
+            d[0] -= frame_start - activities[0].start
+            d[-1] -= activities[-1].end() - frame_end
+            # find activity with max duration, it will fill the whole frame
+            longest_act = activities[np.argmax(d)]
+            # adapt start/duration of this activity
+            new_start = min(longest_act.start, frame_start)
+            new_end = max(longest_act.end(), frame_end)
+            longest_act.start = new_start
+            longest_act.duration = new_end - new_start
+            # delete or adapt other activities accordingly
+            first = activities[0]
+            last = activities[-1]
+            if first is not longest_act and first.start < frame_start:
+                # make activity end before this frame
+                first.duration = frame_start - first.start
+            if last is not longest_act and last.end() > frame_end:
+                # make activity start after this frame
+                test = last.end()
+                last.duration -= frame_end - last.start
+                last.start = frame_end
+            # add the 'winning' activity to the new list, if it is not
+            # in there yet
+            if len(new_activities) == 0 or longest_act is not new_activities[-1]:
+                new_activities.append(longest_act)
+
+        # adapt timestep count of the new activities
+        for a in new_activities:
+            assert a.start % frame_length == 0, "Bug in resampling"
+            assert a.duration % frame_length == 0, "Bug in resampling"
+            a.start //= frame_length
+            a.duration //= frame_length
+        # check if new activity list is valid
+        for i in range(len(new_activities) - 1):
+            assert (
+                new_activities[i].end() == new_activities[i + 1].start
+            ), "Bug in resampling"
+        # assign the new resolution and activity list
+        self.activities = new_activities
+        self.resolution = resolution
+        deleted_activities = original_length - len(new_activities)
+        logging.info(
+            f"Resampled activity profile, deleting {deleted_activities} activities"
+        )
 
     @utils.timing
     def split_into_day_profiles(
