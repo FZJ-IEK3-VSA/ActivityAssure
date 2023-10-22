@@ -5,6 +5,7 @@ different criteria
 
 import logging
 import pandas as pd
+from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     ProfileType,
@@ -88,7 +89,7 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
         f"Sorted {len(data)} entries into {category_sizes.count().sum()} categories."
     )
     print(category_sizes)
-    utils.save_df(category_sizes, "categories", "cat", key)
+    activity_profile.save_df(category_sizes, "categories", "categories")
     return [
         ExpandedActivityProfiles(
             categories.get_group(g),

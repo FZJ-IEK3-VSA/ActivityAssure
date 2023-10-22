@@ -13,6 +13,7 @@ import pandas as pd
 
 from activity_validator.hetus_data_processing import hetus_translations
 from activity_validator.hetus_data_processing import utils
+from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
@@ -113,6 +114,6 @@ def calc_statistics_per_category(profile_sets: list[ExpandedActivityProfiles]) -
         vd = ValidationData(
             profile_set.profile_type, probabilities, frequencies, durations
         )
-        vd.save(utils.VALIDATION_DATA_PATH)
+        vd.save(activity_profile.VALIDATION_DATA_PATH)
 
     logging.info(f"Created result files for {len(profile_sets)} categories")

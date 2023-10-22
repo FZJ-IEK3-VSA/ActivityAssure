@@ -6,7 +6,7 @@ from datetime import datetime, time, timedelta
 import itertools
 import logging
 from pathlib import Path
-from typing import Collection
+from typing import Collection, Optional
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 import numpy as np
@@ -18,12 +18,15 @@ from activity_validator.hetus_data_processing.attributes import (
     person_attributes,
 )
 
-
+#: default resolution for input data # TODO: remove?
 DEFAULT_RESOLUTION = timedelta(minutes=1)
+
+#: path for result data # TODO: move to config file
+VALIDATION_DATA_PATH = Path() / "data" / "validation"
 
 
 @dataclass_json
-@dataclass(unsafe_hash=True)  # TODO: better make it frozen?
+@dataclass(frozen=True)
 class ProfileType:
     """
     A set of characteristics that defines the type of a
@@ -37,12 +40,40 @@ class ProfileType:
     day_type: diary_attributes.DayType | None = None
 
     def to_tuple(self) -> tuple[str, str, str, str]:
+        """
+        Returns a tuple representation of this profile type.
+
+        :return: a tuple containing the characteristics of this
+                 profile type
+        """
         return (
             str(self.country),
             str(self.sex),
             str(self.work_status),
             str(self.day_type),
         )
+
+    def __str__(self) -> str:
+        """
+        Returns a string representation of this profile type
+
+        :return: a str containing the characteristics of this
+                 profile type
+        """
+        return "_".join(str(c) for c in self.to_tuple())
+
+    def construct_filename(self, name: str) -> str:
+        return f"{name}_{self}"
+
+    @staticmethod
+    def from_filename(filepath: Path) -> tuple[str, Optional["ProfileType"] | None]:
+        components = filepath.stem.split("_")
+        basename = components[0]
+        if len(components) > 1:
+            profile_type = ProfileType.from_iterable(components[1:])
+        else:
+            profile_type = None
+        return basename, profile_type
 
     @staticmethod
     def from_iterable(values: Collection[str]) -> "ProfileType":
@@ -66,6 +97,51 @@ class ProfileType:
         except KeyError as e:
             assert False, f"Invalid enum key: {e}"
         return profile_type
+
+
+def save_df(
+    data: pd.DataFrame,
+    subdir: str,
+    name: str,
+    profile_type: ProfileType | None = None,
+    base_path: Path = VALIDATION_DATA_PATH,
+    ext: str = "csv",
+) -> None:
+    """
+    Saves a result data frame to a csv file within the
+    main data directory.
+
+    :param data: data to save
+    :param subdir: subdirectory to save the file at
+    :param name: base name of the file
+    :param profile_type: the category of the profile data,
+                         if applicable; is appended to the
+                         filename; defaults to None
+    :param base_path: base directory for the file,
+                      defaults to VALIDATION_DATA_PATH
+    :param ext: file extension, defaults to "csv"
+    """
+    if profile_type is not None:
+        # add profile type to filename
+        name = profile_type.construct_filename(name)
+    name += f".{ext}"
+    directory = base_path / subdir
+    directory.mkdir(parents=True, exist_ok=True)
+
+    path = directory / name
+    data.to_csv(path)
+    logging.debug(f"Created DataFrame file {path}")
+
+
+def load_df(path: str | Path) -> tuple[ProfileType | None, pd.DataFrame]:
+    if isinstance(path, str):
+        path = Path(path)
+    # determine the profile type from the filename
+    name, profile_type = ProfileType.from_filename(path)
+    # load the data
+    data = pd.read_csv(path, index_col=0)
+    logging.debug(f"Loaded DataFrame from {path}")
+    return profile_type, data
 
 
 def get_person_traits(

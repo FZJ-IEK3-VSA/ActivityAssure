@@ -1,5 +1,6 @@
 """Main module"""
 
+import dataclasses
 from datetime import timedelta
 import functools
 import json
@@ -10,6 +11,7 @@ from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
+from activity_validator.hetus_data_processing import activity_profile
 
 
 from activity_validator.hetus_data_processing.activity_profile import (
@@ -25,7 +27,8 @@ from activity_validator.hetus_data_processing.hetus_constants import PROFILE_OFF
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
 #: activities that should be counted as work for determining work days
-WORK_ACTIVITIES = ["EMPLOYMENT", "work as teacher"]
+# TODO find a more flexible way for this
+WORK_ACTIVITIES = ["EMPLOYMENT", "work"]
 #: minimum working time for a day to be counted as working day
 WORKTIME_THRESHOLD = timedelta(hours=3)
 
@@ -133,7 +136,8 @@ def determine_day_type(activity_profile: SparseActivityProfile) -> None:
         else diary_attributes.DayType.no_work
     )
     # set the determined day type for the profile
-    activity_profile.profile_type.day_type = day_type
+    new_type = dataclasses.replace(activity_profile.profile_type, day_type=day_type)
+    activity_profile.profile_type = new_type
 
 
 def extract_day_profiles(
@@ -170,13 +174,13 @@ def group_profiles_by_type(
     return profiles_by_type
 
 
-def load_validation_data_subdir(path: Path) -> dict[tuple, pd.DataFrame]:
-    return dict(utils.load_df(p) for p in path.iterdir() if p.is_file())
+def load_validation_data_subdir(path: Path) -> dict[ProfileType, pd.DataFrame]:
+    return dict(activity_profile.load_df(p) for p in path.iterdir() if p.is_file())
 
 
 @utils.timing
 def load_validation_data(
-    path: Path = utils.VALIDATION_DATA_PATH,
+    path: Path = activity_profile.VALIDATION_DATA_PATH,
 ) -> dict[ProfileType, ValidationData]:
     subdir_path = path / "probability_profiles"
     probability_profile_data = load_validation_data_subdir(subdir_path)
@@ -199,13 +203,13 @@ def load_validation_data(
         == activity_duration_data.keys()
     ), "Missing data for some of the profile types"
     return {
-        (p := ProfileType.from_iterable(category)): ValidationData(
-            p,
+        profile_type: ValidationData(
+            profile_type,
             prob_data,
-            activity_frequency_data[category],
-            activity_duration_data[category],
+            activity_frequency_data[profile_type],
+            activity_duration_data[profile_type],
         )
-        for category, prob_data in probability_profile_data.items()
+        for profile_type, prob_data in probability_profile_data.items()
     }
 
 
@@ -218,26 +222,20 @@ def filter_relevant_validation_data(
     pass
 
 
-def calc_input_data_statistics(
-    profiles: list[SparseActivityProfile],
-    result_path: Path,
-) -> ValidationData:
+def calc_input_data_statistics(profiles: list[SparseActivityProfile]) -> ValidationData:
     """
     Calculates statistics for the input data of a specific profile type
 
     :param profiles: sparse activity profiles of the same type
-    :param result_path: the base path where to store the statistics files
     :return: the calculated statistics
     """
-
     frequencies = category_statistics.calc_activity_group_frequencies(profiles)
     durations = category_statistics.calc_activity_group_durations(profiles)
-
     # convert to expanded format
     profile_set = ExpandedActivityProfiles.from_sparse_profiles(profiles)
     probabilities = category_statistics.calc_probability_profiles(profile_set.data)
+    # store all statistics in one object
     input_data = ValidationData(
         profiles[0].profile_type, probabilities, frequencies, durations
     )
-    input_data.save(result_path)
     return input_data

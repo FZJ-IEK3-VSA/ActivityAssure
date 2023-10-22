@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from activity_validator.hetus_data_processing import activity_profile, utils
+from activity_validator.hetus_data_processing import activity_profile
 
 
 @dataclass
@@ -24,25 +24,24 @@ class ValidationData:
         :param base_path: the base path to store the
                           data at
         """
-        category = self.profile_type.to_tuple()
-        utils.save_df(
+        activity_profile.save_df(
             self.activity_frequencies,
             "activity_frequencies",
             "freq",
-            category,
+            self.profile_type,
             base_path=base_path,
         )
-        utils.save_df(
+        activity_profile.save_df(
             self.activity_durations,
             "activity_durations",
             "dur",
-            category,
+            self.profile_type,
             base_path=base_path,
         )
-        utils.save_df(
+        activity_profile.save_df(
             self.probability_profiles,
             "probability_profiles",
             "prob",
-            category,
+            self.profile_type,
             base_path=base_path,
         )

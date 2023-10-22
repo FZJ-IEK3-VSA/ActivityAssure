@@ -11,6 +11,8 @@ if __name__ == "__main__":
     # TODO: some general todos
     # - fix mypy issues
     # - standardize definition of file paths
+    # - reevaluate all module-level constants: move to config file?
+    # - check all the TODOs everywhere in the project
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
@@ -30,9 +32,8 @@ if __name__ == "__main__":
     activity_mapping = hetus_translations.load_mapping(custom_mapping_path)
 
     # load validation data
-    validation_data_dict = lpgvalidation.load_validation_data(
-        Path("data/validation DE")
-    )
+    validation_data_path = Path("data/validation DE")
+    validation_data_dict = lpgvalidation.load_validation_data(validation_data_path)
 
     output_path = Path("data/lpg/results")
     # validate each full-year profile individually
@@ -52,9 +53,19 @@ if __name__ == "__main__":
 
         # validate each profile type individually
         for profile_type, profiles in profiles_by_type.items():
+            # select matching validation data
             validation_data = validation_data_dict[profile_type]
-            input_data = lpgvalidation.calc_input_data_statistics(profiles, output_path)
-            comparison_metrics.calc_comparison_metrics(input_data, validation_data)
+            # calculate and store statistics for validation
+            input_data = lpgvalidation.calc_input_data_statistics(profiles)
+            input_data.save(output_path)
+            # calcluate and store comparison metrics
+            metrics = comparison_metrics.calc_comparison_metrics(
+                input_data, validation_data
+            )
+            metrics.save(output_path, profile_type)
 
-            break
+            pass
+
+            # TODO: input statistics and metrics are saved to file - now load them and plot
+            # everything and show the KPIs
         break
