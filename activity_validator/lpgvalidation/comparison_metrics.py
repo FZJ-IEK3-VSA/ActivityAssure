@@ -11,9 +11,20 @@ from activity_validator.lpgvalidation.validation_data import ValidationData
 def calc_probability_curves_diff(
     validation: pd.DataFrame, input: pd.DataFrame
 ) -> pd.DataFrame:
-    assert (
-        validation.index == input.index and validation.columns == input.columns
-    ), "Dataframes have different activity types or timesteps"
+    assert len(validation.columns) == len(
+        input.columns
+    ), "Dataframes have different resolutions"
+    if not validation.columns.equals(input.columns):
+        # resolution is the same, just the names are different
+        validation.columns = input.columns
+    if not validation.index.equals(input.index):
+        # in one of the dataframes not all activity types are present, or
+        # the order is different
+        # determine common index with all activity types
+        common_index = validation.index.union(input.index)
+        # add rows full of zeros for missing activity types
+        validation = validation.reindex(common_index, fill_value=0)
+        input = input.reindex(common_index, fill_value=0)
     return validation - input
 
 
@@ -32,5 +43,5 @@ def calc_comparison_metrics(
         validation_data.probability_profiles, input_data.probability_profiles
     )
     # these KPIs show which activity is represented how well
-    mae = calc_mae(differences).sort_values()
-    rmes = calc_rmse(differences).sort_values()
+    mae_per_activity = calc_mae(differences).sort_values()
+    rmes_per_activity = calc_rmse(differences).sort_values()
