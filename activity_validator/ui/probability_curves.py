@@ -15,6 +15,14 @@ def get_files(path: Path) -> list[Path]:
     return [f for f in path.iterdir() if f.is_file()]
 
 
+def get_profile_types(path: Path) -> list[ProfileType]:
+    input_prob_files = get_files(path)
+    profile_types = [ProfileType.from_filename(p)[1] for p in input_prob_files]
+    if None in profile_types:
+        raise RuntimeError("Invalid file name: could not parse profile type")
+    return profile_types  # type: ignore
+
+
 # All-in-One Components should be suffixed with 'AIO'
 class AIOSelectableProbabilityCurves(html.Div):
     """
@@ -58,8 +66,7 @@ class AIOSelectableProbabilityCurves(html.Div):
             aio_id = str(uuid.uuid4())
 
         # get available profile categories
-        input_prob_files = get_files(path)
-        profile_types = [ProfileType.from_filename(p)[1] for p in input_prob_files]
+        profile_types = get_profile_types(path)
         assert None not in profile_types, "Invalid filename"
         profile_type_strs = [" - ".join(pt.to_tuple()) for pt in profile_types]
 
@@ -84,10 +91,12 @@ class AIOSelectableProbabilityCurves(html.Div):
         Input(ids.dropdown(MATCH), "value"),
         State(ids.store(MATCH), "data"),
     )
-    def update_graph(value, data):
+    def update_graph(value, path):
+        # load the appropriate file depending on the profile type
         profile_type = ProfileType.from_iterable(value.split(" - "))
         filename = profile_type.construct_filename("prob") + ".csv"
-        _, data = activity_profile.load_df(Path(data) / filename)
+        _, data = activity_profile.load_df(Path(path) / filename)
+
         data = data.T
 
         # generate 24h time range starting at 04:00
@@ -96,6 +105,7 @@ class AIOSelectableProbabilityCurves(html.Div):
         end_time = start_time + timedelta(days=1) - resolution
         time_values = pd.date_range(start_time, end_time, freq=resolution)
 
+        # plot the data
         fig = px.area(
             data,
             x=time_values,
