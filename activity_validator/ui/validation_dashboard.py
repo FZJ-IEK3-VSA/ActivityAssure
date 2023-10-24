@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from pathlib import Path
 from dash import Dash, html, dcc, callback, Output, Input
 import plotly.express as px
@@ -15,31 +16,48 @@ app = Dash(__name__)
 validation_path = Path("data/validation")
 input_data_path = Path("data/lpg/results")
 
+prob_path = "probability_profiles"
+
+
+def get_files(path: Path) -> list[Path]:
+    assert path.exists(), f"Invalid path: {path}"
+    return [f for f in path.iterdir() if f.is_file()]
+
+
+input_prob_files = get_files(validation_path / prob_path)
+profile_types = [ProfileType.from_filename(p)[1] for p in input_prob_files]
+assert None not in profile_types, "Invalid filename"
+profile_type_strs = [" - ".join(pt.to_tuple()) for pt in profile_types]
+
 
 app.layout = html.Div(
     [
-        html.H1(children="Title of Dash App", style={"textAlign": "center"}),
-        dcc.Dropdown(df.country.unique(), "Canada", id="dropdown-selection"),
-        dcc.Graph(id="graph-content"),
+        html.H1(children="Activity Profile Validator", style={"textAlign": "center"}),
+        dcc.Dropdown(profile_type_strs, profile_type_strs[0], id="profile-type"),
+        dcc.Graph(id="probability-curve"),
     ]
 )
-df = px.data.gapminder()
 
 
-@callback(Output("graph-content", "figure"), Input("dropdown-selection", "value"))
+@callback(Output("probability-curve", "figure"), Input("profile-type", "value"))
 def update_graph(value):
+    profile_type = ProfileType.from_iterable(value.split(" - "))
     # path = ProfileType.from_iterable(profile_type)
-    base_path = validation_path / "probability_profiles"
-    filename = "prob_DE_female_full time_no work.csv"
-    _, df = activity_profile.load_df(base_path / filename)
-    df = df.T
+    base_path = validation_path / prob_path
+    filename = profile_type.construct_filename("prob") + ".csv"
+    _, data = activity_profile.load_df(base_path / filename)
+    data = data.T
+
+    resolution = timedelta(days=1) / len(data)
+    start_time = datetime.strptime("04:00", "%H:%M")
+    end_time = start_time + timedelta(days=1) - resolution
+    time_values = pd.date_range(start_time, end_time, freq=resolution)
 
     fig = px.area(
-        df,
-        x=list(range(len(df))),
-        y=df.columns,
+        data,
+        x=time_values,
+        y=data.columns,
     )
-    # fig.show()
     return fig
 
 
