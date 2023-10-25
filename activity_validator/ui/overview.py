@@ -10,6 +10,12 @@ from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
+
+
 def draw_figure(profile_type: ProfileType, path: Path):
     # TODO: duplicate code (copied from probability_curves.py)
     # load the appropriate file depending on the profile type
@@ -48,3 +54,14 @@ def draw_figure(profile_type: ProfileType, path: Path):
             ),
         ]
     )
+
+
+def create_rows(path: Path, profile_types, num_columns=4):
+    return [
+        dbc.Row(
+            [dbc.Col([draw_figure(p, path)], width=3) for p in row] + [html.Br()],
+            align="center",
+            justify="center",
+        )
+        for row in chunks(profile_types, num_columns)
+    ]
