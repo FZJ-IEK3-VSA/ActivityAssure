@@ -4,7 +4,11 @@ Example script for validation the LoadProfileGenerator
 
 import logging
 from pathlib import Path
-from activity_validator.hetus_data_processing import hetus_constants, hetus_translations
+from activity_validator.hetus_data_processing import (
+    activity_profile,
+    hetus_constants,
+    hetus_translations,
+)
 from activity_validator.lpgvalidation import comparison_metrics, lpgvalidation
 
 if __name__ == "__main__":
@@ -59,8 +63,11 @@ if __name__ == "__main__":
             input_data = lpgvalidation.calc_input_data_statistics(profiles)
             input_data.save(output_path)
             # calcluate and store comparison metrics
-            metrics = comparison_metrics.calc_comparison_metrics(
+            differences, metrics = comparison_metrics.calc_comparison_metrics(
                 input_data, validation_data
+            )
+            activity_profile.save_df(
+                differences, "differences", "diff", profile_type, output_path
             )
             metrics.save(output_path, profile_type)
 

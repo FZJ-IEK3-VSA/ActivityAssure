@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import glob
 from pathlib import Path
 from dash import Dash, Output, Input, State, html, dcc, callback, MATCH
 import plotly.express as px
@@ -92,10 +93,20 @@ class AIOSelectableProbabilityCurves(html.Div):
         State(ids.store(MATCH), "data"),
     )
     def update_graph(value, path):
-        # load the appropriate file depending on the profile type
+        # get the appropriate file suffix depending on the profile type
         profile_type = ProfileType.from_iterable(value.split(" - "))
-        filename = profile_type.construct_filename("prob") + ".csv"
-        _, data = activity_profile.load_df(Path(path) / filename)
+        filter = path + "/*" + profile_type.construct_filename() + ".csv"
+
+        # find the correct file
+        files = glob.glob(filter)
+        if len(files) == 0:
+            raise RuntimeError(f"Could not find a matching file: {filter}")
+        if len(files) > 1:
+            raise RuntimeError(
+                f"Found multiple files for the same profile type: {files}"
+            )
+        # load the correct file
+        _, data = activity_profile.load_df(files[0])
 
         data = data.T
 
@@ -105,8 +116,11 @@ class AIOSelectableProbabilityCurves(html.Div):
         end_time = start_time + timedelta(days=1) - resolution
         time_values = pd.date_range(start_time, end_time, freq=resolution)
 
+        # TODO: quick and dirty - make nicer solution
+        plotting_func = px.area if "diff" not in files[0] else px.line
+
         # plot the data
-        fig = px.area(
+        fig = plotting_func(
             data,
             x=time_values,
             y=data.columns,

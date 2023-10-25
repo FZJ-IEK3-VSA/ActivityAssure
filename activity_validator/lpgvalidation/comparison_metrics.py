@@ -9,6 +9,7 @@ from pathlib import Path
 from dataclasses_json import config, dataclass_json
 import numpy as np
 import pandas as pd
+from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
@@ -87,11 +88,12 @@ def calc_rmse(differences: pd.DataFrame) -> pd.Series:
 
 def calc_comparison_metrics(
     input_data: ValidationData, validation_data: ValidationData
-) -> ValidationMetrics:
+) -> tuple[pd.DataFrame, ValidationMetrics]:
     differences = calc_probability_curves_diff(
         validation_data.probability_profiles, input_data.probability_profiles
     )
+
     # these KPIs show which activity is represented how well
     mae_per_activity = calc_mae(differences).sort_values()
     rmse_per_activity = calc_rmse(differences).sort_values()
-    return ValidationMetrics(mae_per_activity, rmse_per_activity)
+    return differences, ValidationMetrics(mae_per_activity, rmse_per_activity)

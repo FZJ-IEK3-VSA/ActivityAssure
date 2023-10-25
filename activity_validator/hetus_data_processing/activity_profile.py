@@ -22,7 +22,7 @@ from activity_validator.hetus_data_processing.attributes import (
 DEFAULT_RESOLUTION = timedelta(minutes=1)
 
 #: path for result data # TODO: move to config file
-VALIDATION_DATA_PATH = Path() / "data" / "validation"
+VALIDATION_DATA_PATH = Path() / "data" / "validation_data"
 
 
 @dataclass_json
@@ -62,7 +62,7 @@ class ProfileType:
         """
         return "_".join(str(c) for c in self.to_tuple())
 
-    def construct_filename(self, name: str) -> str:
+    def construct_filename(self, name: str = "") -> str:
         return f"{name}_{self}"
 
     @staticmethod

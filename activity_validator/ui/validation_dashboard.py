@@ -15,14 +15,16 @@ from activity_validator.ui.probability_curves import (
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # default data paths
-validation_path = Path("data/validation")
+validation_path = Path("data/validation_data")
 input_data_path = Path("data/lpg/results")
 
 # data subdirectories
 prob_dir = "probability_profiles"
 freq_dir = "activity_frequencies"
 duration_dir = "activity_durations"
+comp_dir = "comparison"
 metrics_dir = "metrics"
+diff_dir = "differences"
 
 
 def chunks(lst, n):
@@ -44,8 +46,14 @@ tab1_content = html.Div(
         ),
         html.Div(
             [
-                html.H2("Input Data", style={"textAlign": "center"}),
+                html.H2("LoadProfileGenerator Data", style={"textAlign": "center"}),
                 AIOSelectableProbabilityCurves(input_data_path / prob_dir),
+            ]
+        ),
+        html.Div(
+            [
+                html.H2("Difference", style={"textAlign": "center"}),
+                AIOSelectableProbabilityCurves(input_data_path / comp_dir / diff_dir),
             ]
         ),
     ]
@@ -78,7 +86,8 @@ app.layout = html.Div(
         tabs := dcc.Tabs(
             [
                 dcc.Tab(tab1_content, label="Validation"),
-                dcc.Tab(tab2_content, label="Input Overview"),
+                dcc.Tab(tab2_content, label="Single Country Overview"),
+                dcc.Tab(label="Cross-country Overview"),
             ],
             # value=tab1_content,
         ),
