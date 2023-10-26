@@ -1,5 +1,36 @@
 from enum import IntEnum
 
+#: the country codes used by Eurostat
+EUROSTAT_COUNTRY_CODES = {
+    "BE": "Belgium ",
+    "EL": "Greece ",
+    "LT": "Lithuania ",
+    "PT": "Portugal ",
+    "BG": "Bulgaria ",
+    "ES": "Spain ",
+    "LU": "Luxembourg ",
+    "RO": "Romania ",
+    "CZ": "Czechia ",
+    "FR": "France ",
+    "HU": "Hungary ",
+    "SI": "Slovenia ",
+    "DK": "Denmark ",
+    "HR": "Croatia ",
+    "MT": "Malta ",
+    "SK": "Slovakia ",
+    "DE": "Germany ",
+    "IT": "Italy ",
+    "NL": "Netherlands ",
+    "FI": "Finland ",
+    "EE": "Estonia ",
+    "CY": "Cyprus ",
+    "AT": "Austria ",
+    "SE": "Sweden ",
+    "IE": "Ireland ",
+    "LV": "Latvia ",
+    "PL": "Poland ",
+}
+
 
 class NoData(IntEnum):
     """
