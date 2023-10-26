@@ -37,7 +37,7 @@ def calc_activity_group_frequencies(
     # create a DataFrame with all frequencies, using 0 for activities that did
     # not occur in some diary entries
     frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype()).fillna(0)
-    return frequencies.describe()
+    return frequencies  # .describe()
 
     # Debug: show a boxplot for the frequencies
     # from matplotlib import pyplot as plt
@@ -73,7 +73,7 @@ def calc_activity_group_durations(
     # due to different list lengths)
     durations_series = [pd.Series(d, name=k) for k, d in durations_by_activity.items()]
     durations = pd.concat(durations_series, axis=1)
-    return durations.describe()
+    return durations  # .describe()
 
 
 @utils.timing
