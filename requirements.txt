@@ -1,5 +1,8 @@
 pandas
 numpy
 tabulate
+dataclasses-json
+plotly
 dash
 dash-bootstrap-components
+datapane

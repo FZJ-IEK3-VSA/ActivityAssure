@@ -23,8 +23,8 @@ from activity_validator.ui.probability_curves import (
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # default data paths
-# validation_path = Path("data/validation_data")
-validation_path = Path("data/validation_data EU mapped")
+validation_path = Path("data/validation_data")
+# validation_path = Path("data/validation_data EU")
 input_data_path = Path("data/lpg/results")
 
 # data subdirectories
