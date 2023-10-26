@@ -415,13 +415,9 @@ class SparseActivityProfile:
             activities: list[ActivityProfileEntry] = [self.activities[index]]
             while activities[-1].end() < frame_end:
                 index += 1
-                if index >= len(self.activities):
-                    assert (
-                        frame_start + frame_length >= self.length()
-                    ), "This should only happen in the last frame"
-                    # set the end of the frame correctly
-                    frame_end = activities[-1].end()
-                    break
+                assert index < len(
+                    self.activities
+                ), "The last incomplete frame is discared, so this should not happen"
                 activities.append(self.activities[index])
             if activities[-1].end() == frame_end:
                 # this activity ends in this frame and is not
@@ -459,6 +455,10 @@ class SparseActivityProfile:
             # in there yet
             if len(new_activities) == 0 or longest_act is not new_activities[-1]:
                 new_activities.append(longest_act)
+
+        # the duration of the last activity might be too long
+        if new_activities[-1].end() != end:
+            new_activities[-1].duration = end - new_activities[-1].start
 
         # adapt timestep count of the new activities
         for a in new_activities:

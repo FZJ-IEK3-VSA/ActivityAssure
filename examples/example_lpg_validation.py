@@ -75,4 +75,3 @@ if __name__ == "__main__":
 
             # TODO: input statistics and metrics are saved to file - now load them and plot
             # everything and show the KPIs
-        break
