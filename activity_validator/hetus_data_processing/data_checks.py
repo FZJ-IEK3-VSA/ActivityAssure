@@ -3,8 +3,9 @@ Functions for checking availability of data in some columns and share of certain
 special cases.
 """
 
+import logging
 import activity_validator.hetus_data_processing.hetus_columns as col
-from activity_validator.hetus_data_processing import filter
+from activity_validator.hetus_data_processing import filter, load_data
 from activity_validator.hetus_data_processing.hetus_values import DayType
 
 
@@ -115,6 +116,17 @@ def check_activity_data(data):
     non_na_per_row = a3.count(axis=1)
     rows_with_na = len(non_na_per_row[non_na_per_row < 144]) / len(a3)
     print(f"Share of incomplete diary entries: {rows_with_na * 100:.1f} %")
+
+
+def check_countries(data):
+    countries = data.index.get_level_values(col.Country.ID)
+    countries = set(countries)
+    if len(countries) != 17:
+        all = load_data.get_hetus_file_names().keys()
+        missing = [c for c in all if c not in countries]
+        logging.warning(f"Missing countries: {missing}")
+    else:
+        logging.info("All countries covered")
 
 
 def all_data_checks(data, persondata, hhdata):
