@@ -19,6 +19,7 @@ from activity_validator.hetus_data_processing.attributes import (
 )
 
 
+@utils.timing
 def get_person_categorization_data(persondata: pd.DataFrame) -> pd.DataFrame:
     # calculate additionaly attributes and combine them with the data
     work = person_attributes.determine_work_statuses(persondata)
@@ -32,6 +33,7 @@ def get_person_categorization_data(persondata: pd.DataFrame) -> pd.DataFrame:
     return pdata
 
 
+@utils.timing
 def get_diary_categorization_data(
     data: pd.DataFrame, persondata: pd.DataFrame
 ) -> pd.DataFrame:

@@ -4,6 +4,10 @@ specific aspects of the data if necessary.
 """
 
 import pandas as pd
+from activity_validator.hetus_data_processing import hetus_translations
+from activity_validator.hetus_data_processing.category_statistics import (
+    calc_probability_profiles,
+)
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing.hetus_translations import (
@@ -201,3 +205,16 @@ def activity_frequencies(data: pd.DataFrame):
     a3_frequency.index = a3_frequency.index.map(lambda x: codes.get(x, x))
 
     print(a1_frequency)
+
+
+def calc_overall_activity_shares(data: pd.DataFrame) -> pd.Series:
+    """
+    Calculates the overall share of each activity type
+
+    :param data: HETUS diary data
+    :return: the overall share for each activity type
+    """
+    mapped_data = hetus_translations.get_translated_activity_data(data)
+    probabilities = calc_probability_profiles(mapped_data)
+    overall_shares = probabilities.mean(axis=1)
+    return overall_shares
