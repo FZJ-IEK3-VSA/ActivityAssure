@@ -36,7 +36,7 @@ if __name__ == "__main__":
     activity_mapping = hetus_translations.load_mapping(custom_mapping_path)
 
     # load validation data
-    validation_data_path = Path("data/validation DE")
+    validation_data_path = Path("data/validation_data")
     validation_data_dict = lpgvalidation.load_validation_data(validation_data_path)
 
     output_path = Path("data/lpg/results")
