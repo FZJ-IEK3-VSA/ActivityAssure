@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import glob
 from pathlib import Path
 import datapane as dp
 import pandas as pd
@@ -20,6 +21,22 @@ duration_dir = "activity_durations"
 comp_dir = "comparison"
 metrics_dir = "metrics"
 diff_dir = "differences"
+
+
+def get_file_path(directory: Path, profile_type: ProfileType, ext: str = "*") -> Path:
+    filter = directory / ("*" + profile_type.construct_filename() + f".{ext}")
+
+    # find the correct file
+    files = glob.glob(str(filter))
+    if len(files) == 0:
+        raise RuntimeError(f"Could not find a matching file: {filter}")
+    if len(files) > 1:
+        raise RuntimeError(f"Found multiple files for the same profile type: {files}")
+    return Path(files[0])
+
+
+def ptype_to_label(profile_type: ProfileType) -> str:
+    return " - ".join(profile_type.to_tuple())
 
 
 def get_profile_types(path: Path) -> dict[ProfileType, Path]:
@@ -44,7 +61,7 @@ def draw_prob_curves(profile_type: ProfileType, filepath: Path):
     end_time = start_time + timedelta(days=1) - resolution
     time_values = pd.date_range(start_time, end_time, freq=resolution)
 
-    label = " - ".join(profile_type.to_tuple())
+    label = ptype_to_label(profile_type)
     # plot the data
     fig = px.area(
         data,
@@ -55,15 +72,14 @@ def draw_prob_curves(profile_type: ProfileType, filepath: Path):
 
 
 def comparison_prob_curves(profile_type: ProfileType, file_valid: Path, file_in: Path):
-    label = " - ".join(profile_type.to_tuple())
-    return dp.Blocks(
+    return dp.Group(
         draw_prob_curves(profile_type, file_valid),
         draw_prob_curves(profile_type, file_in),
-        label=label,
+        label=ptype_to_label(profile_type),
     )
 
 
-def create_report():
+def create_validation_tab():
     files_val = get_profile_types(validation_path / prob_dir)
     files_in = get_profile_types(input_data_path / prob_dir)
     files_joint = {p: (f, files_in.get(p, None)) for p, f in files_val.items()}
@@ -72,10 +88,23 @@ def create_report():
         comparison_prob_curves(p, f1, f2) for p, (f1, f2) in files_joint.items()
     ]
 
+    return dp.Page(
+        title="Validation",
+        blocks=[dp.Select(blocks=prob_curves_valid, type=dp.SelectType.DROPDOWN)],
+    )
+
+
+def country_overview_tab():
+    return dp.Page(title="Country Overview", blocks=[dp.Text("TBD")])
+
+
+def cross_country_tab():
+    return dp.Page(title="Cross-country Comparison", blocks=[dp.Text("TBD")])
+
+
+def create_report():
     return dp.Blocks(
-        dp.Select(
-            blocks=prob_curves_valid,
-        )
+        create_validation_tab(), country_overview_tab(), cross_country_tab()
     )
 
 
