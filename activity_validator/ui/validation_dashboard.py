@@ -13,18 +13,17 @@ from activity_validator.hetus_data_processing.attributes.person_attributes impor
     Sex,
     WorkStatus,
 )
+from activity_validator.ui.file_utils import get_profile_types, load_data_by_type
 from activity_validator.ui.overview import chunks, create_rows, draw_figure
 
-from activity_validator.ui.probability_curves import (
-    AIOSelectableProbabilityCurves,
-    get_profile_types,
-)
+from activity_validator.ui.probability_curves import AIOSelectableProbabilityCurves
+
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # default data paths
 validation_path = Path("data/validation_data")
-# validation_path = Path("data/validation_data EU")
+validation_path = Path("data/validation_data EU")
 input_data_path = Path("data/lpg/results")
 
 # data subdirectories
@@ -34,20 +33,6 @@ duration_dir = "activity_durations"
 comp_dir = "comparison"
 metrics_dir = "metrics"
 diff_dir = "differences"
-
-
-def load_data_by_type(path, profile_type):
-    filter = str(path) + "/*" + profile_type.construct_filename() + ".csv"
-
-    # find the correct file
-    files = glob.glob(filter)
-    if len(files) == 0:
-        raise RuntimeError(f"Could not find a matching file: {filter}")
-    if len(files) > 1:
-        raise RuntimeError(f"Found multiple files for the same profile type: {files}")
-    # load the correct file
-    _, data = activity_profile.load_df(files[0])
-    return data
 
 
 def draw_activity_figure(subdir: str, profile_type: ProfileType):
@@ -67,7 +52,7 @@ def draw_activity_figure(subdir: str, profile_type: ProfileType):
 
 
 # get available validation profile types
-profile_types = get_profile_types(validation_path / prob_dir)
+profile_types = get_profile_types(validation_path / prob_dir).keys()
 countries = list({p.country for p in profile_types})
 global_profile_types = {dataclasses.replace(p, country="") for p in profile_types}
 global_type_str = [" - ".join(pt.to_tuple()[1:]) for pt in profile_types]

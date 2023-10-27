@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import glob
 from pathlib import Path
+from typing import Iterable
 from dash import Dash, Output, Input, State, html, dcc, callback, MATCH
 import plotly.express as px
 import uuid
@@ -9,22 +10,26 @@ import pandas as pd
 from activity_validator.hetus_data_processing import activity_profile
 
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
+from activity_validator.ui.file_utils import (
+    get_file_path,
+    get_profile_types,
+    ptype_to_label,
+)
+
+from activity_validator.ui import file_utils
 
 
-def get_files(path: Path) -> list[Path]:
-    assert path.exists(), f"Invalid path: {path}"
-    return [f for f in path.iterdir() if f.is_file()]
+def create_profile_type_selector(
+    profile_types: Iterable[ProfileType], dropdown_props=None
+):
+    profile_type_strs = [ptype_to_label(pt) for pt in profile_types]
+    return dcc.Dropdown(
+        profile_type_strs,
+        profile_type_strs[0],
+        **dropdown_props,
+    )
 
 
-def get_profile_types(path: Path) -> list[ProfileType]:
-    input_prob_files = get_files(path)
-    profile_types = [ProfileType.from_filename(p)[1] for p in input_prob_files]
-    if None in profile_types:
-        raise RuntimeError("Invalid file name: could not parse profile type")
-    return profile_types  # type: ignore
-
-
-# All-in-One Components should be suffixed with 'AIO'
 class AIOSelectableProbabilityCurves(html.Div):
     """
     A reusable component containing a profile category selector
@@ -67,17 +72,15 @@ class AIOSelectableProbabilityCurves(html.Div):
             aio_id = str(uuid.uuid4())
 
         # get available profile categories
-        profile_types = get_profile_types(path)
-        assert None not in profile_types, "Invalid filename"
-        profile_type_strs = [" - ".join(pt.to_tuple()) for pt in profile_types]
+        profile_type_labels = file_utils.get_profile_type_labels(path)
 
         # Define the component's layout
         super().__init__(
             [  # Equivalent to `html.Div([...])`
                 dcc.Store(data=str(path), id=self.ids.store(aio_id)),
                 dcc.Dropdown(
-                    profile_type_strs,
-                    profile_type_strs[0],
+                    profile_type_labels,
+                    profile_type_labels[0],
                     id=self.ids.dropdown(aio_id),
                     **dropdown_props,
                 ),
@@ -95,18 +98,9 @@ class AIOSelectableProbabilityCurves(html.Div):
     def update_graph(value, path):
         # get the appropriate file suffix depending on the profile type
         profile_type = ProfileType.from_iterable(value.split(" - "))
-        filter = path + "/*" + profile_type.construct_filename() + ".csv"
-
-        # find the correct file
-        files = glob.glob(filter)
-        if len(files) == 0:
-            raise RuntimeError(f"Could not find a matching file: {filter}")
-        if len(files) > 1:
-            raise RuntimeError(
-                f"Found multiple files for the same profile type: {files}"
-            )
+        filepath = get_file_path(Path(path), profile_type)
         # load the correct file
-        _, data = activity_profile.load_df(files[0])
+        _, data = activity_profile.load_df(filepath)
 
         data = data.T
 
@@ -117,7 +111,7 @@ class AIOSelectableProbabilityCurves(html.Div):
         time_values = pd.date_range(start_time, end_time, freq=resolution)
 
         # TODO: quick and dirty - make nicer solution
-        plotting_func = px.area if "diff" not in files[0] else px.line
+        plotting_func = px.area if "diff" not in str(filepath) else px.line
 
         # plot the data
         fig = plotting_func(
