@@ -9,6 +9,10 @@ def ptype_to_label(profile_type: ProfileType) -> str:
     return " - ".join(profile_type.to_tuple())
 
 
+def ptype_from_label(profile_type_str: str) -> ProfileType:
+    return ProfileType.from_iterable(profile_type_str.split(" - "))
+
+
 def get_files(path: Path) -> list[Path]:
     assert path.exists(), f"Invalid path: {path}"
     return [f for f in path.iterdir() if f.is_file()]
@@ -27,13 +31,16 @@ def get_profile_type_labels(path: Path) -> list[str]:
     return [ptype_to_label(p) for p in profile_types.keys()]
 
 
-def get_file_path(directory: Path, profile_type: ProfileType, ext: str = "*") -> Path:
+def get_file_path(
+    directory: Path, profile_type: ProfileType, ext: str = "*"
+) -> Path | None:
     filter = directory / ("*" + profile_type.construct_filename() + f".{ext}")
 
     # find the correct file
     files = glob.glob(str(filter))
     if len(files) == 0:
-        raise RuntimeError(f"Could not find a matching file: {filter}")
+        # no file for this profile type exists in this directory
+        return None
     if len(files) > 1:
         raise RuntimeError(f"Found multiple files for the same profile type: {files}")
     return Path(files[0])
