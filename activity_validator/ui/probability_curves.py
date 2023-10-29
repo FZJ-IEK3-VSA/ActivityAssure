@@ -13,7 +13,7 @@ from activity_validator.hetus_data_processing import activity_profile
 
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 
-from activity_validator.ui import file_utils
+from activity_validator.ui import data_utils
 
 # default data paths
 validation_path = Path("data/validation_data")
@@ -70,8 +70,8 @@ def stacked_prob_curves(filepath: Path | None, area: bool = True):
 
 def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True):
     # load the correct file and plot it
-    profile_type = file_utils.ptype_from_label(profile_type_str)
-    filepath = file_utils.get_file_path(directory, profile_type)
+    profile_type = data_utils.ptype_from_label(profile_type_str)
+    filepath = data_utils.get_file_path(directory, profile_type)
     result = stacked_prob_curves(filepath, area)
     return [result]
 
@@ -125,9 +125,9 @@ def sum_curves_per_activity_type(
     :return: a list of Cards containing the individual plots
     """
     # determine file paths for validation and input data
-    profile_type = file_utils.ptype_from_label(profile_type_str)
-    path_val = file_utils.get_file_path(validation_path / subdir, profile_type)
-    path_in = file_utils.get_file_path(input_data_path / subdir, profile_type)
+    profile_type = data_utils.ptype_from_label(profile_type_str)
+    path_val = data_utils.get_file_path(validation_path / subdir, profile_type)
+    path_in = data_utils.get_file_path(input_data_path / subdir, profile_type)
     if (
         path_val is None
         or not path_val.is_file()
@@ -226,10 +226,10 @@ class MainValidationView(html.Div):
             aio_id = str(uuid.uuid4())
 
         # get available profile categories
-        validation_types = file_utils.get_profile_type_labels(
+        validation_types = data_utils.get_profile_type_labels(
             validation_path / prob_dir
         )
-        input_types = file_utils.get_profile_type_labels(input_data_path / prob_dir)
+        input_types = data_utils.get_profile_type_labels(input_data_path / prob_dir)
         all_types = sorted(list(set(validation_types) | set(input_types)))
 
         # get filepaths

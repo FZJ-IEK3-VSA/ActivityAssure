@@ -13,7 +13,7 @@ from activity_validator.hetus_data_processing.attributes.person_attributes impor
     Sex,
     WorkStatus,
 )
-from activity_validator.ui import file_utils
+from activity_validator.ui import data_utils
 from activity_validator.ui.overview import chunks, create_rows, draw_figure
 
 from activity_validator.ui.probability_curves import MainValidationView
@@ -36,7 +36,7 @@ diff_dir = "differences"
 
 
 # get available validation profile types
-profile_types = file_utils.get_profile_types(validation_path / prob_dir).keys()
+profile_types = data_utils.get_profile_types(validation_path / prob_dir).keys()
 countries = list({p.country for p in profile_types})
 global_profile_types = {dataclasses.replace(p, country="") for p in profile_types}
 global_type_str = [" - ".join(pt.to_tuple()[1:]) for pt in profile_types]
