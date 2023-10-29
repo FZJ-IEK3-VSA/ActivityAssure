@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
-from dash import html, dcc
-import dash_bootstrap_components as dbc
-import plotly.express as px
+from dash import html, dcc  # type:ignore
+import dash_bootstrap_components as dbc  # type:ignore
+import plotly.express as px  # type:ignore
 
 from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import ProfileType

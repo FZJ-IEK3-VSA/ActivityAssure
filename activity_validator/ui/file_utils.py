@@ -44,17 +44,3 @@ def get_file_path(
     if len(files) > 1:
         raise RuntimeError(f"Found multiple files for the same profile type: {files}")
     return Path(files[0])
-
-
-def load_data_by_type(path, profile_type):
-    filter = str(path) + "/*" + profile_type.construct_filename() + ".csv"
-
-    # find the correct file
-    files = glob.glob(filter)
-    if len(files) == 0:
-        raise RuntimeError(f"Could not find a matching file: {filter}")
-    if len(files) > 1:
-        raise RuntimeError(f"Found multiple files for the same profile type: {files}")
-    # load the correct file
-    _, data = activity_profile.load_df(files[0])
-    return data

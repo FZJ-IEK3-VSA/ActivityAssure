@@ -2,8 +2,10 @@ from datetime import datetime, timedelta
 import glob
 from pathlib import Path
 from typing import Iterable
-from dash import Dash, Output, Input, State, html, dcc, callback, MATCH
-import plotly.express as px
+from dash import Dash, Output, Input, State, html, dcc, callback, MATCH  # type: ignore
+import dash_bootstrap_components as dbc  # type:ignore
+import plotly.express as px  # type: ignore
+import plotly.graph_objects as go  # type: ignore
 import uuid
 
 import pandas as pd
@@ -27,6 +29,17 @@ metrics_dir = "metrics"
 diff_dir = "differences"
 
 
+def replacement_text(text: str = "No data available"):
+    """
+    Function to generate a default replacement text for when
+    the data to display is missing.
+
+    :param text: the text to display, defaults to "No data available"
+    :return: the display element
+    """
+    return html.Div(children=[text], style={"textAlign": "center"})
+
+
 def get_date_range(num_values: int):
     # generate 24h time range starting at 04:00
     resolution = timedelta(days=1) / num_values
@@ -38,7 +51,7 @@ def get_date_range(num_values: int):
 
 def stacked_prob_curves(filepath: Path | None, area: bool = True):
     if filepath is None or not filepath.is_file():
-        return html.Div(children=["No data available"], style={"textAlign": "center"})
+        return replacement_text()
     # load the correct file
     _, data = activity_profile.load_df(filepath)
     # transpose data for plotting
@@ -55,28 +68,98 @@ def stacked_prob_curves(filepath: Path | None, area: bool = True):
     return dcc.Graph(figure=fig)
 
 
-def update_prob_curves(profile_type_str: str, directory: Path):
-    # get the appropriate file suffix depending on the profile type
+def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True):
+    # load the correct file and plot it
     profile_type = file_utils.ptype_from_label(profile_type_str)
     filepath = file_utils.get_file_path(directory, profile_type)
-    result = stacked_prob_curves(filepath)
-    return result
+    result = stacked_prob_curves(filepath, area)
+    return [result]
 
 
-def draw_activity_figure(subdir: str, profile_type: ProfileType):
-    # profile_type = ProfileType.from_iterable(value.split(" - "))
-    dv = file_utils.load_data_by_type(validation_path / subdir, profile_type)
-    di = file_utils.load_data_by_type(input_data_path / subdir, profile_type)
-    di.rename(columns={c: c + " - LPG" for c in di.columns}, inplace=True)
+def join_to_pairs(
+    validation_data: pd.DataFrame, input_data: pd.DataFrame
+) -> dict[str, pd.DataFrame]:
+    """
+    Splits two DataFrames with the same set of columns and
+    joins columns of the same name from the different DataFrames.
 
-    data_sets = []
-    for col in dv.columns:
-        c2 = col + " - LPG"
-        if not c2 in di.columns:
+    :param validation_data: first data set
+    :param input_data: second data set
+    :return: dict of new DataFrames, each containing one column from
+             each of the two original DataFrames, grouped by column
+             name
+    """
+    # join the valiation data with the input data for each activity type
+    data_sets: dict[str, pd.DataFrame] = {}
+    for col in validation_data.columns:
+        d_val = validation_data[col]
+        if col not in input_data:
+            # no input data for this activity type
             continue
-        d = pd.concat([dv[col], di[c2]], axis=1)
-        data_sets.append(d)
-    return [dcc.Graph(figure=px.ecdf(d)) for d in data_sets]
+        d_in = input_data[col]
+        # set new names for the curves
+        d_val.name = "Validation"
+        d_in.name = "Input"
+        joined = pd.concat([validation_data[col], input_data[col]], axis=1)
+        data_sets[col] = joined
+    return data_sets
+
+
+def convert_to_timedelta(data: pd.DataFrame) -> None:
+    for col in data.columns:
+        data[col] = pd.to_timedelta(data[col])
+
+
+def sum_curves_per_activity_type(
+    profile_type_str: str, subdir: Path, duration_data: bool = False
+):
+    """
+    Generates a set of histogram plots, one for each activity type.
+    Each histogram compares the validation data to the matching input
+    data.
+
+    :param profile_type_str: the selected profile type
+    :param subdir: the data subdirectory to use, which must contain
+                   data per activity type in each file
+    :param duration_data: whether to convert the data to timedeltas, defaults to False
+    :return: a list of Cards containing the individual plots
+    """
+    # determine file paths for validation and input data
+    profile_type = file_utils.ptype_from_label(profile_type_str)
+    path_val = file_utils.get_file_path(validation_path / subdir, profile_type)
+    path_in = file_utils.get_file_path(input_data_path / subdir, profile_type)
+    if (
+        path_val is None
+        or not path_val.is_file()
+        or path_in is None
+        or not path_in.is_file()
+    ):
+        return replacement_text()
+
+    # load both files
+    _, validation_data = activity_profile.load_df(path_val)
+    _, input_data = activity_profile.load_df(path_in)
+    # convert data if necessary
+    if duration_data:
+        convert_to_timedelta(validation_data)
+        convert_to_timedelta(input_data)
+
+    data_per_activity = join_to_pairs(validation_data, input_data)
+
+    # create the plot for all activity types and wrap them in Cards
+    # TODO alternative: use ecdf instead of histogram for a sum curve
+    plots = [
+        dbc.Card(
+            dbc.CardBody(
+                children=[
+                    html.H3(activity.title(), style={"textAlign": "center"}),
+                    dcc.Graph(figure=px.histogram(d, barmode="overlay")),
+                ]
+            )
+        )
+        for activity, d in data_per_activity.items()
+    ]
+    return plots
 
 
 class MainValidationView(html.Div):
@@ -88,11 +171,11 @@ class MainValidationView(html.Div):
 
     class ids:
         # A set of functions that create pattern-matching callbacks of the subcomponents
-        store = lambda aio_id: {
-            "component": "AIOSelectableProbabilityCurves",
-            "subcomponent": "store",
-            "aio_id": aio_id,
-        }
+        # store = lambda aio_id: {
+        #     "component": "AIOSelectableProbabilityCurves",
+        #     "subcomponent": "store",
+        #     "aio_id": aio_id,
+        # }
         dropdown = lambda aio_id: {
             "component": "AIOSelectableProbabilityCurves",
             "subcomponent": "dropdown",
@@ -106,6 +189,16 @@ class MainValidationView(html.Div):
         input_graph = lambda aio_id: {
             "component": "AIOSelectableProbabilityCurves",
             "subcomponent": "input probability graph",
+            "aio_id": aio_id,
+        }
+        difference_graph = lambda aio_id: {
+            "component": "AIOSelectableProbabilityCurves",
+            "subcomponent": "probability difference graph",
+            "aio_id": aio_id,
+        }
+        per_activity_graphs = lambda aio_id: {
+            "component": "AIOSelectableProbabilityCurves",
+            "subcomponent": "per activity type graphs",
             "aio_id": aio_id,
         }
 
@@ -137,14 +230,14 @@ class MainValidationView(html.Div):
             validation_path / prob_dir
         )
         input_types = file_utils.get_profile_type_labels(input_data_path / prob_dir)
-        all_types = list(set(validation_types) | set(input_types))
+        all_types = sorted(list(set(validation_types) | set(input_types)))
 
         # get filepaths
 
         # Define the component's layout
         super().__init__(
             [
-                dcc.Store(data=str(validation_path), id=self.ids.store(aio_id)),
+                # dcc.Store(data=str(validation_path), id=self.ids.store(aio_id)),
                 dcc.Dropdown(
                     all_types,
                     all_types[0],
@@ -168,16 +261,30 @@ class MainValidationView(html.Div):
                 html.Div(
                     [
                         html.H2("Difference", style={"textAlign": "center"}),
-                        # MainValidationView(input_data_path / comp_dir / diff_dir),
-                        dcc.Graph(),
+                        html.Div(id=self.ids.difference_graph(aio_id)),
                     ]
                 ),
-                # html.Div(
-                #     [
-                #         html.H2("Activity Frequencies", style={"textAlign": "center"}),
-                #         html.Div(draw_activity_figure(freq_dir, test_profile_type)),
-                #     ]
-                # ),
+                html.Div(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    html.H2(
+                                        "Activity Frequencies",
+                                        style={"textAlign": "center"},
+                                    )
+                                ),
+                                dbc.Col(
+                                    html.H2(
+                                        "Activity Durations",
+                                        style={"textAlign": "center"},
+                                    )
+                                ),
+                            ],
+                        ),
+                        html.Div(id=self.ids.per_activity_graphs(aio_id)),
+                    ]
+                ),
             ],
         )
 
@@ -186,10 +293,28 @@ class MainValidationView(html.Div):
         Input(ids.dropdown(MATCH), "value"),
     )
     def update_validation_graph(profile_type_str):
-        return [update_prob_curves(profile_type_str, validation_path / prob_dir)]
+        return update_prob_curves(profile_type_str, validation_path / prob_dir)
 
     @callback(
         Output(ids.input_graph(MATCH), "children"), Input(ids.dropdown(MATCH), "value")
     )
     def update_input_graph(profile_type_str):
-        return [update_prob_curves(profile_type_str, input_data_path / prob_dir)]
+        return update_prob_curves(profile_type_str, input_data_path / prob_dir)
+
+    @callback(
+        Output(ids.difference_graph(MATCH), "children"),
+        Input(ids.dropdown(MATCH), "value"),
+    )
+    def update_diff_graph(profile_type_str):
+        return update_prob_curves(
+            profile_type_str, input_data_path / diff_dir, area=False
+        )
+
+    @callback(
+        Output(ids.per_activity_graphs(MATCH), "children"),
+        Input(ids.dropdown(MATCH), "value"),
+    )
+    def update_activity_dur_graphs(profile_type_str):
+        freq = sum_curves_per_activity_type(profile_type_str, freq_dir)
+        dur = sum_curves_per_activity_type(profile_type_str, duration_dir, True)
+        return dbc.Row([dbc.Col(freq), dbc.Col(dur)])
