@@ -16,7 +16,7 @@ from activity_validator.hetus_data_processing.attributes.person_attributes impor
 from activity_validator.ui import data_utils
 from activity_validator.ui.overview import chunks, create_rows, draw_figure
 
-from activity_validator.ui.probability_curves import MainValidationView
+from activity_validator.ui.main_validation_view import MainValidationView
 
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])

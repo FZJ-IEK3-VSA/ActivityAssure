@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 import glob
 from pathlib import Path
-import datapane as dp
+import datapane as dp  # type: ignore
 import pandas as pd
-import plotly.express as px
+import plotly.express as px  # type: ignore
 
 from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
-from activity_validator.ui.probability_curves import get_files
+from activity_validator.ui.data_utils import get_files
 
 
 # default data paths
