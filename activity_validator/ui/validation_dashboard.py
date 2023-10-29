@@ -14,6 +14,7 @@ from activity_validator.hetus_data_processing.attributes.person_attributes impor
     WorkStatus,
 )
 from activity_validator.ui import data_utils
+from activity_validator.ui import datapaths
 from activity_validator.ui.overview import chunks, create_rows, draw_figure
 
 from activity_validator.ui.main_validation_view import MainValidationView
@@ -21,22 +22,11 @@ from activity_validator.ui.main_validation_view import MainValidationView
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# default data paths
-validation_path = Path("data/validation_data")
-# validation_path = Path("data/validation_data EU")
-input_data_path = Path("data/lpg/results")
-
-# data subdirectories
-prob_dir = "probability_profiles"
-freq_dir = "activity_frequencies"
-duration_dir = "activity_durations"
-comp_dir = "comparison"
-metrics_dir = "metrics"
-diff_dir = "differences"
-
 
 # get available validation profile types
-profile_types = data_utils.get_profile_types(validation_path / prob_dir).keys()
+profile_types = data_utils.get_profile_types(
+    datapaths.validation_path / datapaths.prob_dir
+).keys()
 countries = list({p.country for p in profile_types})
 global_profile_types = {dataclasses.replace(p, country="") for p in profile_types}
 global_type_str = [" - ".join(pt.to_tuple()[1:]) for pt in profile_types]
@@ -44,7 +34,7 @@ global_type_str = [" - ".join(pt.to_tuple()[1:]) for pt in profile_types]
 # TODO just for testing
 test_profile_type = ProfileType("DE", Sex.female, WorkStatus.full_time, DayType.no_work)
 
-tab1_content = html.Div([MainValidationView(validation_path, input_data_path)])
+tab1_content = html.Div([MainValidationView()])
 
 horizontal_limit = 4
 tab2_content = html.Div(
@@ -91,7 +81,7 @@ app.layout = html.Div(
 
 @callback(Output(single_country_div, "children"), Input(country_selector, "value"))
 def country_overview(country: str):
-    path = validation_path / prob_dir
+    path = datapaths.validation_path / datapaths.prob_dir
     profiles_of_country = [p for p in profile_types if p.country == country]
     return create_rows(path, profiles_of_country)
 
@@ -99,7 +89,7 @@ def country_overview(country: str):
 @callback(Output(cross_country_div, "children"), Input(category_selector, "value"))
 def cross_country_overview(profile_type: str):
     sex, work_status, day_type = profile_type.split(" - ")
-    path = validation_path / prob_dir
+    path = datapaths.validation_path / datapaths.prob_dir
     filtered_profile_types = [
         p
         for p in profile_types

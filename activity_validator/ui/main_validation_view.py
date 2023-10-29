@@ -10,23 +10,9 @@ import uuid
 
 import pandas as pd
 from activity_validator.hetus_data_processing import activity_profile
-
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
-
 from activity_validator.ui import data_utils
-
-# default data paths
-validation_path = Path("data/validation_data")
-# validation_path = Path("data/validation_data EU")
-input_data_path = Path("data/lpg/results")
-
-# data subdirectories
-prob_dir = "probability_profiles"
-freq_dir = "activity_frequencies"
-duration_dir = "activity_durations"
-comp_dir = "comparison"
-metrics_dir = "metrics"
-diff_dir = "differences"
+from activity_validator.ui import datapaths
 
 
 def replacement_text(text: str = "No data available"):
@@ -126,8 +112,10 @@ def sum_curves_per_activity_type(
     """
     # determine file paths for validation and input data
     profile_type = data_utils.ptype_from_label(profile_type_str)
-    path_val = data_utils.get_file_path(validation_path / subdir, profile_type)
-    path_in = data_utils.get_file_path(input_data_path / subdir, profile_type)
+    path_val = data_utils.get_file_path(
+        datapaths.validation_path / subdir, profile_type
+    )
+    path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
     if (
         path_val is None
         or not path_val.is_file()
@@ -205,8 +193,6 @@ class MainValidationView(html.Div):
     # Define the arguments of the component
     def __init__(
         self,
-        validation_path: Path,
-        input_data_path: Path,
         dropdown_props=None,
         graph_props=None,
         aio_id=None,
@@ -227,9 +213,11 @@ class MainValidationView(html.Div):
 
         # get available profile categories
         validation_types = data_utils.get_profile_type_labels(
-            validation_path / prob_dir
+            datapaths.validation_path / datapaths.prob_dir
         )
-        input_types = data_utils.get_profile_type_labels(input_data_path / prob_dir)
+        input_types = data_utils.get_profile_type_labels(
+            datapaths.input_data_path / datapaths.prob_dir
+        )
         all_types = sorted(list(set(validation_types) | set(input_types)))
 
         # get filepaths
@@ -293,13 +281,17 @@ class MainValidationView(html.Div):
         Input(ids.dropdown(MATCH), "value"),
     )
     def update_validation_graph(profile_type_str):
-        return update_prob_curves(profile_type_str, validation_path / prob_dir)
+        return update_prob_curves(
+            profile_type_str, datapaths.validation_path / datapaths.prob_dir
+        )
 
     @callback(
         Output(ids.input_graph(MATCH), "children"), Input(ids.dropdown(MATCH), "value")
     )
     def update_input_graph(profile_type_str):
-        return update_prob_curves(profile_type_str, input_data_path / prob_dir)
+        return update_prob_curves(
+            profile_type_str, datapaths.input_data_path / datapaths.prob_dir
+        )
 
     @callback(
         Output(ids.difference_graph(MATCH), "children"),
@@ -307,7 +299,7 @@ class MainValidationView(html.Div):
     )
     def update_diff_graph(profile_type_str):
         return update_prob_curves(
-            profile_type_str, input_data_path / diff_dir, area=False
+            profile_type_str, datapaths.input_data_path / datapaths.diff_dir, area=False
         )
 
     @callback(
@@ -315,6 +307,8 @@ class MainValidationView(html.Div):
         Input(ids.dropdown(MATCH), "value"),
     )
     def update_activity_dur_graphs(profile_type_str):
-        freq = sum_curves_per_activity_type(profile_type_str, freq_dir)
-        dur = sum_curves_per_activity_type(profile_type_str, duration_dir, True)
+        freq = sum_curves_per_activity_type(profile_type_str, datapaths.freq_dir)
+        dur = sum_curves_per_activity_type(
+            profile_type_str, datapaths.duration_dir, True
+        )
         return dbc.Row([dbc.Col(freq), dbc.Col(dur)])
