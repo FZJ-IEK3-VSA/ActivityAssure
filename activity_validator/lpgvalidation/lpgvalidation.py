@@ -41,13 +41,16 @@ def load_person_characteristics(path: str) -> dict:
 
 @utils.timing
 def load_activity_profiles_from_csv(
-    dir: str, person_trait_file: str, resolution: timedelta = DEFAULT_RESOLUTION
+    path: str | Path, person_trait_file: str, resolution: timedelta = DEFAULT_RESOLUTION
 ) -> list[SparseActivityProfile]:
-    """Loads the activity profiles in json format from the specified folder"""
+    """Loads the activity profiles in csv format from the specified folder"""
+    if not isinstance(path, Path):
+        path = Path(path)
+    assert Path(path).is_dir(), f"Directory does not exist: {path}"
     person_traits = load_person_characteristics(person_trait_file)
     activity_profiles = []
-    for filename in os.listdir(dir):
-        path = os.path.join(dir, filename)
+    for filename in os.listdir(path):
+        path = os.path.join(path, filename)
         if os.path.isfile(path):
             activity_profile = SparseActivityProfile.load_from_csv(
                 path, person_traits, resolution
@@ -58,12 +61,15 @@ def load_activity_profiles_from_csv(
 
 
 @utils.timing
-def load_activity_profiles_from_json(dir: str) -> list[SparseActivityProfile]:
+def load_activity_profiles_from_json(path: str | Path) -> list[SparseActivityProfile]:
     """Loads the activity profiles in json format from the specified folder"""
+    if not isinstance(path, Path):
+        path = Path(path)
+    assert Path(path).is_dir(), f"Directory does not exist: {path}"
     activity_profiles = []
     # collect all files in the directory
-    for filename in os.listdir(dir):
-        path = os.path.join(dir, filename)
+    for filename in os.listdir(path):
+        path = os.path.join(path, filename)
         if os.path.isfile(path):
             with open(path, encoding="utf-8") as f:
                 file_content = f.read()
@@ -182,6 +188,7 @@ def load_validation_data_subdir(path: Path) -> dict[ProfileType, pd.DataFrame]:
 def load_validation_data(
     path: Path = activity_profile.VALIDATION_DATA_PATH,
 ) -> dict[ProfileType, ValidationData]:
+    assert path.is_dir(), f"Validation data directory not found: {path}"
     subdir_path = path / "probability_profiles"
     probability_profile_data = load_validation_data_subdir(subdir_path)
     logging.info(

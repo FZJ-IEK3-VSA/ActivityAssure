@@ -1,5 +1,12 @@
+"""
+Generates the person characteristics and the basic activity mapping for the 
+LoadProfileGenerator from the input database profilegenerator.db3.
+"""
+
 import json
+import logging
 import os
+from pathlib import Path
 import sqlite3
 from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.attributes.person_attributes import (
@@ -8,20 +15,26 @@ from activity_validator.hetus_data_processing.attributes.person_attributes impor
 )
 
 
-def define_person_mapping(path: str):
+def define_person_mapping(path: Path):
     # TODO: (automatically?) create complete mapping for all persons/households
     mapping = {
         "Rubi": activity_profile.ProfileType("DE", Sex.female, WorkStatus.full_time),
         "Sami": activity_profile.ProfileType("DE", Sex.male, WorkStatus.full_time),
+        "Cordelia": activity_profile.ProfileType("DE", Sex.female, WorkStatus.retired),
+        "Edgar": activity_profile.ProfileType("DE", Sex.male, WorkStatus.retired),
     }
     dict_mapping = {n: p.to_dict() for n, p in mapping.items()}  # type: ignore
 
-    path = os.path.join(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w+", encoding="utf-8") as f:
         json.dump(dict_mapping, f, indent=4)
+    print(f"Generated person characteristics file: {path}")
 
 
 def generate_raw_activity_mapping(database_path: str, output_file):
+    assert Path(
+        database_path
+    ).is_file(), f"Input database file of LPG is missing: {database_path}"
     con = sqlite3.connect(database_path)
     cur = con.cursor()
     query = "SELECT Name, AffCategory FROM tblAffordances"
@@ -56,10 +69,11 @@ def generate_raw_activity_mapping(database_path: str, output_file):
 
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(mapping, f, indent=4)
+    print(f"Generated basic activity mapping file: {output_file}")
 
 
 if __name__ == "__main__":
-    person_file = "data/lpg/person_characteristics.json"
+    person_file = Path("data/lpg/person_characteristics.json")
     define_person_mapping(person_file)
 
     lpg_main_db = "data/lpg/profilegenerator.db3"
