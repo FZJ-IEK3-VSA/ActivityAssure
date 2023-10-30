@@ -35,31 +35,9 @@ def get_date_range(num_values: int):
     return time_values
 
 
-def stacked_prob_curves(filepath: Path | None, area: bool = True):
-    if filepath is None or not filepath.is_file():
-        return replacement_text()
-    # load the correct file
-    _, data = activity_profile.load_df(filepath)
-    # transpose data for plotting
-    data = data.T
-    time_values = get_date_range(len(data))
-    # select plot type
-    plotting_func = px.area if area else px.line
-    # plot the data
-    fig = plotting_func(
-        data,
-        x=time_values,
-        y=data.columns,
-    )
-    return dcc.Graph(figure=fig)
-
-
-def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True):
-    # load the correct file and plot it
-    profile_type = data_utils.ptype_from_label(profile_type_str)
-    filepath = data_utils.get_file_path(directory, profile_type)
-    result = stacked_prob_curves(filepath, area)
-    return [result]
+def convert_to_timedelta(data: pd.DataFrame) -> None:
+    for col in data.columns:
+        data[col] = pd.to_timedelta(data[col])
 
 
 def join_to_pairs(
@@ -91,9 +69,70 @@ def join_to_pairs(
     return data_sets
 
 
-def convert_to_timedelta(data: pd.DataFrame) -> None:
-    for col in data.columns:
-        data[col] = pd.to_timedelta(data[col])
+def stacked_prob_curves(filepath: Path | None, area: bool = True):
+    if filepath is None or not filepath.is_file():
+        return replacement_text()
+    # load the correct file
+    _, data = activity_profile.load_df(filepath)
+    # transpose data for plotting
+    data = data.T
+    time_values = get_date_range(len(data))
+    # select plot type
+    plotting_func = px.area if area else px.line
+    # plot the data
+    fig = plotting_func(
+        data,
+        x=time_values,
+        y=data.columns,
+    )
+    return dcc.Graph(figure=fig)
+
+
+def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True):
+    # load the correct file and plot it
+    profile_type = data_utils.ptype_from_label(profile_type_str)
+    filepath = data_utils.get_file_path(directory, profile_type)
+    result = stacked_prob_curves(filepath, area)
+    return [result]
+
+
+def prob_curve_per_activity(profile_type_str: str, subdir: str):
+    profile_type = data_utils.ptype_from_label(profile_type_str)
+    path_val = data_utils.get_file_path(
+        datapaths.validation_path / subdir, profile_type
+    )
+    path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
+    if path_val is None or path_in is None:
+        return replacement_text()
+    # load both files
+    _, validation_data = activity_profile.load_df(path_val)
+    _, input_data = activity_profile.load_df(path_in)
+
+    # assign the same column names (one column per timestep)
+    input_data.columns = validation_data.columns
+    validation_data = validation_data.T
+    input_data = input_data.T * -1
+    data_per_activity = join_to_pairs(validation_data, input_data)
+
+    time_values = get_date_range(len(validation_data))
+    # plot the data
+    plots = [
+        dbc.Card(
+            dbc.CardBody(
+                children=[
+                    html.H3(activity.title(), style={"textAlign": "center"}),
+                    dcc.Graph(
+                        figure=px.area(
+                            d,
+                            # x=time_values,
+                        )
+                    ),
+                ]
+            )
+        )
+        for activity, d in data_per_activity.items()
+    ]
+    return plots
 
 
 def sum_curves_per_activity_type(
@@ -116,12 +155,7 @@ def sum_curves_per_activity_type(
         datapaths.validation_path / subdir, profile_type
     )
     path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
-    if (
-        path_val is None
-        or not path_val.is_file()
-        or path_in is None
-        or not path_in.is_file()
-    ):
+    if path_val is None or path_in is None:
         return replacement_text()
 
     # load both files
@@ -220,15 +254,13 @@ class MainValidationView(html.Div):
         )
         all_types = sorted(list(set(validation_types) | set(input_types)))
 
-        # get filepaths
-
         # Define the component's layout
         super().__init__(
             [
                 # dcc.Store(data=str(validation_path), id=self.ids.store(aio_id)),
                 dcc.Dropdown(
                     all_types,
-                    all_types[0],
+                    input_types[0],
                     id=self.ids.dropdown(aio_id),
                     **dropdown_props,
                 ),
@@ -265,6 +297,12 @@ class MainValidationView(html.Div):
                                 dbc.Col(
                                     html.H2(
                                         "Activity Durations",
+                                        style={"textAlign": "center"},
+                                    )
+                                ),
+                                dbc.Col(
+                                    html.H2(
+                                        "Activity Probabilities",
                                         style={"textAlign": "center"},
                                     )
                                 ),
@@ -311,4 +349,5 @@ class MainValidationView(html.Div):
         dur = sum_curves_per_activity_type(
             profile_type_str, datapaths.duration_dir, True
         )
-        return dbc.Row([dbc.Col(freq), dbc.Col(dur)])
+        prob = prob_curve_per_activity(profile_type_str, datapaths.prob_dir)
+        return dbc.Row([dbc.Col(freq), dbc.Col(dur), dbc.Col(prob)])
