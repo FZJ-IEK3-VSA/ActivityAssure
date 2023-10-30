@@ -108,25 +108,29 @@ def prob_curve_per_activity(profile_type_str: str, subdir: str):
     _, validation_data = activity_profile.load_df(path_val)
     _, input_data = activity_profile.load_df(path_in)
 
-    # assign the same column names (one column per timestep)
-    time_values = get_date_range(len(validation_data))
-    input_data.columns = validation_data.columns
-    validation_data.index = time_values
-    input_data.index = time_values
+    # assign time values for the timesteps
+    time_values = get_date_range(len(validation_data.columns))
+    validation_data.columns = time_values
+    input_data.columns = time_values
+    # determine common index with all activity types
+    common_index = validation_data.index.union(input_data.index)
+    # add rows full of zeros for missing activity types
+    validation_data = validation_data.reindex(common_index, fill_value=0)
+    input_data = input_data.reindex(common_index, fill_value=0)
     validation_data = validation_data.T
     input_data = input_data.T * -1
     data_per_activity = join_to_pairs(validation_data, input_data)
 
     # plot the data
-    figures = {
-        a: px.line(
-            d,
-            # x=time_values,
-        )
-        for a, d in data_per_activity.items()
-    }
-    for figure in figures.values():
-        figure.update_traces()
+    # figures = {
+    #     a: px.line(
+    #         d,
+    #         # x=time_values,
+    #     )
+    #     for a, d in data_per_activity.items()
+    # }
+    # for figure in figures.values():
+    #     figure.update_traces()
 
     plots = [
         dbc.Card(
