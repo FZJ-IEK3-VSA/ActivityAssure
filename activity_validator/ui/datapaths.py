@@ -18,3 +18,23 @@ duration_dir = "activity_durations"
 comp_dir = "comparison"
 metrics_dir = "metrics"
 diff_dir = "differences"
+
+
+def check_paths():
+    """
+    Checks the specified paths for validation and input data
+    """
+    assert validation_path.is_dir(), f"Validation data not found: '{validation_path}'"
+    assert input_data_path.is_dir(), f"Input data not found: '{input_data_path}'"
+    subdirs = [prob_dir, freq_dir, duration_dir, comp_dir, metrics_dir, diff_dir]
+    for subdir in subdirs[:3]:
+        path = validation_path / subdir
+        assert path.is_dir(), f"Validation data incomplete: {subdir} missing"
+        assert len(list(path.glob("*"))), f"Validation subdirectorx {subdir} is empty"
+    for subdir in subdirs:
+        path = input_data_path / subdir
+        assert path.is_dir(), f"Input data incomplete: {subdir} missing"
+        assert len(list(path.glob("*"))), f"Input subdirectorx {subdir} is empty"
+
+
+check_paths()
