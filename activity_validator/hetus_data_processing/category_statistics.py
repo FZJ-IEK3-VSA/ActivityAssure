@@ -11,7 +11,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from activity_validator.hetus_data_processing import hetus_translations
+import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import utils
 from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import (
@@ -102,12 +102,12 @@ def calc_statistics_per_category(profile_sets: list[ExpandedActivityProfiles]) -
                        one category
     """
     for profile_set in profile_sets:
-        # translate the activity codes to the target activity types
-        mapped_data = hetus_translations.get_translated_activity_data(profile_set.data)
-        profile_set.data = mapped_data
-
-        probabilities = calc_probability_profiles(mapped_data)
-
+        # extract only the activity data
+        profile_set.data = profile_set.data.filter(
+            like=col.Diary.MAIN_ACTIVITIES_PATTERN
+        )
+        probabilities = calc_probability_profiles(profile_set.data)
+        # convert to sparse format to calculate more statistics
         activity_profiles = profile_set.create_sparse_profiles()
         frequencies = calc_activity_group_frequencies(activity_profiles)
         durations = calc_activity_group_durations(activity_profiles)

@@ -1,7 +1,10 @@
 import logging
 
 import activity_validator.hetus_data_processing.hetus_columns as col
-from activity_validator.hetus_data_processing import level_extraction
+from activity_validator.hetus_data_processing import (
+    hetus_translations,
+    level_extraction,
+)
 from activity_validator.hetus_data_processing import load_data
 from activity_validator.hetus_data_processing import utils
 from activity_validator.hetus_data_processing.attributes import (
@@ -30,6 +33,8 @@ def process_hetus_2010_data():
     assert data is not None
     data.set_index(col.Diary.KEY, inplace=True)
     utils.stats(data)
+
+    hetus_translations.translate_activity_codes(data)
 
     # extract households and persons
     data_valid_persons, persondata = level_extraction.get_usable_person_data(data)

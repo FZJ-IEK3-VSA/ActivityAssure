@@ -214,7 +214,8 @@ def calc_overall_activity_shares(data: pd.DataFrame) -> pd.Series:
     :param data: HETUS diary data
     :return: the overall share for each activity type
     """
-    mapped_data = hetus_translations.get_translated_activity_data(data)
-    probabilities = calc_probability_profiles(mapped_data)
+    hetus_translations.translate_activity_codes(data)
+    data = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+    probabilities = calc_probability_profiles(data)
     overall_shares = probabilities.mean(axis=1)
     return overall_shares

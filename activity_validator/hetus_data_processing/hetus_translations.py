@@ -10,12 +10,10 @@ import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 
-HETUS_CODES_PATH = (
-    Path() / "activity_validator" / "activity_types" / "hetus_activity_codes_2010.json"
+HETUS_CODES_PATH = Path(
+    "activity_validator/activity_types/hetus_activity_codes_2010.json"
 )
-HETUS_MAPPING_PATH = (
-    Path() / "activity_validator" / "activity_types" / "mapping_hetus.json"
-)
+HETUS_MAPPING_PATH = Path("activity_validator/activity_types/mapping_hetus.json")
 
 
 def load_mapping(path: Path) -> dict[str, str]:
@@ -62,14 +60,17 @@ def extract_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def get_translated_activity_data(data: pd.DataFrame) -> pd.DataFrame:
+def translate_activity_codes(data: pd.DataFrame) -> None:
     """
-    Extracts activity data from a HETUS data set and mapps the
-    activity codes according to the HETUS code definitions and
-    the custom mapping (both defined in json files).
+    Applies the HETUS activity mapping and the custom activity
+    category mapping, both stored in separate json files.
+    Thus, the 3-digit HETUS activity codes are first translated
+    to the respective activity names, which are then grouped
+    according to the custom mapping.
+    The translation works inplace.
 
     :param data: HETUS diary data
-    :return: mapped activity data
+    :return: data with mapped activity names
     """
     # HETUS data contains activity codes which can be mapped to the
     # corresponding activity names, which can in turn be mapped using
@@ -79,7 +80,7 @@ def get_translated_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     # combine the two mapping steps in a single dict (only 3-digit HETUS codes)
     combined = {code: mapping[name] for code, name in codes.items() if name in mapping}
     activity = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
-    return activity.replace(combined)
+    data.loc[:, activity.columns] = activity.replace(combined)
 
 
 def translate_activity_codes_index(data: pd.DataFrame) -> None:
