@@ -79,8 +79,7 @@ def get_translated_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     # combine the two mapping steps in a single dict (only 3-digit HETUS codes)
     combined = {code: mapping[name] for code, name in codes.items() if name in mapping}
     activity = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
-    activity.replace(combined, inplace=True)
-    return activity
+    return activity.replace(combined)
 
 
 def translate_activity_codes_index(data: pd.DataFrame) -> None:
