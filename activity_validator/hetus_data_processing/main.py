@@ -35,7 +35,7 @@ def process_hetus_2010_data():
     utils.stats(data)
 
     hetus_translations.translate_activity_codes(data)
-    hetus_translations.save_final_activity_types()
+    activity_types = hetus_translations.save_final_activity_types()
 
     # extract households and persons
     data_valid_persons, persondata = level_extraction.get_usable_person_data(data)
@@ -56,7 +56,7 @@ def process_hetus_2010_data():
     categories = categorize(cat_data, key)
     # cat_hhdata = get_hh_categorization_data(hhdata, persondata)
 
-    category_statistics.calc_statistics_per_category(categories)
+    category_statistics.calc_statistics_per_category(categories, activity_types)
 
     # data_checks.all_data_checks(data, persondata, hhdata)
 

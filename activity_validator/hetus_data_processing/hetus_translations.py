@@ -62,11 +62,13 @@ def extract_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def save_final_activity_types():
+def save_final_activity_types() -> list[str]:
     """
     Saves the ultimately (i.e., after applying the mappings) available
     activity types in a json file. This can be used to countercheck
     which activities did not occur at all in a profile.
+
+    :return: the list of activity names
     """
     mapping = load_mapping(HETUS_MAPPING_PATH)
     activity_types = list(set(mapping.values()))
@@ -74,6 +76,7 @@ def save_final_activity_types():
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"activity types": activity_types}, f)
     logging.info(f"Created activity types file: {path}")
+    return activity_types
 
 
 def get_combined_mapping() -> dict[str, str]:

@@ -39,13 +39,6 @@ def calc_activity_group_frequencies(
     frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype()).fillna(0)
     return frequencies  # .describe()
 
-    # Debug: show a boxplot for the frequencies
-    # from matplotlib import pyplot as plt
-    # ax: plt.Axes = frequencies.boxplot(rot=90)
-    # plt.subplots_adjust(top=0.95, bottom=0.5)
-    # plt.show()
-    # pass
-
 
 @utils.timing
 def calc_activity_group_durations(
@@ -69,19 +62,21 @@ def calc_activity_group_durations(
         # collect durations by activity type, and convert from number of time slots
         # to Timedelta
         durations_by_activity.setdefault(a.name, []).append(a.duration * resolution)
-    # turn into a DataFrame to calculate statistics (list comprehension is necessary
-    # due to different list lengths)
+    # turn into a DataFrame (list comprehension is necessary due to different list lengths)
     durations_series = [pd.Series(d, name=k) for k, d in durations_by_activity.items()]
     durations = pd.concat(durations_series, axis=1)
     return durations  # .describe()
 
 
 @utils.timing
-def calc_probability_profiles(data: pd.DataFrame) -> pd.DataFrame:
+def calc_probability_profiles(
+    data: pd.DataFrame, activity_types: list[str]
+) -> pd.DataFrame:
     """
     Calculates activity probability profiles for the occurring activity types
 
     :param data: HETUS diary data
+    :param activity_types: list of possible activity types
     :return: probability profiles for all activity types
     """
     probabilities = data.apply(lambda x: x.value_counts(normalize=True))
@@ -89,24 +84,29 @@ def calc_probability_profiles(data: pd.DataFrame) -> pd.DataFrame:
     assert (
         np.isclose(probabilities.sum(), 1.0) | np.isclose(probabilities.sum(), 0.0)
     ).all(), "Calculation error: probabilities are not always 100 % (or 0 % for AT)"
+    # add rows of zeros for any activity type that did not occur at all
+    probabilities = probabilities.reindex(pd.Index(activity_types), fill_value=0)
     return probabilities
 
 
 @utils.timing
-def calc_statistics_per_category(profile_sets: list[ExpandedActivityProfiles]) -> None:
+def calc_statistics_per_category(
+    profile_sets: list[ExpandedActivityProfiles], activity_types: list[str]
+) -> None:
     """
     Calculates all required characteristics for each diary category in the
     HETUS data separately
 
     :param categories: a list of expanded activity profile collections, each for
                        one category
+    :param activity_types: list of possible activity types
     """
     for profile_set in profile_sets:
         # extract only the activity data
         profile_set.data = profile_set.data.filter(
             like=col.Diary.MAIN_ACTIVITIES_PATTERN
         )
-        probabilities = calc_probability_profiles(profile_set.data)
+        probabilities = calc_probability_profiles(profile_set.data, activity_types)
         # convert to sparse format to calculate more statistics
         activity_profiles = profile_set.create_sparse_profiles()
         frequencies = calc_activity_group_frequencies(activity_profiles)
