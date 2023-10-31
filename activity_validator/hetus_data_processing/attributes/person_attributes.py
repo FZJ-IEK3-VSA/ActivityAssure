@@ -6,7 +6,7 @@ from enum import StrEnum
 import logging
 import pandas as pd
 
-from activity_validator.hetus_data_processing import hetus_translations, utils
+from activity_validator.hetus_data_processing import utils
 import activity_validator.hetus_data_processing.hetus_columns as col
 import activity_validator.hetus_data_processing.hetus_values as val
 

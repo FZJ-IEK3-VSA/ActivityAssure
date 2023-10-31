@@ -299,7 +299,7 @@ class MainValidationView(html.Div):
                             [
                                 dbc.Col(
                                     html.H2(
-                                        "Activity Frequencies",
+                                        "Activity Frequencies per Day",
                                         style={"textAlign": "center"},
                                     )
                                 ),

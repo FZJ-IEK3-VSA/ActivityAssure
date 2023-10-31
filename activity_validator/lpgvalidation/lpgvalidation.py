@@ -227,18 +227,23 @@ def filter_relevant_validation_data(
     pass
 
 
-def calc_input_data_statistics(profiles: list[SparseActivityProfile]) -> ValidationData:
+def calc_input_data_statistics(
+    profiles: list[SparseActivityProfile], activity_types: list[str]
+) -> ValidationData:
     """
     Calculates statistics for the input data of a specific profile type
 
     :param profiles: sparse activity profiles of the same type
+    :param activity_types: list of possible activity names
     :return: the calculated statistics
     """
     frequencies = category_statistics.calc_activity_group_frequencies(profiles)
     durations = category_statistics.calc_activity_group_durations(profiles)
     # convert to expanded format
     profile_set = ExpandedActivityProfiles.from_sparse_profiles(profiles)
-    probabilities = category_statistics.calc_probability_profiles(profile_set.data)
+    probabilities = category_statistics.calc_probability_profiles(
+        profile_set.data, activity_types
+    )
     # store all statistics in one object
     input_data = ValidationData(
         profiles[0].profile_type, probabilities, frequencies, durations

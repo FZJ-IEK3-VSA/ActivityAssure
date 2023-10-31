@@ -62,24 +62,29 @@ def extract_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def save_final_activity_types() -> list[str]:
+def save_final_activity_types(
+    mapping_path: Path = HETUS_MAPPING_PATH, base_path: Path | None = None
+) -> list[str]:
     """
     Saves the ultimately (i.e., after applying the mappings) available
     activity types in a json file. This can be used to countercheck
     which activities did not occur at all in a profile.
 
+    :param mapping_path: path of the mapping file to load, defaults to HETUS_MAPPING_PATH
     :return: the list of activity names
     """
-    mapping = load_mapping(HETUS_MAPPING_PATH)
-    activity_types = list(set(mapping.values()))
-    path = create_result_path("activities", "available_activity_types", ext="json")
+    mapping = load_mapping(mapping_path)
+    activity_types = sorted(set(mapping.values()))
+    path = create_result_path(
+        "activities", "available_activity_types", base_path=base_path, ext="json"
+    )
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"activity types": activity_types}, f)
     logging.info(f"Created activity types file: {path}")
     return activity_types
 
 
-def get_combined_mapping() -> dict[str, str]:
+def get_combined_hetus_mapping() -> dict[str, str]:
     """
     Loads the HETUS activity mapping and the custom
     activity mapping and combines them into one dict
@@ -110,7 +115,7 @@ def translate_activity_codes(data: pd.DataFrame) -> None:
     # HETUS data contains activity codes which can be mapped to the
     # corresponding activity names, which can in turn be mapped using
     # the defined activity type mapping
-    combined = get_combined_mapping()
+    combined = get_combined_hetus_mapping()
     activity = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
     data.loc[:, activity.columns] = activity.replace(combined)
 

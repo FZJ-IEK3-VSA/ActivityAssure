@@ -103,7 +103,7 @@ def create_result_path(
     subdir: str,
     name: str,
     profile_type: ProfileType | None = None,
-    base_path: Path = VALIDATION_DATA_PATH,
+    base_path: Path | None = None,
     ext: str = "csv",
 ) -> Path:
     """
@@ -119,6 +119,8 @@ def create_result_path(
                       defaults to VALIDATION_DATA_PATH
     :param ext: file extension, defaults to "csv"
     """
+    if not base_path:
+        base_path = VALIDATION_DATA_PATH
     if profile_type is not None:
         # add profile type to filename
         name = profile_type.construct_filename(name)
@@ -168,7 +170,7 @@ def load_df(path: str | Path) -> tuple[ProfileType | None, pd.DataFrame]:
 
 
 def get_person_traits(
-    person_traits: dict[str, ProfileType], filename: str
+    person_traits: dict[str, ProfileType], filename: str | Path
 ) -> ProfileType:
     """
     Extracts the person name from the path of an activity profile file

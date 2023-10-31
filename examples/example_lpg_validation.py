@@ -2,6 +2,7 @@
 Example script for validation the LoadProfileGenerator
 """
 
+import json
 import logging
 from pathlib import Path
 from activity_validator.hetus_data_processing import (
@@ -10,6 +11,27 @@ from activity_validator.hetus_data_processing import (
     hetus_translations,
 )
 from activity_validator.lpgvalidation import comparison_metrics, lpgvalidation
+
+
+def check_mapping(activity_types: list[str], validation_path: Path):
+    """
+    Checks if the activity types used in the custom mapping here match those
+    in the validation data set.
+    """
+    # load HETUS activity types
+    path = activity_profile.create_result_path(
+        "activities", "available_activity_types", base_path=validation_path, ext="json"
+    )
+    with open(path) as f:
+        activity_types_valid = json.load(f)["activity types"]
+    assert set(activity_types) == set(activity_types_valid), (
+        "The activity mapping does not use the same set of activity types as the"
+        "validation data"
+    )
+    assert (
+        activity_types == activity_types_valid
+    ), "The mappings result in a different activity type order"
+
 
 if __name__ == "__main__":
     # TODO: some general todos
@@ -26,20 +48,26 @@ if __name__ == "__main__":
 
     # load LPG activity profiles
     input_path = Path("data/lpg/processed")
+    output_path = Path("data/lpg/results")
     person_trait_file = Path("data/lpg/person_characteristics.json")
     full_year_profiles = lpgvalidation.load_activity_profiles_from_csv(
         input_path, person_trait_file
     )
 
-    # load activity mapping
-    custom_mapping_path = Path("examples/activity_mapping_lpg.json")
-    activity_mapping = hetus_translations.load_mapping(custom_mapping_path)
-
     # load validation data
     validation_data_path = Path("data/validation_data")
     validation_data_dict = lpgvalidation.load_validation_data(validation_data_path)
 
-    output_path = Path("data/lpg/results")
+    # load activity mapping
+    custom_mapping_path = Path("examples/activity_mapping_lpg.json")
+    activity_mapping = hetus_translations.load_mapping(custom_mapping_path)
+    # TODO: LPG mapping is missing "eat", so skip this check for now
+    # activity_types = hetus_translations.save_final_activity_types(
+    #     custom_mapping_path, output_path
+    # )
+    # check_mapping(activity_types, validation_data_path)
+    activity_types = hetus_translations.save_final_activity_types()
+
     # validate each full-year profile individually
     for full_year_profile in full_year_profiles:
         # resample profiles to validation data resolution
@@ -60,7 +88,9 @@ if __name__ == "__main__":
             # select matching validation data
             validation_data = validation_data_dict[profile_type]
             # calculate and store statistics for validation
-            input_data = lpgvalidation.calc_input_data_statistics(profiles)
+            input_data = lpgvalidation.calc_input_data_statistics(
+                profiles, activity_types
+            )
             input_data.save(output_path)
             # calcluate and store comparison metrics
             differences, metrics = comparison_metrics.calc_comparison_metrics(
