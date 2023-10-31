@@ -1,11 +1,8 @@
 from datetime import datetime, timedelta
-import glob
 from pathlib import Path
-from typing import Iterable
 from dash import Dash, Output, Input, State, html, dcc, callback, MATCH  # type: ignore
-import dash_bootstrap_components as dbc  # type:ignore
+import dash_bootstrap_components as dbc  # type: ignore
 import plotly.express as px  # type: ignore
-import plotly.graph_objects as go  # type: ignore
 import uuid
 
 import pandas as pd
@@ -121,32 +118,28 @@ def prob_curve_per_activity(profile_type_str: str, subdir: str):
     input_data = input_data.T * -1
     data_per_activity = join_to_pairs(validation_data, input_data)
 
-    # plot the data
-    # figures = {
-    #     a: px.line(
-    #         d,
-    #         # x=time_values,
-    #     )
-    #     for a, d in data_per_activity.items()
-    # }
-    # for figure in figures.values():
-    #     figure.update_traces()
-
+    # create the plots
+    figures = {}
+    for activity, data in data_per_activity.items():
+        figure = px.line(data)
+        figures[activity] = figure
+        # fill the areas between the curves and the x-axis
+        figure.update_traces(fill="tonexty", selector={"name": "Validation"})
+        figure.update_traces(fill="tozeroy", selector={"name": "Input"})
+        # make the y-axis range symmetric
+        max_y = data.abs().max(axis=None)
+        figure.update_yaxes(range=[-max_y, max_y])
+    # embed the plots in cards
     plots = [
         dbc.Card(
             dbc.CardBody(
                 children=[
                     html.H3(activity.title(), style={"textAlign": "center"}),
-                    dcc.Graph(
-                        figure=px.line(
-                            d,
-                            # x=time_values,
-                        )
-                    ),
+                    dcc.Graph(figure=fig),
                 ]
             )
         )
-        for activity, d in data_per_activity.items()
+        for activity, fig in figures.items()  # data_per_activity.items()
     ]
     return plots
 

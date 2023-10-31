@@ -31,7 +31,7 @@ def check_paths():
         assert path.is_dir(), f"Validation data incomplete: {subdir} missing"
         assert len(
             list(path.glob("*.csv"))
-        ), f"Validation subdirectory {subdir} is empty"
+        ), f"Validation subdirectory {subdir} contains no .csv files"
     for subdir in subdirs:
         path = input_data_path / subdir
         assert path.is_dir(), f"Input data incomplete: {subdir} missing"
