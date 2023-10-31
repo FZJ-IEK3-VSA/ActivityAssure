@@ -99,6 +99,36 @@ class ProfileType:
         return profile_type
 
 
+def create_result_path(
+    subdir: str,
+    name: str,
+    profile_type: ProfileType | None = None,
+    base_path: Path = VALIDATION_DATA_PATH,
+    ext: str = "csv",
+) -> Path:
+    """
+    Creates a full result path for saving a file within
+    the main result data directory.
+
+    :param subdir: subdirectory to save the file at
+    :param name: base name of the file
+    :param profile_type: the category of the profile data,
+                         if applicable; is appended to the
+                         filename; defaults to None
+    :param base_path: base directory for the file,
+                      defaults to VALIDATION_DATA_PATH
+    :param ext: file extension, defaults to "csv"
+    """
+    if profile_type is not None:
+        # add profile type to filename
+        name = profile_type.construct_filename(name)
+    name += f".{ext}"
+    directory = base_path / subdir
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / name
+    return path
+
+
 def save_df(
     data: pd.DataFrame,
     subdir: str,
@@ -121,14 +151,7 @@ def save_df(
                       defaults to VALIDATION_DATA_PATH
     :param ext: file extension, defaults to "csv"
     """
-    if profile_type is not None:
-        # add profile type to filename
-        name = profile_type.construct_filename(name)
-    name += f".{ext}"
-    directory = base_path / subdir
-    directory.mkdir(parents=True, exist_ok=True)
-
-    path = directory / name
+    path = create_result_path(subdir, name, profile_type, base_path, ext)
     data.to_csv(path)
     logging.debug(f"Created DataFrame file {path}")
 

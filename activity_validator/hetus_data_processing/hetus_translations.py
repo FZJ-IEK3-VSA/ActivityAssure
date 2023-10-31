@@ -4,9 +4,11 @@ This module provides functions for translating HETUS columns and codes to readab
 
 import json
 from enum import EnumType
+import logging
 from pathlib import Path
 
 import pandas as pd
+from activity_validator.hetus_data_processing.activity_profile import create_result_path
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 
@@ -60,6 +62,36 @@ def extract_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def save_final_activity_types():
+    """
+    Saves the ultimately (i.e., after applying the mappings) available
+    activity types in a json file. This can be used to countercheck
+    which activities did not occur at all in a profile.
+    """
+    mapping = load_mapping(HETUS_MAPPING_PATH)
+    activity_types = list(set(mapping.values()))
+    path = create_result_path("activities", "available_activity_types", ext="json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"activity types": activity_types}, f)
+    logging.info(f"Created activity types file: {path}")
+
+
+def get_combined_mapping() -> dict[str, str]:
+    """
+    Loads the HETUS activity mapping and the custom
+    activity mapping and combines them into one dict
+    that allows immediate translation from HETUS code
+    to custom activity category.
+
+    :return: combined activity mapping
+    """
+    codes = load_hetus_activity_codes()
+    mapping = load_mapping(HETUS_MAPPING_PATH)
+    # combine the two mapping steps in a single dict (only 3-digit HETUS codes)
+    combined = {code: mapping[name] for code, name in codes.items() if name in mapping}
+    return combined
+
+
 def translate_activity_codes(data: pd.DataFrame) -> None:
     """
     Applies the HETUS activity mapping and the custom activity
@@ -75,10 +107,7 @@ def translate_activity_codes(data: pd.DataFrame) -> None:
     # HETUS data contains activity codes which can be mapped to the
     # corresponding activity names, which can in turn be mapped using
     # the defined activity type mapping
-    codes = load_hetus_activity_codes()
-    mapping = load_mapping(HETUS_MAPPING_PATH)
-    # combine the two mapping steps in a single dict (only 3-digit HETUS codes)
-    combined = {code: mapping[name] for code, name in codes.items() if name in mapping}
+    combined = get_combined_mapping()
     activity = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
     data.loc[:, activity.columns] = activity.replace(combined)
 
