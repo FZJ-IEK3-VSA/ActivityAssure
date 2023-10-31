@@ -72,6 +72,3 @@ if __name__ == "__main__":
             metrics.save(output_path, profile_type)
 
             pass
-
-            # TODO: input statistics and metrics are saved to file - now load them and plot
-            # everything and show the KPIs

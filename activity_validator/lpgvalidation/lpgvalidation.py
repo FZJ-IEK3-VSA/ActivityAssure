@@ -49,11 +49,10 @@ def load_activity_profiles_from_csv(
     assert Path(path).is_dir(), f"Directory does not exist: {path}"
     person_traits = load_person_characteristics(person_trait_file)
     activity_profiles = []
-    for filename in os.listdir(path):
-        path = os.path.join(path, filename)
-        if os.path.isfile(path):
+    for filepath in path.iterdir():
+        if filepath.is_file():
             activity_profile = SparseActivityProfile.load_from_csv(
-                path, person_traits, resolution
+                filepath, person_traits, resolution
             )
             activity_profiles.append(activity_profile)
     logging.info(f"Loaded {len(activity_profiles)} activity profiles")
@@ -68,10 +67,9 @@ def load_activity_profiles_from_json(path: str | Path) -> list[SparseActivityPro
     assert Path(path).is_dir(), f"Directory does not exist: {path}"
     activity_profiles = []
     # collect all files in the directory
-    for filename in os.listdir(path):
-        path = os.path.join(path, filename)
-        if os.path.isfile(path):
-            with open(path, encoding="utf-8") as f:
+    for filepath in path.iterdir():
+        if filepath.is_file():
+            with open(filepath, encoding="utf-8") as f:
                 file_content = f.read()
                 activity_profile = SparseActivityProfile.from_json(file_content)  # type: ignore
             activity_profiles.append(activity_profile)

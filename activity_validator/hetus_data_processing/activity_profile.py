@@ -284,7 +284,7 @@ class SparseActivityProfile:
 
     @staticmethod
     def load_from_csv(
-        path,
+        path: Path | str,
         person_traits: dict[str, ProfileType],
         resolution: timedelta = DEFAULT_RESOLUTION,
     ) -> "SparseActivityProfile":
