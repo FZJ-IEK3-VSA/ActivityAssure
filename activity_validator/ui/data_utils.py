@@ -1,7 +1,9 @@
 import glob
 from pathlib import Path
 from activity_validator.hetus_data_processing import activity_profile
+from plotly.graph_objects import Figure  # type: ignore
 
+from activity_validator.ui import datapaths
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 
 
@@ -44,3 +46,27 @@ def get_file_path(
     if len(files) > 1:
         raise RuntimeError(f"Found multiple files for the same profile type: {files}")
     return Path(files[0])
+
+
+def save_plot(
+    figure: Figure,
+    subdir: str,
+    name: str,
+    profile_type: ProfileType | None = None,
+    base_path: str | Path = datapaths.output_path,
+    svg: bool = True,
+) -> Figure:
+    if not isinstance(base_path, Path):
+        base_path = Path(base_path)
+    # build the full result path
+    path = base_path / subdir
+    # use another
+    if profile_type is not None:
+        path /= profile_type.construct_filename("")
+    # make sure the directory exists
+    path.mkdir(parents=True, exist_ok=True)
+    name = name.replace("/", "_")
+    name += ".svg" if svg else ".png"
+    filepath = path / name
+    figure.write_image(filepath)
+    return figure

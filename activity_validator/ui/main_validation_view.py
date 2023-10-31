@@ -82,15 +82,15 @@ def stacked_prob_curves(filepath: Path | None, area: bool = True):
         x=time_values,
         y=data.columns,
     )
-    return dcc.Graph(figure=fig)
+    return fig
 
 
 def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True):
     # load the correct file and plot it
     profile_type = data_utils.ptype_from_label(profile_type_str)
     filepath = data_utils.get_file_path(directory, profile_type)
-    result = stacked_prob_curves(filepath, area)
-    return [result]
+    figure = stacked_prob_curves(filepath, area)
+    return [dcc.Graph(figure=figure)]
 
 
 def prob_curve_per_activity(profile_type_str: str, subdir: str):

@@ -18,6 +18,9 @@ duration_dir = "activity_durations"
 metrics_dir = "metrics"
 diff_dir = "differences"
 
+# directory for generated plots
+output_path = Path("data/validation_plots")
+
 
 def check_paths():
     """
