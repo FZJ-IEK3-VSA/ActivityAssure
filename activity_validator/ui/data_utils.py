@@ -20,7 +20,7 @@ def get_files(path: Path) -> list[Path]:
     return [f for f in path.iterdir() if f.is_file()]
 
 
-def get_profile_types(path: Path) -> dict[ProfileType, Path]:
+def get_profile_type_paths(path: Path) -> dict[ProfileType, Path]:
     input_prob_files = get_files(path)
     profile_types = {ProfileType.from_filename(p)[1]: p for p in input_prob_files}
     if None in profile_types:
@@ -29,7 +29,7 @@ def get_profile_types(path: Path) -> dict[ProfileType, Path]:
 
 
 def get_profile_type_labels(path: Path) -> list[str]:
-    profile_types = get_profile_types(path)
+    profile_types = get_profile_type_paths(path)
     return [ptype_to_label(p) for p in profile_types.keys()]
 
 

@@ -1,6 +1,7 @@
 from pathlib import Path
+from plotly.graph_objects import Figure  # type: ignore
 
-from dash import html, dcc  # type:ignore
+from dash import html  # type:ignore
 import dash_bootstrap_components as dbc  # type:ignore
 
 from activity_validator.ui import plots, data_utils
@@ -20,13 +21,20 @@ def create_figure_card(profile_type: ProfileType, path: Path) -> dbc.Card:
     return plots.single_plot_card(data_utils.ptype_to_label(profile_type), fig)
 
 
-def create_rows_of_cards(path: Path, profile_types, num_columns=4) -> list[dbc.Row]:
+def rows_of_cards(figures: dict[str, Figure], num_columns=4) -> list[dbc.Row]:
     return [
         dbc.Row(
-            [dbc.Col([create_figure_card(p, path)], width=3) for p in row]
+            [
+                dbc.Col([plots.single_plot_card(title, fig)], width=3)
+                for title, fig in row
+            ]
             + [html.Br()],
             align="center",
             justify="center",
         )
-        for row in chunks(profile_types, num_columns)
+        for row in chunks(list(figures.items()), num_columns)
     ]
+
+
+def create_stacked_prob_curves(paths: dict[str, Path]) -> dict[str, Figure]:
+    return {title: plots.stacked_prob_curves(path) for title, path in paths.items()}

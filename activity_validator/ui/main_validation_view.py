@@ -212,7 +212,7 @@ class MainValidationView(html.Div):
         Output(ids.per_activity_graphs(MATCH), "children"),
         Input(ids.dropdown(MATCH), "value"),
     )
-    def update_activity_dur_graphs(profile_type_str):
+    def update_graphs_per_activity_type(profile_type_str):
         freq = sum_curves_per_activity_type(profile_type_str, datapaths.freq_dir)
         dur = sum_curves_per_activity_type(
             profile_type_str, datapaths.duration_dir, True

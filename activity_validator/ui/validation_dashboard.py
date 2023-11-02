@@ -1,13 +1,6 @@
 import dataclasses
 from dash import Dash, html, dcc, callback, Output, Input  # type:ignore
 import dash_bootstrap_components as dbc  # type:ignore
-import plotly.express as px  # type:ignore
-from activity_validator.hetus_data_processing.activity_profile import ProfileType
-from activity_validator.hetus_data_processing.attributes.diary_attributes import DayType
-from activity_validator.hetus_data_processing.attributes.person_attributes import (
-    Sex,
-    WorkStatus,
-)
 from activity_validator.ui import data_utils, datapaths, overview
 
 from activity_validator.ui.main_validation_view import MainValidationView
@@ -17,15 +10,13 @@ app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 
 # get available validation profile types
-profile_types = data_utils.get_profile_types(
+prob_paths = data_utils.get_profile_type_paths(
     datapaths.validation_path / datapaths.prob_dir
-).keys()
-countries = list({p.country for p in profile_types})
-global_profile_types = {dataclasses.replace(p, country="") for p in profile_types}
-global_type_str = [" - ".join(pt.to_tuple()[1:]) for pt in profile_types]
+)
+countries = list({p.country for p in prob_paths.keys()})
+global_profile_types = {dataclasses.replace(p, country="") for p in prob_paths.keys()}
+global_type_str = [" - ".join(pt.to_tuple()[1:]) for pt in prob_paths.keys()]
 
-# TODO just for testing
-test_profile_type = ProfileType("DE", Sex.female, WorkStatus.full_time, DayType.no_work)
 
 tab1_content = html.Div([MainValidationView()])
 
@@ -74,21 +65,32 @@ app.layout = html.Div(
 
 @callback(Output(single_country_div, "children"), Input(country_selector, "value"))
 def country_overview(country: str):
-    path = datapaths.validation_path / datapaths.prob_dir
-    profiles_of_country = [p for p in profile_types if p.country == country]
-    return overview.create_rows_of_cards(path, profiles_of_country)
+    # filter all profile types of the selected country
+    filtered_paths = {
+        data_utils.ptype_to_label(profile_type): path
+        for profile_type, path in prob_paths.items()
+        if profile_type.country == country
+    }
+    figures = overview.create_stacked_prob_curves(filtered_paths)
+    prob_curve_rows = overview.rows_of_cards(figures)
+    return prob_curve_rows
 
 
 @callback(Output(cross_country_div, "children"), Input(category_selector, "value"))
-def cross_country_overview(profile_type: str):
-    sex, work_status, day_type = profile_type.split(" - ")
-    path = datapaths.validation_path / datapaths.prob_dir
-    filtered_profile_types = [
-        p
-        for p in profile_types
-        if p.sex == sex and p.work_status == work_status and p.day_type == day_type
-    ]
-    return overview.create_rows_of_cards(path, filtered_profile_types)
+def cross_country_overview(profile_type_str: str):
+    # TODO: maybe replace with tree separate controls for sex, work_status, day_type
+    sex, work_status, day_type = profile_type_str.split(" - ")
+    # filter all profile types with the selected characteristics
+    filtered_paths = {
+        p_type.country: path
+        for p_type, path in prob_paths.items()
+        if p_type.sex == sex
+        and p_type.work_status == work_status
+        and p_type.day_type == day_type
+    }
+    figures = overview.create_stacked_prob_curves(filtered_paths)
+    prob_curve_rows = overview.rows_of_cards(figures)
+    return prob_curve_rows
 
 
 if __name__ == "__main__":
