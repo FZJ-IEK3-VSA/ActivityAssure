@@ -154,7 +154,7 @@ def prob_curve_per_activity(profile_type_str: str, subdir: str):
     return plots
 
 
-def sum_curves_per_activity_type(
+def histogram_per_activity(
     profile_type_str: str, subdir: Path, duration_data: bool = False
 ):
     """
@@ -190,14 +190,13 @@ def sum_curves_per_activity_type(
     # create the plots for all activity types and wrap them in Cards
     # TODO alternative: use ecdf instead of histogram for a sum curve
     plot_cards = [
-        dbc.Card(
-            dbc.CardBody(
-                children=[
-                    html.H3(activity.title(), style={"textAlign": "center"}),
-                    dcc.Graph(figure=px.histogram(d, barmode="overlay")),
-                ]
-            )
-        )
+        single_plot_card(activity.title(), px.histogram(d, barmode="overlay"))
         for activity, d in data_per_activity.items()
     ]
     return plot_cards
+
+
+def stacked_bar_activity_share(paths: dict[str, Path]):
+    datasets = {k: activity_profile.load_df(path)[1] for k, path in paths.items()}
+    data = pd.DataFrame({title: data.mean(axis=1) for title, data in datasets.items()})
+    return px.bar(data.T)  # , x=data.columns, y=data.index)

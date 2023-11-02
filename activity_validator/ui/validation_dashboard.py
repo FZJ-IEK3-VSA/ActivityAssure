@@ -3,6 +3,7 @@ from dash import Dash, html, dcc, callback, Output, Input  # type:ignore
 import dash_bootstrap_components as dbc  # type:ignore
 from activity_validator.ui import data_utils, datapaths, overview
 
+from activity_validator.ui import plots
 from activity_validator.ui.main_validation_view import MainValidationView
 
 
@@ -29,7 +30,8 @@ tab2_content = html.Div(
                     countries,
                     countries[0],
                 ),
-                single_country_div := html.Div(),
+                single_country_share_div := html.Div(),
+                single_country_prob_div := html.Div(),
             ]
         )
     )
@@ -53,26 +55,40 @@ app.layout = html.Div(
     [
         html.H1(children="Activity Profile Validator", style={"textAlign": "center"}),
         tabs := dcc.Tabs(
-            [
-                dcc.Tab(tab1_content, label="Validation"),
-                dcc.Tab(tab2_content, label="Single Country Overview"),
-                dcc.Tab(tab3_content, label="Cross-country Overview"),
+            children=[
+                tab1 := dcc.Tab(tab1_content, label="Validation"),
+                tab2 := dcc.Tab(tab2_content, label="Single Country Overview"),
+                tab3 := dcc.Tab(tab3_content, label="Cross-country Overview"),
             ],
         ),
     ]
 )
 
 
-@callback(Output(single_country_div, "children"), Input(country_selector, "value"))
-def country_overview(country: str):
+@callback(
+    Output(single_country_share_div, "children"), Input(country_selector, "value")
+)
+def country_overview_shares(country: str):
     # filter all profile types of the selected country
     filtered_paths = {
         data_utils.ptype_to_label(profile_type): path
         for profile_type, path in prob_paths.items()
         if profile_type.country == country
     }
-    figures = overview.create_stacked_prob_curves(filtered_paths)
-    prob_curve_rows = overview.rows_of_cards(figures)
+    figure = plots.stacked_bar_activity_share(filtered_paths)
+    return plots.single_plot_card("Activity Shares per Profile Type", figure)
+
+
+@callback(Output(single_country_prob_div, "children"), Input(country_selector, "value"))
+def country_overview_probs(country: str):
+    # filter all profile types of the selected country
+    filtered_paths = {
+        data_utils.ptype_to_label(profile_type): path
+        for profile_type, path in prob_paths.items()
+        if profile_type.country == country
+    }
+    prob_curves = overview.create_stacked_prob_curves(filtered_paths)
+    prob_curve_rows = overview.rows_of_cards(prob_curves)
     return prob_curve_rows
 
 
@@ -82,7 +98,7 @@ def cross_country_overview(profile_type_str: str):
     sex, work_status, day_type = profile_type_str.split(" - ")
     # filter all profile types with the selected characteristics
     filtered_paths = {
-        p_type.country: path
+        p_type.country or "No Country": path
         for p_type, path in prob_paths.items()
         if p_type.sex == sex
         and p_type.work_status == work_status

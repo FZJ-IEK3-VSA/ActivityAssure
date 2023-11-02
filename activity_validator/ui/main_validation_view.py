@@ -164,8 +164,8 @@ class MainValidationView(html.Div):
         Input(ids.dropdown(MATCH), "value"),
     )
     def update_graphs_per_activity_type(profile_type_str):
-        freq = plots.sum_curves_per_activity_type(profile_type_str, datapaths.freq_dir)
-        dur = plots.sum_curves_per_activity_type(
+        freq = plots.histogram_per_activity(profile_type_str, datapaths.freq_dir)
+        dur = plots.histogram_per_activity(
             profile_type_str, datapaths.duration_dir, True
         )
         prob = plots.prob_curve_per_activity(profile_type_str, datapaths.prob_dir)

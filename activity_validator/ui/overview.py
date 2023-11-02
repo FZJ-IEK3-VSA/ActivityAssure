@@ -1,3 +1,7 @@
+"""
+Functions for combining multiple figures in a specific layout, e.g., for an overview.
+"""
+
 from pathlib import Path
 from plotly.graph_objects import Figure  # type: ignore
 
@@ -12,13 +16,6 @@ def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
-
-
-def create_figure_card(profile_type: ProfileType, path: Path) -> dbc.Card:
-    # load the appropriate file depending on the profile type
-    filename = path / (profile_type.construct_filename("prob") + ".csv")
-    fig = plots.stacked_prob_curves(filename)
-    return plots.single_plot_card(data_utils.ptype_to_label(profile_type), fig)
 
 
 def rows_of_cards(figures: dict[str, Figure], num_columns=4) -> list[dbc.Row]:
