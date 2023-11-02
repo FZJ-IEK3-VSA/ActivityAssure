@@ -1,21 +1,14 @@
 import dataclasses
-from datetime import datetime, timedelta
-import glob
-from pathlib import Path
 from dash import Dash, html, dcc, callback, Output, Input  # type:ignore
 import dash_bootstrap_components as dbc  # type:ignore
 import plotly.express as px  # type:ignore
-import pandas as pd
-from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 from activity_validator.hetus_data_processing.attributes.diary_attributes import DayType
 from activity_validator.hetus_data_processing.attributes.person_attributes import (
     Sex,
     WorkStatus,
 )
-from activity_validator.ui import data_utils
-from activity_validator.ui import datapaths
-from activity_validator.ui.overview import chunks, create_rows, draw_figure
+from activity_validator.ui import data_utils, datapaths, overview
 
 from activity_validator.ui.main_validation_view import MainValidationView
 
@@ -83,7 +76,7 @@ app.layout = html.Div(
 def country_overview(country: str):
     path = datapaths.validation_path / datapaths.prob_dir
     profiles_of_country = [p for p in profile_types if p.country == country]
-    return create_rows(path, profiles_of_country)
+    return overview.create_rows_of_cards(path, profiles_of_country)
 
 
 @callback(Output(cross_country_div, "children"), Input(category_selector, "value"))
@@ -95,7 +88,7 @@ def cross_country_overview(profile_type: str):
         for p in profile_types
         if p.sex == sex and p.work_status == work_status and p.day_type == day_type
     ]
-    return create_rows(path, filtered_profile_types)
+    return overview.create_rows_of_cards(path, filtered_profile_types)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,24 @@ def replacement_text(text: str = "No data available"):
     return html.Div(children=[text], style={"textAlign": "center"})
 
 
+def single_plot_card(title: str, figure) -> dbc.Card:
+    """
+    Embeds a single plot in a card with a title
+
+    :param title: title of the plot
+    :param figure: figure object of the plot
+    :return: the Card object containing the plot
+    """
+    return dbc.Card(
+        dbc.CardBody(
+            children=[
+                html.H3(title, style={"textAlign": "center"}),
+                dcc.Graph(figure=figure),
+            ]
+        )
+    )
+
+
 def get_date_range(num_values: int):
     # generate 24h time range starting at 04:00
     resolution = timedelta(days=1) / num_values
@@ -129,14 +147,6 @@ def prob_curve_per_activity(profile_type_str: str, subdir: str):
         figure.update_yaxes(range=[-max_y, max_y])
     # embed the plots in cards
     plots = [
-        dbc.Card(
-            dbc.CardBody(
-                children=[
-                    html.H3(activity.title(), style={"textAlign": "center"}),
-                    dcc.Graph(figure=fig),
-                ]
-            )
-        )
-        for activity, fig in figures.items()  # data_per_activity.items()
+        single_plot_card(activity.title(), fig) for activity, fig in figures.items()
     ]
     return plots

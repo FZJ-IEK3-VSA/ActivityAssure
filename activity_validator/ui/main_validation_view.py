@@ -5,8 +5,7 @@ import plotly.express as px  # type: ignore
 import uuid
 
 from activity_validator.hetus_data_processing import activity_profile
-from activity_validator.ui import data_utils
-from activity_validator.ui import datapaths
+from activity_validator.ui import data_utils, datapaths, plots
 
 
 def sum_curves_per_activity_type(
@@ -30,21 +29,21 @@ def sum_curves_per_activity_type(
     )
     path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
     if path_val is None or path_in is None:
-        return replacement_text()
+        return plots.replacement_text()
 
     # load both files
     _, validation_data = activity_profile.load_df(path_val)
     _, input_data = activity_profile.load_df(path_in)
     # convert data if necessary
     if duration_data:
-        convert_to_timedelta(validation_data)
-        convert_to_timedelta(input_data)
+        plots.convert_to_timedelta(validation_data)
+        plots.convert_to_timedelta(input_data)
 
-    data_per_activity = join_to_pairs(validation_data, input_data)
+    data_per_activity = plots.join_to_pairs(validation_data, input_data)
 
-    # create the plot for all activity types and wrap them in Cards
+    # create the plots for all activity types and wrap them in Cards
     # TODO alternative: use ecdf instead of histogram for a sum curve
-    plots = [
+    plot_cards = [
         dbc.Card(
             dbc.CardBody(
                 children=[
@@ -55,7 +54,7 @@ def sum_curves_per_activity_type(
         )
         for activity, d in data_per_activity.items()
     ]
-    return plots
+    return plot_cards
 
 
 class MainValidationView(html.Div):
@@ -67,11 +66,6 @@ class MainValidationView(html.Div):
 
     class ids:
         # A set of functions that create pattern-matching callbacks of the subcomponents
-        # store = lambda aio_id: {
-        #     "component": "AIOSelectableProbabilityCurves",
-        #     "subcomponent": "store",
-        #     "aio_id": aio_id,
-        # }
         dropdown = lambda aio_id: {
             "component": "AIOSelectableProbabilityCurves",
             "subcomponent": "dropdown",
@@ -193,7 +187,7 @@ class MainValidationView(html.Div):
         Input(ids.dropdown(MATCH), "value"),
     )
     def update_validation_graph(profile_type_str):
-        return update_prob_curves(
+        return plots.update_prob_curves(
             profile_type_str, datapaths.validation_path / datapaths.prob_dir
         )
 
@@ -201,7 +195,7 @@ class MainValidationView(html.Div):
         Output(ids.input_graph(MATCH), "children"), Input(ids.dropdown(MATCH), "value")
     )
     def update_input_graph(profile_type_str):
-        return update_prob_curves(
+        return plots.update_prob_curves(
             profile_type_str, datapaths.input_data_path / datapaths.prob_dir
         )
 
@@ -210,7 +204,7 @@ class MainValidationView(html.Div):
         Input(ids.dropdown(MATCH), "value"),
     )
     def update_diff_graph(profile_type_str):
-        return update_prob_curves(
+        return plots.update_prob_curves(
             profile_type_str, datapaths.input_data_path / datapaths.diff_dir, area=False
         )
 
@@ -223,5 +217,5 @@ class MainValidationView(html.Div):
         dur = sum_curves_per_activity_type(
             profile_type_str, datapaths.duration_dir, True
         )
-        prob = prob_curve_per_activity(profile_type_str, datapaths.prob_dir)
+        prob = plots.prob_curve_per_activity(profile_type_str, datapaths.prob_dir)
         return dbc.Row([dbc.Col(freq), dbc.Col(dur), dbc.Col(prob)])
