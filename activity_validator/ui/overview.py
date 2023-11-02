@@ -28,6 +28,7 @@ def rows_of_cards(figures: dict[str, Figure], num_columns=4) -> list[dbc.Row]:
             + [html.Br()],
             align="center",
             justify="center",
+            className="mb-3",
         )
         for row in chunks(list(figures.items()), num_columns)
     ]

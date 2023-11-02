@@ -37,6 +37,11 @@ class MainValidationView(html.Div):
             "subcomponent": "probability difference graph",
             "aio_id": aio_id,
         }
+        kpi_view = lambda aio_id: {
+            "component": "AIOSelectableProbabilityCurves",
+            "subcomponent": "kpi view",
+            "aio_id": aio_id,
+        }
         per_activity_graphs = lambda aio_id: {
             "component": "AIOSelectableProbabilityCurves",
             "subcomponent": "per activity type graphs",
@@ -75,62 +80,87 @@ class MainValidationView(html.Div):
 
         # Define the component's layout
         super().__init__(
-            [
-                # dcc.Store(data=str(validation_path), id=self.ids.store(aio_id)),
-                dcc.Dropdown(
-                    all_types,
-                    input_types[0],
-                    id=self.ids.dropdown(aio_id),
-                    **dropdown_props,
-                ),
-                html.Div(
+            dbc.Card(
+                dbc.CardBody(
                     [
-                        html.H2("Validation Data", style={"textAlign": "center"}),
-                        html.Div(id=self.ids.validation_graph(aio_id)),
-                    ]
-                ),
-                html.Div(
-                    [
-                        html.H2(
-                            "LoadProfileGenerator Data", style={"textAlign": "center"}
+                        # dcc.Store(data=str(validation_path), id=self.ids.store(aio_id)),
+                        dcc.Dropdown(
+                            all_types,
+                            input_types[0],
+                            id=self.ids.dropdown(aio_id),
+                            className="mb-3",
+                            **dropdown_props,
                         ),
-                        html.Div(id=self.ids.input_graph(aio_id)),
-                    ]
-                ),
-                html.Div(
-                    [
-                        html.H2("Difference", style={"textAlign": "center"}),
-                        html.Div(id=self.ids.difference_graph(aio_id)),
-                    ]
-                ),
-                html.Div(
-                    [
-                        dbc.Row(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.Div(
+                                        [
+                                            html.H2(
+                                                "Validation Data",
+                                                style={"textAlign": "center"},
+                                            ),
+                                            html.Div(
+                                                id=self.ids.validation_graph(aio_id)
+                                            ),
+                                        ]
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.H2(
+                                                "LoadProfileGenerator Data",
+                                                style={"textAlign": "center"},
+                                            ),
+                                            html.Div(id=self.ids.input_graph(aio_id)),
+                                        ]
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.H2(
+                                                "Difference",
+                                                style={"textAlign": "center"},
+                                            ),
+                                            html.Div(
+                                                id=self.ids.difference_graph(aio_id)
+                                            ),
+                                        ]
+                                    ),
+                                ]
+                            ),
+                            className="mb-3",
+                        ),
+                        html.Div(id=self.ids.kpi_view(aio_id), className="mb-3"),
+                        html.Div(
                             [
-                                dbc.Col(
-                                    html.H2(
-                                        "Activity Frequencies per Day",
-                                        style={"textAlign": "center"},
-                                    )
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            html.H2(
+                                                "Activity Frequencies per Day",
+                                                style={"textAlign": "center"},
+                                            )
+                                        ),
+                                        dbc.Col(
+                                            html.H2(
+                                                "Activity Durations",
+                                                style={"textAlign": "center"},
+                                            )
+                                        ),
+                                        dbc.Col(
+                                            html.H2(
+                                                "Activity Probabilities",
+                                                style={"textAlign": "center"},
+                                            )
+                                        ),
+                                    ],
+                                    className="mb-3",
                                 ),
-                                dbc.Col(
-                                    html.H2(
-                                        "Activity Durations",
-                                        style={"textAlign": "center"},
-                                    )
-                                ),
-                                dbc.Col(
-                                    html.H2(
-                                        "Activity Probabilities",
-                                        style={"textAlign": "center"},
-                                    )
-                                ),
-                            ],
+                                html.Div(id=self.ids.per_activity_graphs(aio_id)),
+                            ]
                         ),
-                        html.Div(id=self.ids.per_activity_graphs(aio_id)),
-                    ]
-                ),
-            ],
+                    ],
+                )
+            )
         )
 
     @callback(
@@ -160,6 +190,13 @@ class MainValidationView(html.Div):
         )
 
     @callback(
+        Output(ids.kpi_view(MATCH), "children"),
+        Input(ids.dropdown(MATCH), "value"),
+    )
+    def update_overall_kpis(profile_type_str):
+        return [plots.titled_card("TBD", None)]
+
+    @callback(
         Output(ids.per_activity_graphs(MATCH), "children"),
         Input(ids.dropdown(MATCH), "value"),
     )
@@ -169,4 +206,18 @@ class MainValidationView(html.Div):
             profile_type_str, datapaths.duration_dir, True
         )
         prob = plots.prob_curve_per_activity(profile_type_str, datapaths.prob_dir)
-        return dbc.Row([dbc.Col(freq), dbc.Col(dur), dbc.Col(prob)])
+        assert (
+            freq.keys() == dur.keys() == prob.keys()
+        ), "Missing data for some activity types"
+        # build rows, one for each activity
+        rows = [
+            dbc.Row(
+                [
+                    dbc.Col(plots.titled_card(a.title(), x))
+                    for x in (freq[a], dur[a], prob[a])
+                ],
+                className="mb-3",
+            )
+            for a in freq.keys()
+        ]
+        return rows

@@ -29,8 +29,11 @@ tab2_content = html.Div(
                 country_selector := dcc.Dropdown(
                     countries,
                     countries[0],
+                    className="mb-3",
                 ),
-                single_country_share_div := html.Div(),
+                single_country_share_div := html.Div(
+                    className="mb-3",
+                ),
                 single_country_prob_div := html.Div(),
             ]
         )
@@ -44,6 +47,7 @@ tab3_content = html.Div(
                 category_selector := dcc.Dropdown(
                     global_type_str,
                     global_type_str[0],
+                    className="mb-3",
                 ),
                 cross_country_div := html.Div(),
             ]

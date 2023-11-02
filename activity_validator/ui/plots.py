@@ -22,6 +22,26 @@ def replacement_text(text: str = "No data available"):
     return html.Div(children=[text], style={"textAlign": "center"})
 
 
+def titled_card(title: str, content) -> dbc.Card:
+    """
+    Embeds any content in a card with a title
+
+    :param title: title for the card
+    :param content: content for the card
+    :return: the resulting Card object
+    """
+    if not isinstance(content, list):
+        content = [content]
+    return dbc.Card(
+        dbc.CardBody(
+            children=[
+                html.H3(title, style={"textAlign": "center"}),
+            ]
+            + content
+        )
+    )
+
+
 def single_plot_card(title: str, figure) -> dbc.Card:
     """
     Embeds a single plot in a card with a title
@@ -30,14 +50,7 @@ def single_plot_card(title: str, figure) -> dbc.Card:
     :param figure: figure object of the plot
     :return: the Card object containing the plot
     """
-    return dbc.Card(
-        dbc.CardBody(
-            children=[
-                html.H3(title, style={"textAlign": "center"}),
-                dcc.Graph(figure=figure),
-            ]
-        )
-    )
+    return titled_card(title, dcc.Graph(figure=figure))
 
 
 def get_date_range(num_values: int):
@@ -71,19 +84,20 @@ def join_to_pairs(
     data_sets: dict[str, pd.DataFrame] = {}
     for col in validation_data.columns:
         d_val = validation_data[col]
-        if col not in input_data:
-            # no input data for this activity type
-            continue
-        d_in = input_data[col]
+        if col in input_data:
+            d_in = input_data[col]
+        else:
+            # no input data for this activity type: create an empty column
+            d_in = pd.Series([], dtype=d_val.dtype)
         # set new names for the curves
         d_val.name = "Validation"
         d_in.name = "Input"
-        joined = pd.concat([validation_data[col], input_data[col]], axis=1)
+        joined = pd.concat([d_val, d_in], axis=1)
         data_sets[col] = joined
     return data_sets
 
 
-def stacked_prob_curves(filepath: Path | None, area: bool = True):
+def stacked_prob_curves(filepath: Path | None, area: bool = True) -> Figure:
     if filepath is None or not filepath.is_file():
         return replacement_text()
     # load the correct file
@@ -110,7 +124,7 @@ def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True
     return [dcc.Graph(figure=figure)]
 
 
-def prob_curve_per_activity(profile_type_str: str, subdir: str):
+def prob_curve_per_activity(profile_type_str: str, subdir: str) -> dict[str, dcc.Graph]:
     # get the path of the validation and the input file
     profile_type = data_utils.ptype_from_label(profile_type_str)
     path_val = data_utils.get_file_path(
@@ -140,23 +154,19 @@ def prob_curve_per_activity(profile_type_str: str, subdir: str):
     figures = {}
     for activity, data in data_per_activity.items():
         figure = px.line(data)
-        figures[activity] = figure
         # fill the areas between the curves and the x-axis
         figure.update_traces(fill="tonexty", selector={"name": "Validation"})
         figure.update_traces(fill="tozeroy", selector={"name": "Input"})
         # make the y-axis range symmetric
         max_y = data.abs().max(axis=None)
         figure.update_yaxes(range=[-max_y, max_y])
-    # embed the plots in cards
-    plots = [
-        single_plot_card(activity.title(), fig) for activity, fig in figures.items()
-    ]
-    return plots
+        figures[activity] = dcc.Graph(figure=figure)
+    return figures
 
 
 def histogram_per_activity(
     profile_type_str: str, subdir: Path, duration_data: bool = False
-):
+) -> dict[str, dcc.Graph]:
     """
     Generates a set of histogram plots, one for each activity type.
     Each histogram compares the validation data to the matching input
@@ -189,14 +199,21 @@ def histogram_per_activity(
 
     # create the plots for all activity types and wrap them in Cards
     # TODO alternative: use ecdf instead of histogram for a sum curve
-    plot_cards = [
-        single_plot_card(activity.title(), px.histogram(d, barmode="overlay"))
+    figures = {
+        activity: dcc.Graph(figure=px.histogram(d, barmode="overlay"))
         for activity, d in data_per_activity.items()
-    ]
-    return plot_cards
+    }
+    return figures
 
 
-def stacked_bar_activity_share(paths: dict[str, Path]):
+def stacked_bar_activity_share(paths: dict[str, Path]) -> Figure:
+    """
+    Generates a stacked bar chart to show differences in overall activity
+    shares per profile type.
+
+    :param paths: file paths for each profile type
+    :return: bar chart figure
+    """
     # load all activity probability files
     datasets = {k: activity_profile.load_df(path)[1] for k, path in paths.items()}
     # calculate the average probabilities per profile type
