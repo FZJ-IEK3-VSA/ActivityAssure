@@ -197,6 +197,10 @@ def histogram_per_activity(
 
 
 def stacked_bar_activity_share(paths: dict[str, Path]):
+    # load all activity probability files
     datasets = {k: activity_profile.load_df(path)[1] for k, path in paths.items()}
+    # calculate the average probabilities per profile type
     data = pd.DataFrame({title: data.mean(axis=1) for title, data in datasets.items()})
+    # add the overall probabilities
+    data["Overall"] = data.mean(axis=1)
     return px.bar(data.T)  # , x=data.columns, y=data.index)
