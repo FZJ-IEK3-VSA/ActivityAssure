@@ -3,6 +3,7 @@ from pathlib import Path
 from dash import html, dcc  # type: ignore
 import dash_bootstrap_components as dbc  # type: ignore
 import plotly.express as px  # type: ignore
+from plotly.graph_objects import Figure  # type: ignore
 
 import pandas as pd
 from activity_validator.hetus_data_processing import activity_profile
@@ -110,6 +111,7 @@ def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True
 
 
 def prob_curve_per_activity(profile_type_str: str, subdir: str):
+    # get the path of the validation and the input file
     profile_type = data_utils.ptype_from_label(profile_type_str)
     path_val = data_utils.get_file_path(
         datapaths.validation_path / subdir, profile_type
@@ -150,3 +152,52 @@ def prob_curve_per_activity(profile_type_str: str, subdir: str):
         single_plot_card(activity.title(), fig) for activity, fig in figures.items()
     ]
     return plots
+
+
+def sum_curves_per_activity_type(
+    profile_type_str: str, subdir: Path, duration_data: bool = False
+):
+    """
+    Generates a set of histogram plots, one for each activity type.
+    Each histogram compares the validation data to the matching input
+    data.
+
+    :param profile_type_str: the selected profile type
+    :param subdir: the data subdirectory to use, which must contain
+                   data per activity type in each file
+    :param duration_data: whether to convert the data to timedeltas, defaults to False
+    :return: a list of Cards containing the individual plots
+    """
+    # determine file paths for validation and input data
+    profile_type = data_utils.ptype_from_label(profile_type_str)
+    path_val = data_utils.get_file_path(
+        datapaths.validation_path / subdir, profile_type
+    )
+    path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
+    if path_val is None or path_in is None:
+        return replacement_text()
+
+    # load both files
+    _, validation_data = activity_profile.load_df(path_val)
+    _, input_data = activity_profile.load_df(path_in)
+    # convert data if necessary
+    if duration_data:
+        convert_to_timedelta(validation_data)
+        convert_to_timedelta(input_data)
+
+    data_per_activity = join_to_pairs(validation_data, input_data)
+
+    # create the plots for all activity types and wrap them in Cards
+    # TODO alternative: use ecdf instead of histogram for a sum curve
+    plot_cards = [
+        dbc.Card(
+            dbc.CardBody(
+                children=[
+                    html.H3(activity.title(), style={"textAlign": "center"}),
+                    dcc.Graph(figure=px.histogram(d, barmode="overlay")),
+                ]
+            )
+        )
+        for activity, d in data_per_activity.items()
+    ]
+    return plot_cards
