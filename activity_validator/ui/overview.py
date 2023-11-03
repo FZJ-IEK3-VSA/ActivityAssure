@@ -22,7 +22,7 @@ def rows_of_cards(figures: dict[str, Figure], num_columns=4) -> list[dbc.Row]:
     return [
         dbc.Row(
             [
-                dbc.Col([plots.single_plot_card(title, fig)], width=3)
+                dbc.Col([plots.single_plot_card(fig, title)], width=3)
                 for title, fig in row
             ]
             + [html.Br()],

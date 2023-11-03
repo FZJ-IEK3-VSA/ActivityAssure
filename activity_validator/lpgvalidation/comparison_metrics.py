@@ -6,7 +6,7 @@ validation data
 from dataclasses import dataclass, field
 import logging
 from pathlib import Path
-from dataclasses_json import config, dataclass_json
+from dataclasses_json import config, dataclass_json  # type: ignore
 import numpy as np
 import pandas as pd
 from activity_validator.hetus_data_processing import activity_profile
@@ -44,8 +44,8 @@ class ValidationMetrics:
     def load(filepath: Path) -> tuple[ProfileType | None, "ValidationMetrics"]:
         with open(filepath) as f:
             json_str = f.read()
-        name, profile_type = ProfileType.from_filename(filepath)
         metrics = ValidationMetrics.from_json(json_str)  # type: ignore
+        name, profile_type = ProfileType.from_filename(filepath)
         logging.debug(f"Loaded metrics file {filepath}")
         return profile_type, metrics
 

@@ -7,6 +7,7 @@ from plotly.graph_objects import Figure  # type: ignore
 
 import pandas as pd
 from activity_validator.hetus_data_processing import activity_profile
+from activity_validator.lpgvalidation import comparison_metrics
 from activity_validator.ui import data_utils
 from activity_validator.ui import datapaths
 
@@ -22,35 +23,29 @@ def replacement_text(text: str = "No data available"):
     return html.Div(children=[text], style={"textAlign": "center"})
 
 
-def titled_card(title: str, content) -> dbc.Card:
+def titled_card(content, title: str = "") -> dbc.Card:
     """
-    Embeds any content in a card with a title
+    Embeds any content in a card with an optional title
 
-    :param title: title for the card
     :param content: content for the card
+    :param title: title for the card
     :return: the resulting Card object
     """
     if not isinstance(content, list):
         content = [content]
-    return dbc.Card(
-        dbc.CardBody(
-            children=[
-                html.H3(title, style={"textAlign": "center"}),
-            ]
-            + content
-        )
-    )
+    t = [html.H3(title, style={"textAlign": "center"})] if title else []
+    return dbc.Card(dbc.CardBody(children=t + content))
 
 
-def single_plot_card(title: str, figure) -> dbc.Card:
+def single_plot_card(figure: Figure, title: str = "") -> dbc.Card:
     """
     Embeds a single plot in a card with a title
 
-    :param title: title of the plot
     :param figure: figure object of the plot
+    :param title: title of the plot
     :return: the Card object containing the plot
     """
-    return titled_card(title, dcc.Graph(figure=figure))
+    return titled_card(dcc.Graph(figure=figure), title)
 
 
 def get_date_range(num_values: int):
@@ -97,9 +92,9 @@ def join_to_pairs(
     return data_sets
 
 
-def stacked_prob_curves(filepath: Path | None, area: bool = True) -> Figure:
+def stacked_prob_curves(filepath: Path | None, area: bool = True) -> Figure | None:
     if filepath is None or not filepath.is_file():
-        return replacement_text()
+        return None
     # load the correct file
     _, data = activity_profile.load_df(filepath)
     # transpose data for plotting
@@ -121,18 +116,21 @@ def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True
     profile_type = data_utils.ptype_from_label(profile_type_str)
     filepath = data_utils.get_file_path(directory, profile_type)
     figure = stacked_prob_curves(filepath, area)
+    if not figure:
+        return replacement_text()
     return [dcc.Graph(figure=figure)]
 
 
-def prob_curve_per_activity(profile_type_str: str, subdir: str) -> dict[str, dcc.Graph]:
+def prob_curve_per_activity(
+    profile_type: activity_profile.ProfileType, subdir: str
+) -> dict[str, dcc.Graph]:
     # get the path of the validation and the input file
-    profile_type = data_utils.ptype_from_label(profile_type_str)
     path_val = data_utils.get_file_path(
         datapaths.validation_path / subdir, profile_type
     )
     path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
     if path_val is None or path_in is None:
-        return replacement_text()
+        return {}
     # load both files
     _, validation_data = activity_profile.load_df(path_val)
     _, input_data = activity_profile.load_df(path_in)
@@ -165,27 +163,28 @@ def prob_curve_per_activity(profile_type_str: str, subdir: str) -> dict[str, dcc
 
 
 def histogram_per_activity(
-    profile_type_str: str, subdir: Path, duration_data: bool = False
+    profile_type: activity_profile.ProfileType,
+    subdir: Path,
+    duration_data: bool = False,
 ) -> dict[str, dcc.Graph]:
     """
     Generates a set of histogram plots, one for each activity type.
     Each histogram compares the validation data to the matching input
     data.
 
-    :param profile_type_str: the selected profile type
+    :param profile_type: the selected profile type
     :param subdir: the data subdirectory to use, which must contain
                    data per activity type in each file
     :param duration_data: whether to convert the data to timedeltas, defaults to False
     :return: a list of Cards containing the individual plots
     """
     # determine file paths for validation and input data
-    profile_type = data_utils.ptype_from_label(profile_type_str)
     path_val = data_utils.get_file_path(
         datapaths.validation_path / subdir, profile_type
     )
     path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
     if path_val is None or path_in is None:
-        return replacement_text()
+        return {}
 
     # load both files
     _, validation_data = activity_profile.load_df(path_val)
@@ -221,3 +220,31 @@ def stacked_bar_activity_share(paths: dict[str, Path]) -> Figure:
     # add the overall probabilities
     data["Overall"] = data.mean(axis=1)
     return px.bar(data.T)  # , x=data.columns, y=data.index)
+
+
+def kpi_table(
+    profile_type: activity_profile.ProfileType, subdir: Path
+) -> dict[str, dcc.Graph]:
+    """
+    Generates a KPI table for each activity
+
+    :param profile_type: the profile type
+    :param subdir: _description_
+    :return: _description_
+    """
+    # determine file path for the metrics
+    path = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
+    if path is None:
+        return {}
+    _, metrics = comparison_metrics.ValidationMetrics.load(path)
+    digits = 3
+    tables = {
+        a: dbc.Table(
+            [
+                html.Tr([html.Td("MEA"), html.Td(round(metrics.mea[a], digits))]),
+                html.Tr([html.Td("MSE"), html.Td(round(metrics.rmse[a] ** 2, digits))]),
+            ]
+        )
+        for a in metrics.mea.index
+    }
+    return tables

@@ -18,33 +18,33 @@ class MainValidationView(html.Div):
     class ids:
         # A set of functions that create pattern-matching callbacks of the subcomponents
         dropdown = lambda aio_id: {
-            "component": "AIOSelectableProbabilityCurves",
+            "component": "MainValidationView",
             "subcomponent": "dropdown",
             "aio_id": aio_id,
         }
         validation_graph = lambda aio_id: {
-            "component": "AIOSelectableProbabilityCurves",
+            "component": "MainValidationView",
             "subcomponent": "validation probability graph",
             "aio_id": aio_id,
         }
         input_graph = lambda aio_id: {
-            "component": "AIOSelectableProbabilityCurves",
+            "component": "MainValidationView",
             "subcomponent": "input probability graph",
             "aio_id": aio_id,
         }
         difference_graph = lambda aio_id: {
-            "component": "AIOSelectableProbabilityCurves",
+            "component": "MainValidationView",
             "subcomponent": "probability difference graph",
             "aio_id": aio_id,
         }
         kpi_view = lambda aio_id: {
-            "component": "AIOSelectableProbabilityCurves",
+            "component": "MainValidationView",
             "subcomponent": "kpi view",
             "aio_id": aio_id,
         }
         per_activity_graphs = lambda aio_id: {
-            "component": "AIOSelectableProbabilityCurves",
-            "subcomponent": "per activity type graphs",
+            "component": "MainValidationView",
+            "subcomponent": "graphs per activity",
             "aio_id": aio_id,
         }
 
@@ -194,18 +194,21 @@ class MainValidationView(html.Div):
         Input(ids.dropdown(MATCH), "value"),
     )
     def update_overall_kpis(profile_type_str):
-        return [plots.titled_card("TBD", None)]
+        return [plots.titled_card(None, "TBD")]
 
     @callback(
         Output(ids.per_activity_graphs(MATCH), "children"),
         Input(ids.dropdown(MATCH), "value"),
     )
     def update_graphs_per_activity_type(profile_type_str):
-        freq = plots.histogram_per_activity(profile_type_str, datapaths.freq_dir)
-        dur = plots.histogram_per_activity(
-            profile_type_str, datapaths.duration_dir, True
-        )
-        prob = plots.prob_curve_per_activity(profile_type_str, datapaths.prob_dir)
+        profile_type = data_utils.ptype_from_label(profile_type_str)
+        freq = plots.histogram_per_activity(profile_type, datapaths.freq_dir)
+        dur = plots.histogram_per_activity(profile_type, datapaths.duration_dir, True)
+        prob = plots.prob_curve_per_activity(profile_type, datapaths.prob_dir)
+        kpis = plots.kpi_table(profile_type, datapaths.metrics_dir)
+        if not freq:
+            # no data available for this profile type
+            return plots.titled_card(plots.replacement_text())
         assert (
             freq.keys() == dur.keys() == prob.keys()
         ), "Missing data for some activity types"
@@ -213,8 +216,8 @@ class MainValidationView(html.Div):
         rows = [
             dbc.Row(
                 [
-                    dbc.Col(plots.titled_card(a.title(), x))
-                    for x in (freq[a], dur[a], prob[a])
+                    dbc.Col(plots.titled_card(x, a.title()))
+                    for x in (freq[a], dur[a], prob[a], kpis[a])
                 ],
                 className="mb-3",
             )

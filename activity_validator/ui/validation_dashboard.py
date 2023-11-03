@@ -80,7 +80,7 @@ def country_overview_shares(country: str):
         if profile_type.country == country
     }
     figure = plots.stacked_bar_activity_share(filtered_paths)
-    return plots.single_plot_card("Activity Shares per Profile Type", figure)
+    return plots.single_plot_card(figure, "Activity Shares per Profile Type")
 
 
 @callback(Output(single_country_prob_div, "children"), Input(country_selector, "value"))
