@@ -178,8 +178,12 @@ def group_profiles_by_type(
     return profiles_by_type
 
 
-def load_validation_data_subdir(path: Path) -> dict[ProfileType, pd.DataFrame]:
-    return dict(activity_profile.load_df(p) for p in path.iterdir() if p.is_file())
+def load_validation_data_subdir(
+    path: Path, as_timedelta: bool = False
+) -> dict[ProfileType, pd.DataFrame]:
+    return dict(
+        activity_profile.load_df(p, as_timedelta) for p in path.iterdir() if p.is_file()
+    )
 
 
 @utils.timing
@@ -198,7 +202,7 @@ def load_validation_data(
         f"Loaded activity frequencies for {len(activity_frequency_data)} profile types"
     )
     subdir_path = path / "activity_durations"
-    activity_duration_data = load_validation_data_subdir(subdir_path)
+    activity_duration_data = load_validation_data_subdir(subdir_path, True)
     logging.info(
         f"Loaded activity durations for {len(activity_duration_data)} profile types"
     )

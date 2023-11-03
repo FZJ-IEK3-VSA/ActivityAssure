@@ -57,11 +57,6 @@ def get_date_range(num_values: int):
     return time_values
 
 
-def convert_to_timedelta(data: pd.DataFrame) -> None:
-    for col in data.columns:
-        data[col] = pd.to_timedelta(data[col])
-
-
 def join_to_pairs(
     validation_data: pd.DataFrame, input_data: pd.DataFrame
 ) -> dict[str, pd.DataFrame]:
@@ -187,12 +182,8 @@ def histogram_per_activity(
         return {}
 
     # load both files
-    _, validation_data = activity_profile.load_df(path_val)
-    _, input_data = activity_profile.load_df(path_in)
-    # convert data if necessary
-    if duration_data:
-        convert_to_timedelta(validation_data)
-        convert_to_timedelta(input_data)
+    _, validation_data = activity_profile.load_df(path_val, duration_data)
+    _, input_data = activity_profile.load_df(path_in, duration_data)
 
     data_per_activity = join_to_pairs(validation_data, input_data)
 
@@ -222,6 +213,20 @@ def stacked_bar_activity_share(paths: dict[str, Path]) -> Figure:
     return px.bar(data.T)  # , x=data.columns, y=data.index)
 
 
+def round_num(value, digits: int = -1) -> float | str:
+    """
+    Calls the round function on numbers, and returns
+    everything else unchanged.
+
+    :param value: the value to round
+    :param digits: the digits to round to
+    :return: the rounded value
+    """
+    if value is None or pd.isna(value):
+        return "n/a"
+    return round(value, digits) if digits >= 0 else value
+
+
 def kpi_table(
     profile_type: activity_profile.ProfileType, subdir: Path
 ) -> dict[str, dcc.Graph]:
@@ -237,12 +242,29 @@ def kpi_table(
     if path is None:
         return {}
     _, metrics = comparison_metrics.ValidationMetrics.load(path)
-    digits = 3
+    digits = 6
     tables = {
         a: dbc.Table(
             [
+                html.Tr([html.Td("Probability Curve Difference")]),
                 html.Tr([html.Td("MEA"), html.Td(round(metrics.mea[a], digits))]),
                 html.Tr([html.Td("MSE"), html.Td(round(metrics.rmse[a] ** 2, digits))]),
+                html.Tr(),
+                html.Tr([html.Td("Difference of Activity Frequencies")]),
+                html.Tr(
+                    [
+                        html.Td("Kolmogorov-Smirnov p-Value"),
+                        html.Td(round_num(metrics.ks_frequency_p[a])),
+                    ]
+                ),
+                html.Tr(),
+                html.Tr([html.Td("Difference of Activity Durations")]),
+                html.Tr(
+                    [
+                        html.Td("Kolmogorov-Smirnov p-Value"),
+                        html.Td(round_num(metrics.ks_duration_p[a])),
+                    ]
+                ),
             ]
         )
         for a in metrics.mea.index

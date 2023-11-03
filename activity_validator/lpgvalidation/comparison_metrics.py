@@ -9,6 +9,7 @@ from pathlib import Path
 from dataclasses_json import config, dataclass_json  # type: ignore
 import numpy as np
 import pandas as pd
+import scipy  # type: ignore
 from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 from activity_validator.lpgvalidation.validation_data import ValidationData
@@ -24,6 +25,18 @@ class ValidationMetrics:
         )
     )
     rmse: pd.Series = field(
+        metadata=config(
+            encoder=lambda s: s.to_json(),
+            decoder=lambda s: pd.read_json(s, typ="series"),
+        )
+    )
+    ks_frequency_p: pd.Series = field(
+        metadata=config(
+            encoder=lambda s: s.to_json(),
+            decoder=lambda s: pd.read_json(s, typ="series"),
+        )
+    )
+    ks_duration_p: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
             decoder=lambda s: pd.read_json(s, typ="series"),
@@ -86,6 +99,19 @@ def calc_rmse(differences: pd.DataFrame) -> pd.Series:
     return np.sqrt((differences**2).mean(axis=1))
 
 
+def ks_test_per_activity(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
+    all_activities = data1.columns.union(data2.columns)
+    # Kolmogorov-Smirnov
+    pvalues: list = []
+    for a in all_activities:
+        if a not in data1 or a not in data2:
+            pvalues.append(pd.NA)
+            continue
+        results = scipy.stats.ks_2samp(data1[a], data2[a])
+        pvalues.append(results.pvalue)
+    return pd.Series(pvalues, index=all_activities)
+
+
 def calc_comparison_metrics(
     input_data: ValidationData, validation_data: ValidationData
 ) -> tuple[pd.DataFrame, ValidationMetrics]:
@@ -96,4 +122,14 @@ def calc_comparison_metrics(
     # these KPIs show which activity is represented how well
     mae_per_activity = calc_mae(differences).sort_values()
     rmse_per_activity = calc_rmse(differences).sort_values()
-    return differences, ValidationMetrics(mae_per_activity, rmse_per_activity)
+
+    ks_frequency = ks_test_per_activity(
+        validation_data.activity_frequencies, input_data.activity_frequencies
+    )
+    ks_duration = ks_test_per_activity(
+        validation_data.activity_durations, input_data.activity_durations
+    )
+
+    return differences, ValidationMetrics(
+        mae_per_activity, rmse_per_activity, ks_frequency, ks_duration
+    )

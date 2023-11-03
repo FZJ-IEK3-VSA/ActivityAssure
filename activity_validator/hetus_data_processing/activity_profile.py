@@ -131,6 +131,11 @@ def create_result_path(
     return path
 
 
+def convert_to_timedelta(data: pd.DataFrame) -> None:
+    for col in data.columns:
+        data[col] = pd.to_timedelta(data[col])
+
+
 def save_df(
     data: pd.DataFrame,
     subdir: str,
@@ -158,13 +163,26 @@ def save_df(
     logging.debug(f"Created DataFrame file {path}")
 
 
-def load_df(path: str | Path) -> tuple[ProfileType | None, pd.DataFrame]:
+def load_df(
+    path: str | Path, as_timedelta: bool = False
+) -> tuple[ProfileType | None, pd.DataFrame]:
+    """
+    Loads a data frame from a csv file.
+
+    :param path: path to the csv file
+    :param as_timedelta: whether the DataFrame contains timedelta
+                         values, defaults to False
+    :return: the ProfileType determined from the filename and the
+             loaded DataFrame
+    """
     if isinstance(path, str):
         path = Path(path)
     # determine the profile type from the filename
     name, profile_type = ProfileType.from_filename(path)
     # load the data
     data = pd.read_csv(path, index_col=0)
+    if as_timedelta:
+        convert_to_timedelta(data)
     logging.debug(f"Loaded DataFrame from {path}")
     return profile_type, data
 
