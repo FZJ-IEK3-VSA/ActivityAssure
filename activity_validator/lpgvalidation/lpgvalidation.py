@@ -2,11 +2,8 @@
 
 import dataclasses
 from datetime import timedelta
-import functools
 import json
 import logging
-import operator
-import os
 from pathlib import Path
 from typing import Iterable
 
@@ -25,12 +22,6 @@ from activity_validator.hetus_data_processing.attributes import diary_attributes
 from activity_validator.hetus_data_processing import category_statistics, utils
 from activity_validator.hetus_data_processing.hetus_constants import PROFILE_OFFSET
 from activity_validator.lpgvalidation.validation_data import ValidationData
-
-#: activities that should be counted as work for determining work days
-# TODO find a more flexible way for this
-WORK_ACTIVITIES = ["EMPLOYMENT", "work"]
-#: minimum working time for a day to be counted as working day
-WORKTIME_THRESHOLD = timedelta(hours=3)
 
 
 def load_person_characteristics(path: str) -> dict:
@@ -110,7 +101,7 @@ def is_work_activity(activity: ActivityProfileEntry) -> bool:
     :param activity: the activity to check
     :return: True if the activity is a work activity, else False
     """
-    return activity.name in WORK_ACTIVITIES
+    return activity.name in diary_attributes.WORK_ACTIVITIES
 
 
 def determine_day_type(activity_profile: SparseActivityProfile) -> None:
@@ -122,21 +113,14 @@ def determine_day_type(activity_profile: SparseActivityProfile) -> None:
     """
     durations = [a.duration for a in activity_profile.activities if is_work_activity(a)]
     # calculate total working time on this day
-    if len(durations) > 0:
-        work_sum = functools.reduce(
-            operator.add,
-            durations,
-        )
-    else:
-        # no work at all
-        work_sum = 0
+    work_sum = sum(durations)
     assert (
         work_sum is not None
     ), "Cannot determine day type for profiles with missing durations"
     # set the day type depending on the total working time
     day_type = (
         diary_attributes.DayType.work
-        if work_sum * activity_profile.resolution >= WORKTIME_THRESHOLD
+        if work_sum * activity_profile.resolution >= diary_attributes.WORKTIME_THRESHOLD
         else diary_attributes.DayType.no_work
     )
     # set the determined day type for the profile

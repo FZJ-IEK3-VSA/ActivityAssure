@@ -2,13 +2,14 @@
 Calculates additional attributes for diary entries which can then be used for categorization
 """
 
+from datetime import timedelta
 from enum import StrEnum  # type: ignore
 import logging
 import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 import activity_validator.hetus_data_processing.hetus_values as val
-from activity_validator.hetus_data_processing import utils
+from activity_validator.hetus_data_processing import hetus_constants, utils
 
 
 class DayType(StrEnum):
@@ -38,6 +39,12 @@ MAP_EMPLOYEDSTUDENT = {
     val.EmployedStudent.yes: DayType.work,
     val.EmployedStudent.no: DayType.no_work,
 }
+
+#: activities that should be counted as work for determining work days
+# TODO find a more flexible way for this
+WORK_ACTIVITIES = ["work"]
+#: minimum working time for a day to be counted as working day
+WORKTIME_THRESHOLD = timedelta(hours=3)
 
 
 def determine_day_type(row: pd.Series) -> DayType:
@@ -75,7 +82,22 @@ def determine_day_types(data: pd.DataFrame) -> pd.Series:
     :param data: HETUS data
     :return: day type for each diary entry
     """
-    day_types = data.apply(determine_day_type, axis=1)
+    # TODO: split to calculate AT separately
+    # determine the working time threshold for deciding on the day type
+    country = data.index.get_level_values(col.Country.ID)[0]
+    min_time_slots = WORKTIME_THRESHOLD / hetus_constants.get_resolution(country)
+    # count the occurrences of work activities per diary entry
+    activities = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+    assert len(WORK_ACTIVITIES) == 1, "Not implemented: multiple work activities"
+    day_types = activities[activities == WORK_ACTIVITIES[0]].count(axis=1)
+    # determine day type based on number of work activity entries
+    work = day_types > min_time_slots
+    day_types.loc[work] = DayType.work
+    day_types.loc[~work] = DayType.no_work
+
+    # TODO: old classification method - remove
+    # day_types = data.apply(determine_day_type, axis=1)
+
     day_types.name = DayType.title()
     counts = day_types.value_counts()
     determined = counts[counts.index != DayType.undetermined].sum()
