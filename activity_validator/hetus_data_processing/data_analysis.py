@@ -182,15 +182,15 @@ def compare_mact_and_pact(a2: pd.DataFrame, a3: pd.DataFrame):
 
 def activity_frequencies(data: pd.DataFrame):
     # extract main activity columns (normal and aggregated)
-    a2 = data.filter(like=col.Diary.MAIN_ACTIVITIES_AGG_PATTERN)
-    a3 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+    # hint: PACT is not the equivalent of 2-digit codes, it is
+    # a different, internal format from Eurostat
+    pact = data.filter(like=col.Diary.MAIN_ACTIVITIES_AGG_PATTERN)
+    a3 = col.get_activity_data(data)
 
-    a2_frequency = a2.stack().value_counts()
+    a2_frequency = pact.stack().value_counts()
     a3_frequency = a3.stack().value_counts()
 
-    a1 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).map(
-        lambda x: x[0] if isinstance(x, str) else x
-    )
+    a1 = a3.map(lambda x: x[0] if isinstance(x, str) else x)
     a1_frequency = a1.stack().value_counts()
 
     # convert to average time per diary in minutes
@@ -215,7 +215,7 @@ def calc_overall_activity_shares(data: pd.DataFrame) -> pd.Series:
     :return: the overall share for each activity type
     """
     hetus_translations.translate_activity_codes(data)
-    data = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+    data = col.get_activity_data(data)
     probabilities = calc_probability_profiles(data)
     overall_shares = probabilities.mean(axis=1)
     return overall_shares

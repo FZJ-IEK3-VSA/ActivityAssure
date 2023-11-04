@@ -45,7 +45,7 @@ def load_hetus_activity_codes() -> dict[str, str]:
 def aggregate_activities(data: pd.DataFrame, digits: int = 1):
     assert 1 <= digits <= 3, "invalid number of digits for activity aggregation"
     # filter activity columns (Mact1-144)
-    activity = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+    activity = col.get_activity_data(data)
     # map to the target level
     target = activity.map(lambda x: x[:digits] if isinstance(x, str) else x)  # type: ignore
     return target
@@ -57,7 +57,7 @@ def extract_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     # code 811 exists, then code 81 is its supergroup. However, for group 9
     # there are no two-digit codes. Therefore, if the code is not found, just
     # fall back to the corresponding one-digit code.
-    return data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN).map(  # type: ignore
+    return col.get_activity_data(data).map(  # type: ignore
         lambda x: codes.get(x, codes[x[0]])
     )
 
@@ -116,7 +116,7 @@ def translate_activity_codes(data: pd.DataFrame) -> None:
     # corresponding activity names, which can in turn be mapped using
     # the defined activity type mapping
     combined = get_combined_hetus_mapping()
-    activity = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+    activity = col.get_activity_data(data)
     data.loc[:, activity.columns] = activity.replace(combined)
 
 

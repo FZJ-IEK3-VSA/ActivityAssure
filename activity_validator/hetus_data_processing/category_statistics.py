@@ -103,9 +103,7 @@ def calc_statistics_per_category(
     """
     for profile_set in profile_sets:
         # extract only the activity data
-        profile_set.data = profile_set.data.filter(
-            like=col.Diary.MAIN_ACTIVITIES_PATTERN
-        )
+        profile_set.data = col.get_activity_data(profile_set.data)
         probabilities = calc_probability_profiles(profile_set.data, activity_types)
         # convert to sparse format to calculate more statistics
         activity_profiles = profile_set.create_sparse_profiles()

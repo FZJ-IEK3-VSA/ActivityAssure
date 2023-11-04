@@ -7,6 +7,8 @@ converted to upper case after parsing.
 
 import abc
 
+import pandas as pd
+
 
 class HetusLevel(abc.ABC):
     NAME = ""
@@ -139,3 +141,14 @@ class Diary(HetusLevel):
 
     MAIN_ACTIVITIES_PATTERN = "MACT"
     MAIN_ACTIVITIES_AGG_PATTERN = "PACT"
+
+
+def get_activity_data(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Returns only the activity data columns (MACT1 - MACT144).
+    Returns a view on the original dataframe.
+
+    :param data: HETUS diary data
+    :return: view on only the activity data
+    """
+    return data.filter(like=Diary.MAIN_ACTIVITIES_PATTERN)

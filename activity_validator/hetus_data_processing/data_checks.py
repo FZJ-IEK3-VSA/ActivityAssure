@@ -108,7 +108,7 @@ def check_personal_data(persondata):
 
 def check_activity_data(data):
     print("--- Data availability on activity level ---")
-    a3 = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
+    a3 = col.get_activity_data(data)
     non_na_share = a3.count().sum() / (len(a3) * len(a3.columns))
     print(
         f"Share of missing 10 min activity entries in total: {(1 - non_na_share)*100:.1f} %"
