@@ -87,11 +87,11 @@ def determine_day_types(data: pd.DataFrame) -> pd.Series:
     country = data.index.get_level_values(col.Country.ID)[0]
     min_time_slots = WORKTIME_THRESHOLD / hetus_constants.get_resolution(country)
     # count the occurrences of work activities per diary entry
-    activities = data.filter(like=col.Diary.MAIN_ACTIVITIES_PATTERN)
-    assert len(WORK_ACTIVITIES) == 1, "Not implemented: multiple work activities"
-    day_types = activities[activities == WORK_ACTIVITIES[0]].count(axis=1)
+    activities = col.get_activity_data(data)
+    day_types = activities[activities.isin(WORK_ACTIVITIES)].count(axis=1)
     # determine day type based on number of work activity entries
     work = day_types > min_time_slots
+    # TODO: FutureWarning incompatible dtype
     day_types.loc[work] = DayType.work
     day_types.loc[~work] = DayType.no_work
 
