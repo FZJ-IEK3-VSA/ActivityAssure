@@ -184,6 +184,10 @@ def histogram_per_activity(
     # load both files
     _, validation_data = activity_profile.load_df(path_val, duration_data)
     _, input_data = activity_profile.load_df(path_in, duration_data)
+    if duration_data:
+        # TODO workaround: https://github.com/plotly/plotly.py/issues/799
+        validation_data += datetime(2023, 1, 1)
+        input_data += datetime(2023, 1, 1)
 
     data_per_activity = join_to_pairs(validation_data, input_data)
 
