@@ -51,6 +51,8 @@ def process_hetus_2010_data():
     ]
     # categorize(cat_persondata, key)
 
+    # calculate additional columns for categorizing and drop rows
+    # where important data is missing
     cat_data = get_diary_categorization_data(data, persondata)
     key += [diary_attributes.DayType.title()]
     categories = categorize(cat_data, key)

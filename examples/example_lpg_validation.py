@@ -55,7 +55,7 @@ if __name__ == "__main__":
     )
 
     # load validation data
-    validation_data_path = Path("data/validation_data")
+    validation_data_path = Path("data/validation_data EU")
     validation_data_dict = lpgvalidation.load_validation_data(validation_data_path)
 
     # load activity mapping
