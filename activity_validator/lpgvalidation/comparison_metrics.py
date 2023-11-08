@@ -24,7 +24,19 @@ class ValidationMetrics:
             decoder=lambda s: pd.read_json(s, typ="series"),
         )
     )
+    bias: pd.Series = field(
+        metadata=config(
+            encoder=lambda s: s.to_json(),
+            decoder=lambda s: pd.read_json(s, typ="series"),
+        )
+    )
     rmse: pd.Series = field(
+        metadata=config(
+            encoder=lambda s: s.to_json(),
+            decoder=lambda s: pd.read_json(s, typ="series"),
+        )
+    )
+    pearson_corr: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
             decoder=lambda s: pd.read_json(s, typ="series"),
@@ -88,7 +100,11 @@ def calc_probability_curves_diff(
         # add rows full of zeros for missing activity types
         validation = validation.reindex(common_index, fill_value=0)
         input = input.reindex(common_index, fill_value=0)
-    return validation - input
+    return input - validation
+
+
+def calc_bias(differences: pd.DataFrame) -> pd.Series:
+    return differences.mean(axis=1)
 
 
 def calc_mae(differences: pd.DataFrame) -> pd.Series:
@@ -97,6 +113,13 @@ def calc_mae(differences: pd.DataFrame) -> pd.Series:
 
 def calc_rmse(differences: pd.DataFrame) -> pd.Series:
     return np.sqrt((differences**2).mean(axis=1))
+
+
+def calc_pearson_coeff(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
+    # when one row is entirely zero, numpy places NAN, which is fine
+    with np.errstate(divide="ignore"):
+        coeffs = [np.corrcoef(data1.loc[i], data2.loc[i])[0, 1] for i in data1.index]
+    return pd.Series(coeffs, index=data1.index)
 
 
 def ks_test_per_activity(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
@@ -119,9 +142,13 @@ def calc_comparison_metrics(
         validation_data.probability_profiles, input_data.probability_profiles
     )
 
-    # these KPIs show which activity is represented how well
-    mae_per_activity = calc_mae(differences).sort_values()
-    rmse_per_activity = calc_rmse(differences).sort_values()
+    # calc KPIs per activity
+    bias = calc_bias(differences)
+    mae = calc_mae(differences)
+    rmse = calc_rmse(differences)
+    pearson_corr = calc_pearson_coeff(
+        validation_data.probability_profiles, input_data.probability_profiles
+    )
 
     ks_frequency = ks_test_per_activity(
         validation_data.activity_frequencies, input_data.activity_frequencies
@@ -131,5 +158,5 @@ def calc_comparison_metrics(
     )
 
     return differences, ValidationMetrics(
-        mae_per_activity, rmse_per_activity, ks_frequency, ks_duration
+        mae, bias, rmse, pearson_corr, ks_frequency, ks_duration
     )

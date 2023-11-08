@@ -139,8 +139,8 @@ def prob_curve_per_activity(
     # add rows full of zeros for missing activity types
     validation_data = validation_data.reindex(common_index, fill_value=0)
     input_data = input_data.reindex(common_index, fill_value=0)
-    validation_data = validation_data.T
-    input_data = input_data.T * -1
+    validation_data = validation_data.T * -1
+    input_data = input_data.T
     data_per_activity = join_to_pairs(validation_data, input_data)
 
     # create the plots
@@ -148,8 +148,8 @@ def prob_curve_per_activity(
     for activity, data in data_per_activity.items():
         figure = px.line(data)
         # fill the areas between the curves and the x-axis
-        figure.update_traces(fill="tonexty", selector={"name": "Validation"})
         figure.update_traces(fill="tozeroy", selector={"name": "Input"})
+        figure.update_traces(fill="tozeroy", selector={"name": "Validation"})
         # make the y-axis range symmetric
         max_y = data.abs().max(axis=None)
         figure.update_yaxes(range=[-max_y, max_y])
@@ -217,10 +217,10 @@ def stacked_bar_activity_share(paths: dict[str, Path]) -> Figure:
     return px.bar(data.T)  # , x=data.columns, y=data.index)
 
 
-def round_num(value, digits: int = -1) -> float | str:
+def round_kpi(value, digits: int = -1) -> float | str:
     """
-    Calls the round function on numbers, and returns
-    everything else unchanged.
+    Replaces None or NAN with 'n/a', and optionally
+    rounds numbers
 
     :param value: the value to round
     :param digits: the digits to round to
@@ -229,6 +229,22 @@ def round_num(value, digits: int = -1) -> float | str:
     if value is None or pd.isna(value):
         return "n/a"
     return round(value, digits) if digits >= 0 else value
+
+
+def bias_to_str(value: float) -> str:
+    """
+    Converts the bias from a float in range [-1, 1] to
+    a str representation of a timedelta in range [-1 day, 1 day].
+    This emphasizes its meaning: the average difference of time
+    spent per day on an activity category.
+
+    :param value: bias value
+    :return: str timedelta representation
+    """
+    td = timedelta(abs(value))
+    # python's default representation of negative timedeltas is unintuitive
+    sign = "-" if value < 0 else ""
+    return sign + str(td)
 
 
 def kpi_table(
@@ -247,26 +263,43 @@ def kpi_table(
         return {}
     _, metrics = comparison_metrics.ValidationMetrics.load(path)
     digits = 6
+    header_style = {"fontWeight": "bold"}
     tables = {
         a: dbc.Table(
             [
-                html.Tr([html.Td("Probability Curve Difference")]),
-                html.Tr([html.Td("MAE"), html.Td(round(metrics.mae[a], digits))]),
-                html.Tr([html.Td("MSE"), html.Td(round(metrics.rmse[a] ** 2, digits))]),
-                html.Tr(),
-                html.Tr([html.Td("Difference of Activity Frequencies")]),
+                html.Tr([html.Td("Probability Curves", style=header_style)]),
+                html.Tr([html.Td("MAE"), html.Td(round_kpi(metrics.mae[a], digits))]),
+                html.Tr(
+                    [html.Td("MSE"), html.Td(round_kpi(metrics.rmse[a] ** 2, digits))]
+                ),
                 html.Tr(
                     [
-                        html.Td("Kolmogorov-Smirnov p-Value"),
-                        html.Td(round_num(metrics.ks_frequency_p[a])),
+                        html.Td("Bias [time]"),
+                        html.Td(bias_to_str((metrics.bias[a]))),
                     ]
                 ),
-                html.Tr(),
-                html.Tr([html.Td("Difference of Activity Durations")]),
+                html.Tr(
+                    [
+                        html.Td("Pearson correlation"),
+                        html.Td(round_kpi(metrics.pearson_corr[a], digits)),
+                    ]
+                ),
+                html.Tr(
+                    [html.Td("Difference of Activity Frequencies", style=header_style)]
+                ),
                 html.Tr(
                     [
                         html.Td("Kolmogorov-Smirnov p-Value"),
-                        html.Td(round_num(metrics.ks_duration_p[a])),
+                        html.Td(round_kpi(metrics.ks_frequency_p[a])),
+                    ]
+                ),
+                html.Tr(
+                    [html.Td("Difference of Activity Durations", style=header_style)]
+                ),
+                html.Tr(
+                    [
+                        html.Td("Kolmogorov-Smirnov p-Value"),
+                        html.Td(round_kpi(metrics.ks_duration_p[a])),
                     ]
                 ),
             ]
