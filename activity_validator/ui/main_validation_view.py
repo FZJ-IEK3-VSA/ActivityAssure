@@ -152,6 +152,12 @@ class MainValidationView(html.Div):
                                                 style={"textAlign": "center"},
                                             )
                                         ),
+                                        dbc.Col(
+                                            html.H2(
+                                                "Comparison Metrics",
+                                                style={"textAlign": "center"},
+                                            )
+                                        ),
                                     ],
                                     className="mb-3",
                                 ),

@@ -251,7 +251,7 @@ def kpi_table(
         a: dbc.Table(
             [
                 html.Tr([html.Td("Probability Curve Difference")]),
-                html.Tr([html.Td("MEA"), html.Td(round(metrics.mea[a], digits))]),
+                html.Tr([html.Td("MAE"), html.Td(round(metrics.mae[a], digits))]),
                 html.Tr([html.Td("MSE"), html.Td(round(metrics.rmse[a] ** 2, digits))]),
                 html.Tr(),
                 html.Tr([html.Td("Difference of Activity Frequencies")]),
@@ -271,6 +271,6 @@ def kpi_table(
                 ),
             ]
         )
-        for a in metrics.mea.index
+        for a in metrics.mae.index
     }
     return tables

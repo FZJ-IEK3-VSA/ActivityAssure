@@ -18,7 +18,7 @@ from activity_validator.lpgvalidation.validation_data import ValidationData
 @dataclass_json
 @dataclass
 class ValidationMetrics:
-    mea: pd.Series = field(
+    mae: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
             decoder=lambda s: pd.read_json(s, typ="series"),
