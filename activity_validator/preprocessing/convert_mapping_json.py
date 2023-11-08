@@ -1,7 +1,6 @@
 import json
 
 
-path = r"activity_validator\activity_types\hetus_list.json"
 path = r"activity_validator\activity_types\hetus_activity_codes_2010.json"
 with open(path) as f:
     data = json.load(f)
