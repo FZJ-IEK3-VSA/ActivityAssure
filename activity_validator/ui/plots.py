@@ -150,9 +150,8 @@ def prob_curve_per_activity(
         # fill the areas between the curves and the x-axis
         figure.update_traces(fill="tozeroy", selector={"name": "Input"})
         figure.update_traces(fill="tozeroy", selector={"name": "Validation"})
-        # make the y-axis range symmetric
-        max_y = data.abs().max(axis=None)
-        figure.update_yaxes(range=[-max_y, max_y])
+        # use the same y-axis range for all plots
+        figure.update_yaxes(range=[-1, 1])
         figures[activity] = dcc.Graph(figure=figure)
     return figures
 
