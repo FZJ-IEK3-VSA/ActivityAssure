@@ -42,6 +42,12 @@ class ValidationMetrics:
             decoder=lambda s: pd.read_json(s, typ="series"),
         )
     )
+    wasserstein: pd.Series = field(
+        metadata=config(
+            encoder=lambda s: s.to_json(),
+            decoder=lambda s: pd.read_json(s, typ="series"),
+        )
+    )
     ks_frequency_p: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
@@ -122,6 +128,14 @@ def calc_pearson_coeff(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
     return pd.Series(coeffs, index=data1.index)
 
 
+def calc_wasserstein(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
+    distances = [
+        scipy.stats.wasserstein_distance(data1.loc[i], data2.loc[i])
+        for i in data1.index
+    ]
+    return pd.Series(distances, index=data1.index)
+
+
 def ks_test_per_activity(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
     all_activities = data1.columns.union(data2.columns)
     # Kolmogorov-Smirnov
@@ -149,6 +163,9 @@ def calc_comparison_metrics(
     pearson_corr = calc_pearson_coeff(
         validation_data.probability_profiles, input_data.probability_profiles
     )
+    wasserstein = calc_wasserstein(
+        validation_data.probability_profiles, input_data.probability_profiles
+    )
 
     ks_frequency = ks_test_per_activity(
         validation_data.activity_frequencies, input_data.activity_frequencies
@@ -158,5 +175,5 @@ def calc_comparison_metrics(
     )
 
     return differences, ValidationMetrics(
-        mae, bias, rmse, pearson_corr, ks_frequency, ks_duration
+        mae, bias, rmse, pearson_corr, wasserstein, ks_frequency, ks_duration
     )

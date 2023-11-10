@@ -285,6 +285,12 @@ def kpi_table(
                     ]
                 ),
                 html.Tr(
+                    [
+                        html.Td("Wasserstein distance"),
+                        html.Td(round_kpi(metrics.wasserstein[a], digits)),
+                    ]
+                ),
+                html.Tr(
                     [html.Td("Difference of Activity Frequencies", style=header_style)]
                 ),
                 html.Tr(
