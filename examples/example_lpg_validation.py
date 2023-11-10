@@ -33,18 +33,12 @@ def check_mapping(activity_types: list[str], validation_path: Path):
     ), "The mappings result in a different activity type order"
 
 
-if __name__ == "__main__":
+def validate_lpg():
     # TODO: some general todos
     # - fix mypy issues
     # - standardize definition of file paths
     # - reevaluate all module-level constants: move to config file?
     # - check all the TODOs everywhere in the project
-
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.DEBUG,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
 
     # load LPG activity profiles
     input_path = Path("data/lpg/processed")
@@ -100,5 +94,14 @@ if __name__ == "__main__":
                 differences, "differences", "diff", profile_type, output_path
             )
             metrics.save(output_path, profile_type)
+            return input_data, validation_data
 
-            pass
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    validate_lpg()
