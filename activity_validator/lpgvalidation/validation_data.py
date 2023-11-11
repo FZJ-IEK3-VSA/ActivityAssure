@@ -62,13 +62,17 @@ class ValidationData:
         freq_path = activity_profile.create_result_path(
             "activity_frequencies", "freq", profile_type, base_path
         )
-        _, freq = activity_profile.load_df(freq_path)
         dur_path = activity_profile.create_result_path(
             "activity_durations", "dur", profile_type, base_path
         )
-        _, dur = activity_profile.load_df(dur_path, True)
         prob_path = activity_profile.create_result_path(
             "probability_profiles", "prob", profile_type, base_path
         )
+        if not (freq_path.is_file() and dur_path.is_file() and prob_path.is_file()):
+            raise RuntimeError(
+                f"Did not find all files for profile type {str(profile_type)} in base directory {base_path}"
+            )
+        _, freq = activity_profile.load_df(freq_path)
+        _, dur = activity_profile.load_df(dur_path, True)
         _, prob = activity_profile.load_df(prob_path)
         return ValidationData(profile_type, prob, freq, dur)

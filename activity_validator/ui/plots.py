@@ -287,8 +287,15 @@ def kpi_table(
     :param ptype_in: the selected profile type of the input data
     :return: dict of all KPI tables
     """
-    data_val = validation_data.ValidationData.load(datapaths.validation_path, ptype_val)
-    data_in = validation_data.ValidationData.load(datapaths.input_data_path, ptype_in)
+    try:
+        data_val = validation_data.ValidationData.load(
+            datapaths.validation_path, ptype_val
+        )
+        data_in = validation_data.ValidationData.load(
+            datapaths.input_data_path, ptype_in
+        )
+    except RuntimeError:
+        return {}
     _, metrics = comparison_metrics.calc_comparison_metrics(data_val, data_in)
     digits = 6
     header_style = {"fontWeight": "bold"}
