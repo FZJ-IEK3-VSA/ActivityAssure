@@ -1,5 +1,5 @@
 from pathlib import Path
-from dash import Dash, Output, Input, State, html, dcc, callback, MATCH  # type: ignore
+from dash import Dash, Output, Input, State, html, dcc, callback, no_update, MATCH  # type: ignore
 import dash_bootstrap_components as dbc  # type: ignore
 import plotly.express as px  # type: ignore
 import uuid
@@ -27,6 +27,11 @@ class MainValidationView(html.Div):
             "subcomponent": "dropdown_input",
             "aio_id": aio_id,
         }
+        checklist_sync = lambda aio_id: {
+            "component": "MainValidationView",
+            "subcomponent": "checklist_sync",
+            "aio_id": aio_id,
+        }
         validation_graph = lambda aio_id: {
             "component": "MainValidationView",
             "subcomponent": "validation probability graph",
@@ -52,6 +57,8 @@ class MainValidationView(html.Div):
             "subcomponent": "graphs per activity",
             "aio_id": aio_id,
         }
+
+    synchronize_option = "Synchronize data types"
 
     # Define the arguments of the component
     def __init__(
@@ -89,35 +96,64 @@ class MainValidationView(html.Div):
                 dbc.CardBody(
                     [
                         # dcc.Store(data=str(validation_path), id=self.ids.store(aio_id)),
-                        dbc.Row(
-                            [
-                                dbc.Col(html.H4("Validation data type")),
-                                dbc.Col(
-                                    dcc.Dropdown(
-                                        all_types,
-                                        input_types[0],
-                                        id=self.ids.dropdown_valid(aio_id),
-                                        className="mb-3",
-                                        **dropdown_props,
-                                    )
-                                ),
-                            ],
-                            style={"width": "800px"},
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.Col(html.H4("Input data type")),
-                                dbc.Col(
-                                    dcc.Dropdown(
-                                        all_types,
-                                        input_types[0],
-                                        id=self.ids.dropdown_input(aio_id),
-                                        className="mb-3",
-                                        **dropdown_props,
-                                    )
-                                ),
-                            ],
-                            style={"width": "800px"},
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                dbc.Row(
+                                                    [
+                                                        html.H4(
+                                                            "Validation data type",
+                                                            className="mb-3",
+                                                        ),
+                                                        html.H4(
+                                                            "Input data type",
+                                                            className="mb-3",
+                                                        ),
+                                                    ]
+                                                ),
+                                                width="auto",
+                                            ),
+                                            dbc.Col(
+                                                dbc.Row(
+                                                    [
+                                                        dcc.Dropdown(
+                                                            all_types,
+                                                            input_types[0],
+                                                            id=self.ids.dropdown_valid(
+                                                                aio_id
+                                                            ),
+                                                            className="mb-3",
+                                                            **dropdown_props,
+                                                        ),
+                                                        dcc.Dropdown(
+                                                            all_types,
+                                                            input_types[0],
+                                                            id=self.ids.dropdown_input(
+                                                                aio_id
+                                                            ),
+                                                            className="mb-3",
+                                                            **dropdown_props,
+                                                        ),
+                                                    ]
+                                                ),
+                                                width=2,
+                                            ),
+                                            dbc.Col(
+                                                dcc.Checklist(
+                                                    options=[
+                                                        MainValidationView.synchronize_option
+                                                    ],
+                                                    id=self.ids.checklist_sync(aio_id),
+                                                )
+                                            ),
+                                        ],
+                                    ),
+                                ]
+                            ),
+                            className="mb-3",
                         ),
                         dbc.Card(
                             dbc.CardBody(
@@ -158,43 +194,80 @@ class MainValidationView(html.Div):
                             className="mb-3",
                         ),
                         html.Div(id=self.ids.kpi_view(aio_id), className="mb-3"),
+                        html.Br(),
                         html.Div(
                             [
                                 dbc.Row(
                                     [
                                         dbc.Col(
-                                            html.H2(
-                                                "Activity Frequencies per Day",
-                                                style={"textAlign": "center"},
+                                            dbc.Card(
+                                                html.H2(
+                                                    "Activity Frequencies per Day",
+                                                    style={"textAlign": "center"},
+                                                )
                                             )
                                         ),
                                         dbc.Col(
-                                            html.H2(
-                                                "Activity Durations",
-                                                style={"textAlign": "center"},
+                                            dbc.Card(
+                                                html.H2(
+                                                    "Activity Durations",
+                                                    style={"textAlign": "center"},
+                                                )
                                             )
                                         ),
                                         dbc.Col(
-                                            html.H2(
-                                                "Activity Probabilities",
-                                                style={"textAlign": "center"},
+                                            dbc.Card(
+                                                html.H2(
+                                                    "Activity Probabilities",
+                                                    style={"textAlign": "center"},
+                                                )
                                             )
                                         ),
                                         dbc.Col(
-                                            html.H2(
-                                                "Comparison Metrics",
-                                                style={"textAlign": "center"},
+                                            dbc.Card(
+                                                html.H2(
+                                                    "Comparison Metrics",
+                                                    style={"textAlign": "center"},
+                                                )
                                             )
                                         ),
                                     ],
                                     className="mb-3",
                                 ),
                                 html.Div(id=self.ids.per_activity_graphs(aio_id)),
-                            ]
+                            ],
                         ),
                     ],
                 )
             )
+        )
+
+    @callback(
+        Output(ids.dropdown_input(MATCH), "value"),
+        Input(ids.dropdown_valid(MATCH), "value"),
+        Input(ids.checklist_sync(MATCH), "value"),
+        State(ids.dropdown_input(MATCH), "value"),
+        prevent_initial_call=True,
+    )
+    def update_input_dropdown(
+        profile_type_val: str, checklist: list[str] | None, profile_type_in: str
+    ):
+        if not checklist or MainValidationView.synchronize_option not in checklist:
+            # the dropdowns behave independently
+            return no_update
+        # synchronize input dropdown to validation dropdown
+        if profile_type_in == profile_type_val:
+            # no update necessary
+            return no_update
+        return profile_type_val
+
+    @callback(
+        Output(ids.dropdown_input(MATCH), "disabled"),
+        Input(ids.checklist_sync(MATCH), "value"),
+    )
+    def disable_input_dropdown(checklist: list[str] | None):
+        return (
+            checklist is not None and MainValidationView.synchronize_option in checklist
         )
 
     @callback(
@@ -261,7 +334,7 @@ class MainValidationView(html.Div):
             # no data available for this profile type
             return plots.titled_card(plots.replacement_text())
         assert (
-            freq.keys() == dur.keys() == prob.keys()
+            freq.keys() == dur.keys() == prob.keys() == kpis.keys()
         ), "Missing data for some activity types"
         # build rows, one for each activity
         rows = [
