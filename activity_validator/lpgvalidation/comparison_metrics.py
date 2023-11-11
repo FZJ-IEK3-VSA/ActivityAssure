@@ -61,6 +61,19 @@ class ValidationMetrics:
         )
     )
 
+    shares_validation: pd.Series = field(
+        metadata=config(
+            encoder=lambda s: s.to_json(),
+            decoder=lambda s: pd.read_json(s, typ="series"),
+        )
+    )
+    shares_input: pd.Series = field(
+        metadata=config(
+            encoder=lambda s: s.to_json(),
+            decoder=lambda s: pd.read_json(s, typ="series"),
+        )
+    )
+
     def save(self, result_directory: Path, profile_type: ProfileType) -> None:
         result_directory /= "metrics"
         result_directory.mkdir(parents=True, exist_ok=True)
@@ -122,9 +135,8 @@ def calc_rmse(differences: pd.DataFrame) -> pd.Series:
 
 
 def calc_pearson_coeff(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
-    # when one row is entirely zero, numpy places NAN, which is fine
-    with np.errstate(divide="ignore"):
-        coeffs = [np.corrcoef(data1.loc[i], data2.loc[i])[0, 1] for i in data1.index]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        coeffs = [data1.loc[i].corr(data2.loc[i]) for i in data1.index]
     return pd.Series(coeffs, index=data1.index)
 
 
@@ -174,6 +186,17 @@ def calc_comparison_metrics(
         validation_data.activity_durations, input_data.activity_durations
     )
 
+    shares_validation = validation_data.probability_profiles.mean(axis=1)
+    shares_input = input_data.probability_profiles.mean(axis=1)
+
     return differences, ValidationMetrics(
-        mae, bias, rmse, pearson_corr, wasserstein, ks_frequency, ks_duration
+        mae,
+        bias,
+        rmse,
+        pearson_corr,
+        wasserstein,
+        ks_frequency,
+        ks_duration,
+        shares_validation,
+        shares_input,
     )
