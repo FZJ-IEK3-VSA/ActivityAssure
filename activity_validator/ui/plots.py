@@ -7,7 +7,7 @@ from plotly.graph_objects import Figure  # type: ignore
 
 import pandas as pd
 from activity_validator.hetus_data_processing import activity_profile
-from activity_validator.lpgvalidation import comparison_metrics
+from activity_validator.lpgvalidation import comparison_metrics, validation_data
 from activity_validator.ui import data_utils
 from activity_validator.ui import datapaths
 
@@ -106,7 +106,9 @@ def stacked_prob_curves(filepath: Path | None, area: bool = True) -> Figure | No
     return fig
 
 
-def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True):
+def update_stacked_prob_curves(
+    profile_type_str: str, directory: Path, area: bool = True
+):
     # load the correct file and plot it
     profile_type = data_utils.ptype_from_label(profile_type_str)
     filepath = data_utils.get_file_path(directory, profile_type)
@@ -116,14 +118,43 @@ def update_prob_curves(profile_type_str: str, directory: Path, area: bool = True
     return [dcc.Graph(figure=figure)]
 
 
+def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
+    if (
+        path_valid is None
+        or not path_valid.is_file()
+        or path_in is None
+        or not path_in.is_file()
+    ):
+        return None
+    # load the correct files
+    _, data_val = activity_profile.load_df(path_valid)
+    _, data_in = activity_profile.load_df(path_in)
+
+    # get the probability profile differences
+    diff = comparison_metrics.calc_probability_curves_diff(data_val, data_in)
+    diff = diff.T
+    time_values = get_date_range(len(diff))
+    # plot the data
+    fig = px.line(
+        diff,
+        x=time_values,
+        y=diff.columns,
+    )
+    return fig
+
+
 def prob_curve_per_activity(
-    profile_type: activity_profile.ProfileType, subdir: str
+    profile_type_val: activity_profile.ProfileType,
+    profile_type_in: activity_profile.ProfileType,
+    subdir: Path | str,
 ) -> dict[str, dcc.Graph]:
     # get the path of the validation and the input file
     path_val = data_utils.get_file_path(
-        datapaths.validation_path / subdir, profile_type
+        datapaths.validation_path / subdir, profile_type_val
     )
-    path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
+    path_in = data_utils.get_file_path(
+        datapaths.input_data_path / subdir, profile_type_in
+    )
     if path_val is None or path_in is None:
         return {}
     # load both files
@@ -157,8 +188,9 @@ def prob_curve_per_activity(
 
 
 def histogram_per_activity(
-    profile_type: activity_profile.ProfileType,
-    subdir: Path,
+    ptype_val: activity_profile.ProfileType,
+    ptype_in: activity_profile.ProfileType,
+    subdir: Path | str,
     duration_data: bool = False,
 ) -> dict[str, dcc.Graph]:
     """
@@ -166,17 +198,16 @@ def histogram_per_activity(
     Each histogram compares the validation data to the matching input
     data.
 
-    :param profile_type: the selected profile type
+    :param ptype_val: the selected profile type of the validation data
+    :param ptype_in: the selected profile type of the input data
     :param subdir: the data subdirectory to use, which must contain
                    data per activity type in each file
     :param duration_data: whether to convert the data to timedeltas, defaults to False
     :return: a list of Cards containing the individual plots
     """
     # determine file paths for validation and input data
-    path_val = data_utils.get_file_path(
-        datapaths.validation_path / subdir, profile_type
-    )
-    path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
+    path_val = data_utils.get_file_path(datapaths.validation_path / subdir, ptype_val)
+    path_in = data_utils.get_file_path(datapaths.input_data_path / subdir, ptype_in)
     if path_val is None or path_in is None:
         return {}
 
@@ -247,20 +278,18 @@ def bias_to_str(value: float) -> str:
 
 
 def kpi_table(
-    profile_type: activity_profile.ProfileType, subdir: Path
+    ptype_val: activity_profile.ProfileType, ptype_in: activity_profile.ProfileType
 ) -> dict[str, dcc.Graph]:
     """
-    Generates a KPI table for each activity
+    Generates a KPI table for each activity.
 
-    :param profile_type: the profile type
-    :param subdir: _description_
-    :return: _description_
+    :param ptype_val: the selected profile type of the validation data
+    :param ptype_in: the selected profile type of the input data
+    :return: dict of all KPI tables
     """
-    # determine file path for the metrics
-    path = data_utils.get_file_path(datapaths.input_data_path / subdir, profile_type)
-    if path is None:
-        return {}
-    _, metrics = comparison_metrics.ValidationMetrics.load(path)
+    data_val = validation_data.ValidationData.load(datapaths.validation_path, ptype_val)
+    data_in = validation_data.ValidationData.load(datapaths.input_data_path, ptype_in)
+    _, metrics = comparison_metrics.calc_comparison_metrics(data_val, data_in)
     digits = 6
     header_style = {"fontWeight": "bold"}
     tables = {

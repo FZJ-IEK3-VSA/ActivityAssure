@@ -162,7 +162,7 @@ def ks_test_per_activity(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
 
 
 def calc_comparison_metrics(
-    input_data: ValidationData, validation_data: ValidationData
+    validation_data: ValidationData, input_data: ValidationData
 ) -> tuple[pd.DataFrame, ValidationMetrics]:
     differences = calc_probability_curves_diff(
         validation_data.probability_profiles, input_data.probability_profiles

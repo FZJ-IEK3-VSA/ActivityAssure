@@ -45,3 +45,30 @@ class ValidationData:
             self.profile_type,
             base_path=base_path,
         )
+
+    @staticmethod
+    def load(
+        base_path: Path, profile_type: activity_profile.ProfileType
+    ) -> "ValidationData":
+        """
+        Loads all data for the specified profile type from the separate
+        files.
+
+        :param base_path: the base path where the files are stored
+        :param profile_type: the profile type to load
+        :return: the object containing all data for the specified
+                 profile type
+        """
+        freq_path = activity_profile.create_result_path(
+            "activity_frequencies", "freq", profile_type, base_path
+        )
+        _, freq = activity_profile.load_df(freq_path)
+        dur_path = activity_profile.create_result_path(
+            "activity_durations", "dur", profile_type, base_path
+        )
+        _, dur = activity_profile.load_df(dur_path, True)
+        prob_path = activity_profile.create_result_path(
+            "probability_profiles", "prob", profile_type, base_path
+        )
+        _, prob = activity_profile.load_df(prob_path)
+        return ValidationData(profile_type, prob, freq, dur)

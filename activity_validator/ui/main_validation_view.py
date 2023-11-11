@@ -17,9 +17,14 @@ class MainValidationView(html.Div):
 
     class ids:
         # A set of functions that create pattern-matching callbacks of the subcomponents
-        dropdown = lambda aio_id: {
+        dropdown_valid = lambda aio_id: {
             "component": "MainValidationView",
-            "subcomponent": "dropdown",
+            "subcomponent": "dropdown_validation",
+            "aio_id": aio_id,
+        }
+        dropdown_input = lambda aio_id: {
+            "component": "MainValidationView",
+            "subcomponent": "dropdown_input",
             "aio_id": aio_id,
         }
         validation_graph = lambda aio_id: {
@@ -84,12 +89,35 @@ class MainValidationView(html.Div):
                 dbc.CardBody(
                     [
                         # dcc.Store(data=str(validation_path), id=self.ids.store(aio_id)),
-                        dcc.Dropdown(
-                            all_types,
-                            input_types[0],
-                            id=self.ids.dropdown(aio_id),
-                            className="mb-3",
-                            **dropdown_props,
+                        dbc.Row(
+                            [
+                                dbc.Col(html.H4("Validation data type")),
+                                dbc.Col(
+                                    dcc.Dropdown(
+                                        all_types,
+                                        input_types[0],
+                                        id=self.ids.dropdown_valid(aio_id),
+                                        className="mb-3",
+                                        **dropdown_props,
+                                    )
+                                ),
+                            ],
+                            style={"width": "800px"},
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(html.H4("Input data type")),
+                                dbc.Col(
+                                    dcc.Dropdown(
+                                        all_types,
+                                        input_types[0],
+                                        id=self.ids.dropdown_input(aio_id),
+                                        className="mb-3",
+                                        **dropdown_props,
+                                    )
+                                ),
+                            ],
+                            style={"width": "800px"},
                         ),
                         dbc.Card(
                             dbc.CardBody(
@@ -171,47 +199,64 @@ class MainValidationView(html.Div):
 
     @callback(
         Output(ids.validation_graph(MATCH), "children"),
-        Input(ids.dropdown(MATCH), "value"),
+        Input(ids.dropdown_valid(MATCH), "value"),
     )
-    def update_validation_graph(profile_type_str):
-        return plots.update_prob_curves(
+    def update_validation_graph(profile_type_str: str):
+        return plots.update_stacked_prob_curves(
             profile_type_str, datapaths.validation_path / datapaths.prob_dir
         )
 
     @callback(
-        Output(ids.input_graph(MATCH), "children"), Input(ids.dropdown(MATCH), "value")
+        Output(ids.input_graph(MATCH), "children"),
+        Input(ids.dropdown_input(MATCH), "value"),
     )
-    def update_input_graph(profile_type_str):
-        return plots.update_prob_curves(
+    def update_input_graph(profile_type_str: str):
+        return plots.update_stacked_prob_curves(
             profile_type_str, datapaths.input_data_path / datapaths.prob_dir
         )
 
     @callback(
         Output(ids.difference_graph(MATCH), "children"),
-        Input(ids.dropdown(MATCH), "value"),
+        Input(ids.dropdown_valid(MATCH), "value"),
+        Input(ids.dropdown_input(MATCH), "value"),
     )
-    def update_diff_graph(profile_type_str):
-        return plots.update_prob_curves(
-            profile_type_str, datapaths.input_data_path / datapaths.diff_dir, area=False
+    def update_diff_graph(profile_type_valid: str, profile_type_input: str):
+        profile_type_val = data_utils.ptype_from_label(profile_type_valid)
+        filepath_val = data_utils.get_file_path(
+            datapaths.validation_path / datapaths.prob_dir, profile_type_val
         )
+        profile_type_in = data_utils.ptype_from_label(profile_type_input)
+        filepath_in = data_utils.get_file_path(
+            datapaths.input_data_path / datapaths.prob_dir, profile_type_in
+        )
+        figure = plots.stacked_diff_curve(filepath_val, filepath_in)
+        if not figure:
+            return plots.replacement_text()
+        return [dcc.Graph(figure=figure)]
 
     @callback(
         Output(ids.kpi_view(MATCH), "children"),
-        Input(ids.dropdown(MATCH), "value"),
+        Input(ids.dropdown_valid(MATCH), "value"),
     )
-    def update_overall_kpis(profile_type_str):
+    def update_overall_kpis(profile_type_str: str):
         return [plots.titled_card(None, "TBD")]
 
     @callback(
         Output(ids.per_activity_graphs(MATCH), "children"),
-        Input(ids.dropdown(MATCH), "value"),
+        Input(ids.dropdown_valid(MATCH), "value"),
+        Input(ids.dropdown_input(MATCH), "value"),
     )
-    def update_graphs_per_activity_type(profile_type_str):
-        profile_type = data_utils.ptype_from_label(profile_type_str)
-        freq = plots.histogram_per_activity(profile_type, datapaths.freq_dir)
-        dur = plots.histogram_per_activity(profile_type, datapaths.duration_dir, True)
-        prob = plots.prob_curve_per_activity(profile_type, datapaths.prob_dir)
-        kpis = plots.kpi_table(profile_type, datapaths.metrics_dir)
+    def update_graphs_per_activity_type(
+        profile_type_valid: str, profile_type_input: str
+    ):
+        ptype_val = data_utils.ptype_from_label(profile_type_valid)
+        ptype_in = data_utils.ptype_from_label(profile_type_input)
+        freq = plots.histogram_per_activity(ptype_val, ptype_in, datapaths.freq_dir)
+        dur = plots.histogram_per_activity(
+            ptype_val, ptype_in, datapaths.duration_dir, True
+        )
+        prob = plots.prob_curve_per_activity(ptype_val, ptype_in, datapaths.prob_dir)
+        kpis = plots.kpi_table(ptype_val, ptype_in)
         if not freq:
             # no data available for this profile type
             return plots.titled_card(plots.replacement_text())

@@ -88,7 +88,7 @@ def validate_lpg():
             input_data.save(output_path)
             # calcluate and store comparison metrics
             differences, metrics = comparison_metrics.calc_comparison_metrics(
-                input_data, validation_data
+                validation_data, input_data
             )
             activity_profile.save_df(
                 differences, "differences", "diff", profile_type, output_path
