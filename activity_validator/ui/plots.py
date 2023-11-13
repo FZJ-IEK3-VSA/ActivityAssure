@@ -115,6 +115,13 @@ def update_stacked_prob_curves(
     figure = stacked_prob_curves(filepath, area)
     if not figure:
         return replacement_text()
+
+    data_utils.save_plot(
+        figure,
+        "probability profiles",
+        name="validation" if "valid" in str(directory).lower() else "input",
+        profile_type=profile_type,
+    )
     return [dcc.Graph(figure=figure)]
 
 

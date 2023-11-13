@@ -146,6 +146,9 @@ class MainValidationView(html.Div):
                                                     options=[
                                                         MainValidationView.synchronize_option
                                                     ],
+                                                    value=[
+                                                        MainValidationView.synchronize_option
+                                                    ],
                                                     id=self.ids.checklist_sync(aio_id),
                                                 )
                                             ),
@@ -305,7 +308,16 @@ class MainValidationView(html.Div):
         figure = plots.stacked_diff_curve(filepath_val, filepath_in)
         if not figure:
             return plots.replacement_text()
-        return [dcc.Graph(figure=figure)]
+        return [
+            dcc.Graph(
+                figure=data_utils.save_plot(
+                    figure,
+                    "probability profiles",
+                    "difference",
+                    profile_type=profile_type_in,
+                )
+            )
+        ]
 
     @callback(
         Output(ids.kpi_view(MATCH), "children"),

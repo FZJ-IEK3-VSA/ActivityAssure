@@ -62,7 +62,8 @@ def save_plot(
     path = base_path / subdir
     # use another
     if profile_type is not None:
-        path /= profile_type.construct_filename("")
+        ptypedir = profile_type.construct_filename("")
+        path /= ptypedir.removeprefix("_")
     # make sure the directory exists
     path.mkdir(parents=True, exist_ok=True)
     name = name.replace("/", "_")
