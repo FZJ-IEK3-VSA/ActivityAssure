@@ -66,7 +66,7 @@ class ProfileType:
         return f"{name}_{self}"
 
     @staticmethod
-    def from_filename(filepath: Path) -> tuple[str, Optional["ProfileType"] | None]:
+    def from_filename(filepath: Path) -> tuple[str, Optional["ProfileType"]]:
         components = filepath.stem.split("_")
         basename = components[0]
         if len(components) > 1:
@@ -185,27 +185,6 @@ def load_df(
         convert_to_timedelta(data)
     logging.debug(f"Loaded DataFrame from {path}")
     return profile_type, data
-
-
-def get_person_traits(
-    person_traits: dict[str, ProfileType], filename: str | Path
-) -> ProfileType:
-    """
-    Extracts the person name from the path of an activity profile file
-    and returns the matching ProfileType object with the person
-    characteristics.
-
-    :param person_traits: the person trait dict
-    :param filepath: path of the activity profile file, contains the
-                     name of the person
-    :raises RuntimeError: when no characteristics for the person were
-                          found
-    :return: the characteristics of the person
-    """
-    name = Path(filename).stem
-    if name not in person_traits:
-        raise RuntimeError(f"No person characteristics found for '{name}'")
-    return person_traits[name]
 
 
 def write_timedelta(d: timedelta | None) -> str | None:
@@ -328,7 +307,7 @@ class SparseActivityProfile:
     @staticmethod
     def load_from_csv(
         path: Path | str,
-        person_traits: dict[str, ProfileType],
+        profile_type: ProfileType,
         resolution: timedelta = DEFAULT_RESOLUTION,
     ) -> "SparseActivityProfile":
         """
@@ -353,7 +332,6 @@ class SparseActivityProfile:
         assert offset % resolution == timedelta(
             0
         ), "Start time has to be a divisor of the resolution"
-        profile_type = get_person_traits(person_traits, path)
         profile = SparseActivityProfile(entries, offset, resolution, profile_type)
         profile.remove_timestep_offset()
         profile.calc_durations()
