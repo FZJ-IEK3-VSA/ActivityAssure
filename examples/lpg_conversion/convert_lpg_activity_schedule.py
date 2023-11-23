@@ -10,10 +10,10 @@ import pandas as pd
 TIMESTEP_DURATION = timedelta(minutes=1)
 
 
-def load_activity_profile_from_db(file: str):
-    assert os.path.isfile(file), f"File does not exist: {file}"
+def load_activity_profile_from_db(file: Path):
+    assert file.is_file(), f"File does not exist: {file}"
     # get all activities from LPG result database
-    con = sqlite3.connect(file)
+    con = sqlite3.connect(str(file))
     cur = con.cursor()
     query = "SELECT * FROM PerformedActions"
     results = cur.execute(query)
@@ -31,17 +31,16 @@ def load_activity_profile_from_db(file: str):
         rows_by_person.setdefault(person, []).append(activity_entry)
 
     # store the activities in a DataFrame
-    parent_dir = Path(file).parent / "processed"
+    parent_dir = file.parent / "processed" / "test"
     parent_dir.mkdir(parents=True, exist_ok=True)
     for person, rows in rows_by_person.items():
         data = pd.DataFrame(rows, columns=["Timestep", "Date", "Activity"])
         short_name = person.split(" ")[1]
-        result_path = parent_dir / (short_name + ".csv")
+        result_path = parent_dir / f"{short_name}_{file.stem}.csv"
         data.to_csv(result_path)
 
 
 if __name__ == "__main__":
-    directory = ".\\data\\lpg"
-    file = "Results.HH1.sqlite"
-    path = os.path.join(directory, file)
-    load_activity_profile_from_db(path)
+    directory = Path("data/lpg/lpg_template_results/CHR01")
+    for file in directory.iterdir():
+        load_activity_profile_from_db(directory / file)

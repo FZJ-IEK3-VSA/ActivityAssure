@@ -5,6 +5,7 @@ Example script for validation the LoadProfileGenerator
 import json
 import logging
 from pathlib import Path
+from typing import Any
 from activity_validator.hetus_data_processing import (
     activity_profile,
     hetus_constants,
@@ -31,6 +32,11 @@ def check_mapping(activity_types: list[str], validation_path: Path):
     assert (
         activity_types == activity_types_valid
     ), "The mappings result in a different activity type order"
+
+
+def merge_dicts(dict1: dict[Any, list], dict2: dict[Any, list]) -> dict[Any, list]:
+    keys = dict1.keys() | dict2.keys()
+    return {k: dict1.get(k, []) + dict2.get(k, []) for k in keys}
 
 
 def validate_lpg():
@@ -62,7 +68,8 @@ def validate_lpg():
     # check_mapping(activity_types, validation_data_path)
     activity_types = hetus_translations.save_final_activity_types()
 
-    # validate each full-year profile individually
+    # map and categorize each full-year profile individually
+    all_profiles_by_type = {}
     for full_year_profile in full_year_profiles:
         # resample profiles to validation data resolution
         full_year_profile.resample(hetus_constants.RESOLUTION)
@@ -77,24 +84,24 @@ def validate_lpg():
         # categorize single-day profiles according to country, person and day type
         profiles_by_type = lpgvalidation.group_profiles_by_type(selected_day_profiles)
 
-        # validate each profile type individually
-        for profile_type, profiles in profiles_by_type.items():
-            # select matching validation data
-            validation_data = validation_data_dict[profile_type]
-            # calculate and store statistics for validation
-            input_data = lpgvalidation.calc_input_data_statistics(
-                profiles, activity_types
-            )
-            input_data.save(output_path)
-            # calcluate and store comparison metrics
-            differences, metrics = comparison_metrics.calc_comparison_metrics(
-                validation_data, input_data
-            )
-            activity_profile.save_df(
-                differences, "differences", "diff", profile_type, output_path
-            )
-            metrics.save(output_path, profile_type)
-            return input_data, validation_data
+        all_profiles_by_type = merge_dicts(all_profiles_by_type, profiles_by_type)
+
+    # validate each profile type individually
+    for profile_type, profiles in all_profiles_by_type.items():
+        # select matching validation data
+        validation_data = validation_data_dict[profile_type]
+        # calculate and store statistics for validation
+        input_data = lpgvalidation.calc_input_data_statistics(profiles, activity_types)
+        input_data.save(output_path)
+        # calcluate and store comparison metrics
+        differences, metrics = comparison_metrics.calc_comparison_metrics(
+            validation_data, input_data
+        )
+        activity_profile.save_df(
+            differences, "differences", "diff", profile_type, output_path
+        )
+        metrics.save(output_path, profile_type)
+        return input_data, validation_data
 
 
 if __name__ == "__main__":
