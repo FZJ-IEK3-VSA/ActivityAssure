@@ -101,7 +101,6 @@ def validate_lpg():
             differences, "differences", "diff", profile_type, output_path
         )
         metrics.save(output_path, profile_type)
-        return input_data, validation_data
 
 
 if __name__ == "__main__":
