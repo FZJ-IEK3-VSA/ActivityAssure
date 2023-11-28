@@ -4,6 +4,7 @@ validation data
 """
 
 from dataclasses import dataclass, field
+from datetime import timedelta
 import logging
 from pathlib import Path
 from dataclasses_json import config, dataclass_json  # type: ignore
@@ -48,31 +49,33 @@ class ValidationMetrics:
             decoder=lambda s: pd.read_json(s, typ="series"),
         )
     )
-    ks_frequency_p: pd.Series = field(
+    diff_of_max: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
             decoder=lambda s: pd.read_json(s, typ="series"),
         )
     )
-    ks_duration_p: pd.Series = field(
+    timediff_of_max: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
             decoder=lambda s: pd.read_json(s, typ="series"),
         )
     )
 
-    shares_validation: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
+    def get_scaled(self, scale: pd.Series) -> "ValidationMetrics":
+        mae = self.mae.divide(scale, axis=0)
+        bias = self.bias.divide(scale, axis=0)
+        rmse = self.rmse.divide(scale, axis=0)
+        wasserstein = self.wasserstein.divide(scale, axis=0)
+        return ValidationMetrics(
+            mae,
+            bias,
+            rmse,
+            self.pearson_corr,
+            wasserstein,
+            self.diff_of_max,
+            self.timediff_of_max,
         )
-    )
-    shares_input: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
-        )
-    )
 
     def save(self, result_directory: Path, profile_type: ProfileType) -> None:
         result_directory /= "metrics"
@@ -148,6 +151,30 @@ def calc_wasserstein(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
     return pd.Series(distances, index=data1.index)
 
 
+def get_max_position(data: pd.DataFrame) -> pd.Series:
+    max_index = data.idxmax(axis=1)
+    max_pos = max_index.apply(lambda x: data.columns.get_loc(x))
+    return max_pos
+
+
+def circular_difference(diff, max_value):
+    half_max = max_value / 2
+    if diff > 0:
+        return diff if diff <= half_max else diff - max_value
+    return diff if diff >= -half_max else diff + max_value
+
+
+def calc_time_of_max_diff(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
+    max_pos1 = get_max_position(data1)
+    max_pos2 = get_max_position(data2)
+    diff = max_pos2 - max_pos1
+    length = len(data1.columns)
+    # take day-wrap into account: calculate the appropriate distance
+    capped_diff = diff.apply(lambda d: circular_difference(d, length))
+    difftime = capped_diff.apply(lambda d: timedelta(days=d / length))
+    return difftime
+
+
 def ks_test_per_activity(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
     all_activities = data1.columns.union(data2.columns)
     # Kolmogorov-Smirnov
@@ -178,25 +205,14 @@ def calc_comparison_metrics(
     wasserstein = calc_wasserstein(
         validation_data.probability_profiles, input_data.probability_profiles
     )
-
-    ks_frequency = ks_test_per_activity(
-        validation_data.activity_frequencies, input_data.activity_frequencies
+    # calc difference of respective maximums
+    max_diff = input_data.probability_profiles.max(
+        axis=1
+    ) - validation_data.probability_profiles.max(axis=1)
+    time_of_max_diff = calc_time_of_max_diff(
+        validation_data.probability_profiles, input_data.probability_profiles
     )
-    ks_duration = ks_test_per_activity(
-        validation_data.activity_durations, input_data.activity_durations
-    )
-
-    shares_validation = validation_data.probability_profiles.mean(axis=1)
-    shares_input = input_data.probability_profiles.mean(axis=1)
 
     return differences, ValidationMetrics(
-        mae,
-        bias,
-        rmse,
-        pearson_corr,
-        wasserstein,
-        ks_frequency,
-        ks_duration,
-        shares_validation,
-        shares_input,
+        mae, bias, rmse, pearson_corr, wasserstein, max_diff, time_of_max_diff
     )
