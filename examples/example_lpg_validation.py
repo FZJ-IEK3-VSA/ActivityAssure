@@ -100,7 +100,14 @@ def validate_lpg():
         activity_profile.save_df(
             differences, "differences", "diff", profile_type, output_path
         )
-        metrics.save(output_path, profile_type)
+        # save metrics as normal, scaled and normalized variants
+        metrics.save_as_csv(output_path, profile_type, "normal")
+        shares = validation_data.probability_profiles.mean(axis=1)
+        metrics.get_scaled(shares).save_as_csv(output_path, profile_type, "scaled")
+        _, metrics_normalized = comparison_metrics.calc_comparison_metrics(
+            validation_data, input_data, True
+        )
+        metrics_normalized.save_as_csv(output_path, profile_type, "normalized")
 
 
 if __name__ == "__main__":

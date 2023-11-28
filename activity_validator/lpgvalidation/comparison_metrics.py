@@ -3,7 +3,7 @@ Module for calculating comparison metrics using input data and matching
 validation data
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from datetime import timedelta
 import logging
 from pathlib import Path
@@ -37,13 +37,13 @@ class ValidationMetrics:
             decoder=lambda s: pd.read_json(s, typ="series"),
         )
     )
-    pearson_corr: pd.Series = field(
+    wasserstein: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
             decoder=lambda s: pd.read_json(s, typ="series"),
         )
     )
-    wasserstein: pd.Series = field(
+    pearson_corr: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
             decoder=lambda s: pd.read_json(s, typ="series"),
@@ -63,6 +63,14 @@ class ValidationMetrics:
     )
 
     def get_scaled(self, scale: pd.Series) -> "ValidationMetrics":
+        """
+        Scales the distance metrics according to the provided scaling
+        value for each activity. Does not scale metrics that do not
+        depend on absolute values, such as the correlation coefficient.
+
+        :param scale: the scaling value for each activity type
+        :return: a new metrics object with scaled measures
+        """
         mae = self.mae.divide(scale, axis=0)
         bias = self.bias.divide(scale, axis=0)
         rmse = self.rmse.divide(scale, axis=0)
@@ -77,11 +85,21 @@ class ValidationMetrics:
             self.timediff_of_max,
         )
 
-    def save(self, result_directory: Path, profile_type: ProfileType) -> None:
+    def __build_filename(
+        self,
+        result_directory: Path,
+        profile_type: ProfileType,
+        filename: str = "metrics",
+        extension: str = "json",
+    ) -> Path:
         result_directory /= "metrics"
         result_directory.mkdir(parents=True, exist_ok=True)
-        filename = profile_type.construct_filename("metrics") + ".json"
+        filename = profile_type.construct_filename(filename) + f".{extension}"
         filepath = result_directory / filename
+        return filepath
+
+    def save(self, result_directory: Path, profile_type: ProfileType) -> None:
+        filepath = self.__build_filename(result_directory, profile_type)
         with open(filepath, "w", encoding="utf-8") as f:
             json_str = self.to_json()  # type: ignore
             f.write(json_str)
@@ -95,6 +113,21 @@ class ValidationMetrics:
         name, profile_type = ProfileType.from_filename(filepath)
         logging.debug(f"Loaded metrics file {filepath}")
         return profile_type, metrics
+
+    def to_dataframe(self) -> pd.DataFrame:
+        class_fields = fields(ValidationMetrics)
+        columns = {f.name: getattr(self, f.name) for f in class_fields}
+        return pd.DataFrame(columns)
+
+    def save_as_csv(
+        self, result_directory: Path, profile_type: ProfileType, filename: str
+    ) -> None:
+        filepath = self.__build_filename(
+            result_directory, profile_type, filename, "csv"
+        )
+        df = self.to_dataframe()
+        df.to_csv(filepath)
+        logging.debug(f"Created metrics csv file {filepath}")
 
 
 def calc_probability_curves_diff(
@@ -196,31 +229,62 @@ def ks_test_per_activity(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
     return pd.Series(pvalues, index=all_activities)
 
 
+def normalize(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalizes each row in a dataframe individually
+    to value range [0, 1].
+
+    :param data: the data
+    :return: the normalized data
+    """
+    minimum = data.min(axis=1)
+    maximum = data.max(axis=1)
+    val_range = maximum - minimum
+    without_offset = data.subtract(minimum, axis=0)
+    normalized = without_offset.divide(val_range, axis=0)
+    # rows where the value range was 0 now contain NaN -  take
+    # the values without offset
+    normalized = normalized.combine_first(without_offset)
+    for label, row in normalized.iterrows():
+        assert (np.isclose(row.min(), 0) and np.isclose(row.max(), 1)) or all(
+            row == row.iloc[0]
+        ), "Bug in normalization"
+    return normalized
+
+
 def calc_comparison_metrics(
-    validation_data: ValidationData, input_data: ValidationData
+    validation_data: ValidationData,
+    input_data: ValidationData,
+    normalize_prob_curves: bool = False,
 ) -> tuple[pd.DataFrame, ValidationMetrics]:
-    differences = calc_probability_curves_diff(
-        validation_data.probability_profiles, input_data.probability_profiles
-    )
+    """
+    Caluclates comparison metrics for the two specified datasets.
+
+    :param validation_data: the validation data set
+    :param input_data: the input data set
+    :param normalize_prob_curves: if True, the input data is normalized to
+                                  value range [0, 1], defaults to False
+    :return: the probability curve difference profiles, and the metrics
+    """
+    # optionally normalize the probability profiles before calculating metrics
+    if normalize_prob_curves:
+        prob_profiles_val = normalize(validation_data.probability_profiles)
+        prob_profiles_in = normalize(input_data.probability_profiles)
+    else:
+        prob_profiles_val = validation_data.probability_profiles
+        prob_profiles_in = input_data.probability_profiles
+    differences = calc_probability_curves_diff(prob_profiles_val, prob_profiles_in)
 
     # calc KPIs per activity
     bias = calc_bias(differences)
     mae = calc_mae(differences)
     rmse = calc_rmse(differences)
-    pearson_corr = calc_pearson_coeff(
-        validation_data.probability_profiles, input_data.probability_profiles
-    )
-    wasserstein = calc_wasserstein(
-        validation_data.probability_profiles, input_data.probability_profiles
-    )
+    pearson_corr = calc_pearson_coeff(prob_profiles_val, prob_profiles_in)
+    wasserstein = calc_wasserstein(prob_profiles_val, prob_profiles_in)
     # calc difference of respective maximums
-    max_diff = input_data.probability_profiles.max(
-        axis=1
-    ) - validation_data.probability_profiles.max(axis=1)
-    time_of_max_diff = calc_time_of_max_diff(
-        validation_data.probability_profiles, input_data.probability_profiles
-    )
+    max_diff = prob_profiles_in.max(axis=1) - prob_profiles_val.max(axis=1)
+    time_of_max_diff = calc_time_of_max_diff(prob_profiles_val, prob_profiles_in)
 
     return differences, ValidationMetrics(
-        mae, bias, rmse, pearson_corr, wasserstein, max_diff, time_of_max_diff
+        mae, bias, rmse, wasserstein, pearson_corr, max_diff, time_of_max_diff
     )

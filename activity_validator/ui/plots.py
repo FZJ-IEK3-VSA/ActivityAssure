@@ -311,29 +311,6 @@ def bias_to_str(value: float) -> str:
     return timedelta_to_str(td)
 
 
-def normalize(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Normalizes each row in a dataframe individually
-    to value range [0, 1].
-
-    :param data: the data
-    :return: the normalized data
-    """
-    minimum = data.min(axis=1)
-    maximum = data.max(axis=1)
-    val_range = maximum - minimum
-    without_offset = data.subtract(minimum, axis=0)
-    normalized = without_offset.divide(val_range, axis=0)
-    # rows where the value range was 0 now contain NaN -  take
-    # the values without offset
-    normalized = normalized.combine_first(without_offset)
-    for label, row in normalized.iterrows():
-        assert (np.isclose(row.min(), 0) and np.isclose(row.max(), 1)) or all(
-            row == row.iloc[0]
-        ), "Bug in normalization"
-    return normalized
-
-
 def kpi_table_rows(
     metrics: comparison_metrics.ValidationMetrics,
     activity: str,
@@ -410,20 +387,14 @@ def kpi_table(
 
     shares = data_val.probability_profiles.mean(axis=1)
 
+    # get normal, scaled and normalized metrics
     _, metrics = comparison_metrics.calc_comparison_metrics(data_val, data_in)
 
-    # additionally get metrics after normalizing the probability profiles
-    normed_prob_val = normalize(data_val.probability_profiles)
-    normed_prob_in = normalize(data_in.probability_profiles)
-    data_val_normed = dataclasses.replace(
-        data_val, probability_profiles=normed_prob_val
-    )
-    data_in_normed = dataclasses.replace(data_in, probability_profiles=normed_prob_in)
-    _, metrics_normed = comparison_metrics.calc_comparison_metrics(
-        data_val_normed, data_in_normed
-    )
-
     scaled = metrics.get_scaled(shares)
+
+    _, metrics_normed = comparison_metrics.calc_comparison_metrics(
+        data_val, data_in, True
+    )
     tables = {
         a: dbc.Table(
             kpi_table_rows(metrics, a, "Probability Curves Absolute")
