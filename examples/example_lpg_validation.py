@@ -47,7 +47,7 @@ def validate_lpg():
     # - check all the TODOs everywhere in the project
 
     # load LPG activity profiles
-    input_path = Path("data/lpg/processed")
+    input_path = Path("data/lpg/preprocessed")
     output_path = Path("data/lpg/results")
     person_trait_file = Path("data/lpg/person_characteristics.json")
     full_year_profiles = lpgvalidation.load_activity_profiles_from_csv(
