@@ -1,7 +1,10 @@
+import dataclasses
 from datetime import datetime, timedelta
+import math
 from pathlib import Path
 from dash import html, dcc  # type: ignore
 import dash_bootstrap_components as dbc  # type: ignore
+import numpy as np
 import plotly.express as px  # type: ignore
 from plotly.graph_objects import Figure  # type: ignore
 
@@ -268,6 +271,16 @@ def round_kpi(value, digits: int = -1) -> float | str:
     return round(value, digits) if digits >= 0 else value
 
 
+def timedelta_to_str(t: timedelta) -> str:
+    # python's default representation of negative timedeltas is unintuitive
+    if t < timedelta(0):
+        sign = "-"
+        t *= -1
+    else:
+        sign = ""
+    return sign + str(t)
+
+
 def bias_to_str(value: float) -> str:
     """
     Converts the bias from a float in range [-1, 1] to
@@ -278,10 +291,70 @@ def bias_to_str(value: float) -> str:
     :param value: bias value
     :return: str timedelta representation
     """
+    if not math.isfinite(value):
+        return "Nan/Inf"
     td = timedelta(abs(value))
-    # python's default representation of negative timedeltas is unintuitive
-    sign = "-" if value < 0 else ""
-    return sign + str(td)
+    return timedelta_to_str(td)
+
+
+def normalize(series: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalizes a series to value range [0, 1]
+
+    :param series: a series
+    :return: the normalized series
+    """
+    minimum = series.min()
+    maximum = series.max()
+    normalized = (series - minimum) / (maximum - minimum)
+    assert all(np.isclose(normalized.min(axis=1), 0)) and all(
+        np.isclose(normalized.max(axis=1), 1)
+    )
+    return normalized
+
+
+def kpi_table_rows(
+    metrics: comparison_metrics.ValidationMetrics, activity: str, title: str = ""
+):
+    digits = 6
+    bold = {"fontWeight": "bold"}
+    title_row_list = [html.Tr([html.Td(title)], style=bold)] if title else []
+    return title_row_list + [
+        html.Tr([html.Td("MAE"), html.Td(round_kpi(metrics.mae[activity], digits))]),
+        html.Tr(
+            [html.Td("MSE"), html.Td(round_kpi(metrics.rmse[activity] ** 2, digits))]
+        ),
+        html.Tr(
+            [
+                html.Td("Bias [time]"),
+                html.Td(bias_to_str((metrics.bias[activity]))),
+            ]
+        ),
+        html.Tr(
+            [
+                html.Td("Wasserstein distance"),
+                html.Td(round_kpi(metrics.wasserstein[activity], digits)),
+            ]
+        ),
+        html.Tr(
+            [
+                html.Td("Pearson correlation"),
+                html.Td(round_kpi(metrics.pearson_corr[activity], digits)),
+            ]
+        ),
+        html.Tr(
+            [
+                html.Td("Difference of Maxima"),
+                html.Td(round_kpi(metrics.diff_of_max[activity], digits)),
+            ]
+        ),
+        html.Tr(
+            [
+                html.Td("Difference of Maximum Times"),
+                html.Td(timedelta_to_str(metrics.timediff_of_max[activity])),
+            ]
+        ),
+    ]
 
 
 def kpi_table(
@@ -295,6 +368,7 @@ def kpi_table(
     :return: dict of all KPI tables
     """
     try:
+        # load the statistics for validation and input data
         data_val = validation_data.ValidationData.load(
             datapaths.validation_path, ptype_val
         )
@@ -303,54 +377,30 @@ def kpi_table(
         )
     except RuntimeError:
         return {}
+
+    shares = data_val.probability_profiles.mean(axis=1)
+
     _, metrics = comparison_metrics.calc_comparison_metrics(data_val, data_in)
-    digits = 6
-    header_style = {"fontWeight": "bold"}
+
+    # additionally get metrics after normalizing the probability profiles
+    normed_prob_val = normalize(data_val.probability_profiles)
+    normed_prob_in = normalize(data_in.probability_profiles)
+    data_val_normed = dataclasses.replace(
+        data_val, probability_profiles=normed_prob_val
+    )
+    data_in_normed = dataclasses.replace(data_in, probability_profiles=normed_prob_in)
+    _, metrics_normed = comparison_metrics.calc_comparison_metrics(
+        data_val_normed, data_in_normed
+    )
+
+    scaled = metrics.get_scaled(shares)
     tables = {
         a: dbc.Table(
-            [
-                html.Tr([html.Td("Probability Curves", style=header_style)]),
-                html.Tr([html.Td("MAE"), html.Td(round_kpi(metrics.mae[a], digits))]),
-                html.Tr(
-                    [html.Td("MSE"), html.Td(round_kpi(metrics.rmse[a] ** 2, digits))]
-                ),
-                html.Tr(
-                    [
-                        html.Td("Bias [time]"),
-                        html.Td(bias_to_str((metrics.bias[a]))),
-                    ]
-                ),
-                html.Tr(
-                    [
-                        html.Td("Pearson correlation"),
-                        html.Td(round_kpi(metrics.pearson_corr[a], digits)),
-                    ]
-                ),
-                html.Tr(
-                    [
-                        html.Td("Wasserstein distance"),
-                        html.Td(round_kpi(metrics.wasserstein[a], digits)),
-                    ]
-                ),
-                html.Tr(
-                    [html.Td("Difference of Activity Frequencies", style=header_style)]
-                ),
-                html.Tr(
-                    [
-                        html.Td("Kolmogorov-Smirnov p-Value"),
-                        html.Td(round_kpi(metrics.ks_frequency_p[a])),
-                    ]
-                ),
-                html.Tr(
-                    [html.Td("Difference of Activity Durations", style=header_style)]
-                ),
-                html.Tr(
-                    [
-                        html.Td("Kolmogorov-Smirnov p-Value"),
-                        html.Td(round_kpi(metrics.ks_duration_p[a])),
-                    ]
-                ),
-            ]
+            kpi_table_rows(metrics, a, "Probability Curves Absolute")
+            + kpi_table_rows(
+                scaled, a, "Probability Curves Relative to duration in validation data"
+            )
+            + kpi_table_rows(metrics_normed, a, "Probability Curves Normalized")
         )
         for a in metrics.mae.index
     }
