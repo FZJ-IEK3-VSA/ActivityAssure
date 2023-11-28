@@ -335,12 +335,15 @@ def normalize(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def kpi_table_rows(
-    metrics: comparison_metrics.ValidationMetrics, activity: str, title: str = ""
+    metrics: comparison_metrics.ValidationMetrics,
+    activity: str,
+    title: str = "",
+    extended: bool = True,
 ):
     digits = 6
     bold = {"fontWeight": "bold"}
-    title_row_list = [html.Tr([html.Td(title)], style=bold)] if title else []
-    return title_row_list + [
+    title_rows = [html.Tr([html.Td(title)], style=bold)] if title else []
+    basic_rows = [
         html.Tr([html.Td("MAE"), html.Td(round_kpi(metrics.mae[activity], digits))]),
         html.Tr(
             [html.Td("MSE"), html.Td(round_kpi(metrics.rmse[activity] ** 2, digits))]
@@ -357,25 +360,31 @@ def kpi_table_rows(
                 html.Td(round_kpi(metrics.wasserstein[activity], digits)),
             ]
         ),
-        html.Tr(
-            [
-                html.Td("Pearson correlation"),
-                html.Td(round_kpi(metrics.pearson_corr[activity], digits)),
-            ]
-        ),
-        html.Tr(
-            [
-                html.Td("Difference of Maxima"),
-                html.Td(round_kpi(metrics.diff_of_max[activity], digits)),
-            ]
-        ),
-        html.Tr(
-            [
-                html.Td("Difference of Maximum Times"),
-                html.Td(timedelta_to_str(metrics.timediff_of_max[activity])),
-            ]
-        ),
     ]
+    if extended:
+        extended_rows = [
+            html.Tr(
+                [
+                    html.Td("Pearson correlation"),
+                    html.Td(round_kpi(metrics.pearson_corr[activity], digits)),
+                ]
+            ),
+            html.Tr(
+                [
+                    html.Td("Difference of Maxima"),
+                    html.Td(round_kpi(metrics.diff_of_max[activity], digits)),
+                ]
+            ),
+            html.Tr(
+                [
+                    html.Td("Difference of Maximum Times"),
+                    html.Td(timedelta_to_str(metrics.timediff_of_max[activity])),
+                ]
+            ),
+        ]
+    else:
+        extended_rows = []
+    return title_rows + basic_rows + extended_rows
 
 
 def kpi_table(
@@ -419,9 +428,12 @@ def kpi_table(
         a: dbc.Table(
             kpi_table_rows(metrics, a, "Probability Curves Absolute")
             + kpi_table_rows(
-                scaled, a, "Probability Curves Relative to duration in validation data"
+                scaled,
+                a,
+                "Probability Curves Relative to duration in validation data",
+                False,
             )
-            + kpi_table_rows(metrics_normed, a, "Probability Curves Normalized")
+            + kpi_table_rows(metrics_normed, a, "Probability Curves Normalized", False)
         )
         for a in metrics.mae.index
     }
