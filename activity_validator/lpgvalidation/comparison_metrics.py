@@ -176,6 +176,14 @@ def calc_time_of_max_diff(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series
 
 
 def ks_test_per_activity(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
+    """
+    Calculates the kolmogorov smirnov test for each common column in
+    the passed DataFrames.
+
+    :param data1: first dataset
+    :param data2: second dataset
+    :return: Series containing the resulting pvalue for each column
+    """
     all_activities = data1.columns.union(data2.columns)
     # Kolmogorov-Smirnov
     pvalues: list = []

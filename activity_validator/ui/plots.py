@@ -271,6 +271,20 @@ def round_kpi(value, digits: int = -1) -> float | str:
     return round(value, digits) if digits >= 0 else value
 
 
+def format_timedelta(td):
+    # Extract days, hours, minutes, and seconds
+    days = td.days
+    hours, remainder = divmod(td.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Create a formatted string
+    formatted_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+    if days > 0:
+        formatted_str = f"{days} days, {formatted_str}"
+    return formatted_str
+
+
 def timedelta_to_str(t: timedelta) -> str:
     # python's default representation of negative timedeltas is unintuitive
     if t < timedelta(0):
@@ -278,7 +292,7 @@ def timedelta_to_str(t: timedelta) -> str:
         t *= -1
     else:
         sign = ""
-    return sign + str(t)
+    return sign + format_timedelta(t)
 
 
 def bias_to_str(value: float) -> str:
@@ -297,19 +311,26 @@ def bias_to_str(value: float) -> str:
     return timedelta_to_str(td)
 
 
-def normalize(series: pd.DataFrame) -> pd.DataFrame:
+def normalize(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Normalizes a series to value range [0, 1]
+    Normalizes each row in a dataframe individually
+    to value range [0, 1].
 
-    :param series: a series
-    :return: the normalized series
+    :param data: the data
+    :return: the normalized data
     """
-    minimum = series.min()
-    maximum = series.max()
-    normalized = (series - minimum) / (maximum - minimum)
-    assert all(np.isclose(normalized.min(axis=1), 0)) and all(
-        np.isclose(normalized.max(axis=1), 1)
-    )
+    minimum = data.min(axis=1)
+    maximum = data.max(axis=1)
+    val_range = maximum - minimum
+    without_offset = data.subtract(minimum, axis=0)
+    normalized = without_offset.divide(val_range, axis=0)
+    # rows where the value range was 0 now contain NaN -  take
+    # the values without offset
+    normalized = normalized.combine_first(without_offset)
+    for label, row in normalized.iterrows():
+        assert (np.isclose(row.min(), 0) and np.isclose(row.max(), 1)) or all(
+            row == row.iloc[0]
+        ), "Bug in normalization"
     return normalized
 
 
