@@ -1,0 +1,19 @@
+{
+    "activity types": [
+        "clean",
+        "cook",
+        "dishwashing",
+        "eat",
+        "education",
+        "iron",
+        "laundry",
+        "not at home",
+        "other",
+        "pc",
+        "personal care",
+        "radio/music",
+        "sleep",
+        "tv",
+        "work"
+    ]
+}
