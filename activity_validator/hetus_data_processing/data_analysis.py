@@ -1,10 +1,13 @@
 """
-Contains various rather prototyped functions that can be helpful for further examining
-specific aspects of the data if necessary.
+Contains rather prototyped functions that can be helpful for further examining
+specific aspects of the HETUS data if necessary.
 """
 
 import pandas as pd
 from activity_validator.hetus_data_processing import hetus_translations
+from activity_validator.hetus_data_processing.activity_profile import (
+    ExpandedActivityProfiles,
+)
 from activity_validator.hetus_data_processing.category_statistics import (
     calc_probability_profiles,
 )
@@ -207,15 +210,38 @@ def activity_frequencies(data: pd.DataFrame):
     print(a1_frequency)
 
 
-def calc_overall_activity_shares(data: pd.DataFrame) -> pd.Series:
+def calc_overall_activity_shares(data: pd.DataFrame, activity_types=None) -> pd.Series:
     """
     Calculates the overall share of each activity type
 
     :param data: HETUS diary data
+    :param activity_types: optionally pass the available activity types.
+                           Is determined automatically if not passed.
     :return: the overall share for each activity type
     """
+    if activity_types is None:
+        activity_types = hetus_translations.save_final_activity_types()
     hetus_translations.translate_activity_codes(data)
     data = col.get_activity_data(data)
-    probabilities = calc_probability_profiles(data)
+    probabilities = calc_probability_profiles(data, activity_types)
     overall_shares = probabilities.mean(axis=1)
     return overall_shares
+
+
+def calc_activity_share_per_profile_type(
+    categories: list[ExpandedActivityProfiles],
+) -> pd.DataFrame:
+    """
+    Calculates the activity shares in each profile type individually.
+
+    :param categories: list of profiles per type
+    :return: activity shares per type
+    """
+    activity_types = hetus_translations.save_final_activity_types()
+    shares_per_group = pd.DataFrame(
+        {
+            d.profile_type: calc_overall_activity_shares(d.data, activity_types)
+            for d in categories
+        }
+    )
+    return shares_per_group
