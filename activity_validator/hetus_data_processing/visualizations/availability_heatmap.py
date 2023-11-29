@@ -6,17 +6,10 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
 
+from activity_validator.hetus_data_processing import hetus_constants
 
-def plot_heatmap_diary(name: str, dir: str):
-    # load data
-    path = os.path.join(dir, name + ".csv")
-    data = pd.read_csv(path, header=[0], index_col=[0, 1, 2])
 
-    # rearrange index levels to keep categories for male and female next to each other
-    data = data.reorder_levels([2, 1, 0])
-    data.sort_index(level=[0, 1], inplace=True)
-    print(data.head())
-
+def plot_heatmap_diary(data: pd.DataFrame, tick_labels, name):
     # create the heatmap
     fig, ax = plt.subplots(figsize=(7, 5))
     fig.subplots_adjust(left=0.3)
@@ -30,6 +23,28 @@ def plot_heatmap_diary(name: str, dir: str):
     )
     # heatmap.set_facecolor("black")
     # plt.xticks(rotation=0)
+
+    heatmap.set_yticks(np.arange(0.5, len(data.index)), tick_labels)
+    plt.tick_params(axis="y", which="both", length=0)
+    plt.tick_params(axis="x", which="both", length=0)
+
+    heatmap.set_ylabel("")
+    heatmap.set_xlabel("Country")
+    # heatmap.set_title("Number of Diary Entries")
+
+    plt.savefig(os.path.join(dir, f"{name}.svg"), transparent=True)
+    plt.show()
+
+
+def plot_heatmaps_diary_filtered_and_unfiltered(name: str, dir: str):
+    # load data
+    path = os.path.join(dir, name + ".csv")
+    data = pd.read_csv(path, header=[0], index_col=[0, 1, 2])
+
+    # rearrange index levels to keep categories for male and female next to each other
+    data = data.reorder_levels([2, 1, 0])
+    data.sort_index(level=[0, 1], inplace=True)
+    print(data.head())
 
     # create hierarchical tick labels
     tick_labels: list[tuple[Any]] = [data.index[0]]
@@ -46,16 +61,26 @@ def plot_heatmap_diary(name: str, dir: str):
     ]
     # tick_labels = [f"{a:>11} {b:>8} {c:>6}" for a,b,c in data.index] # does not work due to proportional font
 
-    heatmap.set_yticks(np.arange(0.5, len(data.index)), tick_labels)
-    plt.tick_params(axis="y", which="both", length=0)
-    plt.tick_params(axis="x", which="both", length=0)
+    # plot the unfiltered data
+    plot_heatmap_diary(data, tick_labels, name)
 
-    heatmap.set_ylabel("")
-    heatmap.set_xlabel("Country")
-    # heatmap.set_title("Number of Diary Entries")
+    total = len(data) * len(data.columns)
+    no_data = (data == 0).sum().sum()
+    data_available = total - no_data
 
-    plt.savefig(os.path.join(dir, f"{name}.svg"), transparent=True)
-    plt.show()
+    # filter categories that are too small
+    data[data < hetus_constants.MIN_CELL_SIZE] = 0
+
+    filtered_out = (data == 0).sum().sum() - no_data
+    print("--- Category Data Availability ---")
+    print(f"There was no data available for {no_data} categories.")
+    print(f"Additionally, {filtered_out} categories were too small and filtered out.")
+    print(
+        f"All in all, data is available for {total - no_data - filtered_out} of {total} categories."
+    )
+
+    # plot the filtered heatmap as well
+    plot_heatmap_diary(data, tick_labels, f"{name}_filtered")
 
 
 def plot_heatmap_person(name: str, dir: str):
@@ -110,6 +135,6 @@ def plot_heatmap_person(name: str, dir: str):
 
 
 if __name__ == "__main__":
-    dir = ".\\data\\validation_data\\categories"
+    dir = ".\\data\\validation_data EU\\categories"
     name = "categories"
-    plot_heatmap_diary(name, dir)
+    plot_heatmaps_diary_filtered_and_unfiltered(name, dir)
