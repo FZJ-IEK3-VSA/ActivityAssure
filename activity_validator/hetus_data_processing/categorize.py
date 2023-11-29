@@ -67,6 +67,24 @@ def get_hh_categorization_data(
     return None
 
 
+def get_category_sizes(categories, key: list[str]) -> pd.DataFrame:
+    """
+    Returns a DataFrame with the size of each category, in a readable format.
+
+    :param categories: the result of calling groupby on HETUS data
+    :param key: the key used in groupby
+    :return: a DataFrame containing category sizes
+    """
+    # create separate index without country for a better overview
+    sizes = categories.size()
+    if len(key) > 1:
+        # set country as column header to enhance clarity
+        cat_index = key.copy()
+        cat_index.remove(key[0])
+        sizes = sizes.reset_index().pivot(index=cat_index, columns=key[0], values=0)
+    return sizes
+
+
 @utils.timing
 def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfiles]:
     """
@@ -79,14 +97,7 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
     :return: the separated data sets for all categories
     """
     categories = data.groupby(key)
-    # create separate index without country for a better overview
-    cat_index = key.copy()
-    cat_index.remove(col.Country.ID)
-    category_sizes = (
-        categories.size()
-        .reset_index()
-        .pivot(index=cat_index, columns=col.Country.ID, values=0)
-    )
+    category_sizes = get_category_sizes(categories, key)
     logging.info(
         f"Sorted {len(data)} entries into {category_sizes.count().sum()} categories."
     )
