@@ -135,6 +135,6 @@ def plot_heatmap_person(name: str, dir: str):
 
 
 if __name__ == "__main__":
-    dir = ".\\data\\validation_data EU\\categories"
+    dir = ".\\data\\validation_data\\categories"
     name = "categories"
     plot_heatmaps_diary_filtered_and_unfiltered(name, dir)
