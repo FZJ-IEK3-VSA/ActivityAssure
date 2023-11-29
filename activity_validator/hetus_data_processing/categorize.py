@@ -101,3 +101,21 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
         )
         for g in categories.groups
     ]
+
+
+@utils.timing
+def filter_categories(
+    categories: list[ExpandedActivityProfiles],
+) -> list[ExpandedActivityProfiles]:
+    """
+    Removes all categories that are too small and don't
+    fullfill the requirements by EUROSTAT to permit publication
+
+    :param categories: the categories to filter
+    :return: the categories that can be published
+    """
+    filtered = [c for c in categories if len(c.data) >= hetus_constants.MIN_CELL_SIZE]
+    logging.info(
+        f"{len(filtered)} out of {len(categories)} categories can be published."
+    )
+    return filtered

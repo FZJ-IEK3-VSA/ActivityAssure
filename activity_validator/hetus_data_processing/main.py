@@ -13,6 +13,7 @@ from activity_validator.hetus_data_processing.attributes import (
 )
 from activity_validator.hetus_data_processing.categorize import (
     categorize,
+    filter_categories,
     get_diary_categorization_data,
 )
 from activity_validator.hetus_data_processing import category_statistics
@@ -56,6 +57,8 @@ def process_hetus_2010_data():
     cat_data = get_diary_categorization_data(data, persondata)
     key += [diary_attributes.DayType.title()]
     categories = categorize(cat_data, key)
+    categories = filter_categories(categories)
+
     # cat_hhdata = get_hh_categorization_data(hhdata, persondata)
 
     category_statistics.calc_statistics_per_category(categories, activity_types)
