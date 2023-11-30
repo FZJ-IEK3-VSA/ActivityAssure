@@ -13,7 +13,8 @@ RESOLUTION_AT = timedelta(minutes=15)
 PROFILE_OFFSET = timedelta(hours=4)
 
 #: minimum number of people per group required by EUROSTAT
-#  to permit publication of the dataset
+#: to permit publication of the dataset.
+#: source: https://ec.europa.eu/eurostat/product?code=KS-RA-08-014
 MIN_CELL_SIZE = 20
 
 
