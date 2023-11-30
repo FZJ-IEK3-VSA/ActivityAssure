@@ -165,7 +165,7 @@ def convert_to_timedelta(data: pd.DataFrame) -> None:
 
 
 def save_df(
-    data: pd.DataFrame,
+    data: pd.DataFrame|pd.Series,
     subdir: str,
     name: str,
     profile_type: ProfileType | None = None,

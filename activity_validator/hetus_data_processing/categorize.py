@@ -82,6 +82,9 @@ def get_category_sizes(categories, key: list[str]) -> pd.DataFrame:
         cat_index = key.copy()
         cat_index.remove(key[0])
         sizes = sizes.reset_index().pivot(index=cat_index, columns=key[0], values=0)
+    else:
+        # sizes is a Series; convert it to a DataFrame
+        sizes = sizes.to_frame(name="Entries")
     return sizes
 
 
