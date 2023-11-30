@@ -11,8 +11,9 @@ from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 import numpy as np
 import pandas as pd
-from activity_validator.hetus_data_processing import hetus_constants, utils
 
+import activity_validator.hetus_data_processing.hetus_columns as col
+from activity_validator.hetus_data_processing import hetus_constants, utils
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
     person_attributes,
@@ -76,7 +77,7 @@ class ProfileType:
         return basename, profile_type
 
     @staticmethod
-    def from_iterable(values: Collection[str]) -> "ProfileType":
+    def from_iterable(values: Collection[str | None]) -> "ProfileType":
         """
         Creates a ProfileType object from an iterable containing
         the characteristics as strings.
@@ -88,15 +89,42 @@ class ProfileType:
         # extract characteristics
         country, sex, work_status, day_type = values
         try:
+            # convert the strings to enum values and create the ProfileType
             profile_type = ProfileType(
                 country,
-                person_attributes.Sex(sex),
-                person_attributes.WorkStatus(work_status),
-                diary_attributes.DayType(day_type),
+                person_attributes.Sex(sex) if sex else None,
+                person_attributes.WorkStatus(work_status) if work_status else None,
+                diary_attributes.DayType(day_type) if day_type else None,
             )
         except KeyError as e:
             assert False, f"Invalid enum key: {e}"
         return profile_type
+
+    @staticmethod
+    def from_index_tuple(
+        names: Collection[str], values: Collection[str] | str
+    ) -> "ProfileType":
+        """
+        Creates a ProfileType object from a list of attribute names and a list
+        with their respective values.
+        This can be useful when not all attributes are set, e.g., when only the
+        country is specified.
+
+        :param names: index level names corresponding to the ProfileType attributes
+        :param values: _description_
+        :return: _description_
+        """
+        if isinstance(values, str):
+            # pandas does not put single index values in a list
+            values = [values]
+        assert len(names) == len(values), f"Number of names must match number of values"
+        value_dict = dict(zip(names, values))
+        # extract used category attributes by their names
+        country = value_dict.get(col.Country.ID)
+        sex = value_dict.get(person_attributes.Sex.title())
+        work_status = value_dict.get(person_attributes.WorkStatus.title())
+        day_type = value_dict.get(diary_attributes.DayType.title())
+        return ProfileType.from_iterable([country, sex, work_status, day_type])
 
 
 def create_result_path(

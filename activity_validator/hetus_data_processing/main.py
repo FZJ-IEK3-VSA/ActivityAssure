@@ -44,18 +44,15 @@ def process_hetus_2010_data():
     # data_valid_hhs, hhdata = level_extraction.get_usable_household_data(data)
     # utils.stats(data, data_valid_persons, data_valid_hhs)
 
-    # cat_persondata = get_person_categorization_data(persondata)
+    # calculate additional columns for categorizing and drop rows
+    # where important data is missing
+    cat_data = get_diary_categorization_data(data, persondata)
     key = [
         col.Country.ID,
         person_attributes.Sex.title(),
         person_attributes.WorkStatus.title(),
+        diary_attributes.DayType.title(),
     ]
-    # categorize(cat_persondata, key)
-
-    # calculate additional columns for categorizing and drop rows
-    # where important data is missing
-    cat_data = get_diary_categorization_data(data, persondata)
-    key += [diary_attributes.DayType.title()]
     categories = categorize(cat_data, key)
     categories = filter_categories(categories)
 
