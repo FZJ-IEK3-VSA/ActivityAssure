@@ -6,6 +6,7 @@ import json
 from enum import EnumType
 import logging
 from pathlib import Path
+import shutil
 
 import pandas as pd
 from activity_validator.hetus_data_processing.activity_profile import create_result_path
@@ -18,16 +19,32 @@ HETUS_CODES_PATH = Path(
 HETUS_MAPPING_PATH = Path("activity_validator/activity_types/mapping_hetus.json")
 
 
-def load_mapping(path: Path) -> dict[str, str]:
+def load_mapping(
+    path: Path,
+    copy_to_output: bool = True,
+    output_base_path: Path | None = None,
+) -> dict[str, str]:
     """
     Loads an activity mapping from a json file.
 
     :param path: mapping file path
+    :param copy_to_output: if the activity mapping should be copied to the
+                           output, defaults to True
+    :param output_base_path: the output base folder, defaults to None
     :raises RuntimeError: if the file does not exist
     :return: the mapping dict
     """
     if not path.exists():
         raise RuntimeError(f"Missing mapping file: {path}")
+    if copy_to_output:
+        dest_path = create_result_path(
+            "activities",
+            "activity_mapping",
+            base_path=output_base_path,
+            ext="json",
+        )
+        shutil.copyfile(str(path), str(dest_path))
+        logging.info(f"Copied activity mapping file to {dest_path}")
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -39,7 +56,7 @@ def load_hetus_activity_codes() -> dict[str, str]:
 
     :return: dict mapping each code with its description
     """
-    return load_mapping(HETUS_CODES_PATH)
+    return load_mapping(HETUS_CODES_PATH, False)
 
 
 def aggregate_activities(data: pd.DataFrame, digits: int = 1):
@@ -62,8 +79,10 @@ def extract_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def save_final_activity_types(
-    mapping_path: Path = HETUS_MAPPING_PATH, base_path: Path | None = None
+def get_activity_type_list(
+    mapping_path: Path = HETUS_MAPPING_PATH,
+    save_to_output: bool = True,
+    output_base_path: Path | None = None,
 ) -> list[str]:
     """
     Saves the ultimately (i.e., after applying the mappings) available
@@ -71,16 +90,23 @@ def save_final_activity_types(
     which activities did not occur at all in a profile.
 
     :param mapping_path: path of the mapping file to load, defaults to HETUS_MAPPING_PATH
+    :param save_to_output: if the activity type list should be saved in the
+                           output folder, defaults to True
+    :param output_base_path: the output base folder, defaults to None
     :return: the list of activity names
     """
-    mapping = load_mapping(mapping_path)
+    mapping = load_mapping(mapping_path, False)
     activity_types = sorted(set(mapping.values()))
-    path = create_result_path(
-        "activities", "available_activity_types", base_path=base_path, ext="json"
-    )
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump({"activity types": activity_types}, f)
-    logging.info(f"Created activity types file: {path}")
+    if save_to_output:
+        path = create_result_path(
+            "activities",
+            "available_activity_types",
+            base_path=output_base_path,
+            ext="json",
+        )
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"activity types": activity_types}, f)
+        logging.info(f"Created activity types file: {path}")
     return activity_types
 
 
@@ -118,11 +144,6 @@ def translate_activity_codes(data: pd.DataFrame) -> None:
     combined = get_combined_hetus_mapping()
     activity = col.get_activity_data(data)
     data.loc[:, activity.columns] = activity.replace(combined)
-
-
-def translate_activity_codes_index(data: pd.DataFrame) -> None:
-    codes = load_hetus_activity_codes()
-    data.index = data.index.map(lambda x: codes.get(x, x))
 
 
 def translate_column(

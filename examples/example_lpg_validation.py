@@ -55,18 +55,20 @@ def validate_lpg():
     )
 
     # load validation data
-    validation_data_path = Path("data/validation_data DE")
+    validation_data_path = Path("data/validation_data_categories")
     validation_data_dict = lpgvalidation.load_validation_data(validation_data_path)
 
     # load activity mapping
     custom_mapping_path = Path("examples/activity_mapping_lpg.json")
     activity_mapping = hetus_translations.load_mapping(custom_mapping_path)
+    activity_types = hetus_translations.get_activity_type_list(
+        custom_mapping_path, output_base_path=output_path
+    )
+    activity_types_val = hetus_translations.get_activity_type_list(save_to_output=False)
     # TODO: LPG mapping is missing "eat", so skip this check for now
-    # activity_types = hetus_translations.save_final_activity_types(
-    #     custom_mapping_path, output_path
-    # )
+    # and use validation activity type list
     # check_mapping(activity_types, validation_data_path)
-    activity_types = hetus_translations.save_final_activity_types()
+    activity_types = activity_types_val
 
     # map and categorize each full-year profile individually
     all_profiles_by_type = {}

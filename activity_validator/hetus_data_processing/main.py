@@ -36,7 +36,7 @@ def process_hetus_2010_data():
     utils.stats(data)
 
     hetus_translations.translate_activity_codes(data)
-    activity_types = hetus_translations.save_final_activity_types()
+    activity_types = hetus_translations.get_activity_type_list()
 
     # extract households and persons
     data_valid_persons, persondata = level_extraction.get_usable_person_data(data)

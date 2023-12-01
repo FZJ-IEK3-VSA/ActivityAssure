@@ -220,7 +220,7 @@ def calc_overall_activity_shares(data: pd.DataFrame, activity_types=None) -> pd.
     :return: the overall share for each activity type
     """
     if activity_types is None:
-        activity_types = hetus_translations.save_final_activity_types()
+        activity_types = hetus_translations.get_activity_type_list(save_to_output=False)
     hetus_translations.translate_activity_codes(data)
     data = col.get_activity_data(data)
     probabilities = calc_probability_profiles(data, activity_types)
@@ -237,7 +237,7 @@ def calc_activity_share_per_profile_type(
     :param categories: list of profiles per type
     :return: activity shares per type
     """
-    activity_types = hetus_translations.save_final_activity_types()
+    activity_types = hetus_translations.get_activity_type_list(save_to_output=False)
     shares_per_group = pd.DataFrame(
         {
             d.profile_type: calc_overall_activity_shares(d.data, activity_types)
