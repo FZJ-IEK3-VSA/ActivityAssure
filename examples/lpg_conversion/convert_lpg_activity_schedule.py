@@ -8,8 +8,27 @@ import pandas as pd
 
 from activity_validator.hetus_data_processing import hetus_translations
 
-
-TIMESTEP_DURATION = timedelta(minutes=1)
+# preliminary affordance mappings according to affordance categories
+UNMAPPED_CATEGORY = "TODO"
+CATEGORY_MAPPING = {
+    "Active Entertainment (Computer, Internet etc)": "pc",
+    "Entertainment": UNMAPPED_CATEGORY,
+    "Office": "work",
+    "Offline Entertainment": "other",
+    "Outside recreation": "not at home",
+    "Passive Entertainment (TV etc.)": UNMAPPED_CATEGORY,
+    "child care": "other",
+    "cleaning": UNMAPPED_CATEGORY,  # laundry is separate
+    "cooking": "cook",
+    "gardening and maintenance": "other",
+    "hygiene": "personal care",
+    "other": "other",
+    "school": "education",
+    "shopping": "not at home",
+    "sleep": "sleep",
+    "sports": UNMAPPED_CATEGORY,
+    "work": "work",
+}
 
 
 def load_activity_profile_from_db(file: Path):
@@ -30,12 +49,18 @@ def load_activity_profile_from_db(file: Path):
     parsed_json_list = [json.loads(act) for name, act in activity_list]
     # sort activities by person
     rows_by_person: dict[str, list[tuple[int, datetime, str]]] = {}
-    unmapped_affordances = set()
+    unmapped_affordances = {}
     for entry in parsed_json_list:
         start_date = datetime.fromisoformat(entry["DateTime"])
         affordance = entry["AffordanceName"]
-        if affordance not in activity_mapping:
-            unmapped_affordances.add(affordance)
+        category = entry["Category"]
+        if (
+            affordance not in activity_mapping
+            and affordance not in unmapped_affordances
+        ):
+            unmapped_affordances[affordance] = CATEGORY_MAPPING.get(
+                category, UNMAPPED_CATEGORY
+            )
         person = entry["PersonName"]
         start_step = entry["TimeStep"]["ExternalStep"]
         activity_entry = (start_step, start_date, affordance)
@@ -43,8 +68,7 @@ def load_activity_profile_from_db(file: Path):
 
     if unmapped_affordances:
         print(f"Found {len(unmapped_affordances)} unmapped affordances")
-        d = {a: "TODO" for a in unmapped_affordances}
-        merged = activity_mapping | d
+        merged = activity_mapping | unmapped_affordances
         with open(mapping_path, "w") as f:
             # add unmapped affordances to mapping file
             json.dump(merged, f, indent=4)
