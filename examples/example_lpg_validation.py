@@ -54,10 +54,6 @@ def validate_lpg():
         input_path, person_trait_file
     )
 
-    # load validation data
-    validation_data_path = Path("data/validation_data_categories")
-    validation_data_dict = lpgvalidation.load_validation_data(validation_data_path)
-
     # load activity mapping
     custom_mapping_path = Path("examples/activity_mapping_lpg.json")
     activity_mapping = hetus_translations.load_mapping(custom_mapping_path)
@@ -87,6 +83,10 @@ def validate_lpg():
         profiles_by_type = lpgvalidation.group_profiles_by_type(selected_day_profiles)
 
         all_profiles_by_type = merge_dicts(all_profiles_by_type, profiles_by_type)
+
+    # load validation data
+    validation_data_path = Path("data/validation_data_categories")
+    validation_data_dict = lpgvalidation.load_validation_data(validation_data_path)
 
     # validate each profile type individually
     for profile_type, profiles in all_profiles_by_type.items():
