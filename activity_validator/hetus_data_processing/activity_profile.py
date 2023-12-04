@@ -165,7 +165,7 @@ def convert_to_timedelta(data: pd.DataFrame) -> None:
 
 
 def save_df(
-    data: pd.DataFrame|pd.Series,
+    data: pd.DataFrame | pd.Series,
     subdir: str,
     name: str,
     profile_type: ProfileType | None = None,
@@ -290,11 +290,12 @@ class ActivityProfileEntry:
         """
         Divides this ActivityProfileEntry into multiple entries, splitting at the specified
         timestep and, for activities >24 h, at the same timestep 24 h later.
+        The activity has to start before first_split, but may end exactly at it.
 
         :return: the list of activity entries
         """
         assert (
-            self.start <= first_split <= self.end()
+            self.start < first_split <= self.end()
         ), "Split timestep is outside of activity time frame"
 
         # the section until the first split
@@ -332,31 +333,39 @@ class SparseActivityProfile:
     #: characteristics of the person this profile belongs to
     profile_type: ProfileType = field(default_factory=ProfileType)
 
+    @utils.timing
     @staticmethod
     def load_from_csv(
         path: Path | str,
         profile_type: ProfileType,
         resolution: timedelta = DEFAULT_RESOLUTION,
+        offset: timedelta | None = None,
     ) -> "SparseActivityProfile":
         """
         Loads an ActivityProfile from a csv file.
 
         :param path: path to the csv file
         :param timestep: timestep resolution of the profile, defaults to DEFAULT_RESOLUTION
+        :param offset: timedelta from 00:00 of the first day to the start time of the first
+                       activity; can be omitted if a 'Date' column is contained
         :return: the loaded ActivityProfile
         """
         assert timedelta(days=1) % resolution == timedelta(
             0
         ), "Resolution has to be a divisor of 1 day"
+        # define column names
+        timestep_col = "Timestep"
+        date_col = "Date"
+        activity_col = "Activity"
         data = pd.read_csv(path)
-        # pd.to_datetime(data["Date"])
-        entries = [
-            ActivityProfileEntry(row["Activity"], row["Timestep"])
-            for _, row in data.iterrows()
-        ]
-        # calculate offset (timedelta since last midnight)
-        first_date = datetime.fromisoformat(data["Date"][0])
-        offset = first_date - datetime.combine(first_date.date(), time())
+        entries = data.apply(  # type: ignore
+            lambda row: ActivityProfileEntry(row[activity_col], row[timestep_col]),
+            axis=1,
+        ).to_list()
+        if offset is None:
+            # calculate offset (timedelta since last midnight)
+            first_date = datetime.fromisoformat(data[date_col][0])
+            offset = first_date - datetime.combine(first_date.date(), time())
         assert offset % resolution == timedelta(
             0
         ), "Start time has to be a divisor of the resolution"
@@ -543,12 +552,12 @@ class SparseActivityProfile:
         assert timedelta(1) % self.resolution == timedelta(
             0
         ), f"Invalid resolution: {self.resolution}"
-        timesteps_per_day = int(timedelta(days=1) / self.resolution)
-        # calculate timestep of first split
-        next_split = int((split_offset - self.offset) / self.resolution)
         assert split_offset % self.resolution == timedelta(
             0
         ), f"Invalid split offset: {split_offset}"
+        timesteps_per_day = int(timedelta(days=1) / self.resolution)
+        # calculate timestep of first split
+        next_split = int((split_offset - self.offset) / self.resolution)
         if next_split <= 0:
             # first split is on the next day
             next_split += timesteps_per_day
@@ -557,7 +566,7 @@ class SparseActivityProfile:
         current_day_profile: list[ActivityProfileEntry] = []
         for activity in self.activities:
             if activity.end() >= next_split:
-                # the activity lasts over the specified day switch time
+                # the activity lasts over or until the specified day switch time
                 split_sections = activity.split(next_split, timesteps_per_day)
                 assert len(split_sections) > 0, "Invalid split"
                 # add the profile for the past day
@@ -570,6 +579,18 @@ class SparseActivityProfile:
                         self.profile_type,
                     )
                 )
+                if (activity.end() - next_split) % timesteps_per_day == 0:
+                    # activity ends just on a day split timestep
+                    current_day_profile = []
+                    days_passed = len(split_sections)
+                    last_full_day = None
+                else:
+                    # add the last section to the list for the following day
+                    current_day_profile = [split_sections[-1]]
+                    days_passed = len(split_sections) - 1
+                    last_full_day = -1
+                # increment the timestep for the next split
+                next_split += timesteps_per_day * days_passed
                 # add intermediate 24 h split sections as separate profile
                 day_profiles.extend(
                     SparseActivityProfile(
@@ -578,12 +599,8 @@ class SparseActivityProfile:
                         self.resolution,
                         self.profile_type,
                     )
-                    for a in split_sections[1:-1]
+                    for a in split_sections[1:last_full_day]
                 )
-                # add the last section to the list for the following day
-                current_day_profile = [split_sections[-1]]
-                # increment the timestep for the next split
-                next_split += timesteps_per_day * (len(split_sections) - 1)
             else:
                 # the activity does not need to be split
                 current_day_profile.append(activity)
