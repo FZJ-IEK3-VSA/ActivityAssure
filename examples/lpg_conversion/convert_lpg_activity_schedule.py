@@ -85,6 +85,7 @@ def load_activity_profile_from_db(file: Path):
 
 if __name__ == "__main__":
     directory = Path("data/lpg/raw/")
+    assert directory.is_dir(), f"Invalid path: {directory}"
     pattern = str(directory / "*" / "*.sqlite")
     for file in glob.glob(pattern):
         load_activity_profile_from_db(Path(file))
