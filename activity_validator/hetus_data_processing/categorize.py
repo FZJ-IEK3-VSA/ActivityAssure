@@ -89,7 +89,9 @@ def get_category_sizes(categories, key: list[str]) -> pd.DataFrame:
 
 
 @utils.timing
-def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfiles]:
+def categorize(
+    data: pd.DataFrame, key: list[str], size_threshold: bool = True
+) -> list[ExpandedActivityProfiles]:
     """
     Groups all entries into categories, depending on the categorization
     keys. Each value combination of the specified key columns results in a
@@ -97,6 +99,8 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
 
     :param data: the data to categorize
     :param key: the column names to use for categorization
+    :param size_threshold: whether the exact group size should be overwritten for
+                           small groups according to the Eurostat rules
     :return: the separated data sets for all categories
     """
     categories = data.groupby(key)
@@ -105,6 +109,11 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
         f"Sorted {len(data)} entries into {category_sizes.count().sum()} categories."
     )
     print(category_sizes)
+    if size_threshold:
+        # set the category sizes to the minimum disclosable value for all sizes below
+        category_sizes[
+            category_sizes < hetus_constants.MIN_CELL_SIZE_FOR_SIZE
+        ] = hetus_constants.MIN_CELL_SIZE_FOR_SIZE
     activity_profile.save_df(category_sizes, "categories", "categories")
     return [
         ExpandedActivityProfiles(

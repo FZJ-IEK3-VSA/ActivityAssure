@@ -12,10 +12,12 @@ RESOLUTION_AT = timedelta(minutes=15)
 #: the start time of each diary
 PROFILE_OFFSET = timedelta(hours=4)
 
-#: minimum number of people per group required by EUROSTAT
-#: to permit publication of the dataset.
-#: source: https://ec.europa.eu/eurostat/product?code=KS-RA-08-014
+# Requirements from Eurostat to permit publication of the dataset.
+# source: https://ec.europa.eu/eurostat/product?code=KS-RA-08-014
+#: minimum number of people per group
 MIN_CELL_SIZE = 20
+#: minimum group size to disclose exact group size
+MIN_CELL_SIZE_FOR_SIZE = 50
 
 
 def get_resolution(country: str | None) -> timedelta:
