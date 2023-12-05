@@ -23,7 +23,7 @@ from activity_validator.hetus_data_processing.attributes import (
 DEFAULT_RESOLUTION = timedelta(minutes=1)
 
 #: path for result data # TODO: move to config file
-VALIDATION_DATA_PATH = Path() / "data" / "validation_data"
+VALIDATION_DATA_PATH = Path("data/validation data sets/latest")
 
 
 @dataclass_json
