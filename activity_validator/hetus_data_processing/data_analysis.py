@@ -153,7 +153,7 @@ def analyze_inconsistent_households(data: pd.DataFrame):
     invalid = pd.DataFrame(data=invalid_rows, index=new_index)
     # The following line shows that there are also households with multiple invalid entries
     invalid[invalid.index.duplicated(keep=False)]
-    # TODO: I could check how many valid entries there are for each invalid household:
+    # Further ideas: I could check how many valid entries there are for each invalid household:
     #   - are there households without any valid entry?
     #   - are there households where valid entries are in the minority?
     # Depending on that, I might be able to determine the correct values for all columns

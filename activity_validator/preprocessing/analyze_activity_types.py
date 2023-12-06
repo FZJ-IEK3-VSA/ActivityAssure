@@ -62,6 +62,3 @@ print("\nSimilar:")
 
 print("\nOnly once:")
 print(",".join(a for a in unique if a not in duplicates))
-
-
-# TODO: für jeden Autor ein Mapping erstellen --> so sehe ich, wie gut es funktioniert und habe direkt gute Beispiele

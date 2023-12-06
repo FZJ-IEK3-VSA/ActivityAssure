@@ -96,4 +96,5 @@ if __name__ == "__main__":
     process_all_hetus_countries_AT_separately()
 
     # data = load_data.load_all_hetus_files_except_AT()
+    # data = load_data.load_hetus_files(["DE"])
     # process_hetus_2010_data(data)

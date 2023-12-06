@@ -228,15 +228,6 @@ def load_validation_data(
     }
 
 
-def filter_relevant_validation_data(
-    validation_data_dict: dict[ProfileType, ValidationData],
-    activity_profiles: SparseActivityProfile,
-):
-    # TODO: if necessary, also  filter validation data that does not match the
-    # ProfileType exactly, but is e.g. from another country
-    pass
-
-
 def calc_input_data_statistics(
     profiles: list[SparseActivityProfile], activity_types: list[str]
 ) -> ValidationData:

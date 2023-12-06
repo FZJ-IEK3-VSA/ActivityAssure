@@ -2,7 +2,6 @@
 Functions for filtering HETUS data based on various criteria
 """
 
-
 import functools
 from typing import Any, Callable, Iterable
 import pandas as pd
@@ -10,8 +9,6 @@ import pandas as pd
 import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing.hetus_values import DayType
 from activity_validator.hetus_data_processing.utils import timing
-
-# TODO: for separating dataframes instead of just dropping unmatching columns, groupby can be used
 
 
 @timing

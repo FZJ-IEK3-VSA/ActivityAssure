@@ -663,7 +663,6 @@ class SparseActivityProfile:
             else:
                 # the activity does not need to be split
                 current_day_profile.append(activity)
-        # TODO if necessary, call remove_timestep_offset on each new profile
         return day_profiles
 
 

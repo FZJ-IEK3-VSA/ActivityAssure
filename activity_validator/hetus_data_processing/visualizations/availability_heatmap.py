@@ -66,7 +66,6 @@ def plot_heatmaps_diary_filtered_and_unfiltered(name: str, dir: str):
 
     total = len(data) * len(data.columns)
     no_data = (data == 0).sum().sum()
-    data_available = total - no_data
 
     # filter categories that are too small
     data[data < hetus_constants.MIN_CELL_SIZE] = 0
@@ -135,6 +134,6 @@ def plot_heatmap_person(name: str, dir: str):
 
 
 if __name__ == "__main__":
-    dir = ".\\data\\validation_data\\categories"
+    dir = ".\\data\\validation data sets\\latest\\categories"
     name = "categories"
     plot_heatmaps_diary_filtered_and_unfiltered(name, dir)
