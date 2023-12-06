@@ -67,7 +67,7 @@ def merge_categories_files(path1: Path, path2: Path):
     merged.to_csv(path1.parent / "categories.csv", index=False)
 
 
-def process_all_hetus_countries():
+def process_all_hetus_countries_AT_separately():
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
         level=logging.DEBUG,
@@ -93,4 +93,7 @@ def process_all_hetus_countries():
 
 
 if __name__ == "__main__":
-    process_all_hetus_countries()
+    process_all_hetus_countries_AT_separately()
+
+    # data = load_data.load_all_hetus_files_except_AT()
+    # process_hetus_2010_data(data)
