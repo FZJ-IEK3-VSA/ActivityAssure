@@ -429,6 +429,66 @@ class SparseActivityProfile:
         assert len(profile) == self.length()
         return profile
 
+    @staticmethod
+    def merge_activities(
+        first: ActivityProfileEntry, last: ActivityProfileEntry
+    ) -> ActivityProfileEntry:
+        """
+        Merges a range of consecutive activities.
+
+        :param first: the first activity in the range
+        :param last: the last activity in the range
+        :return: a new activity object encompassing the whole range
+        """
+        assert (
+            first.name == last.name
+        ), f"Cannnot merge different activities: {first.name} and {last.name}"
+        dur = last.end() - first.start
+        return ActivityProfileEntry(first.name, first.start, dur)
+
+    def join_adjacent_activities(self) -> None:
+        """
+        Joins consecutive activities of the same name. This is e.g. necessary after
+        applying an activity mapping to treat this data the same as expanded
+        activity profiles.
+        """
+        start = 0
+        activities = []
+        for i, a in enumerate(self.activities[1:]):
+            if a.name != self.activities[start].name:
+                # i starts at 0, so the index of a is i+1
+                if i == start:
+                    # activity remains unchanged
+                    activities.append(self.activities[start])
+                else:
+                    # multiple activities with same name - merge
+                    activities.append(
+                        SparseActivityProfile.merge_activities(
+                            self.activities[start], self.activities[i]
+                        )
+                    )
+                start = i + 1
+        # add the last activity
+        if start == len(self.activities) - 1:
+            activities.append(self.activities[start])
+        else:
+            activities.append(
+                SparseActivityProfile.merge_activities(
+                    self.activities[start], self.activities[-1]
+                )
+            )
+        assert (
+            self.activities[0].start == activities[0].start
+        ), "Bug in activity joining: wrong start"
+        assert (
+            self.activities[-1].end() == activities[-1].end()
+        ), "Bug in activity joining: wrong end"
+        for i, a in enumerate(activities[:-1]):
+            assert (
+                a.end() == activities[i + 1].start
+            ), "Bug in activity joining: start/end don't match"
+        self.activities = activities
+
     @utils.timing
     def apply_activity_mapping(self, activity_mapping: dict[str, str]) -> None:
         """
@@ -438,8 +498,7 @@ class SparseActivityProfile:
         """
         for activity in self.activities:
             activity.name = activity_mapping[activity.name]
-        # TODO: should consecutive activities that were mapped to the same name
-        # be merged? Would be more similar to HETUS data.
+        self.join_adjacent_activities()
 
     @utils.timing
     def resample(self, resolution: timedelta) -> None:

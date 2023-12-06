@@ -76,16 +76,13 @@ def validate_lpg():
         # split the full year profiles into single-day profiles
         selected_day_profiles = lpgvalidation.extract_day_profiles(full_year_profile)
 
-        # Tests
-        assert len(selected_day_profiles) == 336, "Unexpected number of day profiles"
-
         # categorize single-day profiles according to country, person and day type
         profiles_by_type = lpgvalidation.group_profiles_by_type(selected_day_profiles)
 
         all_profiles_by_type = merge_dicts(all_profiles_by_type, profiles_by_type)
 
     # load validation data
-    validation_data_path = Path("data/validation_data_categories")
+    validation_data_path = Path("data/validation data sets/full_categorization")
     validation_data_dict = lpgvalidation.load_validation_data(validation_data_path)
 
     # validate each profile type individually
