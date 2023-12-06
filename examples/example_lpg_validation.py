@@ -14,24 +14,26 @@ from activity_validator.hetus_data_processing import (
 from activity_validator.lpgvalidation import comparison_metrics, lpgvalidation
 
 
-def check_mapping(activity_types: list[str], validation_path: Path):
+def check_mapping(
+    activity_types: list[str], activity_types_val: list[str]
+) -> list[str]:
     """
     Checks if the activity types used in the custom mapping here match those
-    in the validation data set.
+    in the validation data set. Also returns a new activity types list, containing
+    all validation activity types in the same order.
     """
-    # load HETUS activity types
-    path = activity_profile.create_result_path(
-        "activities", "available_activity_types", base_path=validation_path, ext="json"
-    )
-    with open(path) as f:
-        activity_types_valid = json.load(f)["activity types"]
-    assert set(activity_types) == set(activity_types_valid), (
-        "The activity mapping does not use the same set of activity types as the"
-        "validation data"
-    )
-    assert (
-        activity_types == activity_types_valid
-    ), "The mappings result in a different activity type order"
+    types_custom = set(activity_types)
+    types_val = set(activity_types_val)
+    if types_custom != types_val:
+        logging.warn(
+            "The applied activity mapping does not use the same set of activity types as the"
+            "validation data.\n"
+            f"Missing activity types: {types_val - types_custom}\n"
+            f"Additional activity types: {types_custom - types_val}"
+        )
+        return activity_types_val + list(types_custom - types_val)
+    else:
+        return activity_types_val
 
 
 def merge_dicts(dict1: dict[Any, list], dict2: dict[Any, list]) -> dict[Any, list]:
@@ -61,10 +63,7 @@ def validate_lpg():
         custom_mapping_path, output_base_path=output_path
     )
     activity_types_val = hetus_translations.get_activity_type_list(save_to_output=False)
-    # TODO: LPG mapping is missing "eat", so skip this check for now
-    # and use validation activity type list
-    # check_mapping(activity_types, validation_data_path)
-    activity_types = activity_types_val
+    activity_types = check_mapping(activity_types, activity_types_val)
 
     # map and categorize each full-year profile individually
     all_profiles_by_type = {}
