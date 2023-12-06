@@ -42,7 +42,7 @@ MAP_EMPLOYEDSTUDENT = {
 
 #: activities that should be counted as work for determining work days
 # TODO find a more flexible way for this
-WORK_ACTIVITIES = ["work"]
+WORK_ACTIVITIES = ["work", "education"]
 #: minimum working time for a day to be counted as working day
 WORKTIME_THRESHOLD = timedelta(hours=3)
 
@@ -53,8 +53,6 @@ def determine_day_type(row: pd.Series) -> DayType:
         return MAP_DAYTYPE[row[col.Diary.DAYTYPE]]
     if row[col.Diary.EMPLOYED_STUDENT] >= 0:
         return MAP_EMPLOYEDSTUDENT[row[col.Diary.EMPLOYED_STUDENT]]
-
-    # TODO: if necessary, check working time on this diary entry
     return DayType.undetermined
 
 
@@ -82,7 +80,6 @@ def determine_day_types(data: pd.DataFrame) -> pd.Series:
     :param data: HETUS data
     :return: day type for each diary entry
     """
-    # TODO: split to calculate AT separately
     # determine the working time threshold for deciding on the day type
     country = data.index.get_level_values(col.Country.ID)[0]
     min_time_slots = WORKTIME_THRESHOLD / hetus_constants.get_resolution(country)
@@ -94,9 +91,6 @@ def determine_day_types(data: pd.DataFrame) -> pd.Series:
     # TODO: FutureWarning incompatible dtype
     day_types.loc[work] = DayType.work
     day_types.loc[~work] = DayType.no_work
-
-    # TODO: old classification method - remove
-    # day_types = data.apply(determine_day_type, axis=1)
 
     day_types.name = DayType.title()
     counts = day_types.value_counts()
