@@ -4,7 +4,7 @@ Example script for validation the LoadProfileGenerator
 
 import logging
 from pathlib import Path
-from activity_validator.lpgvalidation import lpgvalidation
+from activity_validator.lpgvalidation import validation
 
 
 def validate_lpg():
@@ -14,27 +14,27 @@ def validate_lpg():
     person_trait_file = Path("data/lpg/person_characteristics.json")
 
     # load and preprocess all input data
-    full_year_profiles = lpgvalidation.load_activity_profiles_from_csv(
+    full_year_profiles = validation.load_activity_profiles_from_csv(
         input_path, person_trait_file
     )
-    activity_mapping, activity_types = lpgvalidation.load_mapping(
+    activity_mapping, activity_types = validation.load_mapping(
         custom_mapping_path, output_path
     )
-    input_data_dict = lpgvalidation.prepare_input_data(
+    input_data_dict = validation.prepare_input_data(
         full_year_profiles, activity_mapping
     )
 
     # load validation data
     validation_data_path = Path("data/validation data sets/full_categorization")
-    validation_statistics = lpgvalidation.load_validation_data(validation_data_path)
+    validation_statistics = validation.load_validation_data(validation_data_path)
 
     # calc input data statistics
-    input_statistics = lpgvalidation.calc_statistics_per_category(
+    input_statistics = validation.calc_statistics_per_category(
         input_data_dict, output_path, activity_types
     )
 
     # compare input and validation data statistics
-    lpgvalidation.validate_per_category(
+    validation.validate_per_category(
         input_statistics, validation_statistics, output_path
     )
 
