@@ -88,6 +88,30 @@ def get_category_sizes(categories, key: list[str]) -> pd.DataFrame:
     return sizes
 
 
+def apply_hetus_size_limits(category_sizes: pd.DataFrame) -> None:
+    """
+    Applies the HETUS cell size limits from Eurostat. Works inplace.
+    Eurostat specifies two size limits. Below these limits, only
+    the range of the cell size may be specified, not the exact size.
+
+    :param category_sizes: the category size dataframe to adapt
+    """
+    # For sizes below the limits, overwrites the actual size with the
+    # respective limit
+    # the between mask cannot be created for the whole dataframe at once
+    for col in category_sizes.columns:
+        upper_limit = category_sizes[col].between(
+            hetus_constants.MIN_CELL_SIZE,
+            hetus_constants.MIN_CELL_SIZE_FOR_SIZE,
+            inclusive="left",
+        )
+        category_sizes.loc[upper_limit, col] = hetus_constants.MIN_CELL_SIZE_FOR_SIZE
+    # the values below the lower limit can be overwritten at once
+    category_sizes[
+        category_sizes < hetus_constants.MIN_CELL_SIZE
+    ] = hetus_constants.MIN_CELL_SIZE
+
+
 @utils.timing
 def categorize(
     data: pd.DataFrame, key: list[str], size_threshold: bool = True
@@ -110,10 +134,7 @@ def categorize(
     )
     print(category_sizes)
     if size_threshold:
-        # set the category sizes to the minimum disclosable value for all sizes below
-        category_sizes[
-            category_sizes < hetus_constants.MIN_CELL_SIZE_FOR_SIZE
-        ] = hetus_constants.MIN_CELL_SIZE_FOR_SIZE
+        apply_hetus_size_limits(category_sizes)
     activity_profile.save_df(category_sizes, "categories", "categories")
     return [
         ExpandedActivityProfiles(

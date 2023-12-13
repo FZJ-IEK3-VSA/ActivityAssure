@@ -129,11 +129,6 @@ def merge_categories_files(path1: Path, path2: Path):
 
 
 def process_all_hetus_countries_AT_separately():
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.DEBUG,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
     # process AT data separately (different resolution)
     logging.info("--- Processing HETUS data for AT ---")
     data_at = load_data.load_hetus_files(["AT"])
@@ -154,9 +149,15 @@ def process_all_hetus_countries_AT_separately():
 
 
 if __name__ == "__main__":
-    # process_all_hetus_countries_AT_separately()
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    process_all_hetus_countries_AT_separately()
 
     # data = load_data.load_all_hetus_files_except_AT()
-    data = load_data.load_hetus_files(["DE"])
+    # data = load_data.load_hetus_files(["FI"])
     # process_hetus_2010_data(data)
-    cross_validation_split(data)
+    # cross_validation_split(data)
