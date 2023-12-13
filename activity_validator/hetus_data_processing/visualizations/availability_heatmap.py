@@ -65,12 +65,14 @@ def plot_heatmaps_diary_filtered_and_unfiltered(name: str, dir: str):
     plot_heatmap_diary(data, tick_labels, name)
 
     total = len(data) * len(data.columns)
-    no_data = (data == 0).sum().sum()
+    zeros = (data == 0).sum().sum()
+    nans = data.isna().sum().sum()
+    no_data = zeros + nans
 
     # filter categories that are too small
-    data[data < hetus_constants.MIN_CELL_SIZE] = 0
+    data[data <= hetus_constants.MIN_CELL_SIZE] = 0
 
-    filtered_out = (data == 0).sum().sum() - no_data
+    filtered_out = (data == 0).sum().sum() - zeros
     print("--- Category Data Availability ---")
     print(f"There was no data available for {no_data} categories.")
     print(f"Additionally, {filtered_out} categories were too small and filtered out.")
