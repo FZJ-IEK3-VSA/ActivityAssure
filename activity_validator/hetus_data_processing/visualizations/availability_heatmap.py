@@ -50,19 +50,19 @@ def plot_heatmaps_diary_filtered_and_unfiltered(name: str, dir: str):
     tick_labels: list[tuple[Any]] = [data.index[0]]
     for i in range(1, len(data.index)):
         a, b, c = data.index[i]
-        l = (c,)
+        l: tuple = (c,)
         if data.index[i - 1][0] != a:
             l = a, b, c
         elif data.index[i - 1][1] != b:
             l = b, c
         tick_labels.append(l)
-    tick_labels = [
+    tick_labels_str = [
         " - ".join([str(y).replace("_", " ") for y in x]) for x in tick_labels
     ]
     # tick_labels = [f"{a:>11} {b:>8} {c:>6}" for a,b,c in data.index] # does not work due to proportional font
 
     # plot the unfiltered data
-    plot_heatmap_diary(data, tick_labels, name)
+    plot_heatmap_diary(data, tick_labels_str, name)
 
     total = len(data) * len(data.columns)
     zeros = (data == 0).sum().sum()
@@ -81,7 +81,7 @@ def plot_heatmaps_diary_filtered_and_unfiltered(name: str, dir: str):
     )
 
     # plot the filtered heatmap as well
-    plot_heatmap_diary(data, tick_labels, f"{name}_filtered")
+    plot_heatmap_diary(data, tick_labels_str, f"{name}_filtered")
 
 
 def plot_heatmap_person(name: str, dir: str):
