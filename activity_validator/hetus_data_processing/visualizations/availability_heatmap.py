@@ -47,7 +47,7 @@ def plot_heatmaps_diary_filtered_and_unfiltered(name: str, dir: str):
     print(data.head())
 
     # create hierarchical tick labels
-    tick_labels: list[tuple[Any]] = [data.index[0]]
+    tick_labels: list[tuple] = [data.index[0]]
     for i in range(1, len(data.index)):
         a, b, c = data.index[i]
         l: tuple = (c,)
