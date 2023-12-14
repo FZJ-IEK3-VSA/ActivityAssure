@@ -143,7 +143,7 @@ def merge_category_sizes_files(path1: Path, path2: Path):
     """
     data1 = pd.read_csv(path1)
     data2 = pd.read_csv(path2)
-    if len(data1.columns) == 2 and all(data1.columns == data2.columns):
+    if len(data1.columns) == len(data2.columns) == 2 and all(data1.columns == data2.columns):
         # only a single categorization attribute
         axis = 0
     else:
