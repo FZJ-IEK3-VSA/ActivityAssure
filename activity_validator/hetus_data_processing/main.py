@@ -142,8 +142,16 @@ def merge_category_sizes_files(path1: Path, path2: Path):
     """
     data1 = pd.read_csv(path1)
     data2 = pd.read_csv(path2)
-    assert len(data1) == len(data2), "Cannot merge without specifying the index columns"
-    merged = pd.concat([data1, data2], axis=1)
+    if len(data1.columns) == 1 and data1.columns == data2.columns:
+        # only a single categorization attribute
+        axis = 0
+    else:
+        assert len(data1) == len(
+            data2
+        ), "Cannot merge without specifying the index columns"
+        axis = 1
+    merged = pd.concat([data1, data2], axis=axis)  # type: ignore
+    # remove the duplicated index
     merged = merged.loc[:, ~merged.columns.duplicated()].copy()  # type: ignore
     merged.to_csv(path1.parent / "category_sizes.csv", index=False)
 
