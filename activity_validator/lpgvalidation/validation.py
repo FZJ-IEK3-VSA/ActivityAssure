@@ -22,7 +22,10 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ActivityProfileEntry,
     ProfileType,
 )
-from activity_validator.hetus_data_processing.attributes import diary_attributes
+from activity_validator.hetus_data_processing.attributes import (
+    diary_attributes,
+    person_attributes,
+)
 from activity_validator.lpgvalidation import comparison_metrics
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
@@ -336,6 +339,28 @@ def calc_statistics_per_category(
     return input_statistics
 
 
+def get_similar_categories(profile_type: ProfileType) -> list[ProfileType]:
+    """
+    Returns a list of all profile types that are similar to the one specified,
+    i.e. all profile types, that differ in only one attribute. Also contains
+    the specified profile type itself.
+
+    :param profile_type: the profile type for which to collect similar types
+    :return: a list of similar profile types
+    """
+    similar = [dataclasses.replace(profile_type, sex=e) for e in person_attributes.Sex]
+    similar += [
+        dataclasses.replace(profile_type, work_status=e)
+        for e in person_attributes.WorkStatus
+    ]
+    similar += [
+        dataclasses.replace(profile_type, day_type=e) for e in diary_attributes.DayType
+    ]
+    # remove duplicates
+    similar = list(set(similar))
+    return similar
+
+
 def validate_per_category(
     input_data_dict: dict[ProfileType, ValidationData],
     validation_data_dict: dict[ProfileType, ValidationData],
@@ -356,19 +381,30 @@ def validate_per_category(
         # select matching validation data
         validation_data = validation_data_dict[profile_type]
         # calcluate and store comparison metrics
-        differences, metrics = comparison_metrics.calc_comparison_metrics(
-            validation_data, input_data
+        _, metrics, _, _ = comparison_metrics.calc_all_metric_variants(
+            validation_data, input_data, True, profile_type, output_path
         )
-        activity_profile.save_df(
-            differences, "differences", "diff", profile_type, output_path
-        )
-        # save metrics as normal, scaled and normalized variants
-        metrics.save_as_csv(output_path, profile_type, "normal")
-        shares = validation_data.probability_profiles.mean(axis=1)
-        metrics.get_scaled(shares).save_as_csv(output_path, profile_type, "scaled")
-        _, metrics_normalized = comparison_metrics.calc_comparison_metrics(
-            validation_data, input_data, True
-        )
-        metrics_normalized.save_as_csv(output_path, profile_type, "normalized")
         metrics_dict[profile_type] = metrics
+    return metrics_dict
+
+
+def validate_similar_categories(
+    input_data_dict: dict[ProfileType, ValidationData],
+    validation_data_dict: dict[ProfileType, ValidationData],
+    output_path: Path,
+) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
+    # validate each profile type individually
+    metrics_dict = {}
+    for profile_type, input_data in input_data_dict.items():
+        # select matching validation data
+        similar = get_similar_categories(profile_type)
+        dict_per_type = {}
+        for similar_type in similar:
+            validation_data = validation_data_dict[similar_type]
+            # calcluate and store comparison metrics
+            _, metrics = comparison_metrics.calc_comparison_metrics(
+                validation_data, input_data
+            )
+            dict_per_type[similar_type] = metrics
+        metrics_dict[profile_type] = dict_per_type
     return metrics_dict

@@ -10,7 +10,8 @@ from pathlib import Path
 from dataclasses_json import config, dataclass_json  # type: ignore
 import numpy as np
 import pandas as pd
-import scipy  # type: ignore
+import scipy
+from activity_validator.hetus_data_processing import activity_profile  # type: ignore
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
@@ -287,3 +288,29 @@ def calc_comparison_metrics(
     return differences, ValidationMetrics(
         mae, bias, rmse, wasserstein, pearson_corr, max_diff, time_of_max_diff
     )
+
+
+def calc_all_metric_variants(
+    validation_data: ValidationData,
+    input_data: ValidationData,
+    save_to_file: bool = True,
+    profile_type: ProfileType | None = None,
+    output_path: Path | None = None,
+) -> tuple[pd.DataFrame, ValidationMetrics, ValidationMetrics, ValidationMetrics]:
+    # calcluate and store comparison metrics as normal, scaled and normalized
+    differences, metrics = calc_comparison_metrics(validation_data, input_data)
+    # calc metrics as normal, scaled and normalized variants
+    shares = validation_data.probability_profiles.mean(axis=1)
+    scaled = metrics.get_scaled(shares)
+    _, normalized = calc_comparison_metrics(validation_data, input_data, True)
+    if save_to_file:
+        assert profile_type is not None, "Must specify a profile type for saving"
+        assert output_path is not None, "Must specify an output path for saving"
+        activity_profile.save_df(
+            differences, "differences", "diff", profile_type, output_path
+        )
+        metrics.save_as_csv(output_path, profile_type, "normal")
+        scaled.save_as_csv(output_path, profile_type, "scaled")
+        normalized.save_as_csv(output_path, profile_type, "normalized")
+
+    return differences, metrics, scaled, normalized
