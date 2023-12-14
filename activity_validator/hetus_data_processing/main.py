@@ -110,7 +110,7 @@ def cross_validation_split(data: pd.DataFrame):
     VALIDATION_DATA_PATH.rename(VALIDATION_DATA_PATH.parent / "Validation Split 2")
 
 
-def merge_categories_files(path1: Path, path2: Path):
+def merge_category_sizes_files(path1: Path, path2: Path):
     """
     Merges two different category size files. The files must
     contain the same row indices, but different column
@@ -125,7 +125,7 @@ def merge_categories_files(path1: Path, path2: Path):
     assert len(data1) == len(data2), "Cannot merge without specifying the index columns"
     merged = pd.concat([data1, data2], axis=1)
     merged = merged.loc[:, ~merged.columns.duplicated()].copy()  # type: ignore
-    merged.to_csv(path1.parent / "categories.csv", index=False)
+    merged.to_csv(path1.parent / "category_sizes.csv", index=False)
 
 
 def process_all_hetus_countries_AT_separately():
@@ -135,17 +135,21 @@ def process_all_hetus_countries_AT_separately():
     process_hetus_2010_data(data_at)
 
     # rename categories file
-    categories_path = VALIDATION_DATA_PATH / "categories" / "categories.csv"
-    categories_at = categories_path.rename(categories_path.parent / "categories_AT.csv")
+    categories_path = VALIDATION_DATA_PATH / "categories" / "category_sizes.csv"
+    categories_at = categories_path.rename(
+        categories_path.parent / "category_sizes_AT.csv"
+    )
 
     # process remaining countries
     logging.info("--- Processing HETUS data for all countries except AT ---")
     data = load_data.load_all_hetus_files_except_AT()
     process_hetus_2010_data(data)
-    categories_eu = categories_path.rename(categories_path.parent / "categories_EU.csv")
+    categories_eu = categories_path.rename(
+        categories_path.parent / "category_sizes_EU.csv"
+    )
 
     # merge categories files
-    merge_categories_files(categories_at, categories_eu)
+    merge_category_sizes_files(categories_at, categories_eu)
 
 
 if __name__ == "__main__":

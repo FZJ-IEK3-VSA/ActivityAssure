@@ -135,7 +135,7 @@ def categorize(
     print(category_sizes)
     if size_threshold:
         apply_hetus_size_limits(category_sizes)
-    activity_profile.save_df(category_sizes, "categories", "categories")
+    activity_profile.save_df(category_sizes, "categories", "category_sizes")
     return [
         ExpandedActivityProfiles(
             categories.get_group(g),
