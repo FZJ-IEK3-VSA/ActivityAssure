@@ -50,7 +50,7 @@ def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
 
 
 @utils.timing
-def process_hetus_2010_data(data: pd.DataFrame):
+def process_hetus_2010_data(data: pd.DataFrame, categorization_attributes=None):
     """
     Prepare and categorize the data set and calculate
     statistics for each category.
@@ -63,13 +63,14 @@ def process_hetus_2010_data(data: pd.DataFrame):
     # where important data is missing
     cat_data = get_diary_categorization_data(data, persondata)
     # categorize the data
-    key = [
-        col.Country.ID,
-        person_attributes.Sex.title(),
-        person_attributes.WorkStatus.title(),
-        diary_attributes.DayType.title(),
-    ]
-    categories = categorize(cat_data, key)
+    if categorization_attributes is None:
+        categorization_attributes = [
+            col.Country.ID,
+            person_attributes.Sex.title(),
+            person_attributes.WorkStatus.title(),
+            diary_attributes.DayType.title(),
+        ]
+    categories = categorize(cat_data, categorization_attributes)
     categories = filter_categories(categories)
 
     # cat_hhdata = get_hh_categorization_data(hhdata, persondata)
@@ -147,11 +148,16 @@ def merge_category_sizes_files(path1: Path, path2: Path):
     merged.to_csv(path1.parent / "category_sizes.csv", index=False)
 
 
-def process_all_hetus_countries_AT_separately(hetus_path: str, encrypted: bool = False):
+def process_all_hetus_countries_AT_separately(
+    hetus_path: str,
+    encrypted: bool = False,
+    categorization_attributes=None,
+    title: str = "",
+):
     # process AT data separately (different resolution)
     logging.info("--- Processing HETUS data for AT ---")
     data_at = load_data.load_hetus_files(["AT"], hetus_path, encrypted)
-    process_hetus_2010_data(data_at)
+    process_hetus_2010_data(data_at, categorization_attributes)
 
     # rename categories file
     categories_path = VALIDATION_DATA_PATH / "categories" / "category_sizes.csv"
@@ -162,13 +168,56 @@ def process_all_hetus_countries_AT_separately(hetus_path: str, encrypted: bool =
     # process remaining countries
     logging.info("--- Processing HETUS data for all countries except AT ---")
     data = load_data.load_all_hetus_files_except_AT(hetus_path, encrypted)
-    process_hetus_2010_data(data)
+    process_hetus_2010_data(data, categorization_attributes)
     categories_eu = categories_path.rename(
         categories_path.parent / "category_sizes_EU.csv"
     )
 
     # merge categories files
     merge_category_sizes_files(categories_at, categories_eu)
+
+    if not title:
+        # determine title automatically
+        title = "_".join(s.lower() for s in categorization_attributes)
+    # rename result directoryc
+    logging.info(f"Finished creating the validation data set '{title}'")
+
+
+def generate_all_dataset_variants():
+    """
+    Generates all relevant variants of the validation data set
+    with a different set of categorization attributes.
+    """
+    HETUS_PATH = "D:\Daten\HETUS Data\HETUS 2010 full set\Data_encrypted"
+    country = col.Country.ID
+    sex = person_attributes.Sex.title()
+    work_status = person_attributes.WorkStatus.title()
+    day_type = diary_attributes.DayType.title()
+    # default variant with full categorization
+    process_all_hetus_countries_AT_separately(
+        HETUS_PATH, True, [country, sex, work_status, day_type]
+    )
+    # variants with only three categorization attributes
+    process_all_hetus_countries_AT_separately(
+        HETUS_PATH, True, [country, sex, work_status]
+    )
+    process_all_hetus_countries_AT_separately(
+        HETUS_PATH, True, [country, sex, day_type]
+    )
+    process_all_hetus_countries_AT_separately(
+        HETUS_PATH, True, [country, work_status, day_type]
+    )
+    # special case: variant without country is special (has to leave out AT data)
+    data = load_data.load_hetus_files(["AT"])
+    process_hetus_2010_data(data)
+    Path(VALIDATION_DATA_PATH).rename(
+        VALIDATION_DATA_PATH.parent / "sex_work status_day type"
+    )
+    # some other relevant variants
+    process_all_hetus_countries_AT_separately(HETUS_PATH, True, [country])
+    process_all_hetus_countries_AT_separately(HETUS_PATH, True, [country, sex])
+    process_all_hetus_countries_AT_separately(HETUS_PATH, True, [country, day_type])
+    process_all_hetus_countries_AT_separately(HETUS_PATH, True, [country, work_status])
 
 
 if __name__ == "__main__":
