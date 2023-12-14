@@ -51,6 +51,12 @@ def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
 
 @utils.timing
 def process_hetus_2010_data(data: pd.DataFrame):
+    """
+    Prepare and categorize the data set and calculate
+    statistics for each category.
+
+    :param data: the data to process
+    """
     persondata, activity_types = prepare_data(data)
 
     # calculate additional columns for categorizing and drop rows
@@ -74,12 +80,25 @@ def process_hetus_2010_data(data: pd.DataFrame):
 
 
 def split_data(data: pd.DataFrame) -> list[pd.DataFrame]:
+    """
+    Randomly split a dataframe into half.
+
+    :param data: the dataframe to split
+    :return: a list containing the dataframe halves
+    """
     part1 = data.sample(frac=0.5)
     part2 = data.drop(part1.index)
     return [part1, part2]
 
 
 def cross_validation_split(data: pd.DataFrame):
+    """
+    Splits each category of the data set in half, and stores
+    both halves in separate directory structures to allow
+    cross-validation.
+
+    :param data: the HETUS data to use
+    """
     persondata, activity_types = prepare_data(data)
     cat_data = get_diary_categorization_data(data, persondata)
     key = [
@@ -128,10 +147,10 @@ def merge_category_sizes_files(path1: Path, path2: Path):
     merged.to_csv(path1.parent / "category_sizes.csv", index=False)
 
 
-def process_all_hetus_countries_AT_separately():
+def process_all_hetus_countries_AT_separately(hetus_path: str, encrypted: bool = False):
     # process AT data separately (different resolution)
     logging.info("--- Processing HETUS data for AT ---")
-    data_at = load_data.load_hetus_files(["AT"])
+    data_at = load_data.load_hetus_files(["AT"], hetus_path, encrypted)
     process_hetus_2010_data(data_at)
 
     # rename categories file
@@ -142,7 +161,7 @@ def process_all_hetus_countries_AT_separately():
 
     # process remaining countries
     logging.info("--- Processing HETUS data for all countries except AT ---")
-    data = load_data.load_all_hetus_files_except_AT()
+    data = load_data.load_all_hetus_files_except_AT(hetus_path, encrypted)
     process_hetus_2010_data(data)
     categories_eu = categories_path.rename(
         categories_path.parent / "category_sizes_EU.csv"
@@ -158,8 +177,9 @@ if __name__ == "__main__":
         level=logging.DEBUG,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    HETUS_PATH = "D:\Daten\HETUS Data\HETUS 2010 full set\Data_encrypted"
 
-    process_all_hetus_countries_AT_separately()
+    process_all_hetus_countries_AT_separately(HETUS_PATH, True)
 
     # data = load_data.load_all_hetus_files_except_AT()
     # data = load_data.load_hetus_files(["FI"])
