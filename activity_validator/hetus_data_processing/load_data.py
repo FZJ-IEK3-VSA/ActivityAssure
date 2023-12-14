@@ -2,6 +2,7 @@
 Functions for loading HETUS data files.
 """
 
+import argparse
 import getpass
 from io import StringIO
 import os
@@ -89,7 +90,7 @@ def build_dtype_dict() -> dict[str, type]:
 DTYPE_DICT = build_dtype_dict()
 
 
-def get_key() -> str:
+def prompt_for_key() -> str:
     """
     Creates a terminal prompt to enter a decryption key.
     The entered key is not echoed.
@@ -97,6 +98,16 @@ def get_key() -> str:
     :return: the entered key
     """
     return getpass.getpass("Enter HETUS decryption key: ")
+
+
+def read_key_as_arg() -> str:
+    """
+    Parses the decryption key as an argument
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("key", type=str, help="Decryption key for HETUS data")
+    args = parser.parse_args()
+    return args.key
 
 
 def decrypt_file(path: str, key: str) -> str:
@@ -160,34 +171,32 @@ def load_hetus_file(
 
 
 def load_hetus_files(
-    countries: Iterable[str], path: str = HETUS_PATH, encrypted: bool = False
+    countries: Iterable[str], path: str = HETUS_PATH, key: str | None = None
 ) -> pd.DataFrame:
     """
     Loads HETUS data of multiple countries.
 
     :param countries: a list of country codes (e.g., "DE" for germany)
     :param path: the HETUS data folder, defaults to HETUS_PATH
-    :param encrypted: if the data files are encrypted
+    :param key: the key if the data file is encrypted, else None
     :return: HETUS data for the countries
     """
-    key = get_key() if encrypted else None
     data = pd.concat(load_hetus_file(country, path, key) for country in countries)
     return data
 
 
 def load_all_hetus_files(
-    path: str = HETUS_PATH, encrypted: bool = False
+    path: str = HETUS_PATH, key: str | None = None
 ) -> pd.DataFrame:
     """
     Loads all available HETUS files.
 
     :param path: the HETUS data folder, defaults to HETUS_PATH
-    :param encrypted: if the data files are encrypted
+    :param key: the key if the data file is encrypted, else None
     :return: HETUS data for all available countries
     """
     start = time.time()
     filenames = get_hetus_file_names(path)
-    key = get_key() if encrypted else None
     data = pd.concat(
         load_hetus_file_from_path(filename, key) for filename in filenames.values()
     )
@@ -198,7 +207,7 @@ def load_all_hetus_files(
 
 
 def load_all_hetus_files_except_AT(
-    path: str = HETUS_PATH, encrypted: bool = False
+    path: str = HETUS_PATH, key: str | None = None
 ) -> pd.DataFrame:
     """
     Loads all available HETUS files, except for the Austrian file.
@@ -206,13 +215,12 @@ def load_all_hetus_files_except_AT(
     which can cause problems.
 
     :param path: the HETUS data folder, defaults to HETUS_PATH
-    :param encrypted: if the data files are encrypted
+    :param key: the key if the data file is encrypted, else None
     :return: HETUS data for all available countries except for Austria
     """
     start = time.time()
     filenames = get_hetus_file_names(path)
     del filenames["AT"]
-    key = get_key() if encrypted else None
     data = pd.concat(
         load_hetus_file_from_path(filename, key) for filename in filenames.values()
     )

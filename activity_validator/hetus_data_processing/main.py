@@ -150,13 +150,13 @@ def merge_category_sizes_files(path1: Path, path2: Path):
 
 def process_all_hetus_countries_AT_separately(
     hetus_path: str,
-    encrypted: bool = False,
+    key: str | None = None,
     categorization_attributes=None,
     title: str = "",
 ):
     # process AT data separately (different resolution)
     logging.info("--- Processing HETUS data for AT ---")
-    data_at = load_data.load_hetus_files(["AT"], hetus_path, encrypted)
+    data_at = load_data.load_hetus_files(["AT"], hetus_path, key)
     process_hetus_2010_data(data_at, categorization_attributes)
 
     # rename categories file
@@ -167,7 +167,7 @@ def process_all_hetus_countries_AT_separately(
 
     # process remaining countries
     logging.info("--- Processing HETUS data for all countries except AT ---")
-    data = load_data.load_all_hetus_files_except_AT(hetus_path, encrypted)
+    data = load_data.load_all_hetus_files_except_AT(hetus_path, key)
     process_hetus_2010_data(data, categorization_attributes)
     categories_eu = categories_path.rename(
         categories_path.parent / "category_sizes_EU.csv"
@@ -183,41 +183,40 @@ def process_all_hetus_countries_AT_separately(
     logging.info(f"Finished creating the validation data set '{title}'")
 
 
-def generate_all_dataset_variants():
+def generate_all_dataset_variants(hetus_path: str, key: str|None = None):
     """
     Generates all relevant variants of the validation data set
     with a different set of categorization attributes.
     """
-    HETUS_PATH = "D:\Daten\HETUS Data\HETUS 2010 full set\Data_encrypted"
     country = col.Country.ID
     sex = person_attributes.Sex.title()
     work_status = person_attributes.WorkStatus.title()
     day_type = diary_attributes.DayType.title()
     # default variant with full categorization
     process_all_hetus_countries_AT_separately(
-        HETUS_PATH, True, [country, sex, work_status, day_type]
+        hetus_path, key, [country, sex, work_status, day_type]
     )
     # variants with only three categorization attributes
     process_all_hetus_countries_AT_separately(
-        HETUS_PATH, True, [country, sex, work_status]
+        hetus_path, key, [country, sex, work_status]
     )
     process_all_hetus_countries_AT_separately(
-        HETUS_PATH, True, [country, sex, day_type]
+        hetus_path, key, [country, sex, day_type]
     )
     process_all_hetus_countries_AT_separately(
-        HETUS_PATH, True, [country, work_status, day_type]
+        hetus_path, key, [country, work_status, day_type]
     )
     # special case: variant without country is special (has to leave out AT data)
-    data = load_data.load_hetus_files(["AT"])
+    data = load_data.load_all_hetus_files_except_AT(hetus_path, key)
     process_hetus_2010_data(data)
     Path(VALIDATION_DATA_PATH).rename(
         VALIDATION_DATA_PATH.parent / "sex_work status_day type"
     )
     # some other relevant variants
-    process_all_hetus_countries_AT_separately(HETUS_PATH, True, [country])
-    process_all_hetus_countries_AT_separately(HETUS_PATH, True, [country, sex])
-    process_all_hetus_countries_AT_separately(HETUS_PATH, True, [country, day_type])
-    process_all_hetus_countries_AT_separately(HETUS_PATH, True, [country, work_status])
+    process_all_hetus_countries_AT_separately(hetus_path, key, [country])
+    process_all_hetus_countries_AT_separately(hetus_path, key, [country, sex])
+    process_all_hetus_countries_AT_separately(hetus_path, key, [country, day_type])
+    process_all_hetus_countries_AT_separately(hetus_path, key, [country, work_status])
 
 
 if __name__ == "__main__":
@@ -226,11 +225,14 @@ if __name__ == "__main__":
         level=logging.DEBUG,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    HETUS_PATH = "D:\Daten\HETUS Data\HETUS 2010 full set\Data_encrypted"
 
-    process_all_hetus_countries_AT_separately(HETUS_PATH, True)
+    HETUS_PATH = "/storage_cluster/projects/2022-d-neuroth-phd/data/hetus_2010_encrypted/"
+    key = load_data.read_key_as_arg()
+    generate_all_dataset_variants(HETUS_PATH, key)
+
+    # process_all_hetus_countries_AT_separately(HETUS_PATH, True)
 
     # data = load_data.load_all_hetus_files_except_AT()
-    # data = load_data.load_hetus_files(["FI"])
+    # data = load_data.load_hetus_files(["FI"], HETUS_PATH, key=key)
     # process_hetus_2010_data(data)
     # cross_validation_split(data)
