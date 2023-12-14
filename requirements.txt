@@ -3,6 +3,8 @@ numpy
 tabulate
 dataclasses-json
 scipy
+cryptography
+tabulate
 
 plotly
 dash
