@@ -179,11 +179,12 @@ def process_all_hetus_countries_AT_separately(
     if not title:
         # determine title automatically
         title = "_".join(s.lower() for s in categorization_attributes)
-    # rename result directoryc
+    # rename result directory
+    Path(VALIDATION_DATA_PATH).rename(VALIDATION_DATA_PATH.parent / title)
     logging.info(f"Finished creating the validation data set '{title}'")
 
 
-def generate_all_dataset_variants(hetus_path: str, key: str|None = None):
+def generate_all_dataset_variants(hetus_path: str, key: str | None = None):
     """
     Generates all relevant variants of the validation data set
     with a different set of categorization attributes.
@@ -200,9 +201,7 @@ def generate_all_dataset_variants(hetus_path: str, key: str|None = None):
     process_all_hetus_countries_AT_separately(
         hetus_path, key, [country, sex, work_status]
     )
-    process_all_hetus_countries_AT_separately(
-        hetus_path, key, [country, sex, day_type]
-    )
+    process_all_hetus_countries_AT_separately(hetus_path, key, [country, sex, day_type])
     process_all_hetus_countries_AT_separately(
         hetus_path, key, [country, work_status, day_type]
     )
@@ -226,7 +225,9 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    HETUS_PATH = "/storage_cluster/projects/2022-d-neuroth-phd/data/hetus_2010_encrypted/"
+    HETUS_PATH = (
+        "/storage_cluster/projects/2022-d-neuroth-phd/data/hetus_2010_encrypted/"
+    )
     key = load_data.read_key_as_arg()
     generate_all_dataset_variants(HETUS_PATH, key)
 
