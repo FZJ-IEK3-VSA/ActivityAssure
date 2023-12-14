@@ -136,6 +136,7 @@ def merge_category_sizes_files(path1: Path, path2: Path):
     contain the same row indices, but different column
     indices.
     Saves the resulting file next to the first input file.
+    Deletes the two original files.
 
     :param path1: path to the first file
     :param path2: path to the second file
@@ -154,6 +155,9 @@ def merge_category_sizes_files(path1: Path, path2: Path):
     # remove the duplicated index
     merged = merged.loc[:, ~merged.columns.duplicated()].copy()  # type: ignore
     merged.to_csv(path1.parent / "category_sizes.csv", index=False)
+    # delete the original files
+    path1.unlink()
+    path2.unlink()
 
 
 def process_all_hetus_countries_AT_separately(
