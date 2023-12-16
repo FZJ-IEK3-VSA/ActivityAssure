@@ -25,7 +25,9 @@ def validate_lpg():
     )
 
     # load validation data
-    validation_data_path = Path("data/validation data sets/full_categorization")
+    validation_data_path = Path(
+        "data/validation data sets/final/country_sex_work status_day type"
+    )
     validation_statistics = validation.load_validation_data(validation_data_path)
 
     # calc input data statistics
