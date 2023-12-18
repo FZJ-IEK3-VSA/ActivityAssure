@@ -2,6 +2,7 @@
 
 import dataclasses
 from datetime import timedelta
+import itertools
 import json
 import logging
 from pathlib import Path
@@ -188,7 +189,7 @@ def group_profiles_by_type(
         determine_day_type(profile)
         profiles_by_type.setdefault(profile.profile_type, []).append(profile)
     logging.info(
-        f"Grouped {len(activity_profiles)} into {len(profiles_by_type)} profile types"
+        f"Grouped {len(activity_profiles)} profiles into {len(profiles_by_type)} categories"
     )
     return profiles_by_type
 
@@ -316,6 +317,7 @@ def prepare_input_data(
     return all_profiles_by_type
 
 
+@utils.timing
 def calc_statistics_per_category(
     input_data_dict: dict[ProfileType, list[SparseActivityProfile]],
     output_path: Path,
@@ -348,17 +350,47 @@ def get_similar_categories(profile_type: ProfileType) -> list[ProfileType]:
     :param profile_type: the profile type for which to collect similar types
     :return: a list of similar profile types
     """
-    similar = [dataclasses.replace(profile_type, sex=e) for e in person_attributes.Sex]
-    similar += [
-        dataclasses.replace(profile_type, work_status=e)
-        for e in person_attributes.WorkStatus
+    # make sure the original profile type comes first
+    similar = [profile_type]
+    similar += [dataclasses.replace(profile_type, sex=e) for e in person_attributes.Sex]
+    work_statuses = [
+        person_attributes.WorkStatus.full_time,
+        person_attributes.WorkStatus.part_time,
+        person_attributes.WorkStatus.retired,
+        person_attributes.WorkStatus.student,
+        person_attributes.WorkStatus.unemployed,
     ]
-    similar += [
-        dataclasses.replace(profile_type, day_type=e) for e in diary_attributes.DayType
-    ]
+    similar += [dataclasses.replace(profile_type, work_status=e) for e in work_statuses]
+    day_types = [diary_attributes.DayType.work, diary_attributes.DayType.no_work]
+    similar += [dataclasses.replace(profile_type, day_type=e) for e in day_types]
     # remove duplicates
     similar = list(set(similar))
     return similar
+
+
+def all_profile_types_of_same_country(country) -> list[ProfileType]:
+    """
+    Returns a list of all possible profile types for a
+    fixed country.
+
+    :return: a list of profile types
+    """
+    # make sure the original profile type comes first
+    sexes = [e for e in person_attributes.Sex]
+    work_statuses = [
+        person_attributes.WorkStatus.full_time,
+        person_attributes.WorkStatus.part_time,
+        person_attributes.WorkStatus.retired,
+        person_attributes.WorkStatus.student,
+        person_attributes.WorkStatus.unemployed,
+    ]
+    day_types = [diary_attributes.DayType.work, diary_attributes.DayType.no_work]
+    combinations: Iterable = itertools.product(
+        [country], day_types, work_statuses, sexes
+    )
+    combinations = [(c, s, w, d) for c, d, w, s in combinations]
+    profile_types = [ProfileType.from_iterable(c) for c in combinations]
+    return profile_types
 
 
 def validate_per_category(
@@ -391,13 +423,12 @@ def validate_per_category(
 def validate_similar_categories(
     input_data_dict: dict[ProfileType, ValidationData],
     validation_data_dict: dict[ProfileType, ValidationData],
-    output_path: Path,
 ) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
     # validate each profile type individually
     metrics_dict = {}
     for profile_type, input_data in input_data_dict.items():
         # select matching validation data
-        similar = get_similar_categories(profile_type)
+        similar = all_profile_types_of_same_country(profile_type.country)
         dict_per_type = {}
         for similar_type in similar:
             validation_data = validation_data_dict[similar_type]
