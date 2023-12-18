@@ -26,7 +26,8 @@ from activity_validator.hetus_data_processing.categorize import (
 from activity_validator.hetus_data_processing import category_statistics
 
 
-def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+@utils.timing
+def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
     """
     Prepares and cleans raw HETUS data before categorizing and
     calculating statistics.
@@ -36,6 +37,21 @@ def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     :param data: raw HETUS data
     :return: cleaned HETUS data and the list of possible activities
     """
+    # extract only the columns that are actually needed to improve performance
+    relevant_columns = (
+        col.Diary.KEY
+        + [
+            col.Person.WORK_STATUS,
+            col.Person.SELF_DECL_LABOUR_STATUS,
+            col.Person.FULL_OR_PART_TIME,
+            col.Person.SEX,
+            col.Diary.DAYTYPE,
+            col.Diary.EMPLOYED_STUDENT,
+        ]
+        + [c for c in data.columns if c.startswith(col.Diary.MAIN_ACTIVITIES_PATTERN)]
+    )
+    data = data[relevant_columns]
+
     data.set_index(col.Diary.KEY, inplace=True)
     utils.stats(data)
 
@@ -46,7 +62,7 @@ def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     data_valid_persons, persondata = level_extraction.get_usable_person_data(data)
     utils.stats(data_valid_persons, persondata)
     # data_valid_hhs, hhdata = level_extraction.get_usable_household_data(data)
-    return persondata, activity_types
+    return data, persondata, activity_types
 
 
 @utils.timing
@@ -57,7 +73,7 @@ def process_hetus_2010_data(data: pd.DataFrame, categorization_attributes=None):
 
     :param data: the data to process
     """
-    persondata, activity_types = prepare_data(data)
+    data, persondata, activity_types = prepare_data(data)
 
     # calculate additional columns for categorizing and drop rows
     # where important data is missing
@@ -76,8 +92,6 @@ def process_hetus_2010_data(data: pd.DataFrame, categorization_attributes=None):
     # cat_hhdata = get_hh_categorization_data(hhdata, persondata)
 
     category_statistics.calc_statistics_per_category(categories, activity_types)
-
-    # data_checks.all_data_checks(data, persondata, hhdata)
 
 
 def split_data(data: pd.DataFrame) -> list[pd.DataFrame]:
@@ -100,7 +114,7 @@ def cross_validation_split(data: pd.DataFrame):
 
     :param data: the HETUS data to use
     """
-    persondata, activity_types = prepare_data(data)
+    data, persondata, activity_types = prepare_data(data)
     cat_data = get_diary_categorization_data(data, persondata)
     key = [
         col.Country.ID,
@@ -143,7 +157,9 @@ def merge_category_sizes_files(path1: Path, path2: Path):
     """
     data1 = pd.read_csv(path1)
     data2 = pd.read_csv(path2)
-    if len(data1.columns) == len(data2.columns) == 2 and all(data1.columns == data2.columns):
+    if len(data1.columns) == len(data2.columns) == 2 and all(
+        data1.columns == data2.columns
+    ):
         # only a single categorization attribute
         axis = 0
     else:
@@ -190,7 +206,10 @@ def process_all_hetus_countries_AT_separately(
 
     if not title:
         # determine title automatically
-        title = "_".join(s.lower() for s in categorization_attributes)
+        if categorization_attributes:
+            title = "_".join(s.lower() for s in categorization_attributes)
+        else:
+            title = "full_categorization"
     # rename result directory
     Path(VALIDATION_DATA_PATH).rename(VALIDATION_DATA_PATH.parent / title)
     logging.info(f"Finished creating the validation data set '{title}'")
@@ -243,7 +262,7 @@ if __name__ == "__main__":
     key = load_data.read_key_as_arg()
     generate_all_dataset_variants(HETUS_PATH, key)
 
-    # process_all_hetus_countries_AT_separately(HETUS_PATH, True)
+    # process_all_hetus_countries_AT_separately(HETUS_PATH, key)
 
     # data = load_data.load_all_hetus_files_except_AT()
     # data = load_data.load_hetus_files(["FI"], HETUS_PATH, key=key)
