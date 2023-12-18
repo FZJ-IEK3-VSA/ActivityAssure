@@ -8,6 +8,8 @@ from typing import Type
 import numpy as np
 import pandas as pd
 
+
+from activity_validator.hetus_data_processing import utils
 import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import filter
 
@@ -29,7 +31,8 @@ def limit_to_columns_by_level(
              desired level
     """
     # remove index and content columns below the specified level
-    limited_data = data.reset_index().set_index(level.KEY)[level.CONTENT]
+    columns_to_keep = list(set(data.columns) & set(level.CONTENT))
+    limited_data = data.reset_index().set_index(level.KEY)[columns_to_keep]
     return limited_data
 
 
@@ -79,7 +82,8 @@ def get_consistent_groups(data: pd.DataFrame, level: Type[col.HetusLevel]) -> pd
     :return: Index containing only consistent households
     """
     # only keep columns on the specified level
-    data = data[level.CONTENT]
+    columns_to_keep = list(set(data.columns) & set(level.CONTENT))
+    data = data[columns_to_keep]
     # get numbers of different values per group for each column
     num_values_per_group = data.groupby(level=level.KEY).nunique(dropna=False)  # type: ignore
     inconsistent_columns_per_group = (num_values_per_group != 1).sum(axis=1)  # type: ignore
@@ -113,6 +117,7 @@ def get_inconsistent_columns(
     return inconsistencies_per_col[inconsistencies_per_col > 0]
 
 
+@utils.timing
 def get_usable_data_by_level(
     data: pd.DataFrame, level: Type[col.HetusLevel]
 ) -> tuple[pd.DataFrame, pd.DataFrame]:

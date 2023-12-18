@@ -48,9 +48,8 @@ def get_diary_categorization_data(
     # calculate additional attributes
     daytype = diary_attributes.determine_day_types(data)
     data = pd.concat([data, daytype], axis=1)
-    data = data[
-        data[diary_attributes.DayType.title()] != diary_attributes.DayType.undetermined
-    ]
+    daytype_col = diary_attributes.DayType.title()
+    data = data[data[daytype_col] != diary_attributes.DayType.undetermined]
     return data
 
 
@@ -158,8 +157,12 @@ def filter_categories(
     :param categories: the categories to filter
     :return: the categories that can be published
     """
+    total_entries = sum(len(c.data) for c in categories)
     filtered = [c for c in categories if len(c.data) >= hetus_constants.MIN_CELL_SIZE]
+    kept_entries = sum(len(c.data) for c in filtered)
+    keep_ratio = round(100 * kept_entries / total_entries, 1)
     logging.info(
-        f"{len(filtered)} out of {len(categories)} categories can be published."
+        f"{len(filtered)} out of {len(categories)} categories can be published "
+        f"({keep_ratio} % of the entries)."
     )
     return filtered
