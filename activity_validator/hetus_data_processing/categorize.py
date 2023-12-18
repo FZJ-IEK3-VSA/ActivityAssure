@@ -162,7 +162,7 @@ def filter_categories(
     kept_entries = sum(len(c.data) for c in filtered)
     keep_ratio = round(100 * kept_entries / total_entries, 1)
     logging.info(
-        f"{len(filtered)} out of {len(categories)} categories can be published "
-        f"({keep_ratio} % of the entries)."
+        f"{len(filtered)} out of {len(categories)} categories can be published. "
+        f"These contain {kept_entries} of {total_entries} entries ({keep_ratio} %)."
     )
     return filtered
