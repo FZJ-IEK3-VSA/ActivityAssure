@@ -439,3 +439,52 @@ def validate_similar_categories(
             dict_per_type[similar_type] = metrics
         metrics_dict[profile_type] = dict_per_type
     return metrics_dict
+
+
+def validate_all_combinations(
+    input_data_dict: dict[ProfileType, ValidationData],
+    validation_data_dict: dict[ProfileType, ValidationData],
+) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
+    """
+    Calculates metrics for each combination of input and validation
+    profile type.
+
+    :param input_data_dict: input data statistics, by profile type
+    :param validation_data_dict: validation data statistics, by profile type
+    :return: nested dict, containing the metrics for each combination
+    """
+    # validate each profile type individually
+    metrics_dict = {}
+    for profile_type, input_data in input_data_dict.items():
+        # select matching validation data
+        dict_per_type = {}
+        for validation_type, validation_data in validation_data_dict.items():
+            # calcluate and store comparison metrics
+            _, metrics = comparison_metrics.calc_comparison_metrics(
+                validation_data, input_data
+            )
+            dict_per_type[validation_type] = metrics
+        metrics_dict[profile_type] = dict_per_type
+    return metrics_dict
+
+
+def save_file_per_metrics_per_combination(
+    metrics: dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]],
+    output_path: Path,
+):
+    """
+    For a nested dict containing metrics for multiple combinations of profile types,
+    creates one file per metric per input profile type. Each file gives an overview
+    how this metric behaves for all activity groups for all other profile types the
+    input profile type was compared to.
+
+    :param metrics: nested metrics dict
+    :param output_path: base output directory
+    """
+    for profile_type, metrics_per_type in metrics.items():
+        kpis = dataclasses.fields(comparison_metrics.ValidationMetrics)
+        for kpi in kpis:
+            df = pd.DataFrame(
+                {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}
+            )
+            activity_profile.save_df(df, "metrics", kpi.name, profile_type, output_path)

@@ -57,18 +57,11 @@ def cross_validation():
     data2 = validation.load_validation_data(data_path2)
 
     # compare each category of data1 to each category of data2
-    metrics = validation.validate_similar_categories(data1, data2)
-    # save the
-    for profile_type, metrics_per_type in metrics.items():
-        kpis = dataclasses.fields(ValidationMetrics)
-        for kpi in kpis:
-            df = pd.DataFrame(
-                {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}
-            )
-            activity_profile.save_df(df, "metrics", kpi.name, profile_type, output_path)
+    metrics = validation.validate_all_combinations(data1, data2)
+    validation.save_file_per_metrics_per_combination(metrics, output_path)
 
     # plot a heatmap for each metric
-    metric_heatmaps.plot_metrics_heatmaps(metrics)
+    metric_heatmaps.plot_metrics_heatmaps(metrics, output_path)
 
 
 if __name__ == "__main__":
