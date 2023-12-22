@@ -2,17 +2,15 @@
 Example script for validation the LoadProfileGenerator
 """
 
-import dataclasses
 import logging
 from pathlib import Path
 
-import pandas as pd
-from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.lpgvalidation import validation
-from activity_validator.lpgvalidation.comparison_metrics import ValidationMetrics
 from activity_validator.hetus_data_processing.visualizations import metric_heatmaps
+from activity_validator.hetus_data_processing import utils
 
 
+@utils.timing
 def validate_lpg():
     input_path = Path("data/lpg/preprocessed_single")
     output_path = Path("data/lpg/results")
@@ -29,24 +27,30 @@ def validate_lpg():
     input_data_dict = validation.prepare_input_data(
         full_year_profiles, activity_mapping
     )
-
-    # load validation data
-    validation_data_path = Path(
-        "data/validation data sets/final/country_sex_work status_day type"
-    )
-    validation_statistics = validation.load_validation_data(validation_data_path)
-
     # calc input data statistics
     input_statistics = validation.calc_statistics_per_category(
         input_data_dict, output_path, activity_types
     )
 
-    # compare input and validation data statistics
-    validation.validate_per_category(
+    # load validation data
+    validation_data_path = Path("data/validation data sets/latest")
+    validation_statistics = validation.load_validation_data(validation_data_path)
+
+    # compare input and validation data statistics per profile type
+    metrics = validation.validate_per_category(
         input_statistics, validation_statistics, output_path
     )
+    validation.save_metric_sums(metrics, output_path)
+
+    # compare input and validation for each combination of profile types
+    metrics = validation.validate_all_combinations(
+        input_statistics, validation_statistics
+    )
+    validation.save_file_per_metrics_per_combination(metrics, output_path)
+    metric_heatmaps.plot_metrics_heatmaps(metrics, output_path)
 
 
+@utils.timing
 def cross_validation():
     output_path = Path("data/lpg/results")
 

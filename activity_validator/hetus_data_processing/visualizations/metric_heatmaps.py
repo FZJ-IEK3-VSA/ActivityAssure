@@ -47,7 +47,7 @@ def plot_metrics_heatmap(data: pd.DataFrame, output_path: Path):
     data.index = pd.Index([str(x) for x in data.index])
     data.columns = pd.Index([str(x) for x in data.columns])
     fig = px.imshow(data, title=data.Name)
-    fig.show()
+    # fig.show()
     # decrease font size for image file to include all axis labels
     fig.update_layout(font_size=9, title_font_size=18)
     path = output_path / "plots"
