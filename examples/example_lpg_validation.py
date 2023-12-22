@@ -10,6 +10,7 @@ import pandas as pd
 from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.lpgvalidation import validation
 from activity_validator.lpgvalidation.comparison_metrics import ValidationMetrics
+from activity_validator.hetus_data_processing.visualizations import metric_heatmaps
 
 
 def validate_lpg():
@@ -65,6 +66,9 @@ def cross_validation():
                 {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}
             )
             activity_profile.save_df(df, "metrics", kpi.name, profile_type, output_path)
+
+    # plot a heatmap for each metric
+    metric_heatmaps.plot_metrics_heatmaps(metrics)
 
 
 if __name__ == "__main__":
