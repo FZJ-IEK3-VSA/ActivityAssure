@@ -31,9 +31,9 @@ print(f"UTSP-Server: {address}")
 
 # Define templates to simulate
 result_file = "Results.HH1.sqlite"
-templates = [HouseholdTemplates.CHR01_Couple_both_at_Work]
+# templates = [HouseholdTemplates.CHR01_Couple_both_at_Work]
 templates = [v for k, v in vars(HouseholdTemplates).items() if not k.startswith("__")]
-repetitions_per_hh = 1  # 50
+repetitions_per_hh = 20  # 50
 
 template_guids_and_requests = []
 for template in templates:
@@ -63,10 +63,10 @@ results = utspclient.calculate_multiple_requests(
     REQUEST_URL, requests, API_KEY, raise_exceptions=False
 )
 d = round(time.time() - start, 2)
-print(f"Calculation of {len(new_ids_and_requests)} requests took {d} sec.")
+print(f"Calculation of {len(new_ids_and_requests) * len(templates)} requests took {d} sec.")
 
 # save all result files
-base_result_path = Path("data/lpg/raw")
+base_result_path = Path("/storage_cluster/projects/2022-d-neuroth-phd/results/activity_validator/lpg_simulations")
 errors_path = base_result_path / "errors"
 errors_path.mkdir(parents=True, exist_ok=True)
 for template, guid, request, result in zip(template_names, guids, requests, results):
