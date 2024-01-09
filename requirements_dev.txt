@@ -14,3 +14,4 @@ sphinx-autodoc-typehints
 pandas-stubs
 types-setuptools
 types-tabulate
+types-tqdm

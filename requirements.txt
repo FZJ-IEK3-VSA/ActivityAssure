@@ -6,7 +6,11 @@ scipy
 cryptography
 tabulate
 
+# plotting
 plotly
 dash
 dash-bootstrap-components
 kaleido
+
+# example
+tqdm

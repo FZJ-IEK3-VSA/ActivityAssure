@@ -1,10 +1,12 @@
-from datetime import datetime, timedelta
+import argparse
+from datetime import datetime
 import glob
 import json
 from pathlib import Path
 import sqlite3
 
 import pandas as pd
+import tqdm
 
 from activity_validator.hetus_data_processing import hetus_translations
 
@@ -31,7 +33,7 @@ CATEGORY_MAPPING = {
 }
 
 
-def load_activity_profile_from_db(file: Path):
+def load_activity_profile_from_db(file: Path, result_dir: Path):
     assert file.is_file(), f"File does not exist: {file}"
 
     # load activity mapping
@@ -74,7 +76,7 @@ def load_activity_profile_from_db(file: Path):
             json.dump(merged, f, indent=4)
 
     # store the activities in a DataFrame
-    base_result_dir = Path("data/lpg/preprocessed")
+    base_result_dir = Path(result_dir)
     base_result_dir.mkdir(parents=True, exist_ok=True)
     for person, rows in rows_by_person.items():
         data = pd.DataFrame(rows, columns=["Timestep", "Date", "Activity"])
@@ -84,8 +86,29 @@ def load_activity_profile_from_db(file: Path):
 
 
 if __name__ == "__main__":
-    directory = Path("data/lpg/raw/")
-    assert directory.is_dir(), f"Invalid path: {directory}"
-    pattern = str(directory / "*" / "*.sqlite")
-    for file in glob.glob(pattern):
-        load_activity_profile_from_db(Path(file))
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        help="Root directory of the raw input data",
+        default="data/lpg/raw/",
+        required=False,
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        help="Root directory for the preprocessed result data",
+        default="data/lpg/preprocessed",
+        required=False,
+    )
+    args = parser.parse_args()
+    input_dir = Path(args.input)
+    result_dir = Path(args.output)
+    assert input_dir.is_dir(), f"Invalid path: {input_dir}"
+
+    # process all sqlite files in the directory
+    pattern = str(input_dir / "*" / "*.sqlite")
+    for file in tqdm.tqdm(glob.glob(pattern)):
+        load_activity_profile_from_db(Path(file), result_dir)
