@@ -33,7 +33,7 @@ print(f"UTSP-Server: {address}")
 result_file = "Results.HH1.sqlite"
 # templates = [HouseholdTemplates.CHR01_Couple_both_at_Work]
 templates = [v for k, v in vars(HouseholdTemplates).items() if not k.startswith("__")]
-repetitions_per_hh = 20  # 50
+repetitions_per_hh = 50
 
 template_guids_and_requests = []
 for template in templates:
@@ -68,7 +68,7 @@ print(
 
 # save all result files
 base_result_path = Path(
-    "/storage_cluster/projects/2022-d-neuroth-phd/results/activity_validator/lpg_simulations"
+    "/storage_cluster/projects/2022-d-neuroth-phd/results/activity_validator/lpg_simulations/raw"
 )
 errors_path = base_result_path / "errors"
 errors_path.mkdir(parents=True, exist_ok=True)
