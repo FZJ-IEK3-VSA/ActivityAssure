@@ -48,6 +48,7 @@ def validate_lpg():
     )
     validation.save_file_per_metrics_per_combination(metrics, output_path)
     metric_heatmaps.plot_metrics_heatmaps(metrics, output_path)
+    metric_heatmaps.plot_metrics_heatmaps_per_activity(metrics, output_path)
 
 
 @utils.timing
@@ -66,6 +67,7 @@ def cross_validation():
 
     # plot a heatmap for each metric
     metric_heatmaps.plot_metrics_heatmaps(metrics, output_path)
+    metric_heatmaps.plot_metrics_heatmaps_per_activity(metrics, output_path)
 
 
 if __name__ == "__main__":

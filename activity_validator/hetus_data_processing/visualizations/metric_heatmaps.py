@@ -12,13 +12,13 @@ from activity_validator.hetus_data_processing.activity_profile import ProfileTyp
 from activity_validator.lpgvalidation import comparison_metrics
 
 
-def convert_to_metric_dataframe(
+def convert_to_metric_sum_dataframe(
     metrics_dict: dict[
         ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]
     ]
 ) -> dict[str, pd.DataFrame]:
     """
-    Converts a nested metric dict to a set of dataframes, one for each metric
+    Converts a nested metric dict to a set of dataframes, one for each metric.
 
     :param metrics_dict: a nested dict that contains metrics for each combination of
                          input and validation profile types
@@ -32,6 +32,39 @@ def convert_to_metric_dataframe(
             for name, value in total_metrics.items():
                 total_metrics_dicts.setdefault(name, {}).setdefault(p1, {})[p2] = value
     dataframes = {k: pd.DataFrame(v) for k, v in total_metrics_dicts.items()}
+    return dataframes
+
+
+def convert_to_metric_dataframe_per_activity(
+    metrics_dict: dict[
+        ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]
+    ]
+) -> dict[str, dict[str, pd.DataFrame]]:
+    """
+    Converts a nested metric dict to a set of dataframes, one for each metric and
+    activity.
+
+    :param metrics_dict: a nested dict that contains metrics for each combination of
+                         input and validation profile types
+    :return: a nested dict mapping the metric names and activity names to the
+             respective dataframes containing the metric values
+    """
+    total_metrics_dicts: dict[
+        str, dict[str, dict[ProfileType, dict[ProfileType, float]]]
+    ] = {}
+    for p1, metrics_for_one_category in metrics_dict.items():
+        for p2, metrics in metrics_for_one_category.items():
+            metric_df = metrics.to_dataframe()
+            # iterate through all columns (one per metric)
+            for kpi_name, kpi_values in metric_df.items():
+                for activity, value in kpi_values.items():
+                    total_metrics_dicts.setdefault(kpi_name, {}).setdefault(
+                        activity, {}
+                    ).setdefault(p1, {})[p2] = value
+    dataframes = {
+        kpi: {act: pd.DataFrame(v) for act, v in d.items()}
+        for kpi, d in total_metrics_dicts.items()
+    }
     return dataframes
 
 
@@ -50,20 +83,22 @@ def plot_metrics_heatmap(data: pd.DataFrame, output_path: Path):
         data,
         title=data.Name,
         labels={"x": "Input Data Category", "y": "Validation Data Category"},
+        zmin=-1,
+        zmax=1,
     )
     # fig.show()
     # decrease font size for image file to include all axis labels
     fig.update_layout(font_size=8, title_font_size=18)
     path = output_path / "plots"
     path.mkdir(parents=True, exist_ok=True)
-    file = path / f"heatmap_{data.Name}.svg"
-    fig.write_image(file)
+    file = path / f"heatmap_{data.Name}.png"
+    fig.write_image(file, engine="kaleido")
 
 
 def make_symmetric(data: pd.DataFrame, sparse: bool = True) -> pd.DataFrame:
     """
     Makes a metrics dataframe symmetric, that means colum and row indices are
-    aligned. This improves heatmap readibility.
+    aligned. This improves heatmap readability.
 
     :param data: metrics dataframe
     :param sparse: whether NaN columns shall be added in case of missing profile types
@@ -119,9 +154,30 @@ def plot_metrics_heatmaps(metrics_dict, output_path: Path):
                          and validation profile types
     :param output_path: base output directory
     """
-    dataframes = convert_to_metric_dataframe(metrics_dict)
+    dataframes = convert_to_metric_sum_dataframe(metrics_dict)
     for name, df in dataframes.items():
         df = order_index(df)
         df = make_symmetric(df)
         df.Name = name
         plot_metrics_heatmap(df, output_path)
+
+
+def plot_metrics_heatmaps_per_activity(metrics_dict, output_path: Path):
+    """
+    Uses a full set of metrics between each combination
+    of input and validation profile types to generate a
+    set of heatmaps, one per activity per validation metric.
+
+    :param metrics_dict: a full, symmetric set of metrics,
+                         one for each combination of input
+                         and validation profile types
+    :param output_path: base output directory
+    """
+    dataframes = convert_to_metric_dataframe_per_activity(metrics_dict)
+    for name, d in dataframes.items():
+        for activity, df in d.items():
+            df = order_index(df)
+            df = make_symmetric(df)
+            clean_act_name = activity.replace("/", "-")
+            df.Name = f"{name} - {clean_act_name}"
+            plot_metrics_heatmap(df, output_path)
