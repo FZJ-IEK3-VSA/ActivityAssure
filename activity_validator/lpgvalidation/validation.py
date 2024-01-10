@@ -398,7 +398,8 @@ def get_metric_sums(
     output_path: Path | None = None,
 ) -> pd.DataFrame:
     """
-    Calculates all metric sums and optionally saves them as a single file.
+    Calculates all metric sums and returns and optionally saves them as a
+    single dataframe.
 
     :param metrics_dict: a dict containing metrics for each profile type
     :param output_path: base output directory
@@ -508,4 +509,6 @@ def save_file_per_metrics_per_combination(
             df = pd.DataFrame(
                 {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}
             )
-            activity_profile.save_df(df, "metrics/all_combinations", kpi.name, profile_type, output_path)
+            activity_profile.save_df(
+                df, "metrics/all_combinations", kpi.name, profile_type, output_path
+            )
