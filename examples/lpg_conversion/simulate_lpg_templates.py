@@ -45,11 +45,10 @@ for template in templates:
     new_ids_and_requests = [
         (
             template_id,
-            i,
             TimeSeriesRequest(
                 simulation_config.to_json(),  # type: ignore
                 "LPG",
-                guid=f"{i}",
+                guid=f"{i:02d}",
                 required_result_files=dict.fromkeys([result_file]),
             ),
         )
@@ -57,19 +56,23 @@ for template in templates:
     ]
     template_guids_and_requests.extend(new_ids_and_requests)
 
-template_names, guids, requests = zip(*template_guids_and_requests)
+template_names, requests = zip(*template_guids_and_requests)
 start = time.time()
 results = utspclient.calculate_multiple_requests(
     REQUEST_URL, requests, API_KEY, raise_exceptions=False
 )
 d = round(time.time() - start, 2)
-print(f"Calculation of {len(new_ids_and_requests) * len(templates)} requests took {d} sec.")
+print(
+    f"Calculation of {len(new_ids_and_requests) * len(templates)} requests took {d} sec."
+)
 
 # save all result files
-base_result_path = Path("/storage_cluster/projects/2022-d-neuroth-phd/results/activity_validator/lpg_simulations")
+base_result_path = Path(
+    "/storage_cluster/projects/2022-d-neuroth-phd/results/activity_validator/lpg_simulations"
+)
 errors_path = base_result_path / "errors"
 errors_path.mkdir(parents=True, exist_ok=True)
-for template, guid, request, result in zip(template_names, guids, requests, results):
+for template, request, result in zip(template_names, requests, results):
     filename = f"{template}_{request.guid}.sqlite"
     # check if the calculation failed
     if isinstance(result, Exception):
