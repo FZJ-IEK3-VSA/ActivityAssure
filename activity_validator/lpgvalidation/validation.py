@@ -470,7 +470,9 @@ def validate_all_combinations(
 
     :param input_data_dict: input data statistics, by profile type
     :param validation_data_dict: validation data statistics, by profile type
-    :return: nested dict, containing the metrics for each combination
+    :return: nested dict, containing the metrics for each combination; the keys of
+             the outer dict are the profile types of the input data, the keys of
+             the inner dict refer to the validation data
     """
     # validate each profile type individually
     metrics_dict = {}
@@ -506,4 +508,4 @@ def save_file_per_metrics_per_combination(
             df = pd.DataFrame(
                 {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}
             )
-            activity_profile.save_df(df, "metrics", kpi.name, profile_type, output_path)
+            activity_profile.save_df(df, "metrics/all_combinations", kpi.name, profile_type, output_path)

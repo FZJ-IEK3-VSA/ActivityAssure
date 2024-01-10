@@ -110,13 +110,13 @@ class ValidationMetrics:
         filename: str = "metrics",
         extension: str = "json",
     ) -> Path:
-        result_directory /= "metrics"
+        result_directory /= "metrics/per_category"
         result_directory.mkdir(parents=True, exist_ok=True)
         filename = profile_type.construct_filename(filename) + f".{extension}"
         filepath = result_directory / filename
         return filepath
 
-    def save(self, result_directory: Path, profile_type: ProfileType) -> None:
+    def save_as_json(self, result_directory: Path, profile_type: ProfileType) -> None:
         filepath = self.__build_filename(result_directory, profile_type)
         with open(filepath, "w", encoding="utf-8") as f:
             json_str = self.to_json()  # type: ignore
@@ -124,7 +124,9 @@ class ValidationMetrics:
         logging.debug(f"Created metrics file {filepath}")
 
     @staticmethod
-    def load(filepath: Path) -> tuple[ProfileType | None, "ValidationMetrics"]:
+    def load_from_json(
+        filepath: Path,
+    ) -> tuple[ProfileType | None, "ValidationMetrics"]:
         with open(filepath) as f:
             json_str = f.read()
         metrics = ValidationMetrics.from_json(json_str)  # type: ignore
