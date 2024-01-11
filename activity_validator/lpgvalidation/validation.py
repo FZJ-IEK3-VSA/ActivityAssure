@@ -393,22 +393,22 @@ def all_profile_types_of_same_country(country) -> list[ProfileType]:
     return profile_types
 
 
-def get_metric_sums(
+def get_metric_means(
     metrics_dict: dict[ProfileType, comparison_metrics.ValidationMetrics],
     output_path: Path | None = None,
 ) -> pd.DataFrame:
     """
-    Calculates all metric sums and returns and optionally saves them as a
+    Calculates all metric means and returns and optionally saves them as a
     single dataframe.
 
     :param metrics_dict: a dict containing metrics for each profile type
     :param output_path: base output directory
     :return: dataframe with all metric sums
     """
-    sums = pd.DataFrame({p: m.get_metric_sums() for p, m in metrics_dict.items()})
+    sums = pd.DataFrame({p: m.get_metric_means() for p, m in metrics_dict.items()})
     if output_path is not None:
         activity_profile.save_df(
-            sums.T, "metrics", "metric_sums", base_path=output_path
+            sums.T, "metrics", "metric_means", base_path=output_path
         )
     return sums.T
 

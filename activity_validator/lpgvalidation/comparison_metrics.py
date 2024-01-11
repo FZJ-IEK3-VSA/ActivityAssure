@@ -85,23 +85,23 @@ class ValidationMetrics:
             self.timediff_of_max,
         )
 
-    def get_metric_sums(self) -> dict[str, float]:
+    def get_metric_means(self) -> dict[str, float]:
         """
-        Sums all metrics across all activity groups to
-        get metrics for the whole profile type.
+        Gets the mean of each metric across all activity groups to
+        obtain metrics for the whole profile type.
 
         :return: a dict containing name and value of each
-                 summed metric
+                 averaged metric
         """
-        metric_sums = {
-            "mae": self.mae.sum(),
-            "bias": self.bias.abs().sum(),
-            "rmse": self.rmse.sum(),
-            "pearson correlation": self.pearson_corr.sum(),
-            "wasserstein": self.wasserstein.sum(),
-            "max difference": self.diff_of_max.abs().sum(),
+        metric_means = {
+            "mae": self.mae.mean(),
+            "bias": self.bias.abs().mean(),
+            "rmse": self.rmse.mean(),
+            "pearson correlation": self.pearson_corr.mean(),
+            "wasserstein": self.wasserstein.mean(),
+            "max difference": self.diff_of_max.abs().mean(),
         }
-        return metric_sums
+        return metric_means
 
     def __build_filename(
         self,

@@ -4,6 +4,7 @@ single metric (e.g., RMSE) for all combinations of profile types.
 """
 
 
+import logging
 from pathlib import Path
 import pandas as pd
 import plotly.express as px
@@ -12,13 +13,14 @@ from activity_validator.hetus_data_processing.activity_profile import ProfileTyp
 from activity_validator.lpgvalidation import comparison_metrics
 
 
-def convert_to_metric_sum_dataframe(
+def convert_to_metric_mean_dataframe(
     metrics_dict: dict[
         ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]
     ]
 ) -> dict[str, pd.DataFrame]:
     """
     Converts a nested metric dict to a set of dataframes, one for each metric.
+    Calculates the mean metrics for each profile type (across all activities).
 
     :param metrics_dict: a nested dict that contains metrics for each combination of
                          input and validation profile types
@@ -28,7 +30,7 @@ def convert_to_metric_sum_dataframe(
     total_metrics_dicts: dict[str, dict[ProfileType, dict[ProfileType, float]]] = {}
     for p1, metrics_for_one_category in metrics_dict.items():
         for p2, metrics in metrics_for_one_category.items():
-            total_metrics = metrics.get_metric_sums()
+            total_metrics = metrics.get_metric_means()
             for name, value in total_metrics.items():
                 total_metrics_dicts.setdefault(name, {}).setdefault(p1, {})[p2] = value
     dataframes = {k: pd.DataFrame(v) for k, v in total_metrics_dicts.items()}
@@ -92,7 +94,10 @@ def plot_metrics_heatmap(data: pd.DataFrame, output_path: Path):
     path = output_path / "plots"
     path.mkdir(parents=True, exist_ok=True)
     file = path / f"heatmap_{data.Name}.png"
-    fig.write_image(file, engine="kaleido")
+    try:
+        fig.write_image(file, engine="kaleido")
+    except Exception as e:
+        logging.error(f"Could not create KPI heatmap {data.Name}: {e}")
 
 
 def make_symmetric(data: pd.DataFrame, sparse: bool = True) -> pd.DataFrame:
@@ -154,7 +159,7 @@ def plot_metrics_heatmaps(metrics_dict, output_path: Path):
                          and validation profile types
     :param output_path: base output directory
     """
-    dataframes = convert_to_metric_sum_dataframe(metrics_dict)
+    dataframes = convert_to_metric_mean_dataframe(metrics_dict)
     for name, df in dataframes.items():
         df = order_index(df)
         df = make_symmetric(df)
