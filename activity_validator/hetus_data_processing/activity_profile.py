@@ -525,6 +525,9 @@ class SparseActivityProfile:
         # determine length of time frame that will be merged
         # into a single timestep with the new resolution
         frame_length = int(resolution / self.resolution)
+        assert (
+            self.length() >= frame_length
+        ), "The profile is too short for resampling to the target resolution"
         # determine the new end timestep (must be a multiple of frame_length)
         end = self.length() // frame_length * frame_length
         index = 0
