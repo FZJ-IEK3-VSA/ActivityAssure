@@ -302,7 +302,13 @@ def prepare_input_data(
 ) -> dict[ProfileType, list[SparseActivityProfile]]:
     # map and categorize each full-year profile individually
     all_profiles_by_type: dict[ProfileType, list[SparseActivityProfile]] = {}
+    empty_profiles = 0
     for full_year_profile in full_year_profiles:
+        logging.debug(f"Preparing profile from file {full_year_profile.filename}")
+        # skip empty profiles
+        if not full_year_profile.activities or len(full_year_profile.activities) < 5:
+            logging.warn(f"Skipping empty/short profile {full_year_profile.filename}")
+            continue
         # resample profiles to validation data resolution
         full_year_profile.resample(hetus_constants.RESOLUTION)
         # translate activities to the common set of activity types
@@ -314,6 +320,8 @@ def prepare_input_data(
         profiles_by_type = group_profiles_by_type(selected_day_profiles)
 
         all_profiles_by_type = utils.merge_dicts(all_profiles_by_type, profiles_by_type)
+    if empty_profiles > 0:
+        logging.warn(f"Skipped {empty_profiles} empty/short profiles.")
     return all_profiles_by_type
 
 
@@ -482,10 +490,16 @@ def validate_all_combinations(
         dict_per_type = {}
         for validation_type, validation_data in validation_data_dict.items():
             # calcluate and store comparison metrics
-            _, metrics = comparison_metrics.calc_comparison_metrics(
-                validation_data, input_data
-            )
-            dict_per_type[validation_type] = metrics
+            try:
+                _, metrics = comparison_metrics.calc_comparison_metrics(
+                    validation_data, input_data
+                )
+                dict_per_type[validation_type] = metrics
+            except utils.ActValidatorException as e:
+                logging.warn(
+                    f"Could not compare input data category '{profile_type}' "
+                    f"to validation data category '{validation_type}': {e}"
+                )
         metrics_dict[profile_type] = dict_per_type
     return metrics_dict
 

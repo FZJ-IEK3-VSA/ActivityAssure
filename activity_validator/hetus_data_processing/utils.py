@@ -6,6 +6,10 @@ from typing import Any
 from tabulate import tabulate
 
 
+class ActValidatorException(Exception):
+    """Generic error in the activity validator"""
+
+
 def stats(data, persondata=None, hhdata=None):
     """Print some basic statistics on HETUS data"""
     print(

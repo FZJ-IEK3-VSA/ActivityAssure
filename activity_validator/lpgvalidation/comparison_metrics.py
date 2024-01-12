@@ -11,7 +11,7 @@ from dataclasses_json import config, dataclass_json  # type: ignore
 import numpy as np
 import pandas as pd
 import scipy
-from activity_validator.hetus_data_processing import activity_profile  # type: ignore
+from activity_validator.hetus_data_processing import activity_profile, utils  # type: ignore
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
@@ -161,9 +161,8 @@ def calc_probability_curves_diff(
     :param input: input data probability profiles
     :return: difference of validation and input data
     """
-    assert len(validation.columns) == len(
-        input.columns
-    ), "Dataframes have different resolutions"
+    if len(validation.columns) != len(input.columns):
+        raise utils.ActValidatorException("Dataframes have different resolutions")
     if not validation.columns.equals(input.columns):
         # resolution is the same, just the names are different
         validation.columns = input.columns

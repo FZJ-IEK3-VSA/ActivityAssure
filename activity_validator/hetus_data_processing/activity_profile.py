@@ -333,6 +333,8 @@ class SparseActivityProfile:
     )
     #: characteristics of the person this profile belongs to
     profile_type: ProfileType = field(default_factory=ProfileType)
+    #: name of the file this profile was loaded from, if applicable (for debugging)
+    filename: str = ""
 
     @utils.timing
     @staticmethod
@@ -375,6 +377,7 @@ class SparseActivityProfile:
         profile.calc_durations()
         # remove the last activity (duration is unknown)
         profile.activities.pop()
+        profile.filename = path.name
         return profile
 
     def remove_timestep_offset(self) -> None:
@@ -566,7 +569,6 @@ class SparseActivityProfile:
                 first.duration = frame_start - first.start
             if last is not longest_act and last.end() > frame_end:
                 # make activity start after this frame
-                test = last.end()
                 last.duration -= frame_end - last.start
                 last.start = frame_end
             # add the 'winning' activity to the new list, if it is not
