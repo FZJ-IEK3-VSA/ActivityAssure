@@ -338,7 +338,7 @@ class MainValidationView(html.Div):
         ptype_in = data_utils.ptype_from_label(profile_type_input)
         freq = plots.histogram_per_activity(ptype_val, ptype_in, datapaths.freq_dir)
         dur = plots.histogram_per_activity(
-            ptype_val, ptype_in, datapaths.duration_dir, True
+            ptype_val, ptype_in, datapaths.duration_dir, True, True
         )
         prob = plots.prob_curve_per_activity(ptype_val, ptype_in, datapaths.prob_dir)
         kpis = plots.kpi_table(ptype_val, ptype_in)

@@ -202,6 +202,7 @@ def histogram_per_activity(
     ptype_in: activity_profile.ProfileType,
     subdir: Path | str,
     duration_data: bool = False,
+    norm: bool = False,
 ) -> dict[str, dcc.Graph]:
     """
     Generates a set of histogram plots, one for each activity type.
@@ -232,9 +233,12 @@ def histogram_per_activity(
     data_per_activity = join_to_pairs(validation_data, input_data)
 
     # create the plots for all activity types and wrap them in Cards
+    histnorm = "percent" if norm else None
     # TODO alternative: use ecdf instead of histogram for a sum curve
     figures = {
-        activity: dcc.Graph(figure=px.histogram(d, barmode="overlay"))
+        activity: dcc.Graph(
+            figure=px.histogram(d, barmode="overlay", histnorm=histnorm)
+        )
         for activity, d in data_per_activity.items()
     }
     return figures
