@@ -202,7 +202,6 @@ def histogram_per_activity(
     ptype_in: activity_profile.ProfileType,
     subdir: Path | str,
     duration_data: bool = False,
-    norm: bool = False,
 ) -> dict[str, dcc.Graph]:
     """
     Generates a set of histogram plots, one for each activity type.
@@ -229,19 +228,24 @@ def histogram_per_activity(
         # TODO workaround: https://github.com/plotly/plotly.py/issues/799
         validation_data += datetime(2023, 1, 1)
         input_data += datetime(2023, 1, 1)
+        title = "Activity Durations"
+        xaxis_title = "Activity duration"
+    else:
+        title = "Activity Frequencies"
+        xaxis_title = "Activity repetitions per day"
 
     data_per_activity = join_to_pairs(validation_data, input_data)
 
     # create the plots for all activity types and wrap them in Cards
-    histnorm = "percent" if norm else None
     # TODO alternative: use ecdf instead of histogram for a sum curve
     figures = {
-        activity: dcc.Graph(
-            figure=px.histogram(d, barmode="overlay", histnorm=histnorm)
-        )
+        activity: px.histogram(d, barmode="overlay", histnorm="percent")
         for activity, d in data_per_activity.items()
     }
-    return figures
+    for a, f in figures.items():
+        f.update_layout(title=f'"{a}" {title}', xaxis_title=xaxis_title)
+    graphs = {a: dcc.Graph(figure=f) for a, f in figures.items()}
+    return graphs
 
 
 def stacked_bar_activity_share(paths: dict[str, Path]) -> Figure:
