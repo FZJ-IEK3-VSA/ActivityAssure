@@ -3,7 +3,6 @@ Generates metric heatmaps. Each metric heatmap gives an overview on a
 single metric (e.g., RMSE) for all combinations of profile types.
 """
 
-
 import logging
 from pathlib import Path
 import pandas as pd
@@ -85,15 +84,14 @@ def plot_metrics_heatmap(data: pd.DataFrame, output_path: Path):
         data,
         title=data.Name,
         labels={"x": "Input Data Category", "y": "Validation Data Category"},
-        zmin=-1,
-        zmax=1,
+        # zmin=-1,
+        # zmax=1,
     )
     # fig.show()
     # decrease font size for image file to include all axis labels
     fig.update_layout(font_size=8, title_font_size=18)
-    path = output_path / "plots"
-    path.mkdir(parents=True, exist_ok=True)
-    file = path / f"heatmap_{data.Name}.png"
+    output_path.mkdir(parents=True, exist_ok=True)
+    file = output_path / f"heatmap_{data.Name}.png"
     try:
         fig.write_image(file, engine="kaleido")
     except Exception as e:
@@ -180,9 +178,11 @@ def plot_metrics_heatmaps_per_activity(metrics_dict, output_path: Path):
     """
     dataframes = convert_to_metric_dataframe_per_activity(metrics_dict)
     for name, d in dataframes.items():
+        path = output_path / name
         for activity, df in d.items():
             df = order_index(df)
             df = make_symmetric(df)
+            # replace invalid characters for file names
             clean_act_name = activity.replace("/", "-")
-            df.Name = f"{name} - {clean_act_name}"
-            plot_metrics_heatmap(df, output_path)
+            df.Name = f"{name}_{clean_act_name}"
+            plot_metrics_heatmap(df, path)
