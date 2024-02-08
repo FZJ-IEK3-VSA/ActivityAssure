@@ -517,8 +517,8 @@ def save_file_per_metrics_per_combination(
     :param metrics: nested metrics dict
     :param output_path: base output directory
     """
+    kpis = dataclasses.fields(comparison_metrics.ValidationMetrics)
     for profile_type, metrics_per_type in metrics.items():
-        kpis = dataclasses.fields(comparison_metrics.ValidationMetrics)
         for kpi in kpis:
             df = pd.DataFrame(
                 {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}

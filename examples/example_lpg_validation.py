@@ -11,12 +11,20 @@ from activity_validator.hetus_data_processing import utils
 
 
 @utils.timing
-def validate_lpg():
-    input_path = Path("data/lpg/preprocessed_single")
-    output_path = Path("data/lpg/results")
-    custom_mapping_path = Path("examples/activity_mapping_lpg.json")
-    person_trait_file = Path("data/lpg/person_characteristics.json")
+def process_model_data(
+    input_path: Path,
+    output_path: Path,
+    custom_mapping_path: Path,
+    person_trait_file: Path,
+):
+    """
+    Processes the input data to produce the validation statistics.
 
+    :param input_path: input data directory
+    :param output_path: destination path for validation statistics
+    :param custom_mapping_path: path of the activity mapping file
+    :param person_trait_file: path of the person trait file
+    """
     # load and preprocess all input data
     full_year_profiles = validation.load_activity_profiles_from_csv(
         input_path, person_trait_file
@@ -27,12 +35,29 @@ def validate_lpg():
     input_data_dict = validation.prepare_input_data(
         full_year_profiles, activity_mapping
     )
-    # calc input data statistics
+    # calc and save input data statistics
     input_statistics = validation.calc_statistics_per_category(
         input_data_dict, output_path, activity_types
     )
+    return input_statistics
 
-    # load validation data
+
+@utils.timing
+def validate_lpg():
+    input_path = Path("data/lpg/preprocessed")
+    output_path = Path("data/lpg/results")
+    custom_mapping_path = Path("examples/activity_mapping_lpg.json")
+    person_trait_file = Path("data/lpg/person_characteristics.json")
+
+    input_statistics = process_model_data(
+        input_path, output_path, custom_mapping_path, person_trait_file
+    )
+
+    # load input data statistics
+    input_statistics2 = validation.load_validation_data(output_path)
+    check = input_statistics == input_statistics2
+
+    # load validation data statistics
     validation_data_path = Path("data/validation data sets/latest")
     validation_statistics = validation.load_validation_data(validation_data_path)
 
@@ -40,7 +65,7 @@ def validate_lpg():
     metrics = validation.validate_per_category(
         input_statistics, validation_statistics, output_path
     )
-    validation.get_metric_means(metrics, output_path)
+    metric_means = validation.get_metric_means(metrics, output_path)
 
     # compare input and validation for each combination of profile types
     metrics = validation.validate_all_combinations(
@@ -66,8 +91,11 @@ def cross_validation():
     validation.save_file_per_metrics_per_combination(metrics, output_path)
 
     # plot a heatmap for each metric
-    metric_heatmaps.plot_metrics_heatmaps(metrics, output_path)
-    metric_heatmaps.plot_metrics_heatmaps_per_activity(metrics, output_path)
+    plot_path = output_path / "heatmaps"
+    metric_heatmaps.plot_metrics_heatmaps(metrics, plot_path / "total")
+    metric_heatmaps.plot_metrics_heatmaps_per_activity(
+        metrics, plot_path / "per_activity"
+    )
 
 
 if __name__ == "__main__":
