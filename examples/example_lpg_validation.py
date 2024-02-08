@@ -7,7 +7,7 @@ from pathlib import Path
 
 from activity_validator.lpgvalidation import validation
 from activity_validator.hetus_data_processing.visualizations import metric_heatmaps
-from activity_validator.hetus_data_processing import utils
+from activity_validator.hetus_data_processing import activity_profile, utils
 
 
 @utils.timing
@@ -45,17 +45,15 @@ def process_model_data(
 @utils.timing
 def validate_lpg():
     input_path = Path("data/lpg/preprocessed")
-    output_path = Path("data/lpg/results")
+    output_path = Path("data/lpg/results_cluster")
     custom_mapping_path = Path("examples/activity_mapping_lpg.json")
     person_trait_file = Path("data/lpg/person_characteristics.json")
 
-    input_statistics = process_model_data(
-        input_path, output_path, custom_mapping_path, person_trait_file
-    )
-
-    # load input data statistics
-    input_statistics2 = validation.load_validation_data(output_path)
-    check = input_statistics == input_statistics2
+    # calculate or load input data statistics
+    # input_statistics = process_model_data(
+    #     input_path, output_path, custom_mapping_path, person_trait_file
+    # )
+    input_statistics = validation.load_validation_data(output_path)
 
     # load validation data statistics
     validation_data_path = Path("data/validation data sets/latest")
@@ -65,6 +63,11 @@ def validate_lpg():
     metrics = validation.validate_per_category(
         input_statistics, validation_statistics, output_path
     )
+    metrics_df = validation.metrics_dict_to_df(metrics)
+    activity_profile.save_df(
+        metrics_df, "metrics", "metrics_per_category", base_path=output_path
+    )
+
     metric_means = validation.get_metric_means(metrics, output_path)
 
     # compare input and validation for each combination of profile types
@@ -72,8 +75,9 @@ def validate_lpg():
         input_statistics, validation_statistics
     )
     validation.save_file_per_metrics_per_combination(metrics, output_path)
-    metric_heatmaps.plot_metrics_heatmaps(metrics, output_path)
-    metric_heatmaps.plot_metrics_heatmaps_per_activity(metrics, output_path)
+    plot_path = output_path / "metrics" / "heatmaps"
+    metric_heatmaps.plot_metrics_heatmaps(metrics, plot_path)
+    metric_heatmaps.plot_metrics_heatmaps_per_activity(metrics, plot_path)
 
 
 @utils.timing

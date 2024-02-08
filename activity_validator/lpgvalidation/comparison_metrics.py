@@ -85,6 +85,22 @@ class ValidationMetrics:
             self.timediff_of_max,
         )
 
+    def add_metric_means(self) -> None:
+        """
+        Adds the mean of each KPI across all activities as another
+        value.
+        """
+        means_idx = "mean"
+        assert (
+            means_idx not in self.mae.index
+        ), f"Cannot add the KPI mean: there is already an activity called {means_idx}"
+        self.mae[means_idx] = self.mae.mean()
+        self.bias[means_idx] = self.bias.mean()
+        self.rmse[means_idx] = self.rmse.mean()
+        self.pearson_corr[means_idx] = self.pearson_corr.mean()
+        self.wasserstein[means_idx] = self.wasserstein.mean()
+        self.diff_of_max[means_idx] = self.diff_of_max.mean()
+
     def get_metric_means(self) -> dict[str, float]:
         """
         Gets the mean of each metric across all activity groups to
@@ -275,6 +291,7 @@ def calc_comparison_metrics(
     validation_data: ValidationData,
     input_data: ValidationData,
     normalize_prob_curves: bool = False,
+    add_kpi_means: bool = True,
 ) -> tuple[pd.DataFrame, ValidationMetrics]:
     """
     Caluclates comparison metrics for the two specified datasets.
@@ -283,6 +300,8 @@ def calc_comparison_metrics(
     :param input_data: the input data set
     :param normalize_prob_curves: if True, the input data is normalized to
                                   value range [0, 1], defaults to False
+    :param add_kpi_means: if True, the mean of each KPI across all activities
+                          is added
     :return: the probability curve difference profiles, and the metrics
     """
     # optionally normalize the probability profiles before calculating metrics
@@ -304,9 +323,12 @@ def calc_comparison_metrics(
     max_diff = prob_profiles_in.max(axis=1) - prob_profiles_val.max(axis=1)
     time_of_max_diff = calc_time_of_max_diff(prob_profiles_val, prob_profiles_in)
 
-    return differences, ValidationMetrics(
+    metrics = ValidationMetrics(
         mae, bias, rmse, wasserstein, pearson_corr, max_diff, time_of_max_diff
     )
+    if add_kpi_means:
+        metrics.add_metric_means()
+    return differences, metrics
 
 
 def calc_all_metric_variants(

@@ -396,12 +396,14 @@ def kpi_table(
     shares = data_val.probability_profiles.mean(axis=1)
 
     # get normal, scaled and normalized metrics
-    _, metrics = comparison_metrics.calc_comparison_metrics(data_val, data_in)
+    _, metrics = comparison_metrics.calc_comparison_metrics(
+        data_val, data_in, add_kpi_means=False
+    )
 
     scaled = metrics.get_scaled(shares)
 
     _, metrics_normed = comparison_metrics.calc_comparison_metrics(
-        data_val, data_in, True
+        data_val, data_in, True, add_kpi_means=False
     )
     tables = {
         a: dbc.Table(

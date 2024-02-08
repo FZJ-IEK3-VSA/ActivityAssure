@@ -421,6 +421,21 @@ def get_metric_means(
     return sums.T
 
 
+def metrics_dict_to_df(
+    metrics: dict[ProfileType, comparison_metrics.ValidationMetrics]
+) -> pd.DataFrame:
+    """
+    Convert the per-category metrics dict to a single dataframe
+    containing all KPIs, means and per activity.
+
+    :param metrics: the metrics dict
+    :return: the KPI dataframe
+    """
+    dataframes = {pt: v.to_dataframe() for pt, v in metrics.items()}
+    combined = pd.concat(dataframes.values(), keys=dataframes.keys())
+    return combined
+
+
 def validate_per_category(
     input_data_dict: dict[ProfileType, ValidationData],
     validation_data_dict: dict[ProfileType, ValidationData],
