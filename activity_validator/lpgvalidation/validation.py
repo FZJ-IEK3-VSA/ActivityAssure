@@ -440,27 +440,31 @@ def validate_per_category(
     input_data_dict: dict[ProfileType, ValidationData],
     validation_data_dict: dict[ProfileType, ValidationData],
     output_path: Path,
-) -> dict[ProfileType, comparison_metrics.ValidationMetrics]:
+) -> dict[str, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
     """
     Compares each category of input data to the same category
-    of validation data.
+    of validation data. Calculates the full set of metrics of
+    all variants (default, scaled, normed), and produces one
+    metric dict per variant.
 
     :param input_data_dict: input data per profile type
     :param validation_data_dict: validation data per profile type
     :param output_path: base path for result data
-    :return: calculated comparison metrics per category
+    :return: a dict containing the per-category metric dict for each variant
     """
     # validate each profile type individually
-    metrics_dict = {}
+    metrics_dict, scaled_dict, normed_dict = {}, {}, {}
     for profile_type, input_data in input_data_dict.items():
         # select matching validation data
         validation_data = validation_data_dict[profile_type]
         # calcluate and store comparison metrics
-        _, metrics, _, _ = comparison_metrics.calc_all_metric_variants(
+        _, metrics, scaled, normed = comparison_metrics.calc_all_metric_variants(
             validation_data, input_data, True, profile_type, output_path
         )
         metrics_dict[profile_type] = metrics
-    return metrics_dict
+        normed_dict[profile_type] = scaled
+        scaled_dict[profile_type] = normed
+    return {"default": metrics_dict, "scaled": scaled_dict, "normed": normed_dict}
 
 
 def validate_similar_categories(

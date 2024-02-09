@@ -56,17 +56,21 @@ def validate_lpg():
     input_statistics = validation.load_validation_data(output_path)
 
     # load validation data statistics
-    validation_data_path = Path("data/validation data sets/latest")
+    validation_data_path = Path("data/validation data sets/full_categorization")
     validation_statistics = validation.load_validation_data(validation_data_path)
 
     # compare input and validation data statistics per profile type
-    metrics = validation.validate_per_category(
+    metric_dict_variants = validation.validate_per_category(
         input_statistics, validation_statistics, output_path
     )
-    metrics_df = validation.metrics_dict_to_df(metrics)
-    activity_profile.save_df(
-        metrics_df, "metrics", "metrics_per_category", base_path=output_path
-    )
+    for variant_name, metric_dict in metric_dict_variants.items():
+        metrics_df = validation.metrics_dict_to_df(metric_dict)
+        activity_profile.save_df(
+            metrics_df,
+            "metrics",
+            f"metrics_per_category_{variant_name}",
+            base_path=output_path,
+        )
 
     metric_means = validation.get_metric_means(metrics, output_path)
 
