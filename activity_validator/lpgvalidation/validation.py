@@ -462,8 +462,8 @@ def validate_per_category(
             validation_data, input_data, True, profile_type, output_path
         )
         metrics_dict[profile_type] = metrics
-        normed_dict[profile_type] = scaled
-        scaled_dict[profile_type] = normed
+        scaled_dict[profile_type] = scaled
+        normed_dict[profile_type] = normed
     return {"default": metrics_dict, "scaled": scaled_dict, "normed": normed_dict}
 
 
