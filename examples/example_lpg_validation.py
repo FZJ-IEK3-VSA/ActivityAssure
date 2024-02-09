@@ -71,8 +71,7 @@ def validate_lpg():
             f"metrics_per_category_{variant_name}",
             base_path=output_path,
         )
-
-    metric_means = validation.get_metric_means(metrics, output_path)
+        metric_means = validation.get_metric_means(metric_dict, output_path)
 
     # compare input and validation for each combination of profile types
     metrics = validation.validate_all_combinations(

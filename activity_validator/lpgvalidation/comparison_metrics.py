@@ -291,7 +291,7 @@ def calc_comparison_metrics(
     validation_data: ValidationData,
     input_data: ValidationData,
     normalize_prob_curves: bool = False,
-    add_kpi_means: bool = True,
+    add_kpi_means: bool = False,
 ) -> tuple[pd.DataFrame, ValidationMetrics]:
     """
     Caluclates comparison metrics for the two specified datasets.
@@ -339,11 +339,18 @@ def calc_all_metric_variants(
     output_path: Path | None = None,
 ) -> tuple[pd.DataFrame, ValidationMetrics, ValidationMetrics, ValidationMetrics]:
     # calcluate and store comparison metrics as normal, scaled and normalized
-    differences, metrics = calc_comparison_metrics(validation_data, input_data)
+    differences, metrics = calc_comparison_metrics(
+        validation_data, input_data, add_kpi_means=False
+    )
     # calc metrics as normal, scaled and normalized variants
     shares = validation_data.probability_profiles.mean(axis=1)
     scaled = metrics.get_scaled(shares)
-    _, normalized = calc_comparison_metrics(validation_data, input_data, True)
+    # add metric means only after obtaining the scaled metrics
+    metrics.add_metric_means()
+    scaled.add_metric_means()
+    _, normalized = calc_comparison_metrics(
+        validation_data, input_data, True, add_kpi_means=True
+    )
     if save_to_file:
         assert profile_type is not None, "Must specify a profile type for saving"
         assert output_path is not None, "Must specify an output path for saving"
