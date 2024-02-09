@@ -162,35 +162,40 @@ class MainValidationView(html.Div):
                             dbc.CardBody(
                                 [
                                     html.Div(
-                                        [
+                                        children=[
                                             html.H2(
                                                 "Validation Data",
                                                 style={"textAlign": "center"},
                                             ),
-                                            html.Div(
-                                                id=self.ids.validation_graph(aio_id)
+                                            dcc.Loading(
+                                                type="circle",
+                                                id=self.ids.validation_graph(aio_id),
                                             ),
-                                        ]
+                                        ],
                                     ),
                                     html.Div(
-                                        [
+                                        children=[
                                             html.H2(
                                                 "LoadProfileGenerator Data",
                                                 style={"textAlign": "center"},
                                             ),
-                                            html.Div(id=self.ids.input_graph(aio_id)),
-                                        ]
+                                            dcc.Loading(
+                                                type="circle",
+                                                id=self.ids.input_graph(aio_id),
+                                            ),
+                                        ],
                                     ),
                                     html.Div(
-                                        [
+                                        children=[
                                             html.H2(
                                                 "Difference",
                                                 style={"textAlign": "center"},
                                             ),
-                                            html.Div(
-                                                id=self.ids.difference_graph(aio_id)
+                                            dcc.Loading(
+                                                type="circle",
+                                                id=self.ids.difference_graph(aio_id),
                                             ),
-                                        ]
+                                        ],
                                     ),
                                 ]
                             ),
@@ -199,45 +204,60 @@ class MainValidationView(html.Div):
                         html.Div(id=self.ids.kpi_view(aio_id), className="mb-3"),
                         html.Br(),
                         html.Div(
-                            [
-                                dbc.Row(
+                            children=[
+                                html.Div(
                                     [
-                                        dbc.Col(
-                                            dbc.Card(
-                                                html.H2(
-                                                    "Activity Frequencies per Day",
-                                                    style={"textAlign": "center"},
-                                                )
-                                            )
+                                        dbc.Row(
+                                            [
+                                                dbc.Col(
+                                                    dbc.Card(
+                                                        html.H2(
+                                                            "Activity Frequencies per Day",
+                                                            style={
+                                                                "textAlign": "center"
+                                                            },
+                                                        )
+                                                    )
+                                                ),
+                                                dbc.Col(
+                                                    dbc.Card(
+                                                        html.H2(
+                                                            "Activity Durations",
+                                                            style={
+                                                                "textAlign": "center"
+                                                            },
+                                                        )
+                                                    )
+                                                ),
+                                                dbc.Col(
+                                                    dbc.Card(
+                                                        html.H2(
+                                                            "Activity Probabilities",
+                                                            style={
+                                                                "textAlign": "center"
+                                                            },
+                                                        )
+                                                    )
+                                                ),
+                                                dbc.Col(
+                                                    dbc.Card(
+                                                        html.H2(
+                                                            "Comparison Metrics",
+                                                            style={
+                                                                "textAlign": "center"
+                                                            },
+                                                        )
+                                                    )
+                                                ),
+                                            ],
+                                            className="mb-3",
                                         ),
-                                        dbc.Col(
-                                            dbc.Card(
-                                                html.H2(
-                                                    "Activity Durations",
-                                                    style={"textAlign": "center"},
-                                                )
-                                            )
-                                        ),
-                                        dbc.Col(
-                                            dbc.Card(
-                                                html.H2(
-                                                    "Activity Probabilities",
-                                                    style={"textAlign": "center"},
-                                                )
-                                            )
-                                        ),
-                                        dbc.Col(
-                                            dbc.Card(
-                                                html.H2(
-                                                    "Comparison Metrics",
-                                                    style={"textAlign": "center"},
-                                                )
-                                            )
+                                        dcc.Loading(
+                                            type="circle",
+                                            id=self.ids.per_activity_graphs(aio_id),
                                         ),
                                     ],
-                                    className="mb-3",
-                                ),
-                                html.Div(id=self.ids.per_activity_graphs(aio_id)),
+                                )
                             ],
                         ),
                     ],

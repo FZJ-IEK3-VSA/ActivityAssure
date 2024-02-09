@@ -114,4 +114,4 @@ def cross_country_overview(profile_type_str: str):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, dev_tools_hot_reload=False)
