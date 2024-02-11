@@ -325,6 +325,39 @@ def prepare_input_data(
     return all_profiles_by_type
 
 
+def calc_category_sizes(
+    input_data_dict: dict[ProfileType, list[SparseActivityProfile]],
+    output_path: Path | None = None,
+) -> pd.DataFrame:
+    """
+    Calculates the category sizes for the categorized input data.
+    If output_path is specified, also saves the sizes as a csv file.
+
+    :param input_data_dict: categorized input data
+    :param output_path: base output directory, defaults to None
+    :return: a dataframe containing the category sizes
+    """
+    # collect the profile type attributes for each category
+    index = pd.MultiIndex.from_tuples([pt.to_tuple() for pt in input_data_dict.keys()])
+    # collect the category sizes
+    sizes = [len(profiles) for profiles in input_data_dict.values()]
+    colname = "sizes"
+    sizes_df = pd.DataFrame({colname: sizes}, index=index)
+    if index.nlevels > 1:
+        # more than one profile type attribute: restructure dataframe for readibility
+        sizes_df.reset_index(inplace=True)
+        cols = list(sizes_df.columns)
+        sizes_df = sizes_df.reset_index().pivot(
+            index=cols[1:-1], columns=cols[0], values=colname
+        )
+    if output_path:
+        # save category sizes to file
+        activity_profile.save_df(
+            sizes_df, "categories", "category_sizes", base_path=output_path
+        )
+    return sizes_df
+
+
 @utils.timing
 def calc_statistics_per_category(
     input_data_dict: dict[ProfileType, list[SparseActivityProfile]],

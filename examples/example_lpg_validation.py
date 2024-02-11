@@ -35,6 +35,7 @@ def process_model_data(
     input_data_dict = validation.prepare_input_data(
         full_year_profiles, activity_mapping
     )
+    validation.calc_category_sizes(input_data_dict, output_path)
     # calc and save input data statistics
     input_statistics = validation.calc_statistics_per_category(
         input_data_dict, output_path, activity_types
