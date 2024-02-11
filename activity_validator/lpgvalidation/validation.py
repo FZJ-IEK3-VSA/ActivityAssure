@@ -344,7 +344,7 @@ def calc_category_sizes(
     colname = "sizes"
     sizes_df = pd.DataFrame({colname: sizes}, index=index)
     if index.nlevels > 1:
-        # more than one profile type attribute: restructure dataframe for readibility
+        # more than one profile type attribute: restructure dataframe for readability
         sizes_df.reset_index(inplace=True)
         cols = list(sizes_df.columns)
         sizes_df = sizes_df.reset_index().pivot(

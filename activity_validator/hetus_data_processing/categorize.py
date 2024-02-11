@@ -78,9 +78,7 @@ def get_category_sizes(categories, key: list[str]) -> pd.DataFrame:
     sizes = categories.size()
     if len(key) > 1:
         # set country as column header to enhance clarity
-        cat_index = key.copy()
-        cat_index.remove(key[0])
-        sizes = sizes.reset_index().pivot(index=cat_index, columns=key[0], values=0)
+        sizes = sizes.reset_index().pivot(index=key[1:], columns=key[0], values=0)
     else:
         # sizes is a Series; convert it to a DataFrame
         sizes = sizes.to_frame(name="Entries")
@@ -106,9 +104,9 @@ def apply_hetus_size_limits(category_sizes: pd.DataFrame) -> None:
         )
         category_sizes.loc[upper_limit, col] = hetus_constants.MIN_CELL_SIZE_FOR_SIZE
     # the values below the lower limit can be overwritten at once
-    category_sizes[
-        category_sizes < hetus_constants.MIN_CELL_SIZE
-    ] = hetus_constants.MIN_CELL_SIZE
+    category_sizes[category_sizes < hetus_constants.MIN_CELL_SIZE] = (
+        hetus_constants.MIN_CELL_SIZE
+    )
 
 
 @utils.timing
