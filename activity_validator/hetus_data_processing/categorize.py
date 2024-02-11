@@ -77,7 +77,7 @@ def get_category_sizes(categories, key: list[str]) -> pd.DataFrame:
     # create separate index without country for a better overview
     sizes = categories.size()
     if len(key) > 1:
-        # set country as column header to enhance clarity
+        # set country as column header to improve readability
         sizes = sizes.reset_index().pivot(index=key[1:], columns=key[0], values=0)
     else:
         # sizes is a Series; convert it to a DataFrame
