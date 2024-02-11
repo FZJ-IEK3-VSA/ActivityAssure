@@ -11,39 +11,6 @@ from activity_validator.hetus_data_processing import activity_profile, utils
 
 
 @utils.timing
-def process_model_data(
-    input_path: Path,
-    output_path: Path,
-    custom_mapping_path: Path,
-    person_trait_file: Path,
-):
-    """
-    Processes the input data to produce the validation statistics.
-
-    :param input_path: input data directory
-    :param output_path: destination path for validation statistics
-    :param custom_mapping_path: path of the activity mapping file
-    :param person_trait_file: path of the person trait file
-    """
-    # load and preprocess all input data
-    full_year_profiles = validation.load_activity_profiles_from_csv(
-        input_path, person_trait_file
-    )
-    activity_mapping, activity_types = validation.load_mapping(
-        custom_mapping_path, output_path
-    )
-    input_data_dict = validation.prepare_input_data(
-        full_year_profiles, activity_mapping
-    )
-    validation.calc_category_sizes(input_data_dict, output_path)
-    # calc and save input data statistics
-    input_statistics = validation.calc_statistics_per_category(
-        input_data_dict, output_path, activity_types
-    )
-    return input_statistics
-
-
-@utils.timing
 def validate_lpg():
     input_path = Path("data/lpg/preprocessed")
     output_path = Path("data/lpg/results_cluster")
