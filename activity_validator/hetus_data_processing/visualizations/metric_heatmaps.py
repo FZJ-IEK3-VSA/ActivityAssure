@@ -12,6 +12,17 @@ from activity_validator.hetus_data_processing.activity_profile import ProfileTyp
 from activity_validator.lpgvalidation import comparison_metrics
 
 
+def clean_activity_name(activity_name: str) -> str:
+    """
+    Sanitizes an activity name by removing special characters
+    so it can be used as a file name.
+
+    :param activity_name: activity name
+    :return: sanitized activity name
+    """
+    return activity_name.replace("/", "-")
+
+
 def convert_to_metric_mean_dataframe(
     metrics_dict: dict[
         ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]
@@ -130,7 +141,7 @@ def make_symmetric(data: pd.DataFrame, sparse: bool = True) -> pd.DataFrame:
     return data.reindex(index)
 
 
-def order_index(data: pd.DataFrame) -> pd.DataFrame:
+def order_profile_type_index(data: pd.DataFrame) -> pd.DataFrame:
     """
     Reorders the dataframe rows based on the different profile types
     in the index to improve heatmap readability. That means, similar
@@ -146,7 +157,7 @@ def order_index(data: pd.DataFrame) -> pd.DataFrame:
     return data.reindex(new_index)
 
 
-def plot_metrics_heatmaps(metrics_dict, output_path: Path):
+def plot_category_comparison(metrics_dict, output_path: Path):
     """
     Uses a full set of metrics between each combination
     of input and validation profile types to generate a
@@ -159,13 +170,13 @@ def plot_metrics_heatmaps(metrics_dict, output_path: Path):
     """
     dataframes = convert_to_metric_mean_dataframe(metrics_dict)
     for name, df in dataframes.items():
-        df = order_index(df)
+        df = order_profile_type_index(df)
         df = make_symmetric(df)
         df.Name = name
         plot_metrics_heatmap(df, output_path)
 
 
-def plot_metrics_heatmaps_per_activity(metrics_dict, output_path: Path):
+def plot_category_comparison_per_activity(metrics_dict, output_path: Path):
     """
     Uses a full set of metrics between each combination
     of input and validation profile types to generate a
@@ -180,9 +191,65 @@ def plot_metrics_heatmaps_per_activity(metrics_dict, output_path: Path):
     for name, d in dataframes.items():
         path = output_path / name
         for activity, df in d.items():
-            df = order_index(df)
+            df = order_profile_type_index(df)
             df = make_symmetric(df)
             # replace invalid characters for file names
-            clean_act_name = activity.replace("/", "-")
+            clean_act_name = clean_activity_name(activity)
             df.Name = f"{name}_{clean_act_name}"
             plot_metrics_heatmap(df, path)
+
+
+def plot_metrics_by_profile_type(metrics: pd.DataFrame, output_path: Path):
+    """
+    Plots a heatmap of all different metrics and profile types.
+    Expects metrics from a per-category validation.
+
+    :param metrics: metric dataframe
+    :param output_path: output path
+    """
+    output_path /= "metrics x profile_type"
+    level = 1
+    grouped = metrics.groupby(level=level)
+    for activity, df in grouped:
+        df = df.droplevel(level)
+        df.Name = clean_activity_name(activity)  # type: ignore
+        plot_metrics_heatmap(df, output_path)
+
+
+def plot_metrics_by_activity(metrics: pd.DataFrame, output_path: Path):
+    """
+    Plots a heatmap of all different metrics and activities.
+    Expects metrics from a per-category validation.
+
+    :param metrics: metric dataframe
+    :param output_path: output path
+    """
+    output_path /= "metrics x activity"
+    level = 0
+    grouped = metrics.groupby(level=level)
+    for profile_type, df in grouped:
+        df = df.droplevel(level)
+        df.Name = profile_type  # type: ignore
+        plot_metrics_heatmap(df, output_path)
+
+
+def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
+    """
+    Plots a heatmap of all different profile types and activities.
+    Expects metrics from a per-category validation.
+
+    :param metrics: metric dataframe
+    :param output_path: output path
+    """
+    output_path /= "profile_type x activity"
+    mean_idx = "mean"
+    for metric_name in metrics.columns:
+        df = metrics[metric_name].unstack(level=1)
+        if mean_idx in df.columns:
+            # if mean is contained, move it to the right side
+            columns = list(df.columns)
+            columns.remove(mean_idx)
+            columns += [mean_idx]
+            df = df[columns]
+        df.Name = metric_name
+        plot_metrics_heatmap(df, output_path)

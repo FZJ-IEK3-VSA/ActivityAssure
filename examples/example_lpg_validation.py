@@ -12,43 +12,53 @@ from activity_validator.hetus_data_processing import activity_profile, utils
 
 @utils.timing
 def validate_lpg():
-    input_path = Path("data/lpg/preprocessed")
-    output_path = Path("data/lpg/results_cluster")
+    input_path = Path("data/lpg/preprocessed_single")
     custom_mapping_path = Path("examples/activity_mapping_lpg.json")
     person_trait_file = Path("data/lpg/person_characteristics.json")
+    validation_data_path = Path(
+        "data/validation data sets/final/country_sex_work status_day type"
+    )
+    # validation_data_path = Path("data/validation data sets/de")
+
+    output_path = Path("data/lpg/results_cluster")
 
     # calculate or load input data statistics
-    # input_statistics = process_model_data(
+    # input_statistics = validation.process_model_data(
     #     input_path, output_path, custom_mapping_path, person_trait_file
     # )
     input_statistics = validation.load_validation_data(output_path)
 
     # load validation data statistics
-    validation_data_path = Path("data/validation data sets/full_categorization")
     validation_statistics = validation.load_validation_data(validation_data_path)
 
     # compare input and validation data statistics per profile type
+    metrics_path = output_path / "metrics"
     metric_dict_variants = validation.validate_per_category(
         input_statistics, validation_statistics, output_path
     )
     for variant_name, metric_dict in metric_dict_variants.items():
+        output_subdir = metrics_path / variant_name
         metrics_df = validation.metrics_dict_to_df(metric_dict)
         activity_profile.save_df(
             metrics_df,
-            "metrics",
+            "metrics",  # TODO: don't save in another subdirectory
             f"metrics_per_category_{variant_name}",
-            base_path=output_path,
+            base_path=output_subdir,
         )
-        metric_means = validation.get_metric_means(metric_dict, output_path)
+        # validation.get_metric_means(metric_dict, output_subdir)
+        plot_path = output_subdir / "heatmaps"
+        metric_heatmaps.plot_metrics_by_profile_type(metrics_df, plot_path)
+        metric_heatmaps.plot_metrics_by_activity(metrics_df, plot_path)
+        metric_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path)
+    return
 
     # compare input and validation for each combination of profile types
-    metrics = validation.validate_all_combinations(
+    metrics_all_comb = validation.validate_all_combinations(
         input_statistics, validation_statistics
     )
-    validation.save_file_per_metrics_per_combination(metrics, output_path)
-    plot_path = output_path / "metrics" / "heatmaps"
-    metric_heatmaps.plot_metrics_heatmaps(metrics, plot_path)
-    metric_heatmaps.plot_metrics_heatmaps_per_activity(metrics, plot_path)
+    validation.save_file_per_metrics_per_combination(metrics_all_comb, output_path)
+    metric_heatmaps.plot_category_comparison(metrics_all_comb, plot_path)
+    metric_heatmaps.plot_category_comparison_per_activity(metrics_all_comb, plot_path)
 
 
 @utils.timing
@@ -67,8 +77,8 @@ def cross_validation():
 
     # plot a heatmap for each metric
     plot_path = output_path / "heatmaps"
-    metric_heatmaps.plot_metrics_heatmaps(metrics, plot_path / "total")
-    metric_heatmaps.plot_metrics_heatmaps_per_activity(
+    metric_heatmaps.plot_category_comparison(metrics, plot_path / "total")
+    metric_heatmaps.plot_category_comparison_per_activity(
         metrics, plot_path / "per_activity"
     )
 
