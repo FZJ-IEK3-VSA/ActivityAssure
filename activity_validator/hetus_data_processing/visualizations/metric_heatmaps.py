@@ -209,9 +209,10 @@ def plot_metrics_by_profile_type(metrics: pd.DataFrame, output_path: Path):
     """
     output_path /= "metrics x profile_type"
     level = 1
-    grouped = metrics.groupby(level=level)
+    grouped = metrics.groupby(level=level, sort=False)
     for activity, df in grouped:
         df = df.droplevel(level)
+        df = order_profile_type_index(df)
         df.Name = clean_activity_name(activity)  # type: ignore
         plot_metrics_heatmap(df, output_path)
 
@@ -226,10 +227,10 @@ def plot_metrics_by_activity(metrics: pd.DataFrame, output_path: Path):
     """
     output_path /= "metrics x activity"
     level = 0
-    grouped = metrics.groupby(level=level)
+    grouped = metrics.groupby(level=level, sort=False)
     for profile_type, df in grouped:
         df = df.droplevel(level)
-        df.Name = profile_type  # type: ignore
+        df.Name = str(profile_type)
         plot_metrics_heatmap(df, output_path)
 
 

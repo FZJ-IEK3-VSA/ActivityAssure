@@ -491,7 +491,7 @@ def metrics_dict_to_df(
     :param metrics: the metrics dict
     :return: the KPI dataframe
     """
-    dataframes = {str(pt): v.to_dataframe() for pt, v in metrics.items()}
+    dataframes = {pt: v.to_dataframe() for pt, v in metrics.items()}
     combined = pd.concat(dataframes.values(), keys=dataframes.keys())
     return combined
 
