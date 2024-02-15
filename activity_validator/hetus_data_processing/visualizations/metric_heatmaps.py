@@ -5,6 +5,7 @@ single metric (e.g., RMSE) for all combinations of profile types.
 
 import logging
 from pathlib import Path
+import warnings
 import pandas as pd
 import plotly.express as px
 
@@ -21,6 +22,55 @@ def clean_activity_name(activity_name: str) -> str:
     :return: sanitized activity name
     """
     return activity_name.replace("/", "-")
+
+
+def make_metrics_comparable(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Can be used for dataframes which contain different types of metrics
+    (e.g. MAE and Pearson correlation coefficient) to facilitate
+    comparing them by transforming their value ranges.
+
+    :param data: metrics data
+    :return: adapted data
+    """
+    data = normalize_min_max(data)
+    data = reverse_pearson(data)
+    data = select_metrics(data)
+    return data
+
+
+def normalize_min_max(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Apply min-max-normalization to change the value range of all
+    metrics to [0, 1].
+    """
+    # ignore performance warning (dataframe is small)
+    with warnings.catch_warnings():
+        warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+        return (data - data.min()) / (data.max() - data.min())
+
+
+def reverse_pearson(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Reverse value range of pearson correlation coefficient, so that
+    low values indicate better fit, as with the other metrics
+
+    :param data: metrics data
+    :return: metrics data with adapted pearson column
+    """
+    pearson_column = "pearson_corr"
+    if pearson_column in data.columns:
+        # the lowest observed value of the pearson correlation coefficient was only slightly
+        # below zero (no correlation). Strongly negative values indicating a negative
+        # correlation are not to be expected.
+        data[pearson_column] = data[pearson_column].max() - data[pearson_column].abs()
+    return data
+
+
+def select_metrics(data: pd.DataFrame) -> pd.DataFrame:
+    """Select only the relevant metrics to compare in the heatmap"""
+    columns = ["mae", "rmse", "wasserstein", "bias", "pearson_corr"]
+    return data[columns]
 
 
 def convert_to_metric_mean_dataframe(
@@ -213,6 +263,7 @@ def plot_metrics_by_profile_type(metrics: pd.DataFrame, output_path: Path):
     for activity, df in grouped:
         df = df.droplevel(level)
         df = order_profile_type_index(df)
+        df = make_metrics_comparable(df)
         df.Name = clean_activity_name(activity)  # type: ignore
         plot_metrics_heatmap(df, output_path)
 
@@ -230,6 +281,7 @@ def plot_metrics_by_activity(metrics: pd.DataFrame, output_path: Path):
     grouped = metrics.groupby(level=level, sort=False)
     for profile_type, df in grouped:
         df = df.droplevel(level)
+        df = make_metrics_comparable(df)
         df.Name = str(profile_type)
         plot_metrics_heatmap(df, output_path)
 

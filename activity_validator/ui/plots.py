@@ -331,7 +331,7 @@ def kpi_table_rows(
     basic_rows = [
         html.Tr([html.Td("MAE"), html.Td(round_kpi(metrics.mae[activity], digits))]),
         html.Tr(
-            [html.Td("MSE"), html.Td(round_kpi(metrics.rmse[activity] ** 2, digits))]
+            [html.Td("RMSE"), html.Td(round_kpi(metrics.rmse[activity] ** 2, digits))]
         ),
         html.Tr(
             [
