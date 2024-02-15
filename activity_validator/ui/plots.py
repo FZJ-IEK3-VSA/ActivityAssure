@@ -315,7 +315,7 @@ def bias_to_str(value: float) -> str:
     """
     if not math.isfinite(value):
         return "Nan/Inf"
-    td = timedelta(abs(value))
+    td = timedelta(value)
     return timedelta_to_str(td)
 
 
@@ -331,13 +331,13 @@ def kpi_table_rows(
     basic_rows = [
         html.Tr([html.Td("MAE"), html.Td(round_kpi(metrics.mae[activity], digits))]),
         html.Tr(
-            [html.Td("RMSE"), html.Td(round_kpi(metrics.rmse[activity] ** 2, digits))]
-        ),
-        html.Tr(
             [
                 html.Td("Bias [time]"),
                 html.Td(bias_to_str((metrics.bias[activity]))),
             ]
+        ),
+        html.Tr(
+            [html.Td("RMSE"), html.Td(round_kpi(metrics.rmse[activity] ** 2, digits))]
         ),
         html.Tr(
             [
@@ -353,19 +353,7 @@ def kpi_table_rows(
                     html.Td("Pearson correlation"),
                     html.Td(round_kpi(metrics.pearson_corr[activity], digits)),
                 ]
-            ),
-            html.Tr(
-                [
-                    html.Td("Difference of Maxima"),
-                    html.Td(round_kpi(metrics.diff_of_max[activity], digits)),
-                ]
-            ),
-            html.Tr(
-                [
-                    html.Td("Difference of Maximum Times"),
-                    html.Td(timedelta_to_str(metrics.timediff_of_max[activity])),
-                ]
-            ),
+            )
         ]
     else:
         extended_rows = []
