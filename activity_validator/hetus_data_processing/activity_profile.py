@@ -153,9 +153,10 @@ def create_result_path(
         # add profile type to filename
         name = profile_type.construct_filename(name)
     name += f".{ext}"
-    directory = base_path / subdir
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / name
+    if subdir:
+        base_path /= subdir
+    base_path.mkdir(parents=True, exist_ok=True)
+    path = base_path / name
     return path
 
 

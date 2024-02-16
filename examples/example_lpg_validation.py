@@ -41,7 +41,7 @@ def validate_lpg():
         metrics_df = validation.metrics_dict_to_df(metric_dict)
         activity_profile.save_df(
             metrics_df,
-            "metrics",  # TODO: don't save in another subdirectory
+            "",
             f"metrics_per_category_{variant_name}",
             base_path=output_subdir,
         )

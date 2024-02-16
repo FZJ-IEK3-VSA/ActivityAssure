@@ -519,7 +519,7 @@ def validate_per_category(
         validation_data = validation_data_dict[profile_type]
         # calcluate and store comparison metrics
         _, metrics, scaled, normed = comparison_metrics.calc_all_metric_variants(
-            validation_data, input_data, True, profile_type, output_path
+            validation_data, input_data, False, profile_type, output_path
         )
         metrics_dict[profile_type] = metrics
         scaled_dict[profile_type] = scaled
