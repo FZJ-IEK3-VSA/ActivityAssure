@@ -79,8 +79,8 @@ class ValidationMetrics:
             mae,
             bias,
             rmse,
-            self.pearson_corr,
             wasserstein,
+            self.pearson_corr,
             self.diff_of_max,
             self.timediff_of_max,
         )
