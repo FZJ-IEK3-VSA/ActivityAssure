@@ -12,7 +12,7 @@ from activity_validator.hetus_data_processing import hetus_constants
 def plot_heatmap_diary(data: pd.DataFrame, tick_labels, name):
     # create the heatmap
     fig, ax = plt.subplots(figsize=(7, 5))
-    fig.subplots_adjust(left=0.3)
+    fig.subplots_adjust(left=0.35)
     heatmap: plt.Axes = sns.heatmap(
         data,
         linewidths=0.5,

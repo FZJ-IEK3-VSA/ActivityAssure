@@ -42,7 +42,7 @@ def validate_lpg():
         activity_profile.save_df(
             metrics_df,
             "",
-            f"metrics_per_category_{variant_name}",
+            f"metrics_per_category",
             base_path=output_subdir,
         )
         # validation.get_metric_means(metric_dict, output_subdir)
