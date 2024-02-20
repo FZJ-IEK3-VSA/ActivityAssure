@@ -9,7 +9,7 @@ RESOLUTION = timedelta(minutes=10)
 #: in HETUS 2010, only Austria uses 15 minute time slots
 RESOLUTION_AT = timedelta(minutes=15)
 
-#: the start time of each diary
+#: the start time of each diary, as offset from 00:00
 PROFILE_OFFSET = timedelta(hours=4)
 
 # Requirements from Eurostat to permit publication of the dataset.

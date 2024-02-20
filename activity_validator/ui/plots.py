@@ -99,7 +99,7 @@ def join_to_pairs(
     return data_sets
 
 
-def stacked_prob_curves(filepath: Path | None, area: bool = True) -> Figure | None:
+def stacked_prob_curves(filepath: Path | None) -> Figure | None:
     if filepath is None or not filepath.is_file():
         return None
     # load the correct file
@@ -107,10 +107,8 @@ def stacked_prob_curves(filepath: Path | None, area: bool = True) -> Figure | No
     # transpose data for plotting
     data = data.T
     time_values = get_date_range(len(data))
-    # select plot type
-    plotting_func = px.area if area else px.line
     # plot the data
-    fig = plotting_func(
+    fig = px.area(
         data,
         x=time_values,
         y=data.columns,
@@ -119,13 +117,11 @@ def stacked_prob_curves(filepath: Path | None, area: bool = True) -> Figure | No
     return fig
 
 
-def update_stacked_prob_curves(
-    profile_type_str: str, directory: Path, area: bool = True
-):
+def update_stacked_prob_curves(profile_type_str: str, directory: Path):
     # load the correct file and plot it
     profile_type = data_utils.ptype_from_label(profile_type_str)
     filepath = data_utils.get_file_path(directory, profile_type)
-    figure = stacked_prob_curves(filepath, area)
+    figure = stacked_prob_curves(filepath)
     if not figure:
         return replacement_text()
 
