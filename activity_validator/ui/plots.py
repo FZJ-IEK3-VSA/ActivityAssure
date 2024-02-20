@@ -14,6 +14,14 @@ from activity_validator.lpgvalidation import comparison_metrics, validation_data
 from activity_validator.ui import data_utils
 from activity_validator.ui import datapaths
 
+# general config for all graphs
+GLOBAL_GRAPH_CONFIG = {
+    "toImageButtonOptions": {
+        "format": "svg",  # one of png, svg, jpeg, webp
+        # "filename": "custom_image",
+    }
+}
+
 
 def replacement_text(text: str = "No data available"):
     """
@@ -48,7 +56,7 @@ def single_plot_card(figure: Figure, title: str = "") -> dbc.Card:
     :param title: title of the plot
     :return: the Card object containing the plot
     """
-    return titled_card(dcc.Graph(figure=figure), title)
+    return titled_card(dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG), title)
 
 
 def get_date_range(num_values: int):
@@ -125,7 +133,7 @@ def update_stacked_prob_curves(
         name="validation" if "valid" in str(directory).lower() else "input",
         profile_type=profile_type,
     )
-    return [dcc.Graph(figure=figure)]
+    return [dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)]
 
 
 def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
@@ -193,7 +201,7 @@ def prob_curve_per_activity(
         figure.update_traces(fill="tozeroy", selector={"name": "Validation"})
         # use the same y-axis range for all plots
         figure.update_yaxes(range=[-1, 1])
-        figures[activity] = dcc.Graph(figure=figure)
+        figures[activity] = dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)
     return figures
 
 
@@ -244,7 +252,9 @@ def histogram_per_activity(
     }
     for a, f in figures.items():
         f.update_layout(title=f'"{a}" {title}', xaxis_title=xaxis_title)
-    graphs = {a: dcc.Graph(figure=f) for a, f in figures.items()}
+    graphs = {
+        a: dcc.Graph(figure=f, config=GLOBAL_GRAPH_CONFIG) for a, f in figures.items()
+    }
     return graphs
 
 
