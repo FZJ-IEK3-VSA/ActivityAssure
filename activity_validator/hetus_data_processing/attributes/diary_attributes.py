@@ -17,7 +17,7 @@ class DayType(StrEnum):
     Specifies the day type of a diary entry
     """
 
-    work = "working day "
+    work = "working day"
     no_work = "rest day"
 
     undetermined = "undetermined"
