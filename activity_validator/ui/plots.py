@@ -9,7 +9,7 @@ import plotly.express as px  # type: ignore
 from plotly.graph_objects import Figure  # type: ignore
 
 import pandas as pd
-from activity_validator.hetus_data_processing import activity_profile
+from activity_validator.hetus_data_processing import activity_profile, hetus_constants
 from activity_validator.lpgvalidation import comparison_metrics, validation_data
 from activity_validator.ui import data_utils
 from activity_validator.ui import datapaths
@@ -63,6 +63,7 @@ def get_date_range(num_values: int):
     # generate 24h time range starting at 04:00
     resolution = timedelta(days=1) / num_values
     start_time = datetime.strptime("04:00", "%H:%M")
+    start_time = datetime(1900, 1, 1) + hetus_constants.PROFILE_OFFSET
     end_time = start_time + timedelta(days=1) - resolution
     time_values = pd.date_range(start_time, end_time, freq=resolution)
     return time_values
@@ -114,6 +115,7 @@ def stacked_prob_curves(filepath: Path | None, area: bool = True) -> Figure | No
         x=time_values,
         y=data.columns,
     )
+    fig.update_xaxes(tickformat="%H:%M")
     return fig
 
 
@@ -158,6 +160,7 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
         x=time_values,
         y=diff.columns,
     )
+    fig.update_xaxes(tickformat="%H:%M")
     return fig
 
 
@@ -201,6 +204,7 @@ def prob_curve_per_activity(
         figure.update_traces(fill="tozeroy", selector={"name": "Validation"})
         # use the same y-axis range for all plots
         figure.update_yaxes(range=[-1, 1])
+        figure.update_xaxes(tickformat="%H:%M")
         figures[activity] = dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)
     return figures
 
