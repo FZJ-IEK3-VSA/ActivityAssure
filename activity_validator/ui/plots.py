@@ -132,6 +132,11 @@ def stacked_prob_curves(filepath: Path | None) -> Figure | None:
         y=data.columns,
     )
     fig.update_xaxes(tickformat="%H:%M")
+    fig.update_layout(
+        title=f"Stacked Probability Curves",
+        xaxis_title="Time",
+        yaxis_title="Probability",
+    )
     return fig
 
 
@@ -175,6 +180,11 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
         y=diff.columns,
     )
     fig.update_xaxes(tickformat="%H:%M")
+    fig.update_layout(
+        title=f"Probability Curve Differences (Input - Validation)",
+        xaxis_title="Time",
+        yaxis_title="Probability Difference",
+    )
     return fig
 
 
@@ -219,6 +229,12 @@ def prob_curve_per_activity(
         # use the same y-axis range for all plots
         figure.update_yaxes(range=[-1, 1])
         figure.update_xaxes(tickformat="%H:%M")
+        # set title and axis labels
+        figure.update_layout(
+            title=f'Probability of "{activity}" Activities',
+            xaxis_title="Time",
+            yaxis_title="Probability",
+        )
         figures[activity] = dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)
     return figures
 
