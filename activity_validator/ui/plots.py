@@ -99,6 +99,24 @@ def join_to_pairs(
     return data_sets
 
 
+def remove_trailing_zero_rows(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Finds the last row that contains at least one non-zero value, and
+    removes all subsequent rows. Can be used for cleaning data for
+    bar charts, for example.
+
+    :param data: input DataFrame with zero rows
+    :return: DataFrame with last rows removed
+    """
+    # convert nan to 0 first
+    data.fillna(0, inplace=True)
+    # find the last non-zero row
+    last_nonzero_row = (data != 0).any(axis=1).cumsum().idxmax()
+    last_nonzero_position = data.index.get_loc(last_nonzero_row)
+    # cut off the last zero-rows
+    return data.iloc[: last_nonzero_position + 1]
+
+
 def stacked_prob_curves(filepath: Path | None) -> Figure | None:
     if filepath is None or not filepath.is_file():
         return None
@@ -233,9 +251,10 @@ def histogram_per_activity(
     _, validation_data = activity_profile.load_df(path_val, duration_data)
     _, input_data = activity_profile.load_df(path_in, duration_data)
     if duration_data:
-        # TODO workaround: https://github.com/plotly/plotly.py/issues/799
-        validation_data += datetime(2023, 1, 1)
-        input_data += datetime(2023, 1, 1)
+        # workaround for getting a timedelta axis
+        # https://github.com/plotly/plotly.py/issues/799
+        validation_data.index += datetime(2023, 1, 1)
+        input_data.index += datetime(2023, 1, 1)
         title = "Activity Durations"
         xaxis_title = "Activity duration"
     else:
@@ -244,14 +263,23 @@ def histogram_per_activity(
 
     data_per_activity = join_to_pairs(validation_data, input_data)
 
-    # create the plots for all activity types and wrap them in Cards
-    # TODO alternative: use ecdf instead of histogram for a sum curve
+    # remove trailing zero rows to make the histograms cleaner
+    for a, df in data_per_activity.items():
+        data_per_activity[a] = remove_trailing_zero_rows(df)
+
+    # create the plot for each activity
     figures = {
-        activity: px.histogram(d, barmode="overlay", histnorm="percent")
+        activity: px.bar(d, barmode="overlay")
         for activity, d in data_per_activity.items()
     }
+    # set title, axis lables and tick format, if necessary
     for a, f in figures.items():
-        f.update_layout(title=f'"{a}" {title}', xaxis_title=xaxis_title)
+        f.update_layout(
+            title=f'"{a}" {title}', xaxis_title=xaxis_title, yaxis_title="Probability"
+        )
+        if duration_data:
+            # set the correct format so only the time is shown, and not the date
+            f.update_xaxes(tickformat="%H:%M")
     graphs = {
         a: dcc.Graph(figure=f, config=GLOBAL_GRAPH_CONFIG) for a, f in figures.items()
     }

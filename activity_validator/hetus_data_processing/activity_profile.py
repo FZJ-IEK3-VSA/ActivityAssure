@@ -212,7 +212,8 @@ def load_df(
     # TODO: for duration data sometimes DtypeWarning: Columns (1,3,5,6,8,9,10,11,12,13,14,15) have mixed types. Specify dtype option on import or set low_memory=False.
     data = pd.read_csv(path, index_col=0)
     if as_timedelta:
-        convert_to_timedelta(data)
+        # convert the index to timedeltas
+        data.index = pd.to_timedelta(data.index)
     logging.debug(f"Loaded DataFrame from {path}")
     return profile_type, data
 
