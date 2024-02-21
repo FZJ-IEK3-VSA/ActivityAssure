@@ -105,11 +105,11 @@ class MainValidationView(html.Div):
                                                 dbc.Row(
                                                     [
                                                         html.H4(
-                                                            "Validation data type",
+                                                            "Validation Profile Category",
                                                             className="mb-3",
                                                         ),
                                                         html.H4(
-                                                            "Input data type",
+                                                            "Input Profile Category",
                                                             className="mb-3",
                                                         ),
                                                     ]
