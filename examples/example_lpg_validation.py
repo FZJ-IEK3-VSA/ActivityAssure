@@ -16,7 +16,7 @@ def validate_lpg():
     custom_mapping_path = Path("examples/activity_mapping_lpg.json")
     person_trait_file = Path("data/lpg/person_characteristics.json")
     validation_data_path = Path(
-        "data/validation data sets/final/country_sex_work status_day type"
+        "data/validation data sets/country_sex_work status_day type"
     )
     # validation_data_path = Path("data/validation data sets/de")
 
