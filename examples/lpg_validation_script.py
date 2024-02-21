@@ -6,23 +6,24 @@ the best and worst person categories.
 import pandas as pd
 from pathlib import Path
 
-base_path = "data/lpg/results_cluster/metrics/metrics_per_category_"
+base_path = "data/lpg/results_cluster/metrics/default/metrics_per_category.csv"
 mean_idx = "mean"
 
-data = pd.read_csv(base_path + "default.csv")
-data_scaled = pd.read_csv(base_path + "scaled.csv")
-data_scaled = data_scaled.loc[:, ("mae", "rmse", "wasserstein")].add_prefix("scaled_")  # type: ignore
+data = pd.read_csv(base_path)
+data_scaled = pd.read_csv(base_path.replace("default", "scaled"))
+data_scaled = data_scaled.loc[:, ("mae", "rmse", "bias", "wasserstein")].add_prefix("scaled_")  # type: ignore
 data = pd.concat([data, data_scaled], axis=1)
 
-data["diff"] = data["scaled_mae"] - data["mae"]
-data.dropna(inplace=True)
+data["diff_mae"] = data["scaled_mae"] - data["mae"]
 print(data.describe())
 
-filtered = data
-# filter category
-# filtered = data[data.iloc[:, 0] == "DE_female_full time_work"]
-# filter activity
-# filtered = data[data.iloc[:, 1] == mean_idx]
+# data.dropna(inplace=True)
 
-filtered = filtered.sort_values(by="bias")
-print(filtered)
+data = data
+# filter category
+# data = data[data.iloc[:, 0] == "DE_female_retired_no work"]
+# filter activity
+data = data[data.iloc[:, 1] == mean_idx]
+
+data = data.sort_values(by="mae")
+print(data)
