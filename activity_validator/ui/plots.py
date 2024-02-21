@@ -1,11 +1,10 @@
-import dataclasses
 from datetime import datetime, timedelta
 import math
 from pathlib import Path
 from dash import html, dcc  # type: ignore
 import dash_bootstrap_components as dbc  # type: ignore
-import numpy as np
 import plotly.express as px  # type: ignore
+import plotly.graph_objects as go  # type: ignore
 from plotly.graph_objects import Figure  # type: ignore
 
 import pandas as pd
@@ -13,6 +12,12 @@ from activity_validator.hetus_data_processing import activity_profile, hetus_con
 from activity_validator.lpgvalidation import comparison_metrics, validation_data
 from activity_validator.ui import data_utils
 from activity_validator.ui import datapaths
+
+
+# workaround for an unresolved bug that randomly causes exceptions
+# on initial app launch: https://github.com/plotly/plotly.py/issues/3441
+go.Figure(layout=dict(template="plotly"))
+
 
 # general config for all graphs
 GLOBAL_GRAPH_CONFIG = {
