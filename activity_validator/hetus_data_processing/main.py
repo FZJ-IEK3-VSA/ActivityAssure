@@ -65,6 +65,22 @@ def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[s
     return data, persondata, activity_types
 
 
+def get_full_categorization_attributes() -> list[str]:
+    """
+    Returns the categorization attributes for a full
+    categorization (country, sex, work status, day type)
+
+    :return: the categorization attributes
+    """
+    categorization_attributes = [
+        col.Country.ID,
+        person_attributes.Sex.title(),
+        person_attributes.WorkStatus.title(),
+        diary_attributes.DayType.title(),
+    ]
+    return categorization_attributes
+
+
 @utils.timing
 def process_hetus_2010_data(data: pd.DataFrame, categorization_attributes=None):
     """
@@ -80,12 +96,7 @@ def process_hetus_2010_data(data: pd.DataFrame, categorization_attributes=None):
     cat_data = get_diary_categorization_data(data, persondata)
     # categorize the data
     if categorization_attributes is None:
-        categorization_attributes = [
-            col.Country.ID,
-            person_attributes.Sex.title(),
-            person_attributes.WorkStatus.title(),
-            diary_attributes.DayType.title(),
-        ]
+        categorization_attributes = get_full_categorization_attributes()
     categories = categorize(cat_data, categorization_attributes)
     categories = filter_categories(categories)
 
@@ -207,9 +218,8 @@ def process_all_hetus_countries_AT_separately(
     if not title:
         # determine title automatically
         if categorization_attributes:
-            title = "_".join(s.lower() for s in categorization_attributes)
-        else:
-            title = "full_categorization"
+            categorization_attributes = get_full_categorization_attributes()
+        title = "_".join(s.lower() for s in categorization_attributes)
     # rename result directory
     Path(VALIDATION_DATA_PATH).rename(VALIDATION_DATA_PATH.parent / title)
     logging.info(f"Finished creating the validation data set '{title}'")
@@ -264,7 +274,8 @@ if __name__ == "__main__":
 
     # process_all_hetus_countries_AT_separately(HETUS_PATH, key)
 
+    # tests on smaller data sets
     # data = load_data.load_all_hetus_files_except_AT()
-    # data = load_data.load_hetus_files(["FI"], HETUS_PATH, key=key)
+    # data = load_data.load_hetus_files(["DE"], HETUS_PATH, key=key)
     # process_hetus_2010_data(data)
     # cross_validation_split(data)
