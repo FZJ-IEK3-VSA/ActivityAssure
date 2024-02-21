@@ -21,6 +21,24 @@ from activity_validator.hetus_data_processing.activity_profile import (
 from activity_validator.lpgvalidation.validation_data import ValidationData
 
 
+def calc_value_counts(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Counts number of occurrences of each value, for all columns
+    separately.
+
+    :param data: input data
+    :return: DataFrame containing value counts for each column
+    """
+    counts_per_col = {c: data[c].value_counts(normalize=True) for c in data.columns}
+    for column, col_counts in counts_per_col.items():
+        # keep the original column names
+        col_counts.name = column
+    counts = pd.concat(counts_per_col.values(), axis=1)
+    counts.fillna(0, inplace=True)
+    counts.sort_index(inplace=True)
+    return counts
+
+
 @utils.timing
 def calc_activity_group_frequencies(
     activity_profiles: Iterable[SparseActivityProfile],
@@ -37,7 +55,8 @@ def calc_activity_group_frequencies(
     # create a DataFrame with all frequencies, using 0 for activities that did
     # not occur in some diary entries
     frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype()).fillna(0)
-    return frequencies  # .describe()
+    counts = calc_value_counts(frequencies)
+    return counts
 
 
 @utils.timing
@@ -65,7 +84,8 @@ def calc_activity_group_durations(
     # turn into a DataFrame (list comprehension is necessary due to different list lengths)
     durations_series = [pd.Series(d, name=k) for k, d in durations_by_activity.items()]
     durations = pd.concat(durations_series, axis=1)
-    return durations  # .describe()
+    counts = calc_value_counts(durations)
+    return counts
 
 
 @utils.timing
