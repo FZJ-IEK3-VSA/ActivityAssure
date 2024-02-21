@@ -8,7 +8,7 @@ from pathlib import Path
 # TODO: load paths from config file
 
 # default data paths
-validation_path = Path("data/validation data sets/full_categorization")
+validation_path = Path("data/validation data sets/country_sex_work status_day type")
 input_data_path = Path("data/lpg/results")
 
 # data subdirectories

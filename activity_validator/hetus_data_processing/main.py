@@ -217,7 +217,7 @@ def process_all_hetus_countries_AT_separately(
 
     if not title:
         # determine title automatically
-        if categorization_attributes:
+        if not categorization_attributes:
             categorization_attributes = get_full_categorization_attributes()
         title = "_".join(s.lower() for s in categorization_attributes)
     # rename result directory

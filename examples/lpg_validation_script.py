@@ -6,7 +6,7 @@ the best and worst person categories.
 import pandas as pd
 from pathlib import Path
 
-base_path = "data/lpg/results_cluster/metrics/default/metrics_per_category.csv"
+base_path = "data/lpg/results/metrics/default/metrics_per_category.csv"
 mean_idx = "mean"
 
 data = pd.read_csv(base_path)

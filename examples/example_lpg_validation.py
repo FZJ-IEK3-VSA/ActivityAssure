@@ -18,9 +18,8 @@ def validate_lpg():
     validation_data_path = Path(
         "data/validation data sets/country_sex_work status_day type"
     )
-    # validation_data_path = Path("data/validation data sets/de")
 
-    output_path = Path("data/lpg/results_cluster")
+    output_path = Path("data/lpg/results")
 
     # calculate or load input data statistics
     # input_statistics = validation.process_model_data(
