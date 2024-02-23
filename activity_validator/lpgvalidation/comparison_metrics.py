@@ -7,6 +7,7 @@ from dataclasses import dataclass, field, fields
 from datetime import timedelta
 import logging
 from pathlib import Path
+from typing import ClassVar
 from dataclasses_json import config, dataclass_json  # type: ignore
 import numpy as np
 import pandas as pd
@@ -18,7 +19,7 @@ from activity_validator.lpgvalidation.validation_data import ValidationData
 
 @dataclass_json
 @dataclass
-class ValidationMetrics:
+class ValidationMetrics:  # TODO: rename to ValidationIndicators
     mae: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
@@ -62,6 +63,8 @@ class ValidationMetrics:
         )
     )
 
+    mean_column: ClassVar[str] = "mean"
+
     def get_scaled(self, scale: pd.Series) -> "ValidationMetrics":
         """
         Scales the distance metrics according to the provided scaling
@@ -90,16 +93,15 @@ class ValidationMetrics:
         Adds the mean of each KPI across all activities as another
         value.
         """
-        means_idx = "mean"
         assert (
-            means_idx not in self.mae.index
-        ), f"Cannot add the KPI mean: there is already an activity called {means_idx}"
-        self.mae[means_idx] = self.mae.mean()
-        self.bias[means_idx] = self.bias.mean()
-        self.rmse[means_idx] = self.rmse.mean()
-        self.pearson_corr[means_idx] = self.pearson_corr.mean()
-        self.wasserstein[means_idx] = self.wasserstein.mean()
-        self.diff_of_max[means_idx] = self.diff_of_max.mean()
+            ValidationMetrics.mean_column not in self.mae.index
+        ), f"Cannot add the indicator mean: there is already an activity called {ValidationMetrics.mean_column}"
+        self.mae[ValidationMetrics.mean_column] = self.mae.mean()
+        self.bias[ValidationMetrics.mean_column] = self.bias.mean()
+        self.rmse[ValidationMetrics.mean_column] = self.rmse.mean()
+        self.pearson_corr[ValidationMetrics.mean_column] = self.pearson_corr.mean()
+        self.wasserstein[ValidationMetrics.mean_column] = self.wasserstein.mean()
+        self.diff_of_max[ValidationMetrics.mean_column] = self.diff_of_max.mean()
 
     def get_metric_means(self) -> dict[str, float]:
         """
@@ -337,7 +339,23 @@ def calc_all_metric_variants(
     save_to_file: bool = True,
     profile_type: ProfileType | None = None,
     output_path: Path | None = None,
+    add_means: bool = True,
 ) -> tuple[pd.DataFrame, ValidationMetrics, ValidationMetrics, ValidationMetrics]:
+    """
+    Calculates all indicator variants (default, scales, normed) for the provided
+    combination of validation and input data. Optionally stores each indicator set
+    as a file.
+
+    :param validation_data: validation statistics
+    :param input_data: input statistics
+    :param save_to_file: if True, saves the indicators to file, defaults to True
+    :param profile_type: the profile type, only required for saving, defaults to None
+    :param output_path: the base output path for saving the indicators, defaults to None
+    :param add_means: if True, means across all activities will be added to each set of
+                      indicators, defaults to True
+    :return: a tuple containing the difference profiles for the activity probabilities
+             and the three indicator variants
+    """
     # calcluate and store comparison metrics as normal, scaled and normalized
     differences, metrics = calc_comparison_metrics(
         validation_data, input_data, add_kpi_means=False
@@ -345,11 +363,12 @@ def calc_all_metric_variants(
     # calc metrics as normal, scaled and normalized variants
     shares = validation_data.probability_profiles.mean(axis=1)
     scaled = metrics.get_scaled(shares)
-    # add metric means only after obtaining the scaled metrics
-    metrics.add_metric_means()
-    scaled.add_metric_means()
+    if add_means:
+        # add metric means only after obtaining the scaled metrics
+        metrics.add_metric_means()
+        scaled.add_metric_means()
     _, normalized = calc_comparison_metrics(
-        validation_data, input_data, True, add_kpi_means=True
+        validation_data, input_data, True, add_kpi_means=add_means
     )
     if save_to_file:
         assert profile_type is not None, "Must specify a profile type for saving"

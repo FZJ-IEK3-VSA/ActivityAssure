@@ -295,7 +295,7 @@ def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
     :param output_path: output path
     """
     output_path /= "profile_type x activity"
-    mean_idx = "mean"
+    mean_idx = comparison_metrics.ValidationMetrics.mean_column
     for metric_name in metrics.columns:
         df = metrics[metric_name].unstack(level=1)
         if mean_idx in df.columns:

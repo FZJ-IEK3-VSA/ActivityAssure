@@ -56,6 +56,7 @@ class ValidationData:
 
         :param base_path: the base path where the files are stored
         :param profile_type: the profile type to load
+        :raises RuntimeError: when not all files could be found
         :return: the object containing all data for the specified
                  profile type
         """
