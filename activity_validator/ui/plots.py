@@ -60,9 +60,11 @@ def replacement_text(text: str = "No data available"):
     return html.Div(children=[text], style={"textAlign": "center"})
 
 
-def titled_card(content, title: str = "") -> dbc.Card:
+def titled_card(content, title: str = "", **kwargs) -> dbc.Card:
     """
-    Embeds any content in a card with an optional title
+    Embeds any content in a card with an optional title.
+    Additional keyword arguments are passed to the Card
+    constructor.
 
     :param content: content for the card
     :param title: title for the card
@@ -71,7 +73,7 @@ def titled_card(content, title: str = "") -> dbc.Card:
     if not isinstance(content, list):
         content = [content]
     t = [html.H3(title, style={"textAlign": "center"})] if title else []
-    return dbc.Card(dbc.CardBody(children=t + content))
+    return dbc.Card(dbc.CardBody(children=t + content), **kwargs)
 
 
 def single_plot_card(figure: Figure, title: str = "") -> dbc.Card:
@@ -403,30 +405,73 @@ def bias_to_str(value: float) -> str:
     return timedelta_to_str(td)
 
 
-def kpi_table_rows(
-    metrics: comparison_metrics.ValidationMetrics,
+def get_all_indicator_variants(
+    ptype_val: activity_profile.ProfileType,
+    ptype_in: activity_profile.ProfileType,
+    add_means: bool,
+) -> tuple[
+    comparison_metrics.ValidationMetrics,
+    comparison_metrics.ValidationMetrics,
+    comparison_metrics.ValidationMetrics,
+]:
+    """
+    Loads the statistics for validation and input data and calculates
+    validation indicators in all variants.
+
+    :param ptype_val: the selected profile type of the validation data
+    :param ptype_in: the selected profile type of the input data
+    :param add_means: if True, adds indicator means across all activities
+    :raises RuntimeError: when statistics for a profile type could not be loaded
+    :return: tuple of validation indicators
+    """
+    # load the statistics for validation and input data
+    data_val = validation_data.ValidationData.load(datapaths.validation_path, ptype_val)
+    data_in = validation_data.ValidationData.load(datapaths.input_data_path, ptype_in)
+    # calculate the indicators without saving them to file
+    _, metrics, scaled, normed = comparison_metrics.calc_all_metric_variants(
+        data_val, data_in, False, add_means=add_means
+    )
+    return metrics, scaled, normed
+
+
+def indicator_table_rows(
+    indicators: comparison_metrics.ValidationMetrics,
     activity: str,
     title: str = "",
     extended: bool = True,
 ):
+    """
+    Creates indicator tables rows for one activity, for
+    a single indicator variant (default/scaled/normed)
+
+    :param indicators: the indicator object (any variant)
+    :param activity: the activity name (only used to get indicator values)
+    :param title: title for the table rows (should match the variant), defaults to ""
+    :param extended: if True, the full set of indicators is shown, else only the indicators
+                     which are affected by scaling/norming, defaults to True
+    :return: indicator table rows
+    """
     digits = 6
     bold = {"fontWeight": "bold"}
     title_rows = [html.Tr([html.Td(title)], style=bold)] if title else []
     basic_rows = [
-        html.Tr([html.Td("MAE"), html.Td(round_kpi(metrics.mae[activity], digits))]),
+        html.Tr([html.Td("MAE"), html.Td(round_kpi(indicators.mae[activity], digits))]),
         html.Tr(
             [
                 html.Td("Bias [time]"),
-                html.Td(bias_to_str((metrics.bias[activity]))),
+                html.Td(bias_to_str((indicators.bias[activity]))),
             ]
         ),
         html.Tr(
-            [html.Td("RMSE"), html.Td(round_kpi(metrics.rmse[activity] ** 2, digits))]
+            [
+                html.Td("RMSE"),
+                html.Td(round_kpi(indicators.rmse[activity] ** 2, digits)),
+            ]
         ),
         html.Tr(
             [
                 html.Td("Wasserstein distance"),
-                html.Td(round_kpi(metrics.wasserstein[activity], digits)),
+                html.Td(round_kpi(indicators.wasserstein[activity], digits)),
             ]
         ),
     ]
@@ -435,7 +480,7 @@ def kpi_table_rows(
             html.Tr(
                 [
                     html.Td("Pearson correlation"),
-                    html.Td(round_kpi(metrics.pearson_corr[activity], digits)),
+                    html.Td(round_kpi(indicators.pearson_corr[activity], digits)),
                 ]
             )
         ]
@@ -444,50 +489,52 @@ def kpi_table_rows(
     return title_rows + basic_rows + extended_rows
 
 
-def kpi_table(
-    ptype_val: activity_profile.ProfileType, ptype_in: activity_profile.ProfileType
-) -> dict[str, dcc.Graph]:
+def create_indicator_table(
+    indicators: comparison_metrics.ValidationMetrics,
+    scaled_indicators: comparison_metrics.ValidationMetrics,
+    normed_indicators: comparison_metrics.ValidationMetrics,
+    activity: str,
+) -> dbc.Table:
     """
-    Generates a KPI table for each activity.
+    Creates an indicator table for one activity, with sections for each
+    indicator variant.
+
+    :param indicators: default indicators
+    :param scaled_indicators: scaled indicators
+    :param normed_indicators: normed indicators
+    :param activity: the activity name (only used to get indicator values)
+    :return: indicator table for one activity
+    """
+    return dbc.Table(
+        indicator_table_rows(indicators, activity, "Probability Curves Absolute")
+        + indicator_table_rows(
+            scaled_indicators,
+            activity,
+            "Probability Curves Relative to duration in validation data",
+            False,
+        )
+        + indicator_table_rows(
+            normed_indicators, activity, "Probability Curves Normalized", False
+        )
+    )
+
+
+def indicator_tables_per_activity(
+    ptype_val: activity_profile.ProfileType, ptype_in: activity_profile.ProfileType
+) -> dict[str, dbc.Table]:
+    """
+    Generates an indicator table for each activity.
 
     :param ptype_val: the selected profile type of the validation data
     :param ptype_in: the selected profile type of the input data
     :return: dict of all KPI tables
     """
     try:
-        # load the statistics for validation and input data
-        data_val = validation_data.ValidationData.load(
-            datapaths.validation_path, ptype_val
-        )
-        data_in = validation_data.ValidationData.load(
-            datapaths.input_data_path, ptype_in
-        )
+        # get indicators without means
+        metrics, scaled, normed = get_all_indicator_variants(ptype_val, ptype_in, False)
     except RuntimeError:
         return {}
-
-    shares = data_val.probability_profiles.mean(axis=1)
-
-    # get normal, scaled and normalized metrics
-    _, metrics = comparison_metrics.calc_comparison_metrics(
-        data_val, data_in, add_kpi_means=False
-    )
-
-    scaled = metrics.get_scaled(shares)
-
-    _, metrics_normed = comparison_metrics.calc_comparison_metrics(
-        data_val, data_in, True, add_kpi_means=False
-    )
     tables = {
-        a: dbc.Table(
-            kpi_table_rows(metrics, a, "Probability Curves Absolute")
-            + kpi_table_rows(
-                scaled,
-                a,
-                "Probability Curves Relative to duration in validation data",
-                False,
-            )
-            + kpi_table_rows(metrics_normed, a, "Probability Curves Normalized", False)
-        )
-        for a in metrics.mae.index
+        a: create_indicator_table(metrics, scaled, normed, a) for a in metrics.mae.index
     }
     return tables

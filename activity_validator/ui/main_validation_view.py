@@ -5,6 +5,7 @@ import plotly.express as px  # type: ignore
 import uuid
 
 from activity_validator.hetus_data_processing import activity_profile
+from activity_validator.lpgvalidation import comparison_metrics
 from activity_validator.ui import data_utils, datapaths, plots
 
 
@@ -201,7 +202,11 @@ class MainValidationView(html.Div):
                             ),
                             className="mb-3",
                         ),
-                        html.Div(id=self.ids.kpi_view(aio_id), className="mb-3"),
+                        dcc.Loading(
+                            type="circle",
+                            id=self.ids.kpi_view(aio_id),
+                            className="mb-3",
+                        ),
                         html.Br(),
                         html.Div(
                             children=[
@@ -342,9 +347,25 @@ class MainValidationView(html.Div):
     @callback(
         Output(ids.kpi_view(MATCH), "children"),
         Input(ids.dropdown_valid(MATCH), "value"),
+        Input(ids.dropdown_input(MATCH), "value"),
     )
-    def update_overall_kpis(profile_type_str: str):
-        return [plots.titled_card(None, "TBD")]
+    def update_overall_kpis(profile_type_valid: str, profile_type_input: str):
+        ptype_val = data_utils.ptype_from_label(profile_type_valid)
+        ptype_in = data_utils.ptype_from_label(profile_type_input)
+        try:
+            metrics, scaled, normed = plots.get_all_indicator_variants(
+                ptype_val, ptype_in, True
+            )
+        except RuntimeError:
+            return plots.titled_card(plots.replacement_text())
+        table = plots.create_indicator_table(
+            metrics, scaled, normed, comparison_metrics.ValidationMetrics.mean_column
+        )
+        return [
+            plots.titled_card(
+                table, "Mean Indicator Values", style={"width": 600, "margin": "auto"}
+            )
+        ]
 
     @callback(
         Output(ids.per_activity_graphs(MATCH), "children"),
@@ -361,7 +382,7 @@ class MainValidationView(html.Div):
             ptype_val, ptype_in, datapaths.duration_dir, True
         )
         prob = plots.prob_curve_per_activity(ptype_val, ptype_in, datapaths.prob_dir)
-        kpis = plots.kpi_table(ptype_val, ptype_in)
+        kpis = plots.indicator_tables_per_activity(ptype_val, ptype_in)
         if not freq:
             # no data available for this profile type
             return plots.titled_card(plots.replacement_text())
