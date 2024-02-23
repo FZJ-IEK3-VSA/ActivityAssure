@@ -387,7 +387,11 @@ class MainValidationView(html.Div):
             # no data available for this profile type
             return plots.titled_card(plots.replacement_text())
         assert (
-            freq.keys() == dur.keys() == prob.keys() == kpis.keys()
+            freq.keys()
+            == dur.keys()
+            == prob.keys()
+            == kpis.keys()
+            == set(plots.ACTIVITY_ORDER_FOR_PLOTS)
         ), "Missing data for some activity types"
         # build rows, one for each activity
         rows = [
@@ -398,6 +402,6 @@ class MainValidationView(html.Div):
                 ],
                 className="mb-3",
             )
-            for a in freq.keys()
+            for a in plots.ACTIVITY_ORDER_FOR_PLOTS
         ]
         return rows
