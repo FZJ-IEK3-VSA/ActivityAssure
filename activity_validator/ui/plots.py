@@ -18,6 +18,27 @@ from activity_validator.ui import datapaths
 # on initial app launch: https://github.com/plotly/plotly.py/issues/3441
 go.Figure(layout=dict(template="plotly"))
 
+# defines the color scheme for plots which show multiple ativities
+STACKED_PROB_CURVE_COLOR = px.colors.qualitative.Plotly
+# defines the order of activities in plots which show multiple ativities
+ACTIVITY_ORDER_FOR_PLOTS = [
+    "sleep",
+    "work",
+    "other",
+    "tv",
+    "eat",
+    "not at home",
+    "personal care",
+    "cook",
+    "clean",
+    "pc",
+    "dishwashing",
+    "education",
+    "iron",
+    "laundry",
+    "radio/music",
+]
+
 
 # general config for all graphs
 GLOBAL_GRAPH_CONFIG = {
@@ -129,12 +150,14 @@ def stacked_prob_curves(filepath: Path | None) -> Figure | None:
     _, data = activity_profile.load_df(filepath)
     # transpose data for plotting
     data = data.T
+    data = data[ACTIVITY_ORDER_FOR_PLOTS]  # reorder
     time_values = get_date_range(len(data))
     # plot the data
     fig = px.area(
         data,
         x=time_values,
         y=data.columns,
+        color_discrete_sequence=STACKED_PROB_CURVE_COLOR,
     )
     fig.update_xaxes(tickformat="%H:%M")
     fig.update_layout(
@@ -177,12 +200,14 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     # get the probability profile differences
     diff = comparison_metrics.calc_probability_curves_diff(data_val, data_in)
     diff = diff.T
+    diff = diff[ACTIVITY_ORDER_FOR_PLOTS]  # reorder
     time_values = get_date_range(len(diff))
     # plot the data
     fig = px.line(
         diff,
         x=time_values,
         y=diff.columns,
+        color_discrete_sequence=STACKED_PROB_CURVE_COLOR,
     )
     fig.update_xaxes(tickformat="%H:%M")
     fig.update_layout(
