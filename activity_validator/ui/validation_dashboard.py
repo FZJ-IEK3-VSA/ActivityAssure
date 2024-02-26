@@ -8,6 +8,8 @@ from activity_validator.ui.main_validation_view import MainValidationView
 
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app.title = "Activity Validator"
+app._favicon = "stacked.ico"
 
 
 # get available validation profile types
