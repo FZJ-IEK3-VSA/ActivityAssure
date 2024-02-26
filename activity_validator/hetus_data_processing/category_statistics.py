@@ -51,7 +51,9 @@ def calc_activity_group_frequencies(
     :return: activity frequency statistics
     """
     # count number of activity name occurrences for each diary entry
-    counters = [Counter(a.name for a in p.activities) for p in activity_profiles]
+    counters = [
+        Counter(a.name for a in p.get_merged_activity_list()) for p in activity_profiles
+    ]
     # create a DataFrame with all frequencies, using 0 for activities that did
     # not occur in some diary entries
     frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype()).fillna(0)
@@ -75,12 +77,15 @@ def calc_activity_group_durations(
         p.resolution == resolution for p in activity_profiles
     ), "Not all profiles have the same resolution"
     # get an iterable of all activities
-    activities = itertools.chain.from_iterable(p.activities for p in activity_profiles)
     durations_by_activity: dict[str, list[timedelta]] = {}
-    for a in activities:
-        # collect durations by activity type, and convert from number of time slots
-        # to Timedelta
-        durations_by_activity.setdefault(a.name, []).append(a.duration * resolution)
+    for activity_profile in activity_profiles:
+        # use the merged activity list to take the day split into account and get
+        # more realistic durations for sleep etc.
+        activities = activity_profile.get_merged_activity_list()
+        for a in activities:
+            # collect durations by activity type, and convert from number of time slots
+            # to Timedelta
+            durations_by_activity.setdefault(a.name, []).append(a.duration * resolution)
     # turn into a DataFrame (list comprehension is necessary due to different list lengths)
     durations_series = [pd.Series(d, name=k) for k, d in durations_by_activity.items()]
     durations = pd.concat(durations_series, axis=1)

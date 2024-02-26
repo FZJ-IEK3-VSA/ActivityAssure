@@ -411,6 +411,38 @@ class SparseActivityProfile:
             last_activity = self.activities[-1]
             last_activity.duration = profile_end - last_activity.start
 
+    def is_last_and_first_same(self) -> bool:
+        """
+        Returns True, if the first and the last activity of the profile
+        are the same. For daily profiles, this can be used to indicate
+        activities like 'sleep' that continue over the day transition
+        time.
+
+        :return: whether first and last activity are the same
+        """
+        return self.activities[0].name == self.activities[-1].name
+
+    def get_merged_activity_list(self) -> list[ActivityProfileEntry]:
+        """
+        Returns a list of activities, in which the first and last activity
+        have been merged, if they were the same. The new activity list starts
+        and ends later than the original one, but has the same duration.
+        Other activities besides the first and last are unaffected.
+
+        :return: the merged activitiy list
+        """
+        if not self.is_last_and_first_same() or len(self.activities) == 1:
+            # only one activity or first and last activity are different - nothing to adapt
+            return self.activities
+        # merge the first and last activity to one activity
+        first, last = self.activities[0], self.activities[-1]
+        merged = ActivityProfileEntry(
+            first.name, last.start, first.duration + last.duration
+        )
+        # remove the original first and last activity, and append the merged one
+        activities = self.activities[1:-1] + [merged]
+        return activities
+
     def start(self) -> int:
         return self.activities[0].start
 
