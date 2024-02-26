@@ -113,7 +113,7 @@ class ValidationMetrics:  # TODO: rename to ValidationIndicators
         """
         metric_means = {
             "mae": self.mae.mean(),
-            "bias": self.bias.abs().mean(),
+            "bias": self.bias.abs().mean(),  # TODO: should the mean of bias be calculated normally, so it is always zero?
             "rmse": self.rmse.mean(),
             "pearson correlation": self.pearson_corr.mean(),
             "wasserstein": self.wasserstein.mean(),

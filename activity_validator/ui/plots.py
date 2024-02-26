@@ -389,12 +389,12 @@ def timedelta_to_str(t: timedelta) -> str:
     return sign + format_timedelta(t)
 
 
-def bias_to_str(value: float) -> str:
+def indicator_as_time_str(value: float) -> str:
     """
-    Converts the bias from a float in range [-1, 1] to
+    Converts an indicator from a float in range [-1, 1] to
     a str representation of a timedelta in range [-1 day, 1 day].
-    This emphasizes its meaning: the average difference of time
-    spent per day on an activity category.
+    This helps to understand the meaning of indicators like mae
+    and bias.
 
     :param value: bias value
     :return: str timedelta representation
@@ -455,11 +455,16 @@ def indicator_table_rows(
     bold = {"fontWeight": "bold"}
     title_rows = [html.Tr([html.Td(title)], style=bold)] if title else []
     basic_rows = [
-        html.Tr([html.Td("MAE"), html.Td(round_kpi(indicators.mae[activity], digits))]),
+        html.Tr(
+            [
+                html.Td("MAE [time]"),
+                html.Td(indicator_as_time_str(indicators.mae[activity])),
+            ]
+        ),
         html.Tr(
             [
                 html.Td("Bias [time]"),
-                html.Td(bias_to_str((indicators.bias[activity]))),
+                html.Td(indicator_as_time_str((indicators.bias[activity]))),
             ]
         ),
         html.Tr(
