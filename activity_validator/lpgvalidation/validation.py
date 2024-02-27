@@ -274,7 +274,7 @@ def check_mapping(
     types_val = set(activity_types_val)
     if types_custom != types_val:
         logging.warn(
-            "The applied activity mapping does not use the same set of activity types as the"
+            "The applied activity mapping does not use the same set of activity types as the "
             "validation data.\n"
             f"Missing activity types: {types_val - types_custom}\n"
             f"Additional activity types: {types_custom - types_val}"
@@ -361,14 +361,12 @@ def calc_category_sizes(
 @utils.timing
 def calc_statistics_per_category(
     input_data_dict: dict[ProfileType, list[SparseActivityProfile]],
-    output_path: Path,
     activity_types: list[str],
 ) -> dict[ProfileType, ValidationData]:
     """
     Calculates statistics per category
 
     :param input_data_dict: input activity profiles per category
-    :param output_path: base path for result data
     :param activity_types: list of possible activity types
     :return: data statistics per category
     """
@@ -377,9 +375,35 @@ def calc_statistics_per_category(
     for profile_type, profiles in input_data_dict.items():
         # calculate and store statistics for validation
         input_data = calc_input_data_statistics(profiles, activity_types)
-        input_data.save(output_path)
         input_statistics[profile_type] = input_data
     return input_statistics
+
+
+def save_statistics(
+    statistics_dict: dict[ProfileType, ValidationData], output_path: Path
+):
+    """
+    Saves the statistics for different profile types in the specified path.
+
+    :param statistics_dict: the dict of statistics to save
+    :param output_path: base output path
+    """
+    for data in statistics_dict.values():
+        data.save(output_path)
+
+
+def map_statistics_activities(
+    statistics: dict[ProfileType, ValidationData], mapping_path: Path
+):
+    """
+    Maps activities to new names and merges them if necessary.
+
+    :param statistics: the statistics in which to rename activities
+    :param mapping_path: the mapping to apply
+    """
+    mapping, _ = load_mapping(mapping_path)
+    for data in statistics.values():
+        data.map_activities(mapping)
 
 
 @utils.timing
@@ -403,9 +427,8 @@ def process_model_data(
     input_data_dict = prepare_input_data(full_year_profiles, activity_mapping)
     calc_category_sizes(input_data_dict, output_path)
     # calc and save input data statistics
-    input_statistics = calc_statistics_per_category(
-        input_data_dict, output_path, activity_types
-    )
+    input_statistics = calc_statistics_per_category(input_data_dict, activity_types)
+    save_statistics(input_statistics, output_path)
     return input_statistics
 
 

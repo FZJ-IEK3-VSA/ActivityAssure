@@ -97,7 +97,7 @@ def get_activity_type_list(
     """
     mapping = load_mapping(mapping_path, False)
     activity_types = sorted(set(mapping.values()))
-    if save_to_output:
+    if save_to_output and output_base_path is not None:
         path = create_result_path(
             "activities",
             "available_activity_types",

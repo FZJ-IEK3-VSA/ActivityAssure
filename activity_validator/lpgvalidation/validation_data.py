@@ -47,6 +47,40 @@ class ValidationData:
         )
 
     @staticmethod
+    def map_columns(data: pd.DataFrame, mapping: dict):
+        """
+        Maps column names of a dataframe to new names. If
+        two or more column names are mapped to the same new
+        name, the colums are added.
+
+        :param data: the data to rename
+        :param mapping: the mapping to apply
+        :return: the renamed data
+        """
+        # rename the columns, which might result in some with identical name
+        data.rename(columns=mapping, inplace=True)
+        # calculate the sum of all columns with the same name
+        data = data.T.groupby(level=0).sum().T
+        return data
+
+    def map_activities(self, mapping: dict):
+        """
+        Renames and if necessary merges activities.
+
+        :param mapping: a dict that maps old activity names to new names
+        """
+        self.activity_frequencies = ValidationData.map_columns(
+            self.activity_frequencies, mapping
+        )
+        self.activity_durations = ValidationData.map_columns(
+            self.activity_durations, mapping
+        )
+        # probability profiles contain one row per activity --> transpose twice
+        self.probability_profiles = ValidationData.map_columns(
+            self.probability_profiles.T, mapping
+        ).T
+
+    @staticmethod
     def load(
         base_path: Path, profile_type: activity_profile.ProfileType
     ) -> "ValidationData":

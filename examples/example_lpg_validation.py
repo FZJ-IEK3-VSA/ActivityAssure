@@ -30,6 +30,19 @@ def validate_lpg():
     # load validation data statistics
     validation_statistics = validation.load_validation_data(validation_data_path)
 
+    # if necessary, apply another mapping to merge activities
+    validation_mapping_path = Path("examples/activity_mapping_validation_lpg.json")
+    if custom_mapping_path is not None:
+        validation.map_statistics_activities(input_statistics, validation_mapping_path)
+        validation.map_statistics_activities(
+            validation_statistics, validation_mapping_path
+        )
+        # define a new path to not overwrite the original validation data
+        mapped_validation_path = Path(f"{validation_data_path}_mapped")
+        validation.save_statistics(validation_statistics, mapped_validation_path)
+
+    validation.save_statistics(input_statistics, output_path)
+
     # compare input and validation data statistics per profile type
     metrics_path = output_path / "metrics"
     metric_dict_variants = validation.validate_per_category(
