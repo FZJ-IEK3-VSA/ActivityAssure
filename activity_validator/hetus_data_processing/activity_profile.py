@@ -823,15 +823,3 @@ class ExpandedActivityProfiles:
                 )
             )
         return profiles
-
-
-@dataclass_json
-@dataclass
-class HHActivityProfiles:  # TODO: obsolete
-    """
-    Bundles the activity profiles from all people in one household
-    """
-
-    activity_profiles: dict[str, SparseActivityProfile] = field(default_factory=dict)
-
-    household: str | None = None
