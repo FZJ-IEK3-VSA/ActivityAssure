@@ -1,30 +1,18 @@
 """
-Calculates additional attributes for diary entries which can then be used for categorization
+Calculates additional attributes for HETUS diary entries which can
+then be used for categorization.
 """
 
 from datetime import timedelta
-from enum import StrEnum
 import logging
 import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 import activity_validator.hetus_data_processing.hetus_values as val
 from activity_validator.hetus_data_processing import hetus_constants, utils
-
-
-class DayType(StrEnum):
-    """
-    Specifies the day type of a diary entry
-    """
-
-    work = "working day"
-    no_work = "rest day"
-
-    undetermined = "undetermined"
-
-    @staticmethod
-    def title() -> str:
-        return "day type"
+from activity_validator.hetus_data_processing.attributes.categorization_attributes import (
+    DayType,
+)
 
 
 MAP_DAYTYPE = {
@@ -48,6 +36,12 @@ WORKTIME_THRESHOLD = timedelta(hours=3)
 
 
 def determine_day_type(row: pd.Series) -> DayType:
+    """
+    Determines the day type for a single diary.
+
+    :param row: the diary row
+    :return: the determined day type
+    """
     # get values of the relevant columns and map them to the destination enum
     if row[col.Diary.DAYTYPE] >= 0:
         return MAP_DAYTYPE[row[col.Diary.DAYTYPE]]
