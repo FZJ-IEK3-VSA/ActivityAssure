@@ -8,7 +8,7 @@ import sqlite3
 import pandas as pd
 import tqdm
 
-from activity_validator.hetus_data_processing import hetus_translations
+from activity_validator import activity_mapping
 
 # preliminary affordance mappings according to affordance categories
 UNMAPPED_CATEGORY = "TODO"
@@ -38,7 +38,7 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
 
     # load activity mapping
     mapping_path = Path("examples/activity_mapping_lpg.json")
-    activity_mapping = hetus_translations.load_mapping(mapping_path)
+    mapping = activity_mapping.load_mapping(mapping_path)
 
     # get all activities from LPG result database
     con = sqlite3.connect(str(file))
@@ -56,10 +56,7 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
         start_date = datetime.fromisoformat(entry["DateTime"])
         affordance = entry["AffordanceName"]
         category = entry["Category"]
-        if (
-            affordance not in activity_mapping
-            and affordance not in unmapped_affordances
-        ):
+        if affordance not in mapping and affordance not in unmapped_affordances:
             unmapped_affordances[affordance] = CATEGORY_MAPPING.get(
                 category, UNMAPPED_CATEGORY
             )
@@ -70,7 +67,7 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
 
     if unmapped_affordances:
         print(f"Found {len(unmapped_affordances)} unmapped affordances")
-        merged = activity_mapping | unmapped_affordances
+        merged = mapping | unmapped_affordances
         with open(mapping_path, "w") as f:
             # add unmapped affordances to mapping file
             json.dump(merged, f, indent=4)

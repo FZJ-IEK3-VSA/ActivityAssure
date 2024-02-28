@@ -37,7 +37,7 @@ def validate_lpg():
     # if necessary, apply another mapping to merge activities
     validation_mapping_path = Path("examples/activity_mapping_validation_lpg.json")
     if validation_mapping_path is not None:
-        mapping, _ = validation.load_mapping(validation_mapping_path)
+        mapping, _ = validation.load_mapping_and_activities(validation_mapping_path)
         input_statistics.map_statistics_activities(mapping)
         validation_statistics.map_statistics_activities(mapping)
         # define a new path to not overwrite the original validation data

@@ -4,6 +4,7 @@ specific aspects of the HETUS data if necessary.
 """
 
 import pandas as pd
+from activity_validator import activity_mapping
 from activity_validator.hetus_data_processing import hetus_translations
 from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
@@ -245,7 +246,7 @@ def calc_overall_activity_shares(data: pd.DataFrame, activities=None) -> pd.Seri
     """
     if activities is None:
         mapping = hetus_translations.get_combined_hetus_mapping()
-        activities = hetus_translations.get_activities_in_mapping(mapping)
+        activities = activity_mapping.get_activities_in_mapping(mapping)
     hetus_translations.translate_activity_codes(data)
     data = col.get_activity_data(data)
     probabilities = category_statistics.calc_probability_profiles(data, activities)
@@ -263,7 +264,7 @@ def calc_activity_share_per_profile_type(
     :return: activity shares per type
     """
     mapping = hetus_translations.get_combined_hetus_mapping()
-    activities = hetus_translations.get_activities_in_mapping(mapping)
+    activities = activity_mapping.get_activities_in_mapping(mapping)
     shares_per_group = pd.DataFrame(
         {
             d.profile_type: calc_overall_activity_shares(d.data, activities)

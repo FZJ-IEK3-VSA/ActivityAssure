@@ -11,7 +11,6 @@ from typing import Iterable
 import pandas as pd
 from activity_validator.hetus_data_processing import (
     activity_profile,
-    hetus_translations,
     hetus_constants,
     category_statistics,
     pandas_utils,
@@ -33,6 +32,7 @@ from activity_validator.lpgvalidation.validation_statistics import (
     ValidationStatistics,
     ValidationSet,
 )
+from activity_validator import activity_mapping
 
 
 def load_person_characteristics(path: str) -> dict:
@@ -204,36 +204,6 @@ def calc_input_data_statistics(
     return input_data
 
 
-def check_activity_lists(
-    activities: list[str], validation_activities: list[str]
-) -> list[str]:
-    """
-    Checks if the passed activity lists match. Also returns a
-    new activity list, containing all activity types in the same
-    order as the validation_activities parameter.
-    """
-    types_custom = set(activities)
-    types_val = set(validation_activities)
-    if types_custom != types_val:
-        logging.warn(
-            "The applied activity mapping does not use the same set of activity types as the "
-            "validation data.\n"
-            f"Missing activity types: {types_val - types_custom}\n"
-            f"Additional activity types: {types_custom - types_val}"
-        )
-        return validation_activities + list(types_custom - types_val)
-    else:
-        # order might be different, but content is the same
-        return validation_activities
-
-
-def load_mapping(mapping_path: Path) -> tuple[dict[str, str], list[str]]:
-    # load activity mapping
-    activity_mapping = hetus_translations.load_mapping(mapping_path)
-    activities = hetus_translations.get_activities_in_mapping(activity_mapping)
-    return activity_mapping, activities
-
-
 def prepare_input_data(
     full_year_profiles: list[SparseActivityProfile], activity_mapping: dict[str, str]
 ) -> dict[ProfileType, list[SparseActivityProfile]]:
@@ -304,10 +274,14 @@ def process_model_data(
     """
     # load and preprocess all input data
     full_year_profiles = load_activity_profiles_from_csv(input_path, person_trait_file)
-    activity_mapping, activities = load_mapping(custom_mapping_path)
+    mapping, activities = activity_mapping.load_mapping_and_activities(
+        custom_mapping_path
+    )
     if validation_activities != activities:
-        activities = check_activity_lists(activities, validation_activities)
-    input_data_dict = prepare_input_data(full_year_profiles, activity_mapping)
+        activities = activity_mapping.check_activity_lists(
+            activities, validation_activities
+        )
+    input_data_dict = prepare_input_data(full_year_profiles, mapping)
     # calc and save input data statistics
     statistics_set = calc_statistics_per_category(input_data_dict, activities)
     return statistics_set

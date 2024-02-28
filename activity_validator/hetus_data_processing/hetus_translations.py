@@ -1,33 +1,39 @@
 """
-This module provides functions for translating HETUS columns and codes to readable names
+This module provides functions for translating HETUS columns and codes to readable names.
 """
 
-import json
-from enum import EnumType
 from pathlib import Path
 
 import pandas as pd
 
+from activity_validator import activity_mapping
 import activity_validator.hetus_data_processing.hetus_column_names as col
 
+#: path of the HETUS code file that maps each HETUS activity code to the
+#  corresponding activity name
 HETUS_CODES_PATH = Path(
     "activity_validator/activity_types/hetus_activity_codes_2010.json"
 )
+#: path of the HETUS mapping file that maps each HETUS activity name to an
+#  activity of the joint activity set
 HETUS_MAPPING_PATH = Path("activity_validator/activity_types/mapping_hetus.json")
 
 
-def load_mapping(path: Path) -> dict[str, str]:
+def get_aggregate_activity_codes(data: pd.DataFrame, digits: int = 1):
     """
-    Loads an activity mapping from a json file.
+    Returns the activity columns, with all activity codes transformed
+    to the desired level (1, 2 or 3 digit codes).
 
-    :param path: mapping file path
-    :raises RuntimeError: if the file does not exist
-    :return: the mapping dict
+    :param data: HETUS data
+    :param digits: the code digits to use, defaults to 1
+    :return: activity data at the desired code level
     """
-    if not path.exists():
-        raise RuntimeError(f"Missing mapping file: {path}")
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    assert 1 <= digits <= 3, "invalid number of digits for activity aggregation"
+    # filter activity columns (Mact1-144)
+    activity = col.get_activity_data(data)
+    # map to the target level
+    target = activity.map(lambda x: x[:digits] if isinstance(x, str) else x)  # type: ignore
+    return target
 
 
 def load_hetus_activity_codes() -> dict[str, str]:
@@ -37,54 +43,23 @@ def load_hetus_activity_codes() -> dict[str, str]:
 
     :return: dict mapping each code with its description
     """
-    return load_mapping(HETUS_CODES_PATH)
-
-
-def aggregate_activities(data: pd.DataFrame, digits: int = 1):
-    assert 1 <= digits <= 3, "invalid number of digits for activity aggregation"
-    # filter activity columns (Mact1-144)
-    activity = col.get_activity_data(data)
-    # map to the target level
-    target = activity.map(lambda x: x[:digits] if isinstance(x, str) else x)  # type: ignore
-    return target
-
-
-def extract_activity_data(data: pd.DataFrame) -> pd.DataFrame:
-    codes = load_hetus_activity_codes()
-    # In general, the codes are hierarchical and complete, meaning that if
-    # code 811 exists, then code 81 is its supergroup. However, for group 9
-    # there are no two-digit codes. Therefore, if the code is not found, just
-    # fall back to the corresponding one-digit code.
-    return col.get_activity_data(data).map(  # type: ignore
-        lambda x: codes.get(x, codes[x[0]])
-    )
+    return activity_mapping.load_mapping(HETUS_CODES_PATH)
 
 
 def get_combined_hetus_mapping() -> dict[str, str]:
     """
-    Loads the HETUS activity mapping and the custom
+    Loads the HETUS activity code mapping and the joint
     activity mapping and combines them into one dict
     that allows immediate translation from HETUS code
-    to custom activity category.
+    to joint activity group.
 
     :return: combined activity mapping
     """
     codes = load_hetus_activity_codes()
-    mapping = load_mapping(HETUS_MAPPING_PATH)
+    mapping = activity_mapping.load_mapping(HETUS_MAPPING_PATH)
     # combine the two mapping steps in a single dict (only 3-digit HETUS codes)
     combined = {code: mapping[name] for code, name in codes.items() if name in mapping}
     return combined
-
-
-def get_activities_in_mapping(mapping: dict[str, str]) -> list[str]:
-    """
-    Collects the target activities from a mapping and returns them in
-    a sorted list.
-
-    :param mapping: the mapping
-    :return: the list of activities
-    """
-    return sorted(set(mapping.values()))
 
 
 def translate_activity_codes(data: pd.DataFrame) -> list[str]:
@@ -97,7 +72,7 @@ def translate_activity_codes(data: pd.DataFrame) -> list[str]:
     The translation works inplace.
 
     :param data: HETUS diary data
-    :return: data with mapped activity names
+    :return: the final list of activities that can occur
     """
     # HETUS data contains activity codes which can be mapped to the
     # corresponding activity names, which can in turn be mapped using
@@ -105,45 +80,4 @@ def translate_activity_codes(data: pd.DataFrame) -> list[str]:
     combined = get_combined_hetus_mapping()
     activity = col.get_activity_data(data)
     data.loc[:, activity.columns] = activity.replace(combined)
-    return get_activities_in_mapping(combined)
-
-
-def translate_column(
-    data: pd.DataFrame,
-    column: str,
-    column_new: str | None = None,
-    value_translation: EnumType | dict | None = None,
-) -> None:
-    """
-    Renames a column and changes all values according to a specified enum or dict.
-    Can handle normal and (multi-)index columns.
-
-    :param data: the data to translate
-    :param column: old name of the column to change
-    :param column_new: optional new name of the column, defaults to None
-    :param value_translation: translation for the column values; can be an enum type or a dict, defaults to None
-    """
-    if isinstance(value_translation, EnumType):
-        # create a dict that maps all enum int values to names
-        value_map = {e.value: e.name for e in value_translation}  # type:ignore
-    else:
-        assert value_translation is not None, "No translation specified"
-        value_map = value_translation
-    if column in data.index.names:
-        # column is part of the (multi-)index
-        if value_map is not None:
-            i = data.index.names.index(column)
-            new_index_level = data.index.levels[i].map(value_map)  # type: ignore
-            new_index = data.index.set_levels(new_index_level, level=i)  # type: ignore
-            data.index = new_index
-        if column_new:
-            # change name of the index level
-            data.index.rename({column: column_new}, inplace=True)
-    elif column in data.columns:
-        # column is a normal column of the dataframe
-        if value_map is not None:
-            data[column].replace(value_map, inplace=True)
-        if column_new:
-            data.rename(columns={column: column_new}, inplace=True)
-    else:
-        assert False, "Column not found"
+    return activity_mapping.get_activities_in_mapping(combined)
