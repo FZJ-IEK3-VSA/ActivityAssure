@@ -10,8 +10,8 @@ from typing import ClassVar
 
 import pandas as pd
 
-from activity_validator.hetus_data_processing.activity_profile import (
-    ProfileType,
+from activity_validator.hetus_data_processing.profile_category import ProfileType
+from activity_validator.hetus_data_processing.pandas_utils import (
     save_df,
     load_df,
     create_result_path,

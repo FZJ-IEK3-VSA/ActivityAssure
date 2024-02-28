@@ -4,12 +4,9 @@ This module provides functions for translating HETUS columns and codes to readab
 
 import json
 from enum import EnumType
-import logging
 from pathlib import Path
-import shutil
 
 import pandas as pd
-from activity_validator.hetus_data_processing.activity_profile import create_result_path
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 

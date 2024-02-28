@@ -6,7 +6,7 @@ LoadProfileGenerator from the input database profilegenerator.db3.
 import json
 from pathlib import Path
 import sqlite3
-from activity_validator.hetus_data_processing import activity_profile
+from activity_validator.hetus_data_processing import profile_category
 from activity_validator.hetus_data_processing.attributes.categorization_attributes import (
     Sex,
     WorkStatus,

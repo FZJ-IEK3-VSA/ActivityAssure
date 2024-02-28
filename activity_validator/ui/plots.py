@@ -10,7 +10,7 @@ import pandas as pd
 
 from activity_validator.hetus_data_processing import (
     profile_category,
-    activity_profile,
+    pandas_utils,
     hetus_constants,
 )
 from activity_validator.lpgvalidation import comparison_metrics, validation_statistics
@@ -153,7 +153,7 @@ def stacked_prob_curves(filepath: Path | None) -> Figure | None:
     if filepath is None or not filepath.is_file():
         return None
     # load the correct file
-    data = activity_profile.load_df(filepath)
+    data = pandas_utils.load_df(filepath)
     # transpose data for plotting
     data = data.T
     data = data[ACTIVITY_ORDER_FOR_PLOTS]  # reorder
@@ -200,8 +200,8 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     ):
         return None
     # load the correct files
-    data_val = activity_profile.load_df(path_valid)
-    data_in = activity_profile.load_df(path_in)
+    data_val = pandas_utils.load_df(path_valid)
+    data_in = pandas_utils.load_df(path_in)
 
     # get the probability profile differences
     diff = comparison_metrics.calc_probability_curves_diff(data_val, data_in)
@@ -239,8 +239,8 @@ def prob_curve_per_activity(
     if path_val is None or path_in is None:
         return {}
     # load both files
-    validation_data = activity_profile.load_df(path_val)
-    input_data = activity_profile.load_df(path_in)
+    validation_data = pandas_utils.load_df(path_val)
+    input_data = pandas_utils.load_df(path_in)
 
     # assign time values for the timesteps
     time_values = get_date_range(len(validation_data.columns))
@@ -300,8 +300,8 @@ def histogram_per_activity(
         return {}
 
     # load both files
-    validation_data = activity_profile.load_df(path_val, duration_data)
-    input_data = activity_profile.load_df(path_in, duration_data)
+    validation_data = pandas_utils.load_df(path_val, duration_data)
+    input_data = pandas_utils.load_df(path_in, duration_data)
     if duration_data:
         # workaround for getting a timedelta axis
         # https://github.com/plotly/plotly.py/issues/799
@@ -347,7 +347,7 @@ def stacked_bar_activity_share(paths: dict[str, Path]) -> Figure:
     :return: bar chart figure
     """
     # load all activity probability files
-    datasets = {k: activity_profile.load_df(path) for k, path in paths.items()}
+    datasets = {k: pandas_utils.load_df(path) for k, path in paths.items()}
     # calculate the average probabilities per profile type
     data = pd.DataFrame({title: data.mean(axis=1) for title, data in datasets.items()})
     # add the overall probabilities

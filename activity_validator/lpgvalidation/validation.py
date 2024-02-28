@@ -14,6 +14,7 @@ from activity_validator.hetus_data_processing import (
     hetus_translations,
     hetus_constants,
     category_statistics,
+    pandas_utils,
     utils,
 )
 
@@ -21,8 +22,8 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
     ActivityProfileEntry,
-    ProfileType,
 )
+from activity_validator.hetus_data_processing.profile_category import ProfileType
 from activity_validator.hetus_data_processing.attributes import (
     categorization_attributes,
     diary_attributes,
@@ -404,9 +405,7 @@ def get_metric_means(
     """
     sums = pd.DataFrame({p: m.get_metric_means() for p, m in metrics_dict.items()})
     if output_path is not None:
-        activity_profile.save_df(
-            sums.T, "metrics", "metric_means", base_path=output_path
-        )
+        pandas_utils.save_df(sums.T, "metrics", "metric_means", base_path=output_path)
     return sums.T
 
 
@@ -533,6 +532,6 @@ def save_file_per_metrics_per_combination(
             df = pd.DataFrame(
                 {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}
             )
-            activity_profile.save_df(
+            pandas_utils.save_df(
                 df, "metrics/all_combinations", kpi.name, profile_type, output_path
             )

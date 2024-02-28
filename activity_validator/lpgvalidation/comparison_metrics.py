@@ -12,7 +12,7 @@ from dataclasses_json import config, dataclass_json  # type: ignore
 import numpy as np
 import pandas as pd
 import scipy  # type: ignore
-from activity_validator.hetus_data_processing import activity_profile, utils
+from activity_validator.hetus_data_processing import pandas_utils, utils
 from activity_validator.hetus_data_processing.profile_category import ProfileType
 from activity_validator.lpgvalidation.validation_statistics import ValidationStatistics
 
@@ -375,7 +375,7 @@ def calc_all_indicator_variants(
     if save_to_file:
         assert profile_type is not None, "Must specify a profile type for saving"
         assert output_path is not None, "Must specify an output path for saving"
-        activity_profile.save_df(
+        pandas_utils.save_df(
             differences, "differences", "diff", profile_type, output_path
         )
         indicators.save_as_csv(output_path, profile_type, "normal")

@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pandas as pd
 from activity_validator.hetus_data_processing.activity_profile import (
-    VALIDATION_DATA_PATH,
     ExpandedActivityProfiles,
 )
 
@@ -12,6 +11,7 @@ from activity_validator.hetus_data_processing import (
     hetus_constants,
     hetus_translations,
     level_extraction,
+    pandas_utils,
 )
 from activity_validator.hetus_data_processing import load_data
 from activity_validator.hetus_data_processing import utils
@@ -24,6 +24,8 @@ from activity_validator.hetus_data_processing.categorize import (
 )
 from activity_validator.hetus_data_processing import category_statistics
 from activity_validator.lpgvalidation import validation_statistics
+
+from activity_validator.hetus_data_processing.pandas_utils import VALIDATION_DATA_PATH
 
 
 @utils.timing
@@ -131,18 +133,6 @@ def process_hetus_2010_data(
     return validation_set
 
 
-def split_data(data: pd.DataFrame) -> list[pd.DataFrame]:
-    """
-    Randomly split a dataframe into half.
-
-    :param data: the dataframe to split
-    :return: a list containing the dataframe halves
-    """
-    part1 = data.sample(frac=0.5)
-    part2 = data.drop(part1.index)
-    return [part1, part2]
-
-
 def cross_validation_split(data: pd.DataFrame):
     """
     Splits each category of the data set in half, and stores
@@ -159,7 +149,7 @@ def cross_validation_split(data: pd.DataFrame):
     # split data of each category
     categories1, categories2 = [], []
     for category in categories:
-        data1, data2 = split_data(category.data)
+        data1, data2 = pandas_utils.split_data(category.data)
         profile1 = ExpandedActivityProfiles(
             data1, category.profile_type, category.offset, category.resolution
         )

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from activity_validator.lpgvalidation import validation
 from activity_validator.hetus_data_processing.visualizations import metric_heatmaps
-from activity_validator.hetus_data_processing import activity_profile, utils
+from activity_validator.hetus_data_processing import pandas_utils, utils
 from activity_validator.lpgvalidation.validation_statistics import ValidationSet
 
 
@@ -54,7 +54,7 @@ def validate_lpg():
     for variant_name, metric_dict in metric_dict_variants.items():
         output_subdir = metrics_path / variant_name
         metrics_df = validation.metrics_dict_to_df(metric_dict)
-        activity_profile.save_df(
+        pandas_utils.save_df(
             metrics_df,
             "",
             f"metrics_per_category",
