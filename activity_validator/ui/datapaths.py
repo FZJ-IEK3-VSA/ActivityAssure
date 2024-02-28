@@ -5,7 +5,7 @@ for validation.
 
 from pathlib import Path
 
-from activity_validator.lpgvalidation.validation_statistics import ValidationStatistics
+from activity_validator.validation_statistics import ValidationStatistics
 
 # TODO: load paths from config file
 

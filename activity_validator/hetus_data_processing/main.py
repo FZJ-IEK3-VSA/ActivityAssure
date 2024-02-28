@@ -23,7 +23,7 @@ from activity_validator.hetus_data_processing.categorize import (
     get_diary_data_for_categorization,
 )
 from activity_validator.hetus_data_processing import category_statistics
-from activity_validator.lpgvalidation import validation_statistics
+from activity_validator import validation_statistics
 
 from activity_validator.hetus_data_processing.pandas_utils import VALIDATION_DATA_PATH
 

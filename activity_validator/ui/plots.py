@@ -13,9 +13,10 @@ from activity_validator.hetus_data_processing import (
     pandas_utils,
     hetus_constants,
 )
-from activity_validator.lpgvalidation import comparison_metrics, validation_statistics
+from activity_validator.lpgvalidation import comparison_metrics
 from activity_validator.ui import data_utils
 from activity_validator.ui import datapaths
+from activity_validator import validation_statistics
 
 
 # workaround for an unresolved bug that randomly causes exceptions

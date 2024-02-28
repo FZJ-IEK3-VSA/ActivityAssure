@@ -1,5 +1,5 @@
 from activity_validator.hetus_data_processing import hetus_constants
-from activity_validator.lpgvalidation import validation_statistics
+from activity_validator import validation_statistics
 
 
 def apply_eurostat_requirements(validation_set: validation_statistics.ValidationSet):

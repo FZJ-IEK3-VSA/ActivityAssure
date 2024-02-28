@@ -16,7 +16,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
 )
-from activity_validator.lpgvalidation.validation_statistics import (
+from activity_validator.validation_statistics import (
     ValidationStatistics,
     ValidationSet,
 )

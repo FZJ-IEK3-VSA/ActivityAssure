@@ -28,7 +28,7 @@ from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
 )
 from activity_validator.lpgvalidation import comparison_metrics
-from activity_validator.lpgvalidation.validation_statistics import (
+from activity_validator.validation_statistics import (
     ValidationStatistics,
     ValidationSet,
 )
