@@ -5,7 +5,6 @@ These can then be used for validation.
 
 from collections import Counter
 from datetime import timedelta
-import itertools
 import logging
 from typing import Iterable
 import numpy as np
@@ -13,12 +12,11 @@ import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import utils
-from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
 )
-from activity_validator.lpgvalidation.validation_data import (
+from activity_validator.lpgvalidation.validation_statistics import (
     ValidationStatistics,
     ValidationSet,
 )

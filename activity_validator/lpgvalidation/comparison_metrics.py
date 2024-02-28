@@ -14,7 +14,7 @@ import pandas as pd
 import scipy  # type: ignore
 from activity_validator.hetus_data_processing import activity_profile, utils
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
-from activity_validator.lpgvalidation.validation_data import ValidationStatistics
+from activity_validator.lpgvalidation.validation_statistics import ValidationStatistics
 
 
 @dataclass_json

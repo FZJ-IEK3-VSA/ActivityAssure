@@ -9,7 +9,7 @@ from plotly.graph_objects import Figure  # type: ignore
 
 import pandas as pd
 from activity_validator.hetus_data_processing import activity_profile, hetus_constants
-from activity_validator.lpgvalidation import comparison_metrics, validation_data
+from activity_validator.lpgvalidation import comparison_metrics, validation_statistics
 from activity_validator.ui import data_utils
 from activity_validator.ui import datapaths
 
@@ -425,10 +425,10 @@ def get_all_indicator_variants(
     :return: tuple of validation indicators
     """
     # load the statistics for validation and input data
-    data_val = validation_data.ValidationStatistics.load(
+    data_val = validation_statistics.ValidationStatistics.load(
         datapaths.validation_path, ptype_val
     )
-    data_in = validation_data.ValidationStatistics.load(
+    data_in = validation_statistics.ValidationStatistics.load(
         datapaths.input_data_path, ptype_in
     )
     # calculate the indicators without saving them to file

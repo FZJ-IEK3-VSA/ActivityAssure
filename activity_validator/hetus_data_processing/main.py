@@ -24,7 +24,7 @@ from activity_validator.hetus_data_processing.categorize import (
     get_diary_categorization_data,
 )
 from activity_validator.hetus_data_processing import category_statistics
-from activity_validator.lpgvalidation import validation_data
+from activity_validator.lpgvalidation import validation_statistics
 
 
 @utils.timing
@@ -81,7 +81,7 @@ def get_default_categorization_attributes() -> list[str]:
     return categorization_attributes
 
 
-def apply_eurostat_requirements(validation_set: validation_data.ValidationSet):
+def apply_eurostat_requirements(validation_set: validation_statistics.ValidationSet):
     """
     Applies the data protection requirements from Eurostat by removing too small
     categories and hiding the exact size of some others.
@@ -211,7 +211,9 @@ def process_all_hetus_countries_AT_separately(
         result_at.statistics.keys() & result_eu.statistics.keys() == set()
     ), "Overlap in profile types. Cannot merge data from AT and EU."
     combined_statistics = result_at.statistics | result_eu.statistics
-    combined = validation_data.ValidationSet(combined_statistics, result_eu.activities)
+    combined = validation_statistics.ValidationSet(
+        combined_statistics, result_eu.activities
+    )
 
     if not title:
         # determine title automatically
