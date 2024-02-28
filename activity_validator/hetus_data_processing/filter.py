@@ -1,42 +1,33 @@
 """
-Functions for filtering HETUS data based on various criteria
+Functions for filtering HETUS data based on various criteria.
 """
 
 import functools
 from typing import Any, Callable, Iterable
 import pandas as pd
 
-import activity_validator.hetus_data_processing.hetus_columns as col
-from activity_validator.hetus_data_processing.hetus_values import DayType
-from activity_validator.hetus_data_processing.utils import timing
 
-
-@timing
-def filter_discrete(
-    data: pd.DataFrame, column: str, allowed_values: list[int]
-) -> pd.DataFrame:
-    return data[data[column].isin(allowed_values)]
-
-
-def filter_by_weekday(data: pd.DataFrame, day_types: list[DayType]) -> pd.DataFrame:
-    return filter_discrete(data, col.Diary.WEEKDAY, day_types)
-
-
-def filter_by_month(data: pd.DataFrame, months: list[int]) -> pd.DataFrame:
-    return filter_discrete(data, col.Diary.MONTH, months)
-
-
-# @timing
 def filter_combined(
     data: pd.DataFrame, conditions: dict[str, list[Any]]
 ) -> pd.DataFrame:
+    """
+    Filters data combining multiple filter conditions which
+    each allow a list of values for a specific column.
+
+    :param data: HETUS data to filter
+    :param conditions: the filter conditions dict; each key is a
+                       column to filter, and the corresponding
+                       value is the list of allowed values for
+                       this column
+    :return: the filtered data
+    """
     masks = [data[k].isin(v) for k, v in conditions.items()]
     combined_mask = functools.reduce(lambda m1, m2: m1 & m2, masks)
     return data[combined_mask]
 
 
 def filter_stats(func: Callable, name, data, *args, **kwargs) -> pd.DataFrame:
-    """Calls filter_combined and prints some filter statistics"""
+    """Calls the specified filter function and prints some filter statistics"""
     result = func(data, *args, **kwargs)
     print(
         f"Filter {name}: {len(result)} / {len(data)} ({100 * len(result) / len(data):.1f} %)"
