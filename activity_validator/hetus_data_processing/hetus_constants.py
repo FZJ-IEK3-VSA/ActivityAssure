@@ -1,5 +1,5 @@
 """
-Constants for working with HETUS data. 
+Constants for working with the HETUS 2010 data set.
 """
 
 from datetime import timedelta

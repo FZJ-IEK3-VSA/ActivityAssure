@@ -11,6 +11,21 @@ import pandas as pd
 
 
 class HetusLevel(abc.ABC):
+    """
+    Abstract base class for defining a HETUS level. A level
+    is a layer in the data with a specific granularity.
+    Multiple items of a certain level are contained in each
+    item of the next higher level.
+    On the highest level is the year, which is the same for
+    the whole HETUS 2010 data set. Below is the country, then
+    household, person and diary.
+    Data in the HETUS SUF files is not normalized, so each row
+    contains the full set of columns, which results in lots of
+    redundant (and in part contradictory) information. The
+    level structure here helps to work with this data
+    structure.
+    """
+
     NAME = ""
     ID = ""
     KEY: list[str] = []
@@ -18,12 +33,20 @@ class HetusLevel(abc.ABC):
 
 
 class Year(HetusLevel):
+    """
+    Column names on year level
+    """
+
     NAME = "Year"
     ID = "YEAR"
     KEY = [ID]
 
 
 class Country(HetusLevel):
+    """
+    Column names on country level
+    """
+
     NAME = "Country"
     ID = "COUNTRY"
     KEY = Year.KEY + [ID]
@@ -85,7 +108,7 @@ class Person(HetusLevel):
     """
     Column names on personal level.
     This encompasses all columns with information on the respondent,
-    e.g., sex or age
+    e.g., sex or age.
     """
 
     NAME = "Person"
@@ -126,7 +149,7 @@ class Person(HetusLevel):
 
 class Diary(HetusLevel):
     """
-    Metadata columns on the diary level (mostly date info)
+    Column names on the diary level (mostly date info)
     """
 
     NAME = "Diary"
