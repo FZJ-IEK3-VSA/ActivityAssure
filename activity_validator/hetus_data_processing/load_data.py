@@ -3,6 +3,7 @@ Functions for loading HETUS data files.
 """
 
 import argparse
+import functools
 import getpass
 from io import StringIO
 import os
@@ -14,8 +15,9 @@ import logging
 from cryptography.fernet import Fernet
 
 
-# TODO: move or remove default path
+# TODO: only used as default param value --> move to main?
 HETUS_PATH = r"D:\Daten\HETUS Data\HETUS 2010 full set\DATA"
+
 HETUS_FILENAME_PREFIX = "TUS_SUF_A_"
 HETUS_FILENAME_SUFFIX = "_2010.csv"
 
@@ -60,6 +62,7 @@ def get_hetus_file_names(path: str = HETUS_PATH) -> dict[str, str]:
     return filenames_by_country
 
 
+@functools.cache
 def build_dtype_dict() -> dict[str, type]:
     """
     Generates a dictionary of dtypes for pandas.
@@ -83,11 +86,7 @@ def build_dtype_dict() -> dict[str, type]:
         "Mcom",
         "Scom",
     ]
-    return {c + str(i): str for c in columns for i in range(1, 145)}
-
-
-#: dictionary specifying the correct data types for some columns
-DTYPE_DICT = build_dtype_dict()
+    return {col + str(i): str for col in columns for i in range(1, 145)}
 
 
 def prompt_for_key() -> str:
@@ -144,6 +143,8 @@ def load_hetus_file_from_path(path: str, key: str | None = None) -> pd.DataFrame
         source: StringIO | str = StringIO(decrypted)
     else:
         source = path
+
+    DTYPE_DICT = build_dtype_dict()
     data = pd.read_csv(source, dtype=DTYPE_DICT)
     logging.info(
         f"Loaded HETUS file for {get_country(path)} with {len(data)} entries and {len(data.columns)} columns in {time.time() - start:.1f} s"
