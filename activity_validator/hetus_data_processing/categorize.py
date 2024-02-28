@@ -1,17 +1,15 @@
 """
-Functions for categorizing all persons or households in HETUS data sets using
-different criteria
+Functions for calculating additional attributes categorizing
+the diary entries.
 """
 
 import logging
 import pandas as pd
-from activity_validator.hetus_data_processing import activity_profile
 from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     ProfileType,
 )
 
-import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import hetus_constants, utils
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
@@ -55,43 +53,6 @@ def get_diary_categorization_data(
     return data
 
 
-def get_hh_categorization_data(
-    hhdata: pd.DataFrame, persondata: pd.DataFrame
-) -> pd.DataFrame:
-    persondata = get_person_categorization_data(persondata)
-    persondata.loc[:, [col.Person.SEX, person_attributes.WorkStatus.title()]].groupby(
-        col.HH.KEY
-    ).apply(list)
-
-    # TODO: how do I treat diaries from one household, but from different days?
-    # --> ignore at first and check if there are weird statistics later
-    return None
-
-
-def apply_hetus_size_limits(category_sizes: pd.DataFrame) -> None:
-    """
-    Applies the HETUS cell size limits from Eurostat. Works inplace.
-    Eurostat specifies two size limits. Below these limits, only
-    the range of the cell size may be specified, not the exact size.
-
-    :param category_sizes: the category size dataframe to adapt
-    """
-    # For sizes below the limits, overwrites the actual size with the
-    # respective limit
-    # the between mask cannot be created for the whole dataframe at once
-    for col in category_sizes.columns:
-        upper_limit = category_sizes[col].between(
-            hetus_constants.MIN_CELL_SIZE,
-            hetus_constants.MIN_CELL_SIZE_FOR_SIZE,
-            inclusive="left",
-        )
-        category_sizes.loc[upper_limit, col] = hetus_constants.MIN_CELL_SIZE_FOR_SIZE
-    # the values below the lower limit can be overwritten at once
-    category_sizes[category_sizes < hetus_constants.MIN_CELL_SIZE] = (
-        hetus_constants.MIN_CELL_SIZE
-    )
-
-
 @utils.timing
 def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfiles]:
     """
@@ -114,25 +75,3 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
         )
         for g in categories.groups
     ]
-
-
-@utils.timing
-def filter_categories(
-    categories: list[ExpandedActivityProfiles],
-) -> list[ExpandedActivityProfiles]:
-    """
-    Removes all categories that are too small and don't
-    fullfill the requirements by EUROSTAT to permit publication
-
-    :param categories: the categories to filter
-    :return: the categories that can be published
-    """
-    total_entries = sum(len(c.data) for c in categories)
-    filtered = [c for c in categories if len(c.data) >= hetus_constants.MIN_CELL_SIZE]
-    kept_entries = sum(len(c.data) for c in filtered)
-    keep_ratio = round(100 * kept_entries / total_entries, 1)
-    logging.info(
-        f"{len(filtered)} out of {len(categories)} categories can be published. "
-        f"These contain {kept_entries} of {total_entries} entries ({keep_ratio} %)."
-    )
-    return filtered
