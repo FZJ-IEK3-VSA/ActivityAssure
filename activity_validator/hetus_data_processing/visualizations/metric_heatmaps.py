@@ -9,7 +9,7 @@ import warnings
 import pandas as pd
 import plotly.express as px  # type: ignore
 
-from activity_validator.hetus_data_processing.activity_profile import ProfileType
+from activity_validator.hetus_data_processing.profile_category import ProfileType
 from activity_validator.lpgvalidation import comparison_metrics
 
 

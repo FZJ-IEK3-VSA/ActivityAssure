@@ -6,9 +6,13 @@ import dash_bootstrap_components as dbc  # type: ignore
 import plotly.express as px  # type: ignore
 import plotly.graph_objects as go  # type: ignore
 from plotly.graph_objects import Figure  # type: ignore
-
 import pandas as pd
-from activity_validator.hetus_data_processing import activity_profile, hetus_constants
+
+from activity_validator.hetus_data_processing import (
+    profile_category,
+    activity_profile,
+    hetus_constants,
+)
 from activity_validator.lpgvalidation import comparison_metrics, validation_statistics
 from activity_validator.ui import data_utils
 from activity_validator.ui import datapaths
@@ -221,8 +225,8 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
 
 
 def prob_curve_per_activity(
-    profile_type_val: activity_profile.ProfileType,
-    profile_type_in: activity_profile.ProfileType,
+    profile_type_val: profile_category.ProfileType,
+    profile_type_in: profile_category.ProfileType,
     subdir: Path | str,
 ) -> dict[str, dcc.Graph]:
     # get the path of the validation and the input file
@@ -272,8 +276,8 @@ def prob_curve_per_activity(
 
 
 def histogram_per_activity(
-    ptype_val: activity_profile.ProfileType,
-    ptype_in: activity_profile.ProfileType,
+    ptype_val: profile_category.ProfileType,
+    ptype_in: profile_category.ProfileType,
     subdir: Path | str,
     duration_data: bool = False,
 ) -> dict[str, dcc.Graph]:
@@ -406,8 +410,8 @@ def indicator_as_time_str(value: float) -> str:
 
 
 def get_all_indicator_variants(
-    ptype_val: activity_profile.ProfileType,
-    ptype_in: activity_profile.ProfileType,
+    ptype_val: profile_category.ProfileType,
+    ptype_in: profile_category.ProfileType,
     add_means: bool,
 ) -> tuple[
     comparison_metrics.ValidationIndicators,
@@ -529,7 +533,7 @@ def create_indicator_table(
 
 
 def indicator_tables_per_activity(
-    ptype_val: activity_profile.ProfileType, ptype_in: activity_profile.ProfileType
+    ptype_val: profile_category.ProfileType, ptype_in: profile_category.ProfileType
 ) -> dict[str, dbc.Table]:
     """
     Generates an indicator table for each activity.

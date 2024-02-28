@@ -67,7 +67,7 @@ from tblPersons inner join tblCHHPersons on tblPersons.ID == tblCHHPersons.Perso
 
     # map all fields
     mapping = {
-        person_name(person): activity_profile.ProfileType(
+        person_name(person): profile_category.ProfileType(
             "DE", GENDER_MAPPING[gender], WORK_STATUS_MAPPING[tag]
         )
         for person, gender, tag in rows

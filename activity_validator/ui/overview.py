@@ -9,7 +9,7 @@ from dash import html  # type:ignore
 import dash_bootstrap_components as dbc  # type:ignore
 
 from activity_validator.ui import plots, data_utils
-from activity_validator.hetus_data_processing.activity_profile import ProfileType
+from activity_validator.hetus_data_processing.profile_category import ProfileType
 
 
 def chunks(lst, n):
