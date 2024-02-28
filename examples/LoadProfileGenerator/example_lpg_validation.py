@@ -7,7 +7,7 @@ from pathlib import Path
 
 from activity_validator import utils, pandas_utils
 from activity_validator.lpgvalidation import validation
-from activity_validator.hetus_data_processing.visualizations import metric_heatmaps
+from activity_validator.visualizations import indicator_heatmaps
 from activity_validator.validation_statistics import ValidationSet
 
 
@@ -62,9 +62,9 @@ def validate_lpg():
         )
         # validation.get_metric_means(metric_dict, output_subdir)
         plot_path = output_subdir / "heatmaps"
-        metric_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path)
-        metric_heatmaps.plot_indicators_by_activity(metrics_df, plot_path)
-        metric_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path)
+        indicator_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path)
+        indicator_heatmaps.plot_indicators_by_activity(metrics_df, plot_path)
+        indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path)
     return
 
     # compare input and validation for each combination of profile types
@@ -72,8 +72,10 @@ def validate_lpg():
         input_statistics, validation_statistics
     )
     validation.save_file_per_metrics_per_combination(metrics_all_comb, output_path)
-    metric_heatmaps.plot_category_comparison(metrics_all_comb, plot_path)
-    metric_heatmaps.plot_category_comparison_per_activity(metrics_all_comb, plot_path)
+    indicator_heatmaps.plot_category_comparison(metrics_all_comb, plot_path)
+    indicator_heatmaps.plot_category_comparison_per_activity(
+        metrics_all_comb, plot_path
+    )
 
 
 @utils.timing
@@ -92,8 +94,8 @@ def cross_validation():
 
     # plot a heatmap for each metric
     plot_path = output_path / "heatmaps"
-    metric_heatmaps.plot_category_comparison(metrics, plot_path / "total")
-    metric_heatmaps.plot_category_comparison_per_activity(
+    indicator_heatmaps.plot_category_comparison(metrics, plot_path / "total")
+    indicator_heatmaps.plot_category_comparison_per_activity(
         metrics, plot_path / "per_activity"
     )
 
