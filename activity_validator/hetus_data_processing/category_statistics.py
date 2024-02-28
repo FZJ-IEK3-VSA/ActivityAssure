@@ -12,7 +12,7 @@ import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import utils
-from activity_validator.hetus_data_processing.activity_profile import (
+from activity_validator.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
 )

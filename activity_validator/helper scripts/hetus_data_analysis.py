@@ -6,7 +6,7 @@ specific aspects of the HETUS data if necessary.
 import pandas as pd
 from activity_validator import activity_mapping
 from activity_validator.hetus_data_processing import hetus_translations
-from activity_validator.hetus_data_processing.activity_profile import (
+from activity_validator.activity_profile import (
     ExpandedActivityProfiles,
 )
 from activity_validator.hetus_data_processing import category_statistics

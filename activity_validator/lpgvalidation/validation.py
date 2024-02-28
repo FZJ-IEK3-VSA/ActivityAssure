@@ -10,23 +10,26 @@ from typing import Iterable
 
 import pandas as pd
 from activity_validator.hetus_data_processing import (
-    activity_profile,
     hetus_constants,
     category_statistics,
     pandas_utils,
     utils,
 )
 
-from activity_validator.hetus_data_processing.activity_profile import (
-    ExpandedActivityProfiles,
-    SparseActivityProfile,
-    ActivityProfileEntry,
-)
 from activity_validator.hetus_data_processing.profile_category import ProfileType
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
 )
-from activity_validator import categorization_attributes, comparison_indicators
+from activity_validator import (
+    activity_profile,
+    categorization_attributes,
+    comparison_indicators,
+)
+from activity_validator.activity_profile import (
+    ExpandedActivityProfiles,
+    SparseActivityProfile,
+    ActivityProfileEntry,
+)
 from activity_validator.validation_statistics import (
     ValidationStatistics,
     ValidationSet,

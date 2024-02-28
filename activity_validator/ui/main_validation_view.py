@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc  # type: ignore
 import plotly.express as px  # type: ignore
 import uuid
 
-from activity_validator.hetus_data_processing import activity_profile
+from activity_validator import activity_profile
 from activity_validator import comparison_indicators
 from activity_validator.ui import data_utils, datapaths, plots
 

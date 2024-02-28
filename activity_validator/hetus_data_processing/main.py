@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 import pandas as pd
-from activity_validator.hetus_data_processing.activity_profile import (
+from activity_validator.activity_profile import (
     ExpandedActivityProfiles,
 )
 

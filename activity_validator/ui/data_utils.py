@@ -1,6 +1,6 @@
 import glob
 from pathlib import Path
-from activity_validator.hetus_data_processing import activity_profile
+from activity_validator import activity_profile
 from plotly.graph_objects import Figure  # type: ignore
 
 from activity_validator.ui import datapaths
