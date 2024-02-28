@@ -6,7 +6,8 @@ import logging
 from pathlib import Path
 
 from activity_validator import utils, pandas_utils
-from activity_validator.lpgvalidation import validation
+from activity_validator import validation
+import activity_validator.input_data_processing.process_model_data
 from activity_validator.visualizations import indicator_heatmaps
 from activity_validator.validation_statistics import ValidationSet
 
@@ -26,11 +27,13 @@ def validate_lpg():
     validation_statistics = ValidationSet.load(validation_data_path)
 
     # calculate or load input data statistics
-    input_statistics = validation.process_model_data(
-        input_path,
-        custom_mapping_path,
-        person_trait_file,
-        validation_statistics.activities,
+    input_statistics = (
+        activity_validator.input_data_processing.process_model_data.process_model_data(
+            input_path,
+            custom_mapping_path,
+            person_trait_file,
+            validation_statistics.activities,
+        )
     )
     # input_statistics = ValidationSet.load(output_path)
 
@@ -47,17 +50,17 @@ def validate_lpg():
     input_statistics.save(output_path)
 
     # compare input and validation data statistics per profile type
-    metrics_path = output_path / "metrics"
-    metric_dict_variants = validation.validate_per_category(
+    validation_result_path = output_path / "validation_results"
+    indicator_dict_variants = validation.validate_per_category(
         input_statistics, validation_statistics, output_path
     )
-    for variant_name, metric_dict in metric_dict_variants.items():
-        output_subdir = metrics_path / variant_name
-        metrics_df = validation.metrics_dict_to_df(metric_dict)
+    for variant_name, metric_dict in indicator_dict_variants.items():
+        output_subdir = validation_result_path / variant_name
+        metrics_df = validation.indicator_dict_to_df(metric_dict)
         pandas_utils.save_df(
             metrics_df,
             "",
-            f"metrics_per_category",
+            f"indicators_per_category",
             base_path=output_subdir,
         )
         # validation.get_metric_means(metric_dict, output_subdir)
@@ -68,13 +71,13 @@ def validate_lpg():
     return
 
     # compare input and validation for each combination of profile types
-    metrics_all_comb = validation.validate_all_combinations(
+    indicators_all_comb = validation.validate_all_combinations(
         input_statistics, validation_statistics
     )
-    validation.save_file_per_metrics_per_combination(metrics_all_comb, output_path)
-    indicator_heatmaps.plot_category_comparison(metrics_all_comb, plot_path)
+    validation.save_file_per_indicator_per_combination(indicators_all_comb, output_path)
+    indicator_heatmaps.plot_category_comparison(indicators_all_comb, plot_path)
     indicator_heatmaps.plot_category_comparison_per_activity(
-        metrics_all_comb, plot_path
+        indicators_all_comb, plot_path
     )
 
 
@@ -90,7 +93,7 @@ def cross_validation():
 
     # compare each category of data1 to each category of data2
     metrics = validation.validate_all_combinations(data1, data2)
-    validation.save_file_per_metrics_per_combination(metrics, output_path)
+    validation.save_file_per_indicator_per_combination(metrics, output_path)
 
     # plot a heatmap for each metric
     plot_path = output_path / "heatmaps"

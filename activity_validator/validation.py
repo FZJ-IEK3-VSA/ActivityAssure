@@ -1,0 +1,216 @@
+"""
+Contains functions for comparing validation and model statistics.
+"""
+
+import dataclasses
+import itertools
+import logging
+from pathlib import Path
+from typing import Iterable
+
+import pandas as pd
+
+from activity_validator.profile_category import ProfileCategory
+from activity_validator import (
+    categorization_attributes,
+    comparison_indicators,
+    pandas_utils,
+    utils,
+)
+from activity_validator.validation_statistics import (
+    ValidationStatistics,
+    ValidationSet,
+)
+
+
+def get_similar_categories(profile_type: ProfileCategory) -> list[ProfileCategory]:
+    """
+    Returns a list of all profile types that are similar to the one specified,
+    i.e. all profile types, that differ in only one attribute. Also contains
+    the specified profile type itself.
+
+    :param profile_type: the profile type for which to collect similar types
+    :return: a list of similar profile types
+    """
+    # make sure the original profile type comes first
+    similar = [profile_type]
+    similar += [
+        dataclasses.replace(profile_type, sex=e) for e in categorization_attributes.Sex
+    ]
+    work_statuses = [
+        categorization_attributes.WorkStatus.full_time,
+        categorization_attributes.WorkStatus.part_time,
+        categorization_attributes.WorkStatus.retired,
+        categorization_attributes.WorkStatus.student,
+        categorization_attributes.WorkStatus.unemployed,
+    ]
+    similar += [dataclasses.replace(profile_type, work_status=e) for e in work_statuses]
+    day_types = [
+        categorization_attributes.DayType.work,
+        categorization_attributes.DayType.no_work,
+    ]
+    similar += [dataclasses.replace(profile_type, day_type=e) for e in day_types]
+    # remove duplicates
+    similar = list(set(similar))
+    return similar
+
+
+def all_profile_types_of_same_country(country) -> list[ProfileCategory]:
+    """
+    Returns a list of all possible profile types for a
+    fixed country.
+
+    :return: a list of profile types
+    """
+    # make sure the original profile type comes first
+    sexes = [e for e in categorization_attributes.Sex]
+    work_statuses = [
+        categorization_attributes.WorkStatus.full_time,
+        categorization_attributes.WorkStatus.part_time,
+        categorization_attributes.WorkStatus.retired,
+        categorization_attributes.WorkStatus.student,
+        categorization_attributes.WorkStatus.unemployed,
+    ]
+    day_types = [
+        categorization_attributes.DayType.work,
+        categorization_attributes.DayType.no_work,
+    ]
+    combinations: Iterable = itertools.product(
+        [country], day_types, work_statuses, sexes
+    )
+    combinations = [(c, s, w, d) for c, d, w, s in combinations]
+    profile_types = [ProfileCategory.from_iterable(c) for c in combinations]
+    return profile_types
+
+
+def indicator_dict_to_df(
+    metrics: dict[ProfileCategory, comparison_indicators.ValidationIndicators]
+) -> pd.DataFrame:
+    """
+    Convert the per-category metrics dict to a single dataframe
+    containing all indicators, means and per activity.
+
+    :param metrics: the metrics dict
+    :return: the KPI dataframe
+    """
+    dataframes = {pt: v.to_dataframe() for pt, v in metrics.items()}
+    combined = pd.concat(dataframes.values(), keys=dataframes.keys())
+    return combined
+
+
+def validate_per_category(
+    input_statistics: ValidationSet,
+    validation_statistics: ValidationSet,
+    output_path: Path,
+) -> dict[str, dict[ProfileCategory, comparison_indicators.ValidationIndicators]]:
+    """
+    Compares each category of input data to the same category
+    of validation data. Calculates the full set of metrics of
+    all variants (default, scaled, normed), and produces one
+    metric dict per variant.
+
+    :param input_statistics: input statistics set
+    :param validation_statistics: validation statistics set
+    :param output_path: base path for result data
+    :return: a dict containing the per-category metric dict for each variant
+    """
+    # validate each profile type individually
+    metrics_dict, scaled_dict, normed_dict = {}, {}, {}
+    for profile_type, input_data in input_statistics.statistics.items():
+        # select matching validation data
+        validation_data = validation_statistics.statistics[profile_type]
+        # calcluate and store comparison metrics
+        _, metrics, scaled, normed = comparison_indicators.calc_all_indicator_variants(
+            validation_data, input_data, False, profile_type, output_path
+        )
+        metrics_dict[profile_type] = metrics
+        scaled_dict[profile_type] = scaled
+        normed_dict[profile_type] = normed
+    return {"default": metrics_dict, "scaled": scaled_dict, "normed": normed_dict}
+
+
+def validate_similar_categories(
+    input_data_dict: dict[ProfileCategory, ValidationStatistics],
+    validation_data_dict: dict[ProfileCategory, ValidationStatistics],
+) -> dict[
+    ProfileCategory, dict[ProfileCategory, comparison_indicators.ValidationIndicators]
+]:
+    # validate each profile type individually
+    metrics_dict = {}
+    for profile_type, input_data in input_data_dict.items():
+        # select matching validation data
+        similar = all_profile_types_of_same_country(profile_type.country)
+        dict_per_type = {}
+        for similar_type in similar:
+            validation_data = validation_data_dict[similar_type]
+            # calcluate and store comparison metrics
+            _, metrics = comparison_indicators.calc_comparison_indicators(
+                validation_data, input_data
+            )
+            dict_per_type[similar_type] = metrics
+        metrics_dict[profile_type] = dict_per_type
+    return metrics_dict
+
+
+def validate_all_combinations(
+    input_data_dict: dict[ProfileCategory, ValidationStatistics],
+    validation_data_dict: dict[ProfileCategory, ValidationStatistics],
+) -> dict[
+    ProfileCategory, dict[ProfileCategory, comparison_indicators.ValidationIndicators]
+]:
+    """
+    Calculates metrics for each combination of input and validation
+    profile type.
+
+    :param input_data_dict: input data statistics, by profile type
+    :param validation_data_dict: validation data statistics, by profile type
+    :return: nested dict, containing the metrics for each combination; the keys of
+             the outer dict are the profile types of the input data, the keys of
+             the inner dict refer to the validation data
+    """
+    # validate each profile type individually
+    metrics_dict = {}
+    for profile_type, input_data in input_data_dict.items():
+        # select matching validation data
+        dict_per_type = {}
+        for validation_type, validation_data in validation_data_dict.items():
+            # calcluate and store comparison metrics
+            try:
+                _, metrics = comparison_indicators.calc_comparison_indicators(
+                    validation_data, input_data
+                )
+                dict_per_type[validation_type] = metrics
+            except utils.ActValidatorException as e:
+                logging.warn(
+                    f"Could not compare input data category '{profile_type}' "
+                    f"to validation data category '{validation_type}': {e}"
+                )
+        metrics_dict[profile_type] = dict_per_type
+    return metrics_dict
+
+
+def save_file_per_indicator_per_combination(
+    metrics: dict[
+        ProfileCategory,
+        dict[ProfileCategory, comparison_indicators.ValidationIndicators],
+    ],
+    output_path: Path,
+):
+    """
+    For a nested dict containing metrics for multiple combinations of profile types,
+    creates one file per metric per input profile type. Each file gives an overview
+    how this metric behaves for all activity groups for all other profile types the
+    input profile type was compared to.
+
+    :param metrics: nested metrics dict
+    :param output_path: base output directory
+    """
+    kpis = dataclasses.fields(comparison_indicators.ValidationIndicators)
+    for profile_type, metrics_per_type in metrics.items():
+        for kpi in kpis:
+            df = pd.DataFrame(
+                {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}
+            )
+            pandas_utils.save_df(
+                df, "metrics/all_combinations", kpi.name, profile_type, output_path
+            )
