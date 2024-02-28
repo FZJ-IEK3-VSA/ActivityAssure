@@ -45,11 +45,10 @@ def calc_activity_group_frequencies(
     activity_profiles: Iterable[SparseActivityProfile],
 ) -> pd.DataFrame:
     """
-    Counts the numbers of occurrences of each activity type per day
-    and calculates statistics on this.
+    Calculates how often each activity is carried out each day.
 
     :param activity_profiles: Iterable of activty lists
-    :return: activity frequency statistics
+    :return: activity frequency value counts
     """
     # count number of activity name occurrences for each diary entry
     counters = [
@@ -67,10 +66,10 @@ def calc_activity_group_durations(
     activity_profiles: list[SparseActivityProfile],
 ) -> pd.DataFrame:
     """
-    Calculates activity duration statistics per activity type
+    Calculates activity durations per activity type.
 
     :param activity_profiles: Iterable of activty lists
-    :return: activty duration statistics
+    :return: activty duration value counts
     """
     # determine the profile resolution (must be the same for all profiles)
     resolution = activity_profiles[0].resolution
@@ -99,7 +98,7 @@ def calc_probability_profiles(
     data: pd.DataFrame, activity_types: list[str]
 ) -> pd.DataFrame:
     """
-    Calculates activity probability profiles for the occurring activity types
+    Calculates the daily activity probability profile for each activity type.
 
     :param data: HETUS diary data
     :param activity_types: list of possible activity types
@@ -121,7 +120,7 @@ def calc_statistics_per_category(
 ) -> ValidationSet:
     """
     Calculates all required characteristics for each diary category in the
-    HETUS data separately
+    HETUS data separately.
 
     :param categories: a list of expanded activity profile collections, each for
                        one category

@@ -1,5 +1,5 @@
 """
-Contains rather prototyped functions that can be helpful for further examining
+Contains prototyped functions that can be helpful for further examining
 specific aspects of the HETUS data if necessary.
 """
 
@@ -9,7 +9,9 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
 )
 from activity_validator.hetus_data_processing import category_statistics
-from activity_validator.hetus_data_processing.attributes.categorization_attributes import DayType
+from activity_validator.hetus_data_processing.attributes.categorization_attributes import (
+    DayType,
+)
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import level_extraction
