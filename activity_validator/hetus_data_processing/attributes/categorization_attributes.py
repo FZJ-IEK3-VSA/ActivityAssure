@@ -69,3 +69,19 @@ class DayType(StrEnum):
     @staticmethod
     def title() -> str:
         return "day type"
+
+
+def get_default_categorization_attributes() -> list[str]:
+    """
+    Returns the categorization attributes for a full
+    categorization (country, sex, work status, day type)
+
+    :return: the categorization attributes
+    """
+    categorization_attributes = [
+        Country.title(),
+        Sex.title(),
+        WorkStatus.title(),
+        DayType.title(),
+    ]
+    return categorization_attributes

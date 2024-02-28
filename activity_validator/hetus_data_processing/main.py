@@ -8,7 +8,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
 
 import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import (
-    hetus_constants,
+    data_protection,
     hetus_translations,
     level_extraction,
     pandas_utils,
@@ -29,7 +29,9 @@ from activity_validator.hetus_data_processing.pandas_utils import VALIDATION_DAT
 
 
 @utils.timing
-def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
+def prepare_hetus_data(
+    data: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
     """
     Prepares and cleans raw HETUS data before categorizing and
     calculating statistics.
@@ -37,7 +39,8 @@ def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[s
     inconsistent entries.
 
     :param data: raw HETUS data
-    :return: cleaned HETUS data and the list of possible activities
+    :return: cleaned HETUS data on diary and person level, and the list of
+             possible activities
     """
     # extract only the columns that are actually needed to improve performance
     relevant_columns = (
@@ -66,66 +69,35 @@ def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[s
     return data, persondata, activities
 
 
-def get_default_categorization_attributes() -> list[str]:
-    """
-    Returns the categorization attributes for a full
-    categorization (country, sex, work status, day type)
-
-    :return: the categorization attributes
-    """
-    categorization_attributes = [
-        categorization_attributes.Country.title(),
-        categorization_attributes.Sex.title(),
-        categorization_attributes.WorkStatus.title(),
-        categorization_attributes.DayType.title(),
-    ]
-    return categorization_attributes
-
-
-def apply_eurostat_requirements(validation_set: validation_statistics.ValidationSet):
-    """
-    Applies the data protection requirements from Eurostat by removing too small
-    categories and hiding the exact size of some others.
-
-    :param statistics_set: the validation data set to apply the rules to
-    """
-    validation_set.filter_categories(hetus_constants.MIN_CELL_SIZE)
-    size_ranges = [
-        hetus_constants.MIN_CELL_SIZE,
-        hetus_constants.MIN_CELL_SIZE_FOR_SIZE,
-    ]
-    validation_set.hide_small_category_sizes(size_ranges)
-
-
 @utils.timing
-def process_hetus_2010_data(
-    data: pd.DataFrame, categorization_attributes=None, save: bool = True
-):
+def process_hetus_2010_data(data: pd.DataFrame, cat_attributes=None, save: bool = True):
     """
     Produces a validation data set out of the passed HETUS data.
     Prepares and categorizes the data set and calculates statistics
     for each category.
 
     :param data: the data to process
-    :param categorization_attributes: the attributes to use for categorization
+    :param cat_attributes: the attributes to use for categorization
     :param save: whether the data set should be saved to files or not
     """
-    data, persondata, activities = prepare_data(data)
+    data, persondata, activities = prepare_hetus_data(data)
 
     # calculate additional columns for categorizing and drop rows
     # where important data is missing
     cat_data = get_diary_data_for_categorization(data, persondata)
     # categorize the data
-    if categorization_attributes is None:
-        categorization_attributes = get_default_categorization_attributes()
-    categories = categorize(cat_data, categorization_attributes)
+    if cat_attributes is None:
+        cat_attributes = (
+            categorization_attributes.get_default_categorization_attributes()
+        )
+    categories = categorize(cat_data, cat_attributes)
 
     validation_set = category_statistics.calc_statistics_per_category(
         categories, activities
     )
 
     # ensure Eurostat data protection requirements
-    apply_eurostat_requirements(validation_set)
+    data_protection.apply_eurostat_requirements(validation_set)
 
     if save:
         # save the validation data set
@@ -141,9 +113,11 @@ def cross_validation_split(data: pd.DataFrame):
 
     :param data: the HETUS data to use
     """
-    data, persondata, activities = prepare_data(data)
+    data, persondata, activities = prepare_hetus_data(data)
     cat_data = get_diary_data_for_categorization(data, persondata)
-    categorization_attributes = get_default_categorization_attributes()
+    categorization_attributes = (
+        categorization_attributes.get_default_categorization_attributes()
+    )
     categories = categorize(cat_data, categorization_attributes)
 
     # split data of each category
@@ -161,18 +135,18 @@ def cross_validation_split(data: pd.DataFrame):
 
     # create statistics for the split parts separately
     split1 = category_statistics.calc_statistics_per_category(categories1, activities)
-    apply_eurostat_requirements(split1)
+    data_protection.apply_eurostat_requirements(split1)
     split1.save(VALIDATION_DATA_PATH.parent / "Validation Split 1")
 
     split2 = category_statistics.calc_statistics_per_category(categories2, activities)
-    apply_eurostat_requirements(split2)
+    data_protection.apply_eurostat_requirements(split2)
     split2.save(VALIDATION_DATA_PATH.parent / "Validation Split 2")
 
 
 def process_all_hetus_countries_AT_separately(
     hetus_path: str,
     hetus_key: str | None = None,
-    categorization_attributes=None,
+    cat_attributes=None,
     title: str = "",
 ):
     """
@@ -182,19 +156,23 @@ def process_all_hetus_countries_AT_separately(
 
     :param hetus_path: HETUS data path
     :param key: key to decrypt HETUS data, defaults to None
-    :param categorization_attributes: categorization attributes to use,
-                                      defaults to a full categorization
+    :param cat_attributes: categorization attributes to use, defaults to a
+                           full categorization
     :param title: title of the validation data set
     """
+    if not cat_attributes:
+        cat_attributes = (
+            categorization_attributes.get_default_categorization_attributes()
+        )
     # process AT data separately (different resolution)
     logging.info("--- Processing HETUS data for AT ---")
     data_at = load_data.load_hetus_files(["AT"], hetus_path, hetus_key)
-    result_at = process_hetus_2010_data(data_at, categorization_attributes, False)
+    result_at = process_hetus_2010_data(data_at, cat_attributes, False)
 
     # process remaining countries
     logging.info("--- Processing HETUS data for all countries except AT ---")
     data = load_data.load_all_hetus_files_except_AT(hetus_path, hetus_key)
-    result_eu = process_hetus_2010_data(data, categorization_attributes, False)
+    result_eu = process_hetus_2010_data(data, cat_attributes, False)
 
     assert (
         result_at.statistics.keys() & result_eu.statistics.keys() == set()
@@ -206,9 +184,7 @@ def process_all_hetus_countries_AT_separately(
 
     if not title:
         # determine title automatically
-        if not categorization_attributes:
-            categorization_attributes = get_default_categorization_attributes()
-        title = "_".join(s.lower() for s in categorization_attributes)
+        title = "_".join(s.lower() for s in cat_attributes)
     # rename result directory
     combined.save(VALIDATION_DATA_PATH.parent / title)
     logging.info(f"Finished creating the validation data set '{title}'")
