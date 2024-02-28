@@ -9,6 +9,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
 )
 from activity_validator.hetus_data_processing import category_statistics
+from activity_validator.hetus_data_processing.attributes.diary_attributes import DayType
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import level_extraction
@@ -152,6 +153,23 @@ def analyze_inconsistent_households(data: pd.DataFrame):
     #   - are there households without any valid entry?
     #   - are there households where valid entries are in the minority?
     # Depending on that, I might be able to determine the correct values for all columns
+
+
+def print_day_type_weekday_overview(data: pd.DataFrame, day_types: pd.Series):
+    """
+    Prints an overview on how many work and non-work days were determined depending
+    on the weekday.
+    Needs the day types determined by diary_attributes.determine_day_types().
+
+    :param data: HETUS data
+    :param day_types: determined day types
+    """
+    weekday_map = {i: "weekday" for i in range(2, 7)}
+    weekday_map[1] = "sunday"
+    weekday_map[7] = "saturday"
+    weekdays = data[col.Diary.WEEKDAY].map(weekday_map)
+    merged = pd.concat([weekdays, day_types], axis=1)
+    print(merged.groupby([col.Diary.WEEKDAY, DayType.title()]).size())
 
 
 def compare_mact_and_pact(a2: pd.DataFrame, a3: pd.DataFrame):

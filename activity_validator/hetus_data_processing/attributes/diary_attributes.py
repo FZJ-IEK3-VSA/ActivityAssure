@@ -56,22 +56,6 @@ def determine_day_type(row: pd.Series) -> DayType:
     return DayType.undetermined
 
 
-def print_day_type_weekday_overview(data: pd.DataFrame, day_types: pd.Series):
-    """
-    Prints an overview on how many work and non-work days were determined depending
-    on the weekday.
-
-    :param data: HETUS data
-    :param day_types: determined day types
-    """
-    weekday_map = {i: "weekday" for i in range(2, 7)}
-    weekday_map[1] = "sunday"
-    weekday_map[7] = "saturday"
-    weekdays = data[col.Diary.WEEKDAY].map(weekday_map)
-    merged = pd.concat([weekdays, day_types], axis=1)
-    print(merged.groupby([col.Diary.WEEKDAY, DayType.title()]).size())
-
-
 @utils.timing
 def determine_day_types(data: pd.DataFrame) -> pd.Series:
     """
