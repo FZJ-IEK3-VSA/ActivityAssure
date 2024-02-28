@@ -10,7 +10,7 @@ from typing import ClassVar
 
 import pandas as pd
 
-from activity_validator.profile_category import ProfileType
+from activity_validator.profile_category import ProfileCategory
 from activity_validator.pandas_utils import (
     save_df,
     load_df,
@@ -24,7 +24,7 @@ class ValidationStatistics:
     Stores all validation statistics for a single profile type
     """
 
-    profile_type: ProfileType
+    profile_type: ProfileCategory
     probability_profiles: pd.DataFrame
     activity_frequencies: pd.DataFrame
     activity_durations: pd.DataFrame
@@ -100,7 +100,7 @@ class ValidationStatistics:
 
     @staticmethod
     def load(
-        base_path: Path, profile_type: ProfileType, size: int | None = None
+        base_path: Path, profile_type: ProfileCategory, size: int | None = None
     ) -> "ValidationStatistics":
         """
         Loads all data for the specified profile type from the separate
@@ -143,7 +143,7 @@ class ValidationSet:
     types and common metadata.
     """
 
-    statistics: dict[ProfileType, ValidationStatistics]
+    statistics: dict[ProfileCategory, ValidationStatistics]
     activities: list[str]
 
     # directory and file names for file storage
@@ -275,14 +275,14 @@ class ValidationSet:
         )
 
     @staticmethod
-    def load_category_sizes(base_path: Path) -> dict[ProfileType, int]:
+    def load_category_sizes(base_path: Path) -> dict[ProfileCategory, int]:
         sizes = pd.read_csv(
             base_path / ValidationSet.CATEGORIES_DIR / ValidationSet.CATEGORY_SIZES_FILE
         )
         # the last column contains the sizes, the others the profile type attributes
         pt_names = sizes.columns[:-1]
         category_sizes = {
-            ProfileType.from_index_tuple(pt_names, values[:-1]): values[-1]
+            ProfileCategory.from_index_tuple(pt_names, values[:-1]): values[-1]
             for values in sizes.itertuples(index=False)
         }
         return category_sizes
@@ -298,9 +298,9 @@ class ValidationSet:
     @staticmethod
     def load_validation_data_subdir(
         path: Path, as_timedelta: bool = False
-    ) -> dict[ProfileType, pd.DataFrame]:
+    ) -> dict[ProfileCategory, pd.DataFrame]:
         return {
-            ProfileType.from_filename(p): load_df(p, as_timedelta)
+            ProfileCategory.from_filename(p): load_df(p, as_timedelta)
             for p in path.iterdir()
             if p.is_file()
         }

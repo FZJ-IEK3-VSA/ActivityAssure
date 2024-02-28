@@ -10,7 +10,7 @@ import warnings
 import pandas as pd
 import plotly.express as px  # type: ignore
 
-from activity_validator.profile_category import ProfileType
+from activity_validator.profile_category import ProfileCategory
 from activity_validator import comparison_indicators
 
 
@@ -76,7 +76,8 @@ def select_metrics(data: pd.DataFrame) -> pd.DataFrame:
 
 def convert_to_indicator_mean_dataframe(
     indicator_dict: dict[
-        ProfileType, dict[ProfileType, comparison_indicators.ValidationIndicators]
+        ProfileCategory,
+        dict[ProfileCategory, comparison_indicators.ValidationIndicators],
     ]
 ) -> dict[str, pd.DataFrame]:
     """
@@ -88,7 +89,9 @@ def convert_to_indicator_mean_dataframe(
     :return: a dict mapping the metric names to the respective dataframes
              containing the metric values
     """
-    total_metrics_dicts: dict[str, dict[ProfileType, dict[ProfileType, float]]] = {}
+    total_metrics_dicts: dict[
+        str, dict[ProfileCategory, dict[ProfileCategory, float]]
+    ] = {}
     for p1, metrics_for_one_category in indicator_dict.items():
         for p2, metrics in metrics_for_one_category.items():
             total_metrics = metrics.get_metric_means()
@@ -100,7 +103,8 @@ def convert_to_indicator_mean_dataframe(
 
 def convert_to_indicator_dataframe_per_activity(
     metrics_dict: dict[
-        ProfileType, dict[ProfileType, comparison_indicators.ValidationIndicators]
+        ProfileCategory,
+        dict[ProfileCategory, comparison_indicators.ValidationIndicators],
     ]
 ) -> dict[str, dict[str, pd.DataFrame]]:
     """
@@ -113,7 +117,7 @@ def convert_to_indicator_dataframe_per_activity(
              respective dataframes containing the metric values
     """
     total_metrics_dicts: dict[
-        str, dict[str, dict[ProfileType, dict[ProfileType, float]]]
+        str, dict[str, dict[ProfileCategory, dict[ProfileCategory, float]]]
     ] = {}
     for p1, metrics_for_one_category in metrics_dict.items():
         for p2, metrics in metrics_for_one_category.items():

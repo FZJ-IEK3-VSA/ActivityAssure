@@ -14,7 +14,7 @@ from activity_validator.hetus_data_processing import (
     category_statistics,
 )
 
-from activity_validator.profile_category import ProfileType
+from activity_validator.profile_category import ProfileCategory
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
 )
@@ -40,12 +40,12 @@ from activity_validator import activity_mapping
 def load_person_characteristics(path: str) -> dict:
     with open(path, encoding="utf-8") as f:
         traits: dict[str, dict] = json.load(f)
-    return {name: ProfileType.from_dict(d) for name, d in traits.items()}  # type: ignore
+    return {name: ProfileCategory.from_dict(d) for name, d in traits.items()}  # type: ignore
 
 
 def get_person_traits(
-    person_traits: dict[str, ProfileType], filename: str | Path
-) -> ProfileType:
+    person_traits: dict[str, ProfileCategory], filename: str | Path
+) -> ProfileCategory:
     """
     Extracts the person name from the path of an activity profile file
     and returns the matching ProfileType object with the person
@@ -162,7 +162,7 @@ def extract_day_profiles(
 
 def group_profiles_by_type(
     activity_profiles: list[SparseActivityProfile],
-) -> dict[ProfileType, list[SparseActivityProfile]]:
+) -> dict[ProfileCategory, list[SparseActivityProfile]]:
     """
     Determines day type for each day profile and groups
     the profiles by their overall type.
@@ -171,7 +171,7 @@ def group_profiles_by_type(
     :return: a dict mapping each profile type to the respective
              profiles
     """
-    profiles_by_type: dict[ProfileType, list[SparseActivityProfile]] = {}
+    profiles_by_type: dict[ProfileCategory, list[SparseActivityProfile]] = {}
     for profile in activity_profiles:
         # set day type property
         determine_day_type(profile)
@@ -208,9 +208,9 @@ def calc_input_data_statistics(
 
 def prepare_input_data(
     full_year_profiles: list[SparseActivityProfile], activity_mapping: dict[str, str]
-) -> dict[ProfileType, list[SparseActivityProfile]]:
+) -> dict[ProfileCategory, list[SparseActivityProfile]]:
     # map and categorize each full-year profile individually
-    all_profiles_by_type: dict[ProfileType, list[SparseActivityProfile]] = {}
+    all_profiles_by_type: dict[ProfileCategory, list[SparseActivityProfile]] = {}
     empty_profiles = 0
     for full_year_profile in full_year_profiles:
         logging.debug(f"Preparing profile from file {full_year_profile.filename}")
@@ -236,7 +236,7 @@ def prepare_input_data(
 
 @utils.timing
 def calc_statistics_per_category(
-    input_data_dict: dict[ProfileType, list[SparseActivityProfile]],
+    input_data_dict: dict[ProfileCategory, list[SparseActivityProfile]],
     activities: list[str],
 ) -> ValidationSet:
     """
@@ -289,7 +289,7 @@ def process_model_data(
     return statistics_set
 
 
-def get_similar_categories(profile_type: ProfileType) -> list[ProfileType]:
+def get_similar_categories(profile_type: ProfileCategory) -> list[ProfileCategory]:
     """
     Returns a list of all profile types that are similar to the one specified,
     i.e. all profile types, that differ in only one attribute. Also contains
@@ -321,7 +321,7 @@ def get_similar_categories(profile_type: ProfileType) -> list[ProfileType]:
     return similar
 
 
-def all_profile_types_of_same_country(country) -> list[ProfileType]:
+def all_profile_types_of_same_country(country) -> list[ProfileCategory]:
     """
     Returns a list of all possible profile types for a
     fixed country.
@@ -345,12 +345,12 @@ def all_profile_types_of_same_country(country) -> list[ProfileType]:
         [country], day_types, work_statuses, sexes
     )
     combinations = [(c, s, w, d) for c, d, w, s in combinations]
-    profile_types = [ProfileType.from_iterable(c) for c in combinations]
+    profile_types = [ProfileCategory.from_iterable(c) for c in combinations]
     return profile_types
 
 
 def get_metric_means(
-    metrics_dict: dict[ProfileType, comparison_indicators.ValidationIndicators],
+    metrics_dict: dict[ProfileCategory, comparison_indicators.ValidationIndicators],
     output_path: Path | None = None,
 ) -> pd.DataFrame:
     """
@@ -368,7 +368,7 @@ def get_metric_means(
 
 
 def metrics_dict_to_df(
-    metrics: dict[ProfileType, comparison_indicators.ValidationIndicators]
+    metrics: dict[ProfileCategory, comparison_indicators.ValidationIndicators]
 ) -> pd.DataFrame:
     """
     Convert the per-category metrics dict to a single dataframe
@@ -386,7 +386,7 @@ def validate_per_category(
     input_statistics: ValidationSet,
     validation_statistics: ValidationSet,
     output_path: Path,
-) -> dict[str, dict[ProfileType, comparison_indicators.ValidationIndicators]]:
+) -> dict[str, dict[ProfileCategory, comparison_indicators.ValidationIndicators]]:
     """
     Compares each category of input data to the same category
     of validation data. Calculates the full set of metrics of
@@ -414,9 +414,11 @@ def validate_per_category(
 
 
 def validate_similar_categories(
-    input_data_dict: dict[ProfileType, ValidationStatistics],
-    validation_data_dict: dict[ProfileType, ValidationStatistics],
-) -> dict[ProfileType, dict[ProfileType, comparison_indicators.ValidationIndicators]]:
+    input_data_dict: dict[ProfileCategory, ValidationStatistics],
+    validation_data_dict: dict[ProfileCategory, ValidationStatistics],
+) -> dict[
+    ProfileCategory, dict[ProfileCategory, comparison_indicators.ValidationIndicators]
+]:
     # validate each profile type individually
     metrics_dict = {}
     for profile_type, input_data in input_data_dict.items():
@@ -435,9 +437,11 @@ def validate_similar_categories(
 
 
 def validate_all_combinations(
-    input_data_dict: dict[ProfileType, ValidationStatistics],
-    validation_data_dict: dict[ProfileType, ValidationStatistics],
-) -> dict[ProfileType, dict[ProfileType, comparison_indicators.ValidationIndicators]]:
+    input_data_dict: dict[ProfileCategory, ValidationStatistics],
+    validation_data_dict: dict[ProfileCategory, ValidationStatistics],
+) -> dict[
+    ProfileCategory, dict[ProfileCategory, comparison_indicators.ValidationIndicators]
+]:
     """
     Calculates metrics for each combination of input and validation
     profile type.
@@ -471,7 +475,8 @@ def validate_all_combinations(
 
 def save_file_per_metrics_per_combination(
     metrics: dict[
-        ProfileType, dict[ProfileType, comparison_indicators.ValidationIndicators]
+        ProfileCategory,
+        dict[ProfileCategory, comparison_indicators.ValidationIndicators],
     ],
     output_path: Path,
 ):

@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 import pandas as pd
 
-from activity_validator.profile_category import ProfileType
+from activity_validator.profile_category import ProfileCategory
 
 #: path for result data # TODO: move to config file
 VALIDATION_DATA_PATH = Path("data/validation data sets/latest")
@@ -15,7 +15,7 @@ VALIDATION_DATA_PATH = Path("data/validation data sets/latest")
 def create_result_path(
     subdir: str,
     name: str,
-    profile_type: ProfileType | None = None,
+    profile_type: ProfileCategory | None = None,
     base_path: Path | None = None,
     ext: str = "csv",
 ) -> Path:
@@ -55,7 +55,7 @@ def save_df(
     data: pd.DataFrame | pd.Series,
     subdir: str,
     name: str,
-    profile_type: ProfileType | None = None,
+    profile_type: ProfileCategory | None = None,
     base_path: Path = VALIDATION_DATA_PATH,
     ext: str = "csv",
 ) -> None:

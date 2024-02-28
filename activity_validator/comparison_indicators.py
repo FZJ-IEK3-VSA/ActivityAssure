@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import scipy  # type: ignore
 from activity_validator import pandas_utils
-from activity_validator.profile_category import ProfileType
+from activity_validator.profile_category import ProfileCategory
 from activity_validator import utils
 from activity_validator.validation_statistics import ValidationStatistics
 
@@ -125,7 +125,7 @@ class ValidationIndicators:
     def __build_filename(
         self,
         result_directory: Path,
-        profile_type: ProfileType,
+        profile_type: ProfileCategory,
         filename: str = "metrics",
         extension: str = "json",
     ) -> Path:
@@ -135,7 +135,9 @@ class ValidationIndicators:
         filepath = result_directory / filename
         return filepath
 
-    def save_as_json(self, result_directory: Path, profile_type: ProfileType) -> None:
+    def save_as_json(
+        self, result_directory: Path, profile_type: ProfileCategory
+    ) -> None:
         filepath = self.__build_filename(result_directory, profile_type)
         with open(filepath, "w", encoding="utf-8") as f:
             json_str = self.to_json()  # type: ignore
@@ -145,11 +147,11 @@ class ValidationIndicators:
     @staticmethod
     def load_from_json(
         filepath: Path,
-    ) -> tuple[ProfileType | None, "ValidationIndicators"]:
+    ) -> tuple[ProfileCategory | None, "ValidationIndicators"]:
         with open(filepath) as f:
             json_str = f.read()
         metrics = ValidationIndicators.from_json(json_str)  # type: ignore
-        profile_type = ProfileType.from_filename(filepath)
+        profile_type = ProfileCategory.from_filename(filepath)
         logging.debug(f"Loaded metrics file {filepath}")
         return profile_type, metrics
 
@@ -159,7 +161,7 @@ class ValidationIndicators:
         return pd.DataFrame(columns)
 
     def save_as_csv(
-        self, result_directory: Path, profile_type: ProfileType, filename: str
+        self, result_directory: Path, profile_type: ProfileCategory, filename: str
     ) -> None:
         filepath = self.__build_filename(
             result_directory, profile_type, filename, "csv"
@@ -338,7 +340,7 @@ def calc_all_indicator_variants(
     validation_data: ValidationStatistics,
     input_data: ValidationStatistics,
     save_to_file: bool = True,
-    profile_type: ProfileType | None = None,
+    profile_type: ProfileCategory | None = None,
     output_path: Path | None = None,
     add_means: bool = True,
 ) -> tuple[

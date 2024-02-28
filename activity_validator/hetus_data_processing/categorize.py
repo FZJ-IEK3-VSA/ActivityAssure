@@ -8,7 +8,7 @@ import pandas as pd
 from activity_validator import categorization_attributes, utils
 from activity_validator.activity_profile import (
     ExpandedActivityProfiles,
-    ProfileType,
+    ProfileCategory,
 )
 
 from activity_validator.hetus_data_processing import hetus_constants
@@ -87,7 +87,7 @@ def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfi
     return [
         ExpandedActivityProfiles(
             categories.get_group(g),
-            (p := ProfileType.from_index_tuple(key, g)),  # type: ignore
+            (p := ProfileCategory.from_index_tuple(key, g)),  # type: ignore
             hetus_constants.PROFILE_OFFSET,
             hetus_constants.get_resolution(p.country),
         )

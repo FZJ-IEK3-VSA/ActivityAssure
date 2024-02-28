@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from activity_validator.hetus_data_processing import hetus_constants
-from activity_validator.profile_category import ProfileType
+from activity_validator.profile_category import ProfileCategory
 from activity_validator import utils
 
 #: default resolution for input data # TODO: remove?
@@ -94,7 +94,7 @@ class SparseActivityProfile:
     #: duration of one timestep
     resolution: timedelta
     #: characteristics of the person this profile belongs to
-    profile_type: ProfileType = field(default_factory=ProfileType)
+    profile_type: ProfileCategory = field(default_factory=ProfileCategory)
     #: name of the file this profile was loaded from, if applicable (for debugging)
     filename: str = ""
 
@@ -102,7 +102,7 @@ class SparseActivityProfile:
     @staticmethod
     def load_from_csv(
         path: Path,
-        profile_type: ProfileType,
+        profile_type: ProfileCategory,
         resolution: timedelta = DEFAULT_RESOLUTION,
         offset: timedelta | None = None,
     ) -> "SparseActivityProfile":
@@ -475,7 +475,7 @@ class ExpandedActivityProfiles:
     def __init__(
         self,
         data: pd.DataFrame,
-        profile_type: ProfileType,
+        profile_type: ProfileCategory,
         offset: timedelta,
         resolution: timedelta,
     ) -> None:

@@ -8,17 +8,15 @@ from typing import Any, Collection
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
-from activity_validator import (
-    categorization_attributes,
-)
+from activity_validator import categorization_attributes
 
 
 @dataclass_json
 @dataclass(frozen=True)
-class ProfileType:  # TODO: move to dedicated profile type module
+class ProfileCategory:
     """
-    A set of characteristics that defines the type of a
-    sinlge-day activity profile and identifies matching
+    A set of characteristics that defines the category of a
+    single-day activity profile and identifies matching
     validation data.
     """
 
@@ -83,17 +81,17 @@ class ProfileType:  # TODO: move to dedicated profile type module
         return f"{name}_{self}"
 
     @staticmethod
-    def from_filename(filepath: Path) -> "ProfileType":
+    def from_filename(filepath: Path) -> "ProfileCategory":
         components = filepath.stem.split("_")
         assert (
             len(components) > 1
         ), f"Could not parse profile type from path '{filepath}'"
         # basename = components[0] # not needed
-        profile_type = ProfileType.from_iterable(components[1:])
+        profile_type = ProfileCategory.from_iterable(components[1:])
         return profile_type
 
     @staticmethod
-    def from_iterable(values: Collection[str | None]) -> "ProfileType":
+    def from_iterable(values: Collection[str | None]) -> "ProfileCategory":
         """
         Creates a ProfileType object from an iterable containing
         the characteristics as strings.
@@ -106,7 +104,7 @@ class ProfileType:  # TODO: move to dedicated profile type module
         country, sex, work_status, day_type = values
         try:
             # convert the strings to enum values and create the ProfileType
-            profile_type = ProfileType(
+            profile_type = ProfileCategory(
                 country,
                 categorization_attributes.Sex(sex) if sex else None,
                 (
@@ -123,7 +121,7 @@ class ProfileType:  # TODO: move to dedicated profile type module
     @staticmethod
     def from_index_tuple(
         names: Collection[str], values: Collection[str] | str
-    ) -> "ProfileType":
+    ) -> "ProfileCategory":
         """
         Creates a ProfileType object from a list of attribute names and a list
         with their respective values. The lists names and values must match.
@@ -144,4 +142,4 @@ class ProfileType:  # TODO: move to dedicated profile type module
         sex = value_dict.get(categorization_attributes.Sex.title())
         work_status = value_dict.get(categorization_attributes.WorkStatus.title())
         day_type = value_dict.get(categorization_attributes.DayType.title())
-        return ProfileType.from_iterable([country, sex, work_status, day_type])
+        return ProfileCategory.from_iterable([country, sex, work_status, day_type])

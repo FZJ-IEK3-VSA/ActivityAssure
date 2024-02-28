@@ -1,18 +1,17 @@
 import glob
 from pathlib import Path
-from activity_validator import activity_profile
 from plotly.graph_objects import Figure  # type: ignore
 
 from activity_validator.ui import datapaths
-from activity_validator.profile_category import ProfileType
+from activity_validator.profile_category import ProfileCategory
 
 
-def ptype_to_label(profile_type: ProfileType) -> str:
+def ptype_to_label(profile_type: ProfileCategory) -> str:
     return " - ".join(profile_type.to_tuple())
 
 
-def ptype_from_label(profile_type_str: str) -> ProfileType:
-    return ProfileType.from_iterable(profile_type_str.split(" - "))
+def ptype_from_label(profile_type_str: str) -> ProfileCategory:
+    return ProfileCategory.from_iterable(profile_type_str.split(" - "))
 
 
 def get_files(path: Path) -> list[Path]:
@@ -20,9 +19,9 @@ def get_files(path: Path) -> list[Path]:
     return [f for f in path.iterdir() if f.is_file()]
 
 
-def get_profile_type_paths(path: Path) -> dict[ProfileType, Path]:
+def get_profile_type_paths(path: Path) -> dict[ProfileCategory, Path]:
     input_prob_files = get_files(path)
-    profile_types = {ProfileType.from_filename(p): p for p in input_prob_files}
+    profile_types = {ProfileCategory.from_filename(p): p for p in input_prob_files}
     if None in profile_types:
         raise RuntimeError("Invalid file name: could not parse profile type")
     return profile_types  # type: ignore
@@ -34,7 +33,7 @@ def get_profile_type_labels(path: Path) -> list[str]:
 
 
 def get_file_path(
-    directory: Path, profile_type: ProfileType, ext: str = "*"
+    directory: Path, profile_type: ProfileCategory, ext: str = "*"
 ) -> Path | None:
     filter = directory / ("*" + profile_type.construct_filename() + f".{ext}")
 
@@ -52,7 +51,7 @@ def save_plot(
     figure: Figure,
     subdir: str,
     name: str,
-    profile_type: ProfileType | None = None,
+    profile_type: ProfileCategory | None = None,
     base_path: str | Path = datapaths.output_path,
     svg: bool = True,
 ) -> Figure:

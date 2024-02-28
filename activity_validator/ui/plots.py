@@ -227,8 +227,8 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
 
 
 def prob_curve_per_activity(
-    profile_type_val: profile_category.ProfileType,
-    profile_type_in: profile_category.ProfileType,
+    profile_type_val: profile_category.ProfileCategory,
+    profile_type_in: profile_category.ProfileCategory,
     subdir: Path | str,
 ) -> dict[str, dcc.Graph]:
     # get the path of the validation and the input file
@@ -278,8 +278,8 @@ def prob_curve_per_activity(
 
 
 def histogram_per_activity(
-    ptype_val: profile_category.ProfileType,
-    ptype_in: profile_category.ProfileType,
+    ptype_val: profile_category.ProfileCategory,
+    ptype_in: profile_category.ProfileCategory,
     subdir: Path | str,
     duration_data: bool = False,
 ) -> dict[str, dcc.Graph]:
@@ -412,8 +412,8 @@ def indicator_as_time_str(value: float) -> str:
 
 
 def get_all_indicator_variants(
-    ptype_val: profile_category.ProfileType,
-    ptype_in: profile_category.ProfileType,
+    ptype_val: profile_category.ProfileCategory,
+    ptype_in: profile_category.ProfileCategory,
     add_means: bool,
 ) -> tuple[
     comparison_indicators.ValidationIndicators,
@@ -535,7 +535,8 @@ def create_indicator_table(
 
 
 def indicator_tables_per_activity(
-    ptype_val: profile_category.ProfileType, ptype_in: profile_category.ProfileType
+    ptype_val: profile_category.ProfileCategory,
+    ptype_in: profile_category.ProfileCategory,
 ) -> dict[str, dbc.Table]:
     """
     Generates an indicator table for each activity.
