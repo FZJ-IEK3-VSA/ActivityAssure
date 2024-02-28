@@ -1,5 +1,5 @@
 {
-    "activity types": [
+    "activities": [
         "clean",
         "cook",
         "dishwashing",
@@ -15,5 +15,9 @@
         "sleep",
         "tv",
         "work"
+    ],
+    "work activities": [
+        "work",
+        "education"
     ]
 }
