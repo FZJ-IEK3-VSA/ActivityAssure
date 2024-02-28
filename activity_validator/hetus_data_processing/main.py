@@ -20,7 +20,7 @@ from activity_validator.hetus_data_processing.attributes import (
 )
 from activity_validator.hetus_data_processing.categorize import (
     categorize,
-    get_diary_categorization_data,
+    get_diary_data_for_categorization,
 )
 from activity_validator.hetus_data_processing import category_statistics
 from activity_validator.lpgvalidation import validation_statistics
@@ -114,7 +114,7 @@ def process_hetus_2010_data(
 
     # calculate additional columns for categorizing and drop rows
     # where important data is missing
-    cat_data = get_diary_categorization_data(data, persondata)
+    cat_data = get_diary_data_for_categorization(data, persondata)
     # categorize the data
     if categorization_attributes is None:
         categorization_attributes = get_default_categorization_attributes()
@@ -142,7 +142,7 @@ def cross_validation_split(data: pd.DataFrame):
     :param data: the HETUS data to use
     """
     data, persondata, activities = prepare_data(data)
-    cat_data = get_diary_categorization_data(data, persondata)
+    cat_data = get_diary_data_for_categorization(data, persondata)
     categorization_attributes = get_default_categorization_attributes()
     categories = categorize(cat_data, categorization_attributes)
 

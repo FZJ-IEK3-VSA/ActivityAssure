@@ -19,7 +19,14 @@ from activity_validator.hetus_data_processing.attributes import (
 
 
 @utils.timing
-def get_person_categorization_data(persondata: pd.DataFrame) -> pd.DataFrame:
+def get_person_data_for_categorization(persondata: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calcluates attributes needed to categorize the persons. Removes
+    all persons for which theses attributes could not be determined.
+
+    :param persondata: HETUS person data
+    :return: HETUS person data for categorization
+    """
     # calculate additionaly attributes and combine them with the data
     country = person_attributes.determine_country(persondata)
     work = person_attributes.determine_work_statuses(persondata)
@@ -36,10 +43,18 @@ def get_person_categorization_data(persondata: pd.DataFrame) -> pd.DataFrame:
 
 
 @utils.timing
-def get_diary_categorization_data(
+def get_diary_data_for_categorization(
     data: pd.DataFrame, persondata: pd.DataFrame
 ) -> pd.DataFrame:
-    persondata = get_person_categorization_data(persondata)
+    """
+    Adds all attributes necessary to categorize the diaries. Removes
+    all diaries where these attributes could not be determined.
+
+    :param data: HETUS data
+    :param persondata: HETUS person data
+    :return: HETUS data ready for categorization
+    """
+    persondata = get_person_data_for_categorization(persondata)
     columns = [
         categorization_attributes.Country.title(),
         categorization_attributes.WorkStatus.title(),
