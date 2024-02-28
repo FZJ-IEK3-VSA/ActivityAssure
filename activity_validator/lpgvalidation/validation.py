@@ -85,24 +85,6 @@ def load_activity_profiles_from_csv(
     return activity_profiles
 
 
-@utils.timing
-def load_activity_profiles_from_json(path: str | Path) -> list[SparseActivityProfile]:
-    """Loads the activity profiles in json format from the specified folder"""
-    if not isinstance(path, Path):
-        path = Path(path)
-    assert Path(path).is_dir(), f"Directory does not exist: {path}"
-    activity_profiles = []
-    # collect all files in the directory
-    for filepath in path.iterdir():
-        if filepath.is_file():
-            with open(filepath, encoding="utf-8") as f:
-                file_content = f.read()
-                activity_profile = SparseActivityProfile.from_json(file_content)  # type: ignore
-            activity_profiles.append(activity_profile)
-    logging.info(f"Loaded {len(activity_profiles)} activity profiles")
-    return activity_profiles
-
-
 def filter_complete_day_profiles(
     activity_profiles: Iterable[SparseActivityProfile],
 ) -> list[SparseActivityProfile]:

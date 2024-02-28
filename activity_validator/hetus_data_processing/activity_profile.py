@@ -7,7 +7,6 @@ import itertools
 import logging
 from pathlib import Path
 from dataclasses import dataclass, field
-from dataclasses_json import dataclass_json, config
 import numpy as np
 import pandas as pd
 
@@ -18,41 +17,6 @@ from activity_validator.hetus_data_processing.profile_category import ProfileTyp
 DEFAULT_RESOLUTION = timedelta(minutes=1)
 
 
-def write_timedelta(d: timedelta | None) -> str | None:
-    """
-    Converts a timedelta into a str. Necessary to correctly
-    represent None as null in json.
-
-    :param d: timedelta to write
-    :return: str representation of the timedelta
-    """
-    return str(d) if d else None
-
-
-def parse_timedelta(s: str) -> timedelta:
-    """
-    Parses a timedelta object from a string. Only supports a
-    resolution up to seconds.
-
-    :param s: the string to parse the timedelta from
-    :return: parsed timedelta object
-    """
-    days = 0
-    if "day" in s:
-        # s has the format 'X days, XX:XX:XX'
-        i1 = s.find("day")
-        days = int(s[:i1].strip())
-        assert "," in s, f"Unexpected timedelta format: {s}"
-        i2 = s.find(",")
-        time_str = s[i2 + 1 :].strip()
-    else:
-        # s has the format 'XX:XX:XX'
-        time_str = s
-    t = datetime.strptime(time_str, "%H:%M:%S")
-    return timedelta(days=days, hours=t.hour, minutes=t.minute, seconds=t.second)
-
-
-@dataclass_json
 @dataclass
 class ActivityProfileEntry:
     """
@@ -115,7 +79,6 @@ class ActivityProfileEntry:
         return entries
 
 
-@dataclass_json
 @dataclass
 class SparseActivityProfile:
     """
@@ -126,13 +89,9 @@ class SparseActivityProfile:
     #: list of activity objects
     activities: list[ActivityProfileEntry]
     #: time offset from midnight
-    offset: timedelta = field(
-        metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
-    )
+    offset: timedelta
     #: duration of one timestep
-    resolution: timedelta = field(
-        metadata=config(encoder=write_timedelta, decoder=parse_timedelta),
-    )
+    resolution: timedelta
     #: characteristics of the person this profile belongs to
     profile_type: ProfileType = field(default_factory=ProfileType)
     #: name of the file this profile was loaded from, if applicable (for debugging)
