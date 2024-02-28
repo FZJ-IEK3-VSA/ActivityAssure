@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 import warnings
 import pandas as pd
-import plotly.express as px
+import plotly.express as px  # type: ignore
 
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 from activity_validator.lpgvalidation import comparison_metrics
@@ -120,8 +120,8 @@ def convert_to_metric_dataframe_per_activity(
             # iterate through all columns (one per metric)
             for kpi_name, kpi_values in metric_df.items():
                 for activity, value in kpi_values.items():
-                    total_metrics_dicts.setdefault(kpi_name, {}).setdefault(
-                        activity, {}
+                    total_metrics_dicts.setdefault(str(kpi_name), {}).setdefault(
+                        str(activity), {}
                     ).setdefault(p1, {})[p2] = value
     dataframes = {
         kpi: {act: pd.DataFrame(v) for act, v in d.items()}

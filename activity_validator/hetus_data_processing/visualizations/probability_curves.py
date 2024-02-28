@@ -5,7 +5,7 @@ Plots probability profiles for activity groups
 from datetime import datetime, timedelta
 import os
 import pandas as pd
-import seaborn as sns
+import seaborn as sns  # type: ignore
 import matplotlib.pyplot as plt
 import matplotlib.dates
 

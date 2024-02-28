@@ -1,7 +1,7 @@
 import os
 from typing import Any
 import pandas as pd
-import seaborn as sns
+import seaborn as sns  # type: ignore
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
@@ -111,19 +111,20 @@ def plot_heatmap_person(name: str, dir: str):
     # create hierarchical tick labels
     # Remark: the following link might help to create actual hierarchical tick labels
     # https://stackoverflow.com/questions/71048752/adding-multi-level-x-axis
-    tick_labels: list[tuple[Any]] = [data.index[0]]
+    tick_labels: list[tuple] = [data.index[0]]
     for i in range(1, len(data.index)):
         a, b = data.index[i]
-        l = (b,)
+        l: tuple = (b,)
         if data.index[i - 1][0] != a:
             l = a, b
         # elif data.index[i-1][1] != b:
         #     l = b,c
         tick_labels.append(l)
-    tick_labels = [" - ".join([y.replace("_", " ") for y in x]) for x in tick_labels]
-    # tick_labels = [f"{a:>11} {b:>8} {c:>6}" for a,b,c in data.index] # does not work due to proportional font
+    tick_labels_strs = [
+        " - ".join([y.replace("_", " ") for y in x]) for x in tick_labels
+    ]
 
-    heatmap.set_yticks(np.arange(0.5, len(data.index)), tick_labels)
+    heatmap.set_yticks(np.arange(0.5, len(data.index)), tick_labels_strs)
     plt.tick_params(axis="y", which="both", length=0)
     plt.tick_params(axis="x", which="both", length=0)
 
