@@ -14,8 +14,7 @@ import pandas as pd
 
 from activity_validator.hetus_data_processing import hetus_constants, utils
 from activity_validator.hetus_data_processing.attributes import (
-    diary_attributes,
-    person_attributes,
+    categorization_attributes,
 )
 
 #: default resolution for input data # TODO: remove?
@@ -35,9 +34,9 @@ class ProfileType:  # TODO: move to dedicated profile type module
     """
 
     country: str | None = None
-    sex: person_attributes.Sex | None = None
-    work_status: person_attributes.WorkStatus | None = None
-    day_type: diary_attributes.DayType | None = None
+    sex: categorization_attributes.Sex | None = None
+    work_status: categorization_attributes.WorkStatus | None = None
+    day_type: categorization_attributes.DayType | None = None
 
     def get_attribute_names(self) -> list[str]:
         """
@@ -58,10 +57,10 @@ class ProfileType:  # TODO: move to dedicated profile type module
         :return: the dict representing this ProfileType
         """
         value_dict = {
-            person_attributes.Country.title(): self.country,
-            person_attributes.Sex.title(): self.sex,
-            person_attributes.WorkStatus.title(): self.work_status,
-            diary_attributes.DayType.title(): self.day_type,
+            categorization_attributes.Country.title(): self.country,
+            categorization_attributes.Sex.title(): self.sex,
+            categorization_attributes.WorkStatus.title(): self.work_status,
+            categorization_attributes.DayType.title(): self.day_type,
         }
         if only_used_attributes:
             # exclude unused attributes
@@ -120,9 +119,13 @@ class ProfileType:  # TODO: move to dedicated profile type module
             # convert the strings to enum values and create the ProfileType
             profile_type = ProfileType(
                 country,
-                person_attributes.Sex(sex) if sex else None,
-                person_attributes.WorkStatus(work_status) if work_status else None,
-                diary_attributes.DayType(day_type) if day_type else None,
+                categorization_attributes.Sex(sex) if sex else None,
+                (
+                    categorization_attributes.WorkStatus(work_status)
+                    if work_status
+                    else None
+                ),
+                categorization_attributes.DayType(day_type) if day_type else None,
             )
         except KeyError as e:
             assert False, f"Invalid enum key: {e}"
@@ -148,10 +151,10 @@ class ProfileType:  # TODO: move to dedicated profile type module
         assert len(names) == len(values), f"Number of names must match number of values"
         value_dict = dict(zip(names, values))
         # extract used category attributes by their names
-        country = value_dict.get(person_attributes.Country.title())
-        sex = value_dict.get(person_attributes.Sex.title())
-        work_status = value_dict.get(person_attributes.WorkStatus.title())
-        day_type = value_dict.get(diary_attributes.DayType.title())
+        country = value_dict.get(categorization_attributes.Country.title())
+        sex = value_dict.get(categorization_attributes.Sex.title())
+        work_status = value_dict.get(categorization_attributes.WorkStatus.title())
+        day_type = value_dict.get(categorization_attributes.DayType.title())
         return ProfileType.from_iterable([country, sex, work_status, day_type])
 
 

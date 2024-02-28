@@ -24,8 +24,8 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ProfileType,
 )
 from activity_validator.hetus_data_processing.attributes import (
+    categorization_attributes,
     diary_attributes,
-    person_attributes,
 )
 from activity_validator.lpgvalidation import comparison_metrics
 from activity_validator.lpgvalidation.validation_statistics import (
@@ -153,9 +153,9 @@ def determine_day_type(activity_profile: SparseActivityProfile) -> None:
     ), "Cannot determine day type for profiles with missing durations"
     # set the day type depending on the total working time
     day_type = (
-        diary_attributes.DayType.work
+        categorization_attributes.DayType.work
         if work_sum * activity_profile.resolution >= diary_attributes.WORKTIME_THRESHOLD
-        else diary_attributes.DayType.no_work
+        else categorization_attributes.DayType.no_work
     )
     # set the determined day type for the profile
     new_type = dataclasses.replace(activity_profile.profile_type, day_type=day_type)
@@ -341,16 +341,21 @@ def get_similar_categories(profile_type: ProfileType) -> list[ProfileType]:
     """
     # make sure the original profile type comes first
     similar = [profile_type]
-    similar += [dataclasses.replace(profile_type, sex=e) for e in person_attributes.Sex]
+    similar += [
+        dataclasses.replace(profile_type, sex=e) for e in categorization_attributes.Sex
+    ]
     work_statuses = [
-        person_attributes.WorkStatus.full_time,
-        person_attributes.WorkStatus.part_time,
-        person_attributes.WorkStatus.retired,
-        person_attributes.WorkStatus.student,
-        person_attributes.WorkStatus.unemployed,
+        categorization_attributes.WorkStatus.full_time,
+        categorization_attributes.WorkStatus.part_time,
+        categorization_attributes.WorkStatus.retired,
+        categorization_attributes.WorkStatus.student,
+        categorization_attributes.WorkStatus.unemployed,
     ]
     similar += [dataclasses.replace(profile_type, work_status=e) for e in work_statuses]
-    day_types = [diary_attributes.DayType.work, diary_attributes.DayType.no_work]
+    day_types = [
+        categorization_attributes.DayType.work,
+        categorization_attributes.DayType.no_work,
+    ]
     similar += [dataclasses.replace(profile_type, day_type=e) for e in day_types]
     # remove duplicates
     similar = list(set(similar))
@@ -365,15 +370,18 @@ def all_profile_types_of_same_country(country) -> list[ProfileType]:
     :return: a list of profile types
     """
     # make sure the original profile type comes first
-    sexes = [e for e in person_attributes.Sex]
+    sexes = [e for e in categorization_attributes.Sex]
     work_statuses = [
-        person_attributes.WorkStatus.full_time,
-        person_attributes.WorkStatus.part_time,
-        person_attributes.WorkStatus.retired,
-        person_attributes.WorkStatus.student,
-        person_attributes.WorkStatus.unemployed,
+        categorization_attributes.WorkStatus.full_time,
+        categorization_attributes.WorkStatus.part_time,
+        categorization_attributes.WorkStatus.retired,
+        categorization_attributes.WorkStatus.student,
+        categorization_attributes.WorkStatus.unemployed,
     ]
-    day_types = [diary_attributes.DayType.work, diary_attributes.DayType.no_work]
+    day_types = [
+        categorization_attributes.DayType.work,
+        categorization_attributes.DayType.no_work,
+    ]
     combinations: Iterable = itertools.product(
         [country], day_types, work_statuses, sexes
     )

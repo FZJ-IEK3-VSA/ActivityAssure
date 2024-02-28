@@ -16,8 +16,7 @@ from activity_validator.hetus_data_processing import (
 from activity_validator.hetus_data_processing import load_data
 from activity_validator.hetus_data_processing import utils
 from activity_validator.hetus_data_processing.attributes import (
-    diary_attributes,
-    person_attributes,
+    categorization_attributes,
 )
 from activity_validator.hetus_data_processing.categorize import (
     categorize,
@@ -73,10 +72,10 @@ def get_default_categorization_attributes() -> list[str]:
     :return: the categorization attributes
     """
     categorization_attributes = [
-        person_attributes.Country.title(),
-        person_attributes.Sex.title(),
-        person_attributes.WorkStatus.title(),
-        diary_attributes.DayType.title(),
+        categorization_attributes.Country.title(),
+        categorization_attributes.Sex.title(),
+        categorization_attributes.WorkStatus.title(),
+        categorization_attributes.DayType.title(),
     ]
     return categorization_attributes
 
@@ -230,10 +229,10 @@ def generate_all_dataset_variants(hetus_path: str, key: str | None = None):
     Generates all relevant variants of the validation data set, each with a
     different set of categorization attributes.
     """
-    country = person_attributes.Country.title()
-    sex = person_attributes.Sex.title()
-    work_status = person_attributes.WorkStatus.title()
-    day_type = diary_attributes.DayType.title()
+    country = categorization_attributes.Country.title()
+    sex = categorization_attributes.Sex.title()
+    work_status = categorization_attributes.WorkStatus.title()
+    day_type = categorization_attributes.DayType.title()
     # default variant with full categorization
     process_all_hetus_countries_AT_separately(
         hetus_path, key, [country, sex, work_status, day_type]
