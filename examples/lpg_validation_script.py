@@ -6,7 +6,7 @@ the best and worst person categories.
 import pandas as pd
 from pathlib import Path
 
-from activity_validator.lpgvalidation.comparison_metrics import ValidationIndicators
+from activity_validator.comparison_indicators import ValidationIndicators
 
 # TODO: turn this into a function to show a quick overview at the end of the validate_lpg() function?
 #      E.g. overall best and worst categories/activities, worst according to each indicator etc.

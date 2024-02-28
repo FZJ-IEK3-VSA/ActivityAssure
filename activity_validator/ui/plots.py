@@ -13,10 +13,8 @@ from activity_validator.hetus_data_processing import (
     pandas_utils,
     hetus_constants,
 )
-from activity_validator.lpgvalidation import comparison_metrics
-from activity_validator.ui import data_utils
-from activity_validator.ui import datapaths
-from activity_validator import validation_statistics
+from activity_validator import validation_statistics, comparison_indicators
+from activity_validator.ui import data_utils, datapaths
 
 
 # workaround for an unresolved bug that randomly causes exceptions
@@ -205,7 +203,7 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     data_in = pandas_utils.load_df(path_in)
 
     # get the probability profile differences
-    diff = comparison_metrics.calc_probability_curves_diff(data_val, data_in)
+    diff = comparison_indicators.calc_probability_curves_diff(data_val, data_in)
     diff = diff.T
     diff = diff[ACTIVITY_ORDER_FOR_PLOTS]  # reorder
     time_values = get_date_range(len(diff))
@@ -415,9 +413,9 @@ def get_all_indicator_variants(
     ptype_in: profile_category.ProfileType,
     add_means: bool,
 ) -> tuple[
-    comparison_metrics.ValidationIndicators,
-    comparison_metrics.ValidationIndicators,
-    comparison_metrics.ValidationIndicators,
+    comparison_indicators.ValidationIndicators,
+    comparison_indicators.ValidationIndicators,
+    comparison_indicators.ValidationIndicators,
 ]:
     """
     Loads the statistics for validation and input data and calculates
@@ -437,14 +435,14 @@ def get_all_indicator_variants(
         datapaths.input_data_path, ptype_in
     )
     # calculate the indicators without saving them to file
-    _, metrics, scaled, normed = comparison_metrics.calc_all_indicator_variants(
+    _, metrics, scaled, normed = comparison_indicators.calc_all_indicator_variants(
         data_val, data_in, False, add_means=add_means
     )
     return metrics, scaled, normed
 
 
 def indicator_table_rows(
-    indicators: comparison_metrics.ValidationIndicators,
+    indicators: comparison_indicators.ValidationIndicators,
     activity: str,
     title: str = "",
     extended: bool = True,
@@ -504,9 +502,9 @@ def indicator_table_rows(
 
 
 def create_indicator_table(
-    indicators: comparison_metrics.ValidationIndicators,
-    scaled_indicators: comparison_metrics.ValidationIndicators,
-    normed_indicators: comparison_metrics.ValidationIndicators,
+    indicators: comparison_indicators.ValidationIndicators,
+    scaled_indicators: comparison_indicators.ValidationIndicators,
+    normed_indicators: comparison_indicators.ValidationIndicators,
     activity: str,
 ) -> dbc.Table:
     """

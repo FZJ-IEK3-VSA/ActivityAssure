@@ -10,7 +10,7 @@ import pandas as pd
 import plotly.express as px  # type: ignore
 
 from activity_validator.hetus_data_processing.profile_category import ProfileType
-from activity_validator.lpgvalidation import comparison_metrics
+from activity_validator import comparison_indicators
 
 
 def clean_activity_name(activity_name: str) -> str:
@@ -75,7 +75,7 @@ def select_metrics(data: pd.DataFrame) -> pd.DataFrame:
 
 def convert_to_indicator_mean_dataframe(
     indicator_dict: dict[
-        ProfileType, dict[ProfileType, comparison_metrics.ValidationIndicators]
+        ProfileType, dict[ProfileType, comparison_indicators.ValidationIndicators]
     ]
 ) -> dict[str, pd.DataFrame]:
     """
@@ -99,7 +99,7 @@ def convert_to_indicator_mean_dataframe(
 
 def convert_to_indicator_dataframe_per_activity(
     metrics_dict: dict[
-        ProfileType, dict[ProfileType, comparison_metrics.ValidationIndicators]
+        ProfileType, dict[ProfileType, comparison_indicators.ValidationIndicators]
     ]
 ) -> dict[str, dict[str, pd.DataFrame]]:
     """
@@ -295,7 +295,7 @@ def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
     :param output_path: output path
     """
     output_path /= "profile_type x activity"
-    mean_idx = comparison_metrics.ValidationIndicators.mean_column
+    mean_idx = comparison_indicators.ValidationIndicators.mean_column
     for metric_name in metrics.columns:
         df = metrics[metric_name].unstack(level=1)
         if mean_idx in df.columns:

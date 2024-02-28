@@ -5,7 +5,7 @@ import plotly.express as px  # type: ignore
 import uuid
 
 from activity_validator.hetus_data_processing import activity_profile
-from activity_validator.lpgvalidation import comparison_metrics
+from activity_validator import comparison_indicators
 from activity_validator.ui import data_utils, datapaths, plots
 
 
@@ -362,7 +362,7 @@ class MainValidationView(html.Div):
             indicators,
             scaled,
             normed,
-            comparison_metrics.ValidationIndicators.mean_column,
+            comparison_indicators.ValidationIndicators.mean_column,
         )
         return [
             plots.titled_card(
