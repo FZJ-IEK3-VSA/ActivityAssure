@@ -10,7 +10,7 @@ import pandas as pd
 
 
 from activity_validator.hetus_data_processing import utils
-import activity_validator.hetus_data_processing.hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import filter
 
 

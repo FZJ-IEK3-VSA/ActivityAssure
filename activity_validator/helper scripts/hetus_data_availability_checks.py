@@ -4,9 +4,9 @@ special cases.
 """
 
 import logging
-import activity_validator.hetus_data_processing.hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import filter, load_data
-from activity_validator.hetus_data_processing.hetus_values import DayType
+from activity_validator.hetus_data_processing.hetus_column_values import DayType
 
 
 def special_entries(data, persondata):

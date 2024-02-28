@@ -10,7 +10,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-import activity_validator.hetus_data_processing.hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import utils
 from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,

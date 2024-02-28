@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-import activity_validator.hetus_data_processing.hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_column_names as col
 
 HETUS_CODES_PATH = Path(
     "activity_validator/activity_types/hetus_activity_codes_2010.json"

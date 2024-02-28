@@ -1,3 +1,9 @@
+"""
+Contains column value definitions of the HETUS 2010 data set.
+For the column enums, the docstrings indicate the name of the 
+corresponding HETUS column.
+"""
+
 from enum import IntEnum
 
 #: the country codes used by Eurostat

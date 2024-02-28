@@ -13,7 +13,7 @@ from activity_validator.hetus_data_processing.attributes.categorization_attribut
     DayType,
 )
 
-import activity_validator.hetus_data_processing.hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import level_extraction
 
 

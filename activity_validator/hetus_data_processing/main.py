@@ -6,7 +6,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
 )
 
-import activity_validator.hetus_data_processing.hetus_columns as col
+import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import (
     hetus_constants,
     hetus_translations,

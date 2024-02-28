@@ -7,8 +7,8 @@ from datetime import timedelta
 import logging
 import pandas as pd
 
-import activity_validator.hetus_data_processing.hetus_columns as col
-import activity_validator.hetus_data_processing.hetus_values as val
+import activity_validator.hetus_data_processing.hetus_column_names as col
+import activity_validator.hetus_data_processing.hetus_column_values as val
 from activity_validator.hetus_data_processing import hetus_constants, utils
 from activity_validator.hetus_data_processing.attributes.categorization_attributes import (
     DayType,
