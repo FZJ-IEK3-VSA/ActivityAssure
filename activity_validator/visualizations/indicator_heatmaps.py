@@ -1,6 +1,7 @@
 """
-Generates metric heatmaps. Each metric heatmap gives an overview on a 
-single metric (e.g., RMSE) for all combinations of profile types.
+Generates indicator heatmaps. Each heatmap gives an overview on indicator 
+values along two axes. The axes can be profile categories, activities, or
+different indicators.
 """
 
 import logging
