@@ -1,10 +1,12 @@
+"""
+Helper script for comparing activity mappings and checking which
+common activities they contain.
+"""
+
 import collections
-import itertools
 import json
 
-import difflib
-
-# Kategorien von Jannik: Personal Area,Employment,Education,Housekeeping,Voluntary Work,Social/Entertainment,Hobbies/Sport,Media Usage,Travel Times,Cooking/Eating,TV Usage
+# file that contains all mappings
 path = r"activity_validator\activity_types\mappings.json"
 
 with open(path, "r") as f:
@@ -42,23 +44,6 @@ print(
         f"{item:<15} {count:>2}   {used_by[item]}" for item, count in duplicates.items()
     )
 )
-
-# difflib is not really helpful here
-print("\nSimilar:")
-# for i, activity in enumerate(unique):
-# similar = difflib.get_close_matches(activity, unique, n=10, cutoff=0.5)
-# the word itself is always contained in similar
-# if len(similar) > 1:
-#     similar.remove(activity)
-#     print(f"{activity:<30} {similar}")
-# overlapping = []
-# for other in unique[i + 1 :]:
-#     sm = difflib.SequenceMatcher(None, activity, other)
-#     pos_a, pos_b, size = sm.find_longest_match(0, len(activity), 0, len(other))
-#     if size > 3:
-#         overlapping.append(other)
-# if overlapping:
-#     print(f"{activity:<30} {overlapping}")
 
 print("\nOnly once:")
 print(",".join(a for a in unique if a not in duplicates))

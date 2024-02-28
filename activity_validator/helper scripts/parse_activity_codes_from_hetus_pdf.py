@@ -2,7 +2,7 @@
 Script for parsing HETUS activity codes from the HETUS 2008 guidelines PDF.
 
 The PDF to be parsed can be obtained here:
-https://ec.europa.eu/eurostat/web/products-manuals-and-guidelines/-/ks-ra-08-014
+https://ec.europa.eu/eurostat/product?code=KS-RA-08-014
 """
 
 import json
@@ -85,7 +85,9 @@ if __name__ == "__main__":
     codes["900"] = codes["900"].replace("AUXILIARY CODES", "").strip()
     assert codes["910"] == "Travel to", "Special case different than expected"
     codes["910"] = "Travel to/from work"
-    assert codes["6"] == "SPORTS AND OUTD OOR ACTIVITIES", "Special case different than expected"
+    assert (
+        codes["6"] == "SPORTS AND OUTD OOR ACTIVITIES"
+    ), "Special case different than expected"
     codes["6"] = "SPORTS AND OUTDOOR ACTIVITIES"
 
     # store as json file
