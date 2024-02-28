@@ -3,7 +3,7 @@ Calculates additional attributes for diary entries which can then be used for ca
 """
 
 from datetime import timedelta
-from enum import StrEnum  # type: ignore
+from enum import StrEnum
 import logging
 import pandas as pd
 
