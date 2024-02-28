@@ -8,7 +8,7 @@ from typing import Any, Collection
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
-from activity_validator.hetus_data_processing.attributes import (
+from activity_validator import (
     categorization_attributes,
 )
 

@@ -10,7 +10,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
 )
 from activity_validator.hetus_data_processing import category_statistics
-from activity_validator.hetus_data_processing.attributes.categorization_attributes import (
+from activity_validator.categorization_attributes import (
     DayType,
 )
 

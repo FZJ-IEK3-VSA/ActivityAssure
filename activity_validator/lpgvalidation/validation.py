@@ -24,10 +24,9 @@ from activity_validator.hetus_data_processing.activity_profile import (
 )
 from activity_validator.hetus_data_processing.profile_category import ProfileType
 from activity_validator.hetus_data_processing.attributes import (
-    categorization_attributes,
     diary_attributes,
 )
-from activity_validator import comparison_indicators
+from activity_validator import categorization_attributes, comparison_indicators
 from activity_validator.validation_statistics import (
     ValidationStatistics,
     ValidationSet,

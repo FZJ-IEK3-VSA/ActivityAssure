@@ -15,7 +15,7 @@ from activity_validator.hetus_data_processing import (
 )
 from activity_validator.hetus_data_processing import load_data
 from activity_validator.hetus_data_processing import utils
-from activity_validator.hetus_data_processing.attributes import (
+from activity_validator import (
     categorization_attributes,
 )
 from activity_validator.hetus_data_processing.categorize import (

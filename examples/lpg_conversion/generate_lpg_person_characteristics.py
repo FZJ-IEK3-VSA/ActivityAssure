@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import sqlite3
 from activity_validator.hetus_data_processing import profile_category
-from activity_validator.hetus_data_processing.attributes.categorization_attributes import (
+from activity_validator.categorization_attributes import (
     Sex,
     WorkStatus,
 )
