@@ -5,16 +5,18 @@ for validation.
 
 from pathlib import Path
 
+from activity_validator.lpgvalidation.validation_data import ValidationStatistics
+
 # TODO: load paths from config file
 
 # default data paths
-validation_path = Path("data/validation data sets/country_sex_work status_day type")
-input_data_path = Path("data/lpg/results")
+validation_path = Path("data/validation data sets/de_mapped")
+input_data_path = Path("data/lpg/results_tmp")
 
 # data subdirectories
-prob_dir = "probability_profiles"
-freq_dir = "activity_frequencies"
-duration_dir = "activity_durations"
+prob_dir = ValidationStatistics.PROBABILITY_PROFILE_DIR
+freq_dir = ValidationStatistics.FREQUENCY_DIR
+duration_dir = ValidationStatistics.DURATION_DIR
 # metrics_dir = "metrics"
 # diff_dir = "differences"
 

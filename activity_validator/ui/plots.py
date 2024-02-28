@@ -426,10 +426,10 @@ def get_all_indicator_variants(
     """
     # load the statistics for validation and input data
     data_val = validation_data.ValidationStatistics.load(
-        datapaths.validation_path, ptype_val, None
+        datapaths.validation_path, ptype_val
     )
     data_in = validation_data.ValidationStatistics.load(
-        datapaths.input_data_path, ptype_in, None
+        datapaths.input_data_path, ptype_in
     )
     # calculate the indicators without saving them to file
     _, metrics, scaled, normed = comparison_metrics.calc_all_metric_variants(

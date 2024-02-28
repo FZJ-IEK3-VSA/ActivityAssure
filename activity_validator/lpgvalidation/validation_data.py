@@ -28,7 +28,7 @@ class ValidationStatistics:
     probability_profiles: pd.DataFrame
     activity_frequencies: pd.DataFrame
     activity_durations: pd.DataFrame
-    category_size: int
+    category_size: int | None = None
 
     # subdirectory names for file storage
     PROBABILITY_PROFILE_DIR: ClassVar = "probability_profiles"
@@ -100,7 +100,7 @@ class ValidationStatistics:
 
     @staticmethod
     def load(
-        base_path: Path, profile_type: ProfileType, size: int
+        base_path: Path, profile_type: ProfileType, size: int | None = None
     ) -> "ValidationStatistics":
         """
         Loads all data for the specified profile type from the separate
@@ -108,6 +108,8 @@ class ValidationStatistics:
 
         :param base_path: the base path where the files are stored
         :param profile_type: the profile type to load
+        :param size: the number of activity profiles that were aggregated
+                     for these statistics
         :raises RuntimeError: when not all files could be found
         :return: the object containing all data for the specified
                  profile type
@@ -160,6 +162,7 @@ class ValidationSet:
         total = 0
         deleted = 0
         for pt, stat in self.statistics.items():
+            assert stat.category_size is not None, "Missing category size in filtering"
             total += stat.category_size
             if stat.category_size < min_size:
                 del self.statistics[pt]
@@ -178,11 +181,13 @@ class ValidationSet:
         """
         assert size_ranges == sorted(
             size_ranges
-        ), "Unclear parameter: unsorted size limits"
+        ), "Unclear parameter: size_ranges must be sorted"
         hidden = 0
         for stat in self.statistics.values():
-            # find the first limit that is larger than the actual size
             old_size = stat.category_size
+            if old_size is None:
+                continue
+            # find the lowest limit that is larger than the actual size
             new_size = next((n for n in size_ranges if old_size < n), old_size)
             if new_size != old_size:
                 hidden += 1

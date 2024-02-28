@@ -11,8 +11,8 @@ from typing import ClassVar
 from dataclasses_json import config, dataclass_json  # type: ignore
 import numpy as np
 import pandas as pd
-import scipy
-from activity_validator.hetus_data_processing import activity_profile, utils  # type: ignore
+import scipy  # type: ignore
+from activity_validator.hetus_data_processing import activity_profile, utils
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
 from activity_validator.lpgvalidation.validation_data import ValidationStatistics
 

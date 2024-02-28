@@ -8,14 +8,9 @@ from activity_validator.hetus_data_processing import hetus_translations
 from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
 )
-from activity_validator.hetus_data_processing.category_statistics import (
-    calc_probability_profiles,
-)
+from activity_validator.hetus_data_processing import category_statistics
 
 import activity_validator.hetus_data_processing.hetus_columns as col
-from activity_validator.hetus_data_processing.hetus_translations import (
-    load_hetus_activity_codes,
-)
 from activity_validator.hetus_data_processing import level_extraction
 
 
@@ -168,7 +163,7 @@ def compare_mact_and_pact(a2: pd.DataFrame, a3: pd.DataFrame):
     should only use Mact.
     """
     # get the 2-digit codes that correspond to the 3-digit codes
-    a2_check = a3.map(lambda x: x[:2] if isinstance(x, str) else x)
+    a2_check = a3.map(lambda x: x[:2] if isinstance(x, str) else x)  # type: ignore
     a2_check.columns = a2.columns
 
     # check if the 2-digit codes in the database (a2) and the 2-digit codes
@@ -184,16 +179,25 @@ def compare_mact_and_pact(a2: pd.DataFrame, a3: pd.DataFrame):
 
 
 def activity_frequencies(data: pd.DataFrame):
+    """
+    Shows the frequencies and time shares of the HETUS
+    activities on different aggregation levels (1-3 digit
+    codes)
+
+    :param data: HETUS data
+    """
     # extract main activity columns (normal and aggregated)
     # hint: PACT is not the equivalent of 2-digit codes, it is
     # a different, internal format from Eurostat
     pact = data.filter(like=col.Diary.MAIN_ACTIVITIES_AGG_PATTERN)
-    a3 = col.get_activity_data(data)
 
-    a2_frequency = pact.stack().value_counts()
+    a3 = col.get_activity_data(data)
     a3_frequency = a3.stack().value_counts()
 
-    a1 = a3.map(lambda x: x[0] if isinstance(x, str) else x)
+    # take only the first 1 or 2 digits of each 3-digit code
+    a2 = a3.map(lambda x: x[:2] if isinstance(x, str) else x)  # type: ignore
+    a1 = a3.map(lambda x: x[0] if isinstance(x, str) else x)  # type: ignore
+    a2_frequency = a2.stack().value_counts()
     a1_frequency = a1.stack().value_counts()
 
     # convert to average time per diary in minutes
@@ -202,7 +206,7 @@ def activity_frequencies(data: pd.DataFrame):
     a2_frequency = a2_frequency * time_factor
     a3_frequency = a3_frequency * time_factor
 
-    codes = load_hetus_activity_codes()
+    codes = hetus_translations.load_hetus_activity_codes()
     a1_frequency.index = a1_frequency.index.map(lambda x: codes.get(x, x))
     a2_frequency.index = a2_frequency.index.map(lambda x: codes.get(x, x))
     a3_frequency.index = a3_frequency.index.map(lambda x: codes.get(x, x))
@@ -210,20 +214,21 @@ def activity_frequencies(data: pd.DataFrame):
     print(a1_frequency)
 
 
-def calc_overall_activity_shares(data: pd.DataFrame, activity_types=None) -> pd.Series:
+def calc_overall_activity_shares(data: pd.DataFrame, activities=None) -> pd.Series:
     """
     Calculates the overall share of each activity type
 
     :param data: HETUS diary data
-    :param activity_types: optionally pass the available activity types.
-                           Is determined automatically if not passed.
+    :param activities: optionally pass the available activity types.
+                       Is determined automatically if not passed.
     :return: the overall share for each activity type
     """
-    if activity_types is None:
-        activity_types = hetus_translations.get_activity_type_list(save_to_output=False)
+    if activities is None:
+        mapping = hetus_translations.get_combined_hetus_mapping()
+        activities = hetus_translations.get_activities_in_mapping(mapping)
     hetus_translations.translate_activity_codes(data)
     data = col.get_activity_data(data)
-    probabilities = calc_probability_profiles(data, activity_types)
+    probabilities = category_statistics.calc_probability_profiles(data, activities)
     overall_shares = probabilities.mean(axis=1)
     return overall_shares
 
@@ -237,10 +242,11 @@ def calc_activity_share_per_profile_type(
     :param categories: list of profiles per type
     :return: activity shares per type
     """
-    activity_types = hetus_translations.get_activity_type_list(save_to_output=False)
+    mapping = hetus_translations.get_combined_hetus_mapping()
+    activities = hetus_translations.get_activities_in_mapping(mapping)
     shares_per_group = pd.DataFrame(
         {
-            d.profile_type: calc_overall_activity_shares(d.data, activity_types)
+            d.profile_type: calc_overall_activity_shares(d.data, activities)
             for d in categories
         }
     )
