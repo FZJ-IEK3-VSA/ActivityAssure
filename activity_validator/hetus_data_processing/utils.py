@@ -16,9 +16,11 @@ def stats(data, persondata=None, hhdata=None):
         tabulate(
             [
                 ["Number of diaries", len(data)],
-                ["Number of persons", len(persondata)]
-                if persondata is not None
-                else [],
+                (
+                    ["Number of persons", len(persondata)]
+                    if persondata is not None
+                    else []
+                ),
                 ["Number of households", len(hhdata)] if hhdata is not None else [],
             ]
         )

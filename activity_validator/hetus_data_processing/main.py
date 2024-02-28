@@ -21,7 +21,6 @@ from activity_validator.hetus_data_processing.attributes import (
 )
 from activity_validator.hetus_data_processing.categorize import (
     categorize,
-    filter_categories,
     get_diary_categorization_data,
 )
 from activity_validator.hetus_data_processing import category_statistics
