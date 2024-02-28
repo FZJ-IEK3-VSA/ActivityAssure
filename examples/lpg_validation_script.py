@@ -6,13 +6,13 @@ the best and worst person categories.
 import pandas as pd
 from pathlib import Path
 
-from activity_validator.lpgvalidation.comparison_metrics import ValidationMetrics
+from activity_validator.lpgvalidation.comparison_metrics import ValidationIndicators
 
 # TODO: turn this into a function to show a quick overview at the end of the validate_lpg() function?
 #      E.g. overall best and worst categories/activities, worst according to each indicator etc.
 
 base_path = "data/lpg/results/metrics/default/metrics_per_category.csv"
-mean_idx = ValidationMetrics.mean_column
+mean_idx = ValidationIndicators.mean_column
 
 data = pd.read_csv(base_path)
 data_scaled = pd.read_csv(base_path.replace("default", "scaled"))

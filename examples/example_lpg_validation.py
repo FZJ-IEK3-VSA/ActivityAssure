@@ -62,8 +62,8 @@ def validate_lpg():
         )
         # validation.get_metric_means(metric_dict, output_subdir)
         plot_path = output_subdir / "heatmaps"
-        metric_heatmaps.plot_metrics_by_profile_type(metrics_df, plot_path)
-        metric_heatmaps.plot_metrics_by_activity(metrics_df, plot_path)
+        metric_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path)
+        metric_heatmaps.plot_indicators_by_activity(metrics_df, plot_path)
         metric_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path)
     return
 

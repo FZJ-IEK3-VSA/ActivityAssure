@@ -410,9 +410,9 @@ def get_all_indicator_variants(
     ptype_in: activity_profile.ProfileType,
     add_means: bool,
 ) -> tuple[
-    comparison_metrics.ValidationMetrics,
-    comparison_metrics.ValidationMetrics,
-    comparison_metrics.ValidationMetrics,
+    comparison_metrics.ValidationIndicators,
+    comparison_metrics.ValidationIndicators,
+    comparison_metrics.ValidationIndicators,
 ]:
     """
     Loads the statistics for validation and input data and calculates
@@ -432,14 +432,14 @@ def get_all_indicator_variants(
         datapaths.input_data_path, ptype_in
     )
     # calculate the indicators without saving them to file
-    _, metrics, scaled, normed = comparison_metrics.calc_all_metric_variants(
+    _, metrics, scaled, normed = comparison_metrics.calc_all_indicator_variants(
         data_val, data_in, False, add_means=add_means
     )
     return metrics, scaled, normed
 
 
 def indicator_table_rows(
-    indicators: comparison_metrics.ValidationMetrics,
+    indicators: comparison_metrics.ValidationIndicators,
     activity: str,
     title: str = "",
     extended: bool = True,
@@ -499,9 +499,9 @@ def indicator_table_rows(
 
 
 def create_indicator_table(
-    indicators: comparison_metrics.ValidationMetrics,
-    scaled_indicators: comparison_metrics.ValidationMetrics,
-    normed_indicators: comparison_metrics.ValidationMetrics,
+    indicators: comparison_metrics.ValidationIndicators,
+    scaled_indicators: comparison_metrics.ValidationIndicators,
+    normed_indicators: comparison_metrics.ValidationIndicators,
     activity: str,
 ) -> dbc.Table:
     """

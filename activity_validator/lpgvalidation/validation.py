@@ -383,7 +383,7 @@ def all_profile_types_of_same_country(country) -> list[ProfileType]:
 
 
 def get_metric_means(
-    metrics_dict: dict[ProfileType, comparison_metrics.ValidationMetrics],
+    metrics_dict: dict[ProfileType, comparison_metrics.ValidationIndicators],
     output_path: Path | None = None,
 ) -> pd.DataFrame:
     """
@@ -403,7 +403,7 @@ def get_metric_means(
 
 
 def metrics_dict_to_df(
-    metrics: dict[ProfileType, comparison_metrics.ValidationMetrics]
+    metrics: dict[ProfileType, comparison_metrics.ValidationIndicators]
 ) -> pd.DataFrame:
     """
     Convert the per-category metrics dict to a single dataframe
@@ -421,7 +421,7 @@ def validate_per_category(
     input_statistics: ValidationSet,
     validation_statistics: ValidationSet,
     output_path: Path,
-) -> dict[str, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
+) -> dict[str, dict[ProfileType, comparison_metrics.ValidationIndicators]]:
     """
     Compares each category of input data to the same category
     of validation data. Calculates the full set of metrics of
@@ -439,7 +439,7 @@ def validate_per_category(
         # select matching validation data
         validation_data = validation_statistics.statistics[profile_type]
         # calcluate and store comparison metrics
-        _, metrics, scaled, normed = comparison_metrics.calc_all_metric_variants(
+        _, metrics, scaled, normed = comparison_metrics.calc_all_indicator_variants(
             validation_data, input_data, False, profile_type, output_path
         )
         metrics_dict[profile_type] = metrics
@@ -451,7 +451,7 @@ def validate_per_category(
 def validate_similar_categories(
     input_data_dict: dict[ProfileType, ValidationStatistics],
     validation_data_dict: dict[ProfileType, ValidationStatistics],
-) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
+) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationIndicators]]:
     # validate each profile type individually
     metrics_dict = {}
     for profile_type, input_data in input_data_dict.items():
@@ -461,7 +461,7 @@ def validate_similar_categories(
         for similar_type in similar:
             validation_data = validation_data_dict[similar_type]
             # calcluate and store comparison metrics
-            _, metrics = comparison_metrics.calc_comparison_metrics(
+            _, metrics = comparison_metrics.calc_comparison_indicators(
                 validation_data, input_data
             )
             dict_per_type[similar_type] = metrics
@@ -472,7 +472,7 @@ def validate_similar_categories(
 def validate_all_combinations(
     input_data_dict: dict[ProfileType, ValidationStatistics],
     validation_data_dict: dict[ProfileType, ValidationStatistics],
-) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
+) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationIndicators]]:
     """
     Calculates metrics for each combination of input and validation
     profile type.
@@ -491,7 +491,7 @@ def validate_all_combinations(
         for validation_type, validation_data in validation_data_dict.items():
             # calcluate and store comparison metrics
             try:
-                _, metrics = comparison_metrics.calc_comparison_metrics(
+                _, metrics = comparison_metrics.calc_comparison_indicators(
                     validation_data, input_data
                 )
                 dict_per_type[validation_type] = metrics
@@ -505,7 +505,9 @@ def validate_all_combinations(
 
 
 def save_file_per_metrics_per_combination(
-    metrics: dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]],
+    metrics: dict[
+        ProfileType, dict[ProfileType, comparison_metrics.ValidationIndicators]
+    ],
     output_path: Path,
 ):
     """
@@ -517,7 +519,7 @@ def save_file_per_metrics_per_combination(
     :param metrics: nested metrics dict
     :param output_path: base output directory
     """
-    kpis = dataclasses.fields(comparison_metrics.ValidationMetrics)
+    kpis = dataclasses.fields(comparison_metrics.ValidationIndicators)
     for profile_type, metrics_per_type in metrics.items():
         for kpi in kpis:
             df = pd.DataFrame(

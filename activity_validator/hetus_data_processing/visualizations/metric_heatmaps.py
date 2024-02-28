@@ -73,9 +73,9 @@ def select_metrics(data: pd.DataFrame) -> pd.DataFrame:
     return data[columns]
 
 
-def convert_to_metric_mean_dataframe(
-    metrics_dict: dict[
-        ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]
+def convert_to_indicator_mean_dataframe(
+    indicator_dict: dict[
+        ProfileType, dict[ProfileType, comparison_metrics.ValidationIndicators]
     ]
 ) -> dict[str, pd.DataFrame]:
     """
@@ -88,7 +88,7 @@ def convert_to_metric_mean_dataframe(
              containing the metric values
     """
     total_metrics_dicts: dict[str, dict[ProfileType, dict[ProfileType, float]]] = {}
-    for p1, metrics_for_one_category in metrics_dict.items():
+    for p1, metrics_for_one_category in indicator_dict.items():
         for p2, metrics in metrics_for_one_category.items():
             total_metrics = metrics.get_metric_means()
             for name, value in total_metrics.items():
@@ -97,9 +97,9 @@ def convert_to_metric_mean_dataframe(
     return dataframes
 
 
-def convert_to_metric_dataframe_per_activity(
+def convert_to_indicator_dataframe_per_activity(
     metrics_dict: dict[
-        ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]
+        ProfileType, dict[ProfileType, comparison_metrics.ValidationIndicators]
     ]
 ) -> dict[str, dict[str, pd.DataFrame]]:
     """
@@ -130,7 +130,7 @@ def convert_to_metric_dataframe_per_activity(
     return dataframes
 
 
-def plot_metrics_heatmap(data: pd.DataFrame, output_path: Path):
+def plot_indicator_heatmap(data: pd.DataFrame, output_path: Path):
     """
     Plots a single metric heatmap
 
@@ -218,12 +218,12 @@ def plot_category_comparison(metrics_dict, output_path: Path):
                          and validation profile types
     :param output_path: base output directory
     """
-    dataframes = convert_to_metric_mean_dataframe(metrics_dict)
+    dataframes = convert_to_indicator_mean_dataframe(metrics_dict)
     for name, df in dataframes.items():
         df = order_profile_type_index(df)
         df = make_symmetric(df)
         df.Name = name
-        plot_metrics_heatmap(df, output_path)
+        plot_indicator_heatmap(df, output_path)
 
 
 def plot_category_comparison_per_activity(metrics_dict, output_path: Path):
@@ -237,7 +237,7 @@ def plot_category_comparison_per_activity(metrics_dict, output_path: Path):
                          and validation profile types
     :param output_path: base output directory
     """
-    dataframes = convert_to_metric_dataframe_per_activity(metrics_dict)
+    dataframes = convert_to_indicator_dataframe_per_activity(metrics_dict)
     for name, d in dataframes.items():
         path = output_path / name
         for activity, df in d.items():
@@ -246,10 +246,10 @@ def plot_category_comparison_per_activity(metrics_dict, output_path: Path):
             # replace invalid characters for file names
             clean_act_name = clean_activity_name(activity)
             df.Name = f"{name}_{clean_act_name}"
-            plot_metrics_heatmap(df, path)
+            plot_indicator_heatmap(df, path)
 
 
-def plot_metrics_by_profile_type(metrics: pd.DataFrame, output_path: Path):
+def plot_indicators_by_profile_type(metrics: pd.DataFrame, output_path: Path):
     """
     Plots a heatmap of all different metrics and profile types.
     Expects metrics from a per-category validation.
@@ -265,10 +265,10 @@ def plot_metrics_by_profile_type(metrics: pd.DataFrame, output_path: Path):
         df = order_profile_type_index(df)
         df = make_metrics_comparable(df)
         df.Name = clean_activity_name(activity)  # type: ignore
-        plot_metrics_heatmap(df, output_path)
+        plot_indicator_heatmap(df, output_path)
 
 
-def plot_metrics_by_activity(metrics: pd.DataFrame, output_path: Path):
+def plot_indicators_by_activity(metrics: pd.DataFrame, output_path: Path):
     """
     Plots a heatmap of all different metrics and activities.
     Expects metrics from a per-category validation.
@@ -283,7 +283,7 @@ def plot_metrics_by_activity(metrics: pd.DataFrame, output_path: Path):
         df = df.droplevel(level)
         df = make_metrics_comparable(df)
         df.Name = str(profile_type)
-        plot_metrics_heatmap(df, output_path)
+        plot_indicator_heatmap(df, output_path)
 
 
 def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
@@ -295,7 +295,7 @@ def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
     :param output_path: output path
     """
     output_path /= "profile_type x activity"
-    mean_idx = comparison_metrics.ValidationMetrics.mean_column
+    mean_idx = comparison_metrics.ValidationIndicators.mean_column
     for metric_name in metrics.columns:
         df = metrics[metric_name].unstack(level=1)
         if mean_idx in df.columns:
@@ -305,4 +305,4 @@ def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
             columns += [mean_idx]
             df = df[columns]
         df.Name = metric_name
-        plot_metrics_heatmap(df, output_path)
+        plot_indicator_heatmap(df, output_path)

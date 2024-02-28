@@ -19,7 +19,7 @@ from activity_validator.lpgvalidation.validation_statistics import ValidationSta
 
 @dataclass_json
 @dataclass
-class ValidationMetrics:  # TODO: rename to ValidationIndicators
+class ValidationIndicators:
     mae: pd.Series = field(
         metadata=config(
             encoder=lambda s: s.to_json(),
@@ -65,7 +65,7 @@ class ValidationMetrics:  # TODO: rename to ValidationIndicators
 
     mean_column: ClassVar[str] = "mean"
 
-    def get_scaled(self, scale: pd.Series) -> "ValidationMetrics":
+    def get_scaled(self, scale: pd.Series) -> "ValidationIndicators":
         """
         Scales the distance metrics according to the provided scaling
         value for each activity. Does not scale metrics that do not
@@ -78,7 +78,7 @@ class ValidationMetrics:  # TODO: rename to ValidationIndicators
         bias = self.bias.divide(scale, axis=0)
         rmse = self.rmse.divide(scale, axis=0)
         wasserstein = self.wasserstein.divide(scale, axis=0)
-        return ValidationMetrics(
+        return ValidationIndicators(
             mae,
             bias,
             rmse,
@@ -94,14 +94,14 @@ class ValidationMetrics:  # TODO: rename to ValidationIndicators
         value.
         """
         assert (
-            ValidationMetrics.mean_column not in self.mae.index
-        ), f"Cannot add the indicator mean: there is already an activity called {ValidationMetrics.mean_column}"
-        self.mae[ValidationMetrics.mean_column] = self.mae.mean()
-        self.bias[ValidationMetrics.mean_column] = self.bias.mean()
-        self.rmse[ValidationMetrics.mean_column] = self.rmse.mean()
-        self.pearson_corr[ValidationMetrics.mean_column] = self.pearson_corr.mean()
-        self.wasserstein[ValidationMetrics.mean_column] = self.wasserstein.mean()
-        self.diff_of_max[ValidationMetrics.mean_column] = self.diff_of_max.mean()
+            ValidationIndicators.mean_column not in self.mae.index
+        ), f"Cannot add the indicator mean: there is already an activity called {ValidationIndicators.mean_column}"
+        self.mae[ValidationIndicators.mean_column] = self.mae.mean()
+        self.bias[ValidationIndicators.mean_column] = self.bias.mean()
+        self.rmse[ValidationIndicators.mean_column] = self.rmse.mean()
+        self.pearson_corr[ValidationIndicators.mean_column] = self.pearson_corr.mean()
+        self.wasserstein[ValidationIndicators.mean_column] = self.wasserstein.mean()
+        self.diff_of_max[ValidationIndicators.mean_column] = self.diff_of_max.mean()
 
     def get_metric_means(self) -> dict[str, float]:
         """
@@ -144,16 +144,16 @@ class ValidationMetrics:  # TODO: rename to ValidationIndicators
     @staticmethod
     def load_from_json(
         filepath: Path,
-    ) -> tuple[ProfileType | None, "ValidationMetrics"]:
+    ) -> tuple[ProfileType | None, "ValidationIndicators"]:
         with open(filepath) as f:
             json_str = f.read()
-        metrics = ValidationMetrics.from_json(json_str)  # type: ignore
+        metrics = ValidationIndicators.from_json(json_str)  # type: ignore
         profile_type = ProfileType.from_filename(filepath)
         logging.debug(f"Loaded metrics file {filepath}")
         return profile_type, metrics
 
     def to_dataframe(self) -> pd.DataFrame:
-        class_fields = fields(ValidationMetrics)
+        class_fields = fields(ValidationIndicators)
         columns = {f.name: getattr(self, f.name) for f in class_fields}
         return pd.DataFrame(columns)
 
@@ -289,14 +289,14 @@ def normalize(data: pd.DataFrame) -> pd.DataFrame:
     return normalized
 
 
-def calc_comparison_metrics(
+def calc_comparison_indicators(
     validation_data: ValidationStatistics,
     input_data: ValidationStatistics,
     normalize_prob_curves: bool = False,
     add_kpi_means: bool = False,
-) -> tuple[pd.DataFrame, ValidationMetrics]:
+) -> tuple[pd.DataFrame, ValidationIndicators]:
     """
-    Caluclates comparison metrics for the two specified datasets.
+    Caluclates comparison indicators for the two specified datasets.
 
     :param validation_data: the validation data set
     :param input_data: the input data set
@@ -304,7 +304,7 @@ def calc_comparison_metrics(
                                   value range [0, 1], defaults to False
     :param add_kpi_means: if True, the mean of each KPI across all activities
                           is added
-    :return: the probability curve difference profiles, and the metrics
+    :return: the probability curve difference profiles, and the indicators
     """
     # optionally normalize the probability profiles before calculating metrics
     if normalize_prob_curves:
@@ -325,7 +325,7 @@ def calc_comparison_metrics(
     max_diff = prob_profiles_in.max(axis=1) - prob_profiles_val.max(axis=1)
     time_of_max_diff = calc_time_of_max_diff(prob_profiles_val, prob_profiles_in)
 
-    metrics = ValidationMetrics(
+    metrics = ValidationIndicators(
         mae, bias, rmse, wasserstein, pearson_corr, max_diff, time_of_max_diff
     )
     if add_kpi_means:
@@ -333,14 +333,16 @@ def calc_comparison_metrics(
     return differences, metrics
 
 
-def calc_all_metric_variants(
+def calc_all_indicator_variants(
     validation_data: ValidationStatistics,
     input_data: ValidationStatistics,
     save_to_file: bool = True,
     profile_type: ProfileType | None = None,
     output_path: Path | None = None,
     add_means: bool = True,
-) -> tuple[pd.DataFrame, ValidationMetrics, ValidationMetrics, ValidationMetrics]:
+) -> tuple[
+    pd.DataFrame, ValidationIndicators, ValidationIndicators, ValidationIndicators
+]:
     """
     Calculates all indicator variants (default, scales, normed) for the provided
     combination of validation and input data. Optionally stores each indicator set
@@ -357,17 +359,17 @@ def calc_all_metric_variants(
              and the three indicator variants
     """
     # calcluate and store comparison metrics as normal, scaled and normalized
-    differences, metrics = calc_comparison_metrics(
+    differences, indicators = calc_comparison_indicators(
         validation_data, input_data, add_kpi_means=False
     )
     # calc metrics as normal, scaled and normalized variants
     shares = validation_data.probability_profiles.mean(axis=1)
-    scaled = metrics.get_scaled(shares)
+    scaled = indicators.get_scaled(shares)
     if add_means:
         # add metric means only after obtaining the scaled metrics
-        metrics.add_metric_means()
+        indicators.add_metric_means()
         scaled.add_metric_means()
-    _, normalized = calc_comparison_metrics(
+    _, normalized = calc_comparison_indicators(
         validation_data, input_data, True, add_kpi_means=add_means
     )
     if save_to_file:
@@ -376,8 +378,8 @@ def calc_all_metric_variants(
         activity_profile.save_df(
             differences, "differences", "diff", profile_type, output_path
         )
-        metrics.save_as_csv(output_path, profile_type, "normal")
+        indicators.save_as_csv(output_path, profile_type, "normal")
         scaled.save_as_csv(output_path, profile_type, "scaled")
         normalized.save_as_csv(output_path, profile_type, "normalized")
 
-    return differences, metrics, scaled, normalized
+    return differences, indicators, scaled, normalized

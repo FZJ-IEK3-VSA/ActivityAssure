@@ -353,13 +353,16 @@ class MainValidationView(html.Div):
         ptype_val = data_utils.ptype_from_label(profile_type_valid)
         ptype_in = data_utils.ptype_from_label(profile_type_input)
         try:
-            metrics, scaled, normed = plots.get_all_indicator_variants(
+            indicators, scaled, normed = plots.get_all_indicator_variants(
                 ptype_val, ptype_in, True
             )
         except RuntimeError:
             return plots.titled_card(plots.replacement_text())
         table = plots.create_indicator_table(
-            metrics, scaled, normed, comparison_metrics.ValidationMetrics.mean_column
+            indicators,
+            scaled,
+            normed,
+            comparison_metrics.ValidationIndicators.mean_column,
         )
         return [
             plots.titled_card(
