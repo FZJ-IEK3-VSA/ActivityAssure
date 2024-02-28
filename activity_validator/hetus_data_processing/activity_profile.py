@@ -6,13 +6,12 @@ from datetime import datetime, time, timedelta
 import itertools
 import logging
 from pathlib import Path
-from typing import Collection, Optional
+from typing import Any, Collection
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 import numpy as np
 import pandas as pd
 
-import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import hetus_constants, utils
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
@@ -28,7 +27,7 @@ VALIDATION_DATA_PATH = Path("data/validation data sets/latest")
 
 @dataclass_json
 @dataclass(frozen=True)
-class ProfileType:
+class ProfileType:  # TODO: move to dedicated profile type module
     """
     A set of characteristics that defines the type of a
     sinlge-day activity profile and identifies matching
@@ -39,6 +38,35 @@ class ProfileType:
     sex: person_attributes.Sex | None = None
     work_status: person_attributes.WorkStatus | None = None
     day_type: diary_attributes.DayType | None = None
+
+    def get_attribute_names(self) -> list[str]:
+        """
+        Returns the names of the currently used attributes
+
+        :return: list of attribute names
+        """
+        title_val_dict = self.to_dict(True)
+        return list(title_val_dict.keys())
+
+    def to_dict(self, only_used_attributes: bool = False) -> dict[str, Any]:
+        """
+        Returns the profile type as a dict, mapping the attribute
+        titles to the corresponding values.
+
+        :param only_used_attributes: if True, only includes attributes that are
+                                     in use, i.e. that are not None
+        :return: the dict representing this ProfileType
+        """
+        value_dict = {
+            person_attributes.Country.title(): self.country,
+            person_attributes.Sex.title(): self.sex,
+            person_attributes.WorkStatus.title(): self.work_status,
+            diary_attributes.DayType.title(): self.day_type,
+        }
+        if only_used_attributes:
+            # exclude unused attributes
+            value_dict = {k: v for k, v in value_dict.items() if v is not None}
+        return value_dict
 
     def to_tuple(self) -> tuple[str, str, str, str]:
         """
@@ -67,14 +95,14 @@ class ProfileType:
         return f"{name}_{self}"
 
     @staticmethod
-    def from_filename(filepath: Path) -> tuple[str, Optional["ProfileType"]]:
+    def from_filename(filepath: Path) -> "ProfileType":
         components = filepath.stem.split("_")
-        basename = components[0]
-        if len(components) > 1:
-            profile_type = ProfileType.from_iterable(components[1:])
-        else:
-            profile_type = None
-        return basename, profile_type
+        assert (
+            len(components) > 1
+        ), f"Could not parse profile type from path '{filepath}'"
+        # basename = components[0] # not needed
+        profile_type = ProfileType.from_iterable(components[1:])
+        return profile_type
 
     @staticmethod
     def from_iterable(values: Collection[str | None]) -> "ProfileType":
@@ -106,13 +134,13 @@ class ProfileType:
     ) -> "ProfileType":
         """
         Creates a ProfileType object from a list of attribute names and a list
-        with their respective values.
+        with their respective values. The lists names and values must match.
         This can be useful when not all attributes are set, e.g., when only the
         country is specified.
 
         :param names: index level names corresponding to the ProfileType attributes
-        :param values: _description_
-        :return: _description_
+        :param values: the values of the ProfileType attributes
+        :return: the ProfileType object
         """
         if isinstance(values, str):
             # pandas does not put single index values in a list
@@ -120,7 +148,7 @@ class ProfileType:
         assert len(names) == len(values), f"Number of names must match number of values"
         value_dict = dict(zip(names, values))
         # extract used category attributes by their names
-        country = value_dict.get(col.Country.ID)
+        country = value_dict.get(person_attributes.Country.title())
         sex = value_dict.get(person_attributes.Sex.title())
         work_status = value_dict.get(person_attributes.WorkStatus.title())
         day_type = value_dict.get(diary_attributes.DayType.title())
@@ -152,7 +180,8 @@ def create_result_path(
     if profile_type is not None:
         # add profile type to filename
         name = profile_type.construct_filename(name)
-    name += f".{ext}"
+    if ext and not name.endswith(f".{ext}"):
+        name += f".{ext}"
     if subdir:
         base_path /= subdir
     base_path.mkdir(parents=True, exist_ok=True)
@@ -193,29 +222,26 @@ def save_df(
 
 
 def load_df(
-    path: str | Path, as_timedelta: bool = False
-) -> tuple[ProfileType | None, pd.DataFrame]:
+    path: str | Path, timedelta_index: bool = False
+) -> pd.DataFrame:  # TODO: make obsolete?
     """
     Loads a data frame from a csv file.
 
     :param path: path to the csv file
-    :param as_timedelta: whether the DataFrame contains timedelta
-                         values, defaults to False
-    :return: the ProfileType determined from the filename and the
-             loaded DataFrame
+    :param as_timedelta: whether the DataFrame contains a timedelta
+                         index, defaults to False
+    :return: the loaded DataFrame
     """
     if isinstance(path, str):
         path = Path(path)
-    # determine the profile type from the filename
-    name, profile_type = ProfileType.from_filename(path)
     # load the data
     # TODO: for duration data sometimes DtypeWarning: Columns (1,3,5,6,8,9,10,11,12,13,14,15) have mixed types. Specify dtype option on import or set low_memory=False.
     data = pd.read_csv(path, index_col=0)
-    if as_timedelta:
+    if timedelta_index:
         # convert the index to timedeltas
         data.index = pd.to_timedelta(data.index)
     logging.debug(f"Loaded DataFrame from {path}")
-    return profile_type, data
+    return data
 
 
 def write_timedelta(d: timedelta | None) -> str | None:
@@ -341,7 +367,7 @@ class SparseActivityProfile:
     @utils.timing
     @staticmethod
     def load_from_csv(
-        path: Path | str,
+        path: Path,
         profile_type: ProfileType,
         resolution: timedelta = DEFAULT_RESOLUTION,
         offset: timedelta | None = None,
@@ -724,6 +750,14 @@ class ExpandedActivityProfiles:
         self.offset = offset
         self.resolution = resolution
 
+    def get_profile_count(self) -> int:
+        """
+        Returns the number of contained activity profiles
+
+        :return: number of activity profiles
+        """
+        return len(self.data)
+
     @utils.timing
     @staticmethod
     def from_sparse_profiles(profiles: list[SparseActivityProfile]):
@@ -793,7 +827,7 @@ class ExpandedActivityProfiles:
 
 @dataclass_json
 @dataclass
-class HHActivityProfiles:
+class HHActivityProfiles:  # TODO: obsolete
     """
     Bundles the activity profiles from all people in one household
     """

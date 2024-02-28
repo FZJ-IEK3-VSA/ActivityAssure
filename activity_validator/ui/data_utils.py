@@ -22,7 +22,7 @@ def get_files(path: Path) -> list[Path]:
 
 def get_profile_type_paths(path: Path) -> dict[ProfileType, Path]:
     input_prob_files = get_files(path)
-    profile_types = {ProfileType.from_filename(p)[1]: p for p in input_prob_files}
+    profile_types = {ProfileType.from_filename(p): p for p in input_prob_files}
     if None in profile_types:
         raise RuntimeError("Invalid file name: could not parse profile type")
     return profile_types  # type: ignore

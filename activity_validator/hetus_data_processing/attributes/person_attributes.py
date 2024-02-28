@@ -11,6 +11,16 @@ import activity_validator.hetus_data_processing.hetus_columns as col
 import activity_validator.hetus_data_processing.hetus_values as val
 
 
+class Country(str):
+    """
+    Specifies the home country of a person:
+    """
+
+    @staticmethod
+    def title() -> str:
+        return "country"
+
+
 class WorkStatus(StrEnum):
     """
     Specifies the working status of a person
@@ -144,3 +154,9 @@ def determine_sex(persondata: pd.DataFrame) -> pd.Series:
     results = persondata[col.Person.SEX].replace(MAP_SEX)
     results.rename(Sex.title(), inplace=True)
     return results
+
+
+def determine_country(persondata: pd.DataFrame) -> pd.Series:
+    # simply gets the COUNTRY index level
+    country = persondata.index.get_level_values(col.Country.ID)
+    return country.to_series(persondata.index, name=Country.title())

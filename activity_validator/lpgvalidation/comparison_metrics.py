@@ -14,7 +14,7 @@ import pandas as pd
 import scipy
 from activity_validator.hetus_data_processing import activity_profile, utils  # type: ignore
 from activity_validator.hetus_data_processing.activity_profile import ProfileType
-from activity_validator.lpgvalidation.validation_data import ValidationData
+from activity_validator.lpgvalidation.validation_data import ValidationStatistics
 
 
 @dataclass_json
@@ -148,7 +148,7 @@ class ValidationMetrics:  # TODO: rename to ValidationIndicators
         with open(filepath) as f:
             json_str = f.read()
         metrics = ValidationMetrics.from_json(json_str)  # type: ignore
-        name, profile_type = ProfileType.from_filename(filepath)
+        profile_type = ProfileType.from_filename(filepath)
         logging.debug(f"Loaded metrics file {filepath}")
         return profile_type, metrics
 
@@ -290,8 +290,8 @@ def normalize(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def calc_comparison_metrics(
-    validation_data: ValidationData,
-    input_data: ValidationData,
+    validation_data: ValidationStatistics,
+    input_data: ValidationStatistics,
     normalize_prob_curves: bool = False,
     add_kpi_means: bool = False,
 ) -> tuple[pd.DataFrame, ValidationMetrics]:
@@ -334,8 +334,8 @@ def calc_comparison_metrics(
 
 
 def calc_all_metric_variants(
-    validation_data: ValidationData,
-    input_data: ValidationData,
+    validation_data: ValidationStatistics,
+    input_data: ValidationStatistics,
     save_to_file: bool = True,
     profile_type: ProfileType | None = None,
     output_path: Path | None = None,

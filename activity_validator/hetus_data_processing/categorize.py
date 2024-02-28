@@ -22,9 +22,10 @@ from activity_validator.hetus_data_processing.attributes import (
 @utils.timing
 def get_person_categorization_data(persondata: pd.DataFrame) -> pd.DataFrame:
     # calculate additionaly attributes and combine them with the data
+    country = person_attributes.determine_country(persondata)
     work = person_attributes.determine_work_statuses(persondata)
     sex = person_attributes.determine_sex(persondata)
-    pdata = pd.concat([persondata, work, sex], axis=1)
+    pdata = pd.concat([persondata, country, work, sex], axis=1)
     # remove persons where key attributes are missing
     pdata = pdata[
         pdata[person_attributes.WorkStatus.title()].apply(lambda x: x.is_determined())
@@ -38,11 +39,12 @@ def get_diary_categorization_data(
     data: pd.DataFrame, persondata: pd.DataFrame
 ) -> pd.DataFrame:
     persondata = get_person_categorization_data(persondata)
-    data = data.join(
-        persondata.loc[
-            :, (person_attributes.WorkStatus.title(), person_attributes.Sex.title())
-        ]
-    )
+    columns = [
+        person_attributes.Country.title(),
+        person_attributes.WorkStatus.title(),
+        person_attributes.Sex.title(),
+    ]
+    data = data.join(persondata.loc[:, columns])
     # drop diaries of persons with missing key attributes
     data = data[data[person_attributes.WorkStatus.title()].notna()]
     # calculate additional attributes
@@ -64,25 +66,6 @@ def get_hh_categorization_data(
     # TODO: how do I treat diaries from one household, but from different days?
     # --> ignore at first and check if there are weird statistics later
     return None
-
-
-def get_category_sizes(categories, key: list[str]) -> pd.DataFrame:
-    """
-    Returns a DataFrame with the size of each category, in a readable format.
-
-    :param categories: the result of calling groupby on HETUS data
-    :param key: the key used in groupby
-    :return: a DataFrame containing category sizes
-    """
-    # create separate index without country for a better overview
-    sizes = categories.size()
-    if len(key) > 1:
-        # set country as column header to improve readability
-        sizes = sizes.reset_index().pivot(index=key[1:], columns=key[0], values=0)
-    else:
-        # sizes is a Series; convert it to a DataFrame
-        sizes = sizes.to_frame(name="Entries")
-    return sizes
 
 
 def apply_hetus_size_limits(category_sizes: pd.DataFrame) -> None:
@@ -110,9 +93,7 @@ def apply_hetus_size_limits(category_sizes: pd.DataFrame) -> None:
 
 
 @utils.timing
-def categorize(
-    data: pd.DataFrame, key: list[str], size_threshold: bool = True
-) -> list[ExpandedActivityProfiles]:
+def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfiles]:
     """
     Groups all entries into categories, depending on the categorization
     keys. Each value combination of the specified key columns results in a
@@ -120,19 +101,10 @@ def categorize(
 
     :param data: the data to categorize
     :param key: the column names to use for categorization
-    :param size_threshold: whether the exact group size should be overwritten for
-                           small groups according to the Eurostat rules
     :return: the separated data sets for all categories
     """
     categories = data.groupby(key)
-    category_sizes = get_category_sizes(categories, key)
-    logging.info(
-        f"Sorted {len(data)} entries into {category_sizes.count().sum()} categories."
-    )
-    print(category_sizes)
-    if size_threshold:
-        apply_hetus_size_limits(category_sizes)
-    activity_profile.save_df(category_sizes, "categories", "category_sizes")
+    logging.info(f"Sorted {len(data)} entries into {categories.ngroups} categories.")
     return [
         ExpandedActivityProfiles(
             categories.get_group(g),

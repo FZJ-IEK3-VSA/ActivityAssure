@@ -28,7 +28,10 @@ from activity_validator.hetus_data_processing.attributes import (
     person_attributes,
 )
 from activity_validator.lpgvalidation import comparison_metrics
-from activity_validator.lpgvalidation.validation_data import ValidationData
+from activity_validator.lpgvalidation.validation_data import (
+    ValidationStatistics,
+    ValidationSet,
+)
 
 
 def load_person_characteristics(path: str) -> dict:
@@ -194,53 +197,9 @@ def group_profiles_by_type(
     return profiles_by_type
 
 
-def load_validation_data_subdir(
-    path: Path, as_timedelta: bool = False
-) -> dict[ProfileType, pd.DataFrame]:
-    return dict(
-        activity_profile.load_df(p, as_timedelta) for p in path.iterdir() if p.is_file()
-    )
-
-
-@utils.timing
-def load_validation_data(
-    path: Path = activity_profile.VALIDATION_DATA_PATH,
-) -> dict[ProfileType, ValidationData]:
-    assert path.is_dir(), f"Validation data directory not found: {path}"
-    subdir_path = path / "probability_profiles"
-    probability_profile_data = load_validation_data_subdir(subdir_path)
-    logging.info(
-        f"Loaded probability profiles for {len(probability_profile_data)} profile types"
-    )
-    subdir_path = path / "activity_frequencies"
-    activity_frequency_data = load_validation_data_subdir(subdir_path)
-    logging.info(
-        f"Loaded activity frequencies for {len(activity_frequency_data)} profile types"
-    )
-    subdir_path = path / "activity_durations"
-    activity_duration_data = load_validation_data_subdir(subdir_path, True)
-    logging.info(
-        f"Loaded activity durations for {len(activity_duration_data)} profile types"
-    )
-    assert (
-        probability_profile_data.keys()
-        == activity_frequency_data.keys()
-        == activity_duration_data.keys()
-    ), "Missing data for some of the profile types"
-    return {
-        profile_type: ValidationData(
-            profile_type,
-            prob_data,
-            activity_frequency_data[profile_type],
-            activity_duration_data[profile_type],
-        )
-        for profile_type, prob_data in probability_profile_data.items()
-    }
-
-
 def calc_input_data_statistics(
     profiles: list[SparseActivityProfile], activity_types: list[str]
-) -> ValidationData:
+) -> ValidationStatistics:
     """
     Calculates statistics for the input data of a specific profile type
 
@@ -256,22 +215,22 @@ def calc_input_data_statistics(
         profile_set.data, activity_types
     )
     # store all statistics in one object
-    input_data = ValidationData(
-        profiles[0].profile_type, probabilities, frequencies, durations
+    input_data = ValidationStatistics(
+        profiles[0].profile_type, probabilities, frequencies, durations, len(profiles)
     )
     return input_data
 
 
-def check_mapping(
-    activity_types: list[str], activity_types_val: list[str]
+def check_activity_lists(
+    activities: list[str], validation_activities: list[str]
 ) -> list[str]:
     """
-    Checks if the activity types used in the custom mapping here match those
-    in the validation data set. Also returns a new activity types list, containing
-    all validation activity types in the same order.
+    Checks if the passed activity lists match. Also returns a
+    new activity list, containing all activity types in the same
+    order as the validation_activities parameter.
     """
-    types_custom = set(activity_types)
-    types_val = set(activity_types_val)
+    types_custom = set(activities)
+    types_val = set(validation_activities)
     if types_custom != types_val:
         logging.warn(
             "The applied activity mapping does not use the same set of activity types as the "
@@ -279,22 +238,17 @@ def check_mapping(
             f"Missing activity types: {types_val - types_custom}\n"
             f"Additional activity types: {types_custom - types_val}"
         )
-        return activity_types_val + list(types_custom - types_val)
+        return validation_activities + list(types_custom - types_val)
     else:
-        return activity_types_val
+        # order might be different, but content is the same
+        return validation_activities
 
 
-def load_mapping(
-    mapping_path: Path, output_path: Path | None = None
-) -> tuple[dict[str, str], list[str]]:
+def load_mapping(mapping_path: Path) -> tuple[dict[str, str], list[str]]:
     # load activity mapping
     activity_mapping = hetus_translations.load_mapping(mapping_path)
-    activity_types = hetus_translations.get_activity_type_list(
-        mapping_path, output_base_path=output_path
-    )
-    activity_types_val = hetus_translations.get_activity_type_list(save_to_output=False)
-    activity_types = check_mapping(activity_types, activity_types_val)
-    return activity_mapping, activity_types
+    activities = hetus_translations.get_activities_in_mapping(activity_mapping)
+    return activity_mapping, activities
 
 
 def prepare_input_data(
@@ -325,94 +279,35 @@ def prepare_input_data(
     return all_profiles_by_type
 
 
-def calc_category_sizes(
-    input_data_dict: dict[ProfileType, list[SparseActivityProfile]],
-    output_path: Path | None = None,
-) -> pd.DataFrame:
-    """
-    Calculates the category sizes for the categorized input data.
-    If output_path is specified, also saves the sizes as a csv file.
-
-    :param input_data_dict: categorized input data
-    :param output_path: base output directory, defaults to None
-    :return: a dataframe containing the category sizes
-    """
-    # collect the profile type attributes for each category
-    index = pd.MultiIndex.from_tuples([pt.to_tuple() for pt in input_data_dict.keys()])
-    # collect the category sizes
-    sizes = [len(profiles) for profiles in input_data_dict.values()]
-    colname = "sizes"
-    sizes_df = pd.DataFrame({colname: sizes}, index=index)
-    if index.nlevels > 1:
-        # more than one profile type attribute: restructure dataframe for readability
-        sizes_df.reset_index(inplace=True)
-        cols = list(sizes_df.columns)
-        sizes_df = sizes_df.reset_index().pivot(
-            index=cols[1:-1], columns=cols[0], values=colname
-        )
-    if output_path:
-        # save category sizes to file
-        activity_profile.save_df(
-            sizes_df, "categories", "category_sizes", base_path=output_path
-        )
-    return sizes_df
-
-
 @utils.timing
 def calc_statistics_per_category(
     input_data_dict: dict[ProfileType, list[SparseActivityProfile]],
-    activity_types: list[str],
-) -> dict[ProfileType, ValidationData]:
+    activities: list[str],
+) -> ValidationSet:
     """
     Calculates statistics per category
 
     :param input_data_dict: input activity profiles per category
-    :param activity_types: list of possible activity types
+    :param activities: list of possible activities
     :return: data statistics per category
     """
     # validate each profile type individually
     input_statistics = {}
     for profile_type, profiles in input_data_dict.items():
         # calculate and store statistics for validation
-        input_data = calc_input_data_statistics(profiles, activity_types)
+        input_data = calc_input_data_statistics(profiles, activities)
         input_statistics[profile_type] = input_data
-    return input_statistics
-
-
-def save_statistics(
-    statistics_dict: dict[ProfileType, ValidationData], output_path: Path
-):
-    """
-    Saves the statistics for different profile types in the specified path.
-
-    :param statistics_dict: the dict of statistics to save
-    :param output_path: base output path
-    """
-    for data in statistics_dict.values():
-        data.save(output_path)
-
-
-def map_statistics_activities(
-    statistics: dict[ProfileType, ValidationData], mapping_path: Path
-):
-    """
-    Maps activities to new names and merges them if necessary.
-
-    :param statistics: the statistics in which to rename activities
-    :param mapping_path: the mapping to apply
-    """
-    mapping, _ = load_mapping(mapping_path)
-    for data in statistics.values():
-        data.map_activities(mapping)
+    statistics_set = ValidationSet(input_statistics, activities)
+    return statistics_set
 
 
 @utils.timing
 def process_model_data(
     input_path: Path,
-    output_path: Path,
     custom_mapping_path: Path,
     person_trait_file: Path,
-):
+    validation_activities: list[str] = [],
+) -> ValidationSet:
     """
     Processes the input data to produce the validation statistics.
 
@@ -420,16 +315,19 @@ def process_model_data(
     :param output_path: destination path for validation statistics
     :param custom_mapping_path: path of the activity mapping file
     :param person_trait_file: path of the person trait file
+    :param validation_activities: optionally, the activities list of the validation
+                                  data can be passed to get the same list, which
+                                  makes comparison easier
     """
     # load and preprocess all input data
     full_year_profiles = load_activity_profiles_from_csv(input_path, person_trait_file)
-    activity_mapping, activity_types = load_mapping(custom_mapping_path, output_path)
+    activity_mapping, activities = load_mapping(custom_mapping_path)
+    if validation_activities != activities:
+        activities = check_activity_lists(activities, validation_activities)
     input_data_dict = prepare_input_data(full_year_profiles, activity_mapping)
-    calc_category_sizes(input_data_dict, output_path)
     # calc and save input data statistics
-    input_statistics = calc_statistics_per_category(input_data_dict, activity_types)
-    save_statistics(input_statistics, output_path)
-    return input_statistics
+    statistics_set = calc_statistics_per_category(input_data_dict, activities)
+    return statistics_set
 
 
 def get_similar_categories(profile_type: ProfileType) -> list[ProfileType]:
@@ -520,8 +418,8 @@ def metrics_dict_to_df(
 
 
 def validate_per_category(
-    input_data_dict: dict[ProfileType, ValidationData],
-    validation_data_dict: dict[ProfileType, ValidationData],
+    input_statistics: ValidationSet,
+    validation_statistics: ValidationSet,
     output_path: Path,
 ) -> dict[str, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
     """
@@ -530,16 +428,16 @@ def validate_per_category(
     all variants (default, scaled, normed), and produces one
     metric dict per variant.
 
-    :param input_data_dict: input data per profile type
-    :param validation_data_dict: validation data per profile type
+    :param input_statistics: input statistics set
+    :param validation_statistics: validation statistics set
     :param output_path: base path for result data
     :return: a dict containing the per-category metric dict for each variant
     """
     # validate each profile type individually
     metrics_dict, scaled_dict, normed_dict = {}, {}, {}
-    for profile_type, input_data in input_data_dict.items():
+    for profile_type, input_data in input_statistics.statistics.items():
         # select matching validation data
-        validation_data = validation_data_dict[profile_type]
+        validation_data = validation_statistics.statistics[profile_type]
         # calcluate and store comparison metrics
         _, metrics, scaled, normed = comparison_metrics.calc_all_metric_variants(
             validation_data, input_data, False, profile_type, output_path
@@ -551,8 +449,8 @@ def validate_per_category(
 
 
 def validate_similar_categories(
-    input_data_dict: dict[ProfileType, ValidationData],
-    validation_data_dict: dict[ProfileType, ValidationData],
+    input_data_dict: dict[ProfileType, ValidationStatistics],
+    validation_data_dict: dict[ProfileType, ValidationStatistics],
 ) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
     # validate each profile type individually
     metrics_dict = {}
@@ -572,8 +470,8 @@ def validate_similar_categories(
 
 
 def validate_all_combinations(
-    input_data_dict: dict[ProfileType, ValidationData],
-    validation_data_dict: dict[ProfileType, ValidationData],
+    input_data_dict: dict[ProfileType, ValidationStatistics],
+    validation_data_dict: dict[ProfileType, ValidationStatistics],
 ) -> dict[ProfileType, dict[ProfileType, comparison_metrics.ValidationMetrics]]:
     """
     Calculates metrics for each combination of input and validation

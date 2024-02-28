@@ -19,32 +19,16 @@ HETUS_CODES_PATH = Path(
 HETUS_MAPPING_PATH = Path("activity_validator/activity_types/mapping_hetus.json")
 
 
-def load_mapping(
-    path: Path,
-    copy_to_output: bool = True,
-    output_base_path: Path | None = None,
-) -> dict[str, str]:
+def load_mapping(path: Path) -> dict[str, str]:
     """
     Loads an activity mapping from a json file.
 
     :param path: mapping file path
-    :param copy_to_output: if the activity mapping should be copied to the
-                           output, defaults to True
-    :param output_base_path: the output base folder, defaults to None
     :raises RuntimeError: if the file does not exist
     :return: the mapping dict
     """
     if not path.exists():
         raise RuntimeError(f"Missing mapping file: {path}")
-    if copy_to_output:
-        dest_path = create_result_path(
-            "activities",
-            "activity_mapping",
-            base_path=output_base_path,
-            ext="json",
-        )
-        shutil.copyfile(str(path), str(dest_path))
-        logging.info(f"Copied activity mapping file to {dest_path}")
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -56,7 +40,7 @@ def load_hetus_activity_codes() -> dict[str, str]:
 
     :return: dict mapping each code with its description
     """
-    return load_mapping(HETUS_CODES_PATH, False)
+    return load_mapping(HETUS_CODES_PATH)
 
 
 def aggregate_activities(data: pd.DataFrame, digits: int = 1):
@@ -79,37 +63,6 @@ def extract_activity_data(data: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def get_activity_type_list(
-    mapping_path: Path = HETUS_MAPPING_PATH,
-    save_to_output: bool = True,
-    output_base_path: Path | None = None,
-) -> list[str]:
-    """
-    Saves the ultimately (i.e., after applying the mappings) available
-    activity types in a json file. This can be used to countercheck
-    which activities did not occur at all in a profile.
-
-    :param mapping_path: path of the mapping file to load, defaults to HETUS_MAPPING_PATH
-    :param save_to_output: if the activity type list should be saved in the
-                           output folder, defaults to True
-    :param output_base_path: the output base folder, defaults to None
-    :return: the list of activity names
-    """
-    mapping = load_mapping(mapping_path, False)
-    activity_types = sorted(set(mapping.values()))
-    if save_to_output and output_base_path is not None:
-        path = create_result_path(
-            "activities",
-            "available_activity_types",
-            base_path=output_base_path,
-            ext="json",
-        )
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump({"activity types": activity_types}, f)
-        logging.info(f"Created activity types file: {path}")
-    return activity_types
-
-
 def get_combined_hetus_mapping() -> dict[str, str]:
     """
     Loads the HETUS activity mapping and the custom
@@ -126,7 +79,18 @@ def get_combined_hetus_mapping() -> dict[str, str]:
     return combined
 
 
-def translate_activity_codes(data: pd.DataFrame) -> None:
+def get_activities_in_mapping(mapping: dict[str, str]) -> list[str]:
+    """
+    Collects the target activities from a mapping and returns them in
+    a sorted list.
+
+    :param mapping: the mapping
+    :return: the list of activities
+    """
+    return sorted(set(mapping.values()))
+
+
+def translate_activity_codes(data: pd.DataFrame) -> list[str]:
     """
     Applies the HETUS activity mapping and the custom activity
     category mapping, both stored in separate json files.
@@ -144,6 +108,7 @@ def translate_activity_codes(data: pd.DataFrame) -> None:
     combined = get_combined_hetus_mapping()
     activity = col.get_activity_data(data)
     data.loc[:, activity.columns] = activity.replace(combined)
+    return get_activities_in_mapping(combined)
 
 
 def translate_column(

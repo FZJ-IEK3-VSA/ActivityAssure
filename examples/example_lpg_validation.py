@@ -8,6 +8,7 @@ from pathlib import Path
 from activity_validator.lpgvalidation import validation
 from activity_validator.hetus_data_processing.visualizations import metric_heatmaps
 from activity_validator.hetus_data_processing import activity_profile, utils
+from activity_validator.lpgvalidation.validation_data import ValidationSet
 
 
 @utils.timing
@@ -21,27 +22,29 @@ def validate_lpg():
 
     output_path = Path("data/lpg/results")
 
-    # calculate or load input data statistics
-    # input_statistics = validation.process_model_data(
-    #     input_path, output_path, custom_mapping_path, person_trait_file
-    # )
-    input_statistics = validation.load_validation_data(output_path)
-
     # load validation data statistics
-    validation_statistics = validation.load_validation_data(validation_data_path)
+    validation_statistics = ValidationSet.load(validation_data_path)
+
+    # calculate or load input data statistics
+    input_statistics = validation.process_model_data(
+        input_path,
+        custom_mapping_path,
+        person_trait_file,
+        validation_statistics.activities,
+    )
+    # input_statistics = ValidationSet.load(output_path)
 
     # if necessary, apply another mapping to merge activities
     validation_mapping_path = Path("examples/activity_mapping_validation_lpg.json")
-    if custom_mapping_path is not None:
-        validation.map_statistics_activities(input_statistics, validation_mapping_path)
-        validation.map_statistics_activities(
-            validation_statistics, validation_mapping_path
-        )
+    if validation_mapping_path is not None:
+        mapping, _ = validation.load_mapping(validation_mapping_path)
+        input_statistics.map_statistics_activities(mapping)
+        validation_statistics.map_statistics_activities(mapping)
         # define a new path to not overwrite the original validation data
         mapped_validation_path = Path(f"{validation_data_path}_mapped")
-        validation.save_statistics(validation_statistics, mapped_validation_path)
+        validation_statistics.save(mapped_validation_path)
 
-    validation.save_statistics(input_statistics, output_path)
+    input_statistics.save(output_path)
 
     # compare input and validation data statistics per profile type
     metrics_path = output_path / "metrics"

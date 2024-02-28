@@ -9,6 +9,7 @@ from activity_validator.hetus_data_processing.activity_profile import (
 
 import activity_validator.hetus_data_processing.hetus_columns as col
 from activity_validator.hetus_data_processing import (
+    hetus_constants,
     hetus_translations,
     level_extraction,
 )
@@ -55,17 +56,16 @@ def prepare_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[s
     data.set_index(col.Diary.KEY, inplace=True)
     utils.stats(data)
 
-    hetus_translations.translate_activity_codes(data)
-    activity_types = hetus_translations.get_activity_type_list()
+    activities = hetus_translations.translate_activity_codes(data)
 
     # extract households and persons
     data_valid_persons, persondata = level_extraction.get_usable_person_data(data)
     utils.stats(data_valid_persons, persondata)
     # data_valid_hhs, hhdata = level_extraction.get_usable_household_data(data)
-    return data, persondata, activity_types
+    return data, persondata, activities
 
 
-def get_full_categorization_attributes() -> list[str]:
+def get_default_categorization_attributes() -> list[str]:
     """
     Returns the categorization attributes for a full
     categorization (country, sex, work status, day type)
@@ -73,7 +73,7 @@ def get_full_categorization_attributes() -> list[str]:
     :return: the categorization attributes
     """
     categorization_attributes = [
-        col.Country.ID,
+        person_attributes.Country.title(),
         person_attributes.Sex.title(),
         person_attributes.WorkStatus.title(),
         diary_attributes.DayType.title(),
@@ -89,20 +89,28 @@ def process_hetus_2010_data(data: pd.DataFrame, categorization_attributes=None):
 
     :param data: the data to process
     """
-    data, persondata, activity_types = prepare_data(data)
+    data, persondata, activities = prepare_data(data)
 
     # calculate additional columns for categorizing and drop rows
     # where important data is missing
     cat_data = get_diary_categorization_data(data, persondata)
     # categorize the data
     if categorization_attributes is None:
-        categorization_attributes = get_full_categorization_attributes()
+        categorization_attributes = get_default_categorization_attributes()
     categories = categorize(cat_data, categorization_attributes)
-    categories = filter_categories(categories)
 
     # cat_hhdata = get_hh_categorization_data(hhdata, persondata)
 
-    category_statistics.calc_statistics_per_category(categories, activity_types)
+    statistics_set = category_statistics.calc_statistics_per_category(
+        categories, activities
+    )
+    statistics_set.filter_categories(hetus_constants.MIN_CELL_SIZE)
+    size_ranges = [
+        hetus_constants.MIN_CELL_SIZE,
+        hetus_constants.MIN_CELL_SIZE_FOR_SIZE,
+    ]
+    statistics_set.hide_small_category_sizes(size_ranges)
+    statistics_set.save(VALIDATION_DATA_PATH)
 
 
 def split_data(data: pd.DataFrame) -> list[pd.DataFrame]:
@@ -128,7 +136,7 @@ def cross_validation_split(data: pd.DataFrame):
     data, persondata, activity_types = prepare_data(data)
     cat_data = get_diary_categorization_data(data, persondata)
     key = [
-        col.Country.ID,
+        person_attributes.Country.title(),
         person_attributes.Sex.title(),
         person_attributes.WorkStatus.title(),
         diary_attributes.DayType.title(),
@@ -149,10 +157,14 @@ def cross_validation_split(data: pd.DataFrame):
         categories2.append(profile2)
 
     # create statistics for the split parts separately
-    category_statistics.calc_statistics_per_category(categories1, activity_types)
-    VALIDATION_DATA_PATH.rename(VALIDATION_DATA_PATH.parent / "Validation Split 1")
-    category_statistics.calc_statistics_per_category(categories2, activity_types)
-    VALIDATION_DATA_PATH.rename(VALIDATION_DATA_PATH.parent / "Validation Split 2")
+    split1 = category_statistics.calc_statistics_per_category(
+        categories1, activity_types
+    )
+    split1.save(VALIDATION_DATA_PATH.parent / "Validation Split 1")
+    split2 = category_statistics.calc_statistics_per_category(
+        categories2, activity_types
+    )
+    split2.save(VALIDATION_DATA_PATH.parent / "Validation Split 2")
 
 
 def merge_category_sizes_files(path1: Path, path2: Path):
@@ -218,7 +230,7 @@ def process_all_hetus_countries_AT_separately(
     if not title:
         # determine title automatically
         if not categorization_attributes:
-            categorization_attributes = get_full_categorization_attributes()
+            categorization_attributes = get_default_categorization_attributes()
         title = "_".join(s.lower() for s in categorization_attributes)
     # rename result directory
     Path(VALIDATION_DATA_PATH).rename(VALIDATION_DATA_PATH.parent / title)
@@ -230,7 +242,7 @@ def generate_all_dataset_variants(hetus_path: str, key: str | None = None):
     Generates all relevant variants of the validation data set
     with a different set of categorization attributes.
     """
-    country = col.Country.ID
+    country = person_attributes.Country.title()
     sex = person_attributes.Sex.title()
     work_status = person_attributes.WorkStatus.title()
     day_type = diary_attributes.DayType.title()

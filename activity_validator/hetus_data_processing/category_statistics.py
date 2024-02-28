@@ -18,7 +18,10 @@ from activity_validator.hetus_data_processing.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
 )
-from activity_validator.lpgvalidation.validation_data import ValidationData
+from activity_validator.lpgvalidation.validation_data import (
+    ValidationStatistics,
+    ValidationSet,
+)
 
 
 def calc_value_counts(data: pd.DataFrame) -> pd.DataFrame:
@@ -117,7 +120,7 @@ def calc_probability_profiles(
 @utils.timing
 def calc_statistics_per_category(
     profile_sets: list[ExpandedActivityProfiles], activity_types: list[str]
-) -> None:
+) -> ValidationSet:
     """
     Calculates all required characteristics for each diary category in the
     HETUS data separately
@@ -126,6 +129,7 @@ def calc_statistics_per_category(
                        one category
     :param activity_types: list of possible activity types
     """
+    statistics = {}
     for profile_set in profile_sets:
         # extract only the activity data
         profile_set.data = col.get_activity_data(profile_set.data)
@@ -134,9 +138,14 @@ def calc_statistics_per_category(
         activity_profiles = profile_set.create_sparse_profiles()
         frequencies = calc_activity_group_frequencies(activity_profiles)
         durations = calc_activity_group_durations(activity_profiles)
-        vd = ValidationData(
-            profile_set.profile_type, probabilities, frequencies, durations
+        vs = ValidationStatistics(
+            profile_set.profile_type,
+            probabilities,
+            frequencies,
+            durations,
+            profile_set.get_profile_count(),
         )
-        vd.save(activity_profile.VALIDATION_DATA_PATH)
-
+        statistics[profile_set.profile_type] = vs
     logging.info(f"Created result files for {len(profile_sets)} categories")
+    statistics_set = ValidationSet(statistics, activity_types)
+    return statistics_set
