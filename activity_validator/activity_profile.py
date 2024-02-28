@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from activity_validator.hetus_data_processing import hetus_constants, utils
-from activity_validator.hetus_data_processing.profile_category import ProfileType
+from activity_validator.profile_category import ProfileType
 
 #: default resolution for input data # TODO: remove?
 DEFAULT_RESOLUTION = timedelta(minutes=1)

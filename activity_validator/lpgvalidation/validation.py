@@ -16,7 +16,7 @@ from activity_validator.hetus_data_processing import (
     utils,
 )
 
-from activity_validator.hetus_data_processing.profile_category import ProfileType
+from activity_validator.profile_category import ProfileType
 from activity_validator.hetus_data_processing.attributes import (
     diary_attributes,
 )

@@ -9,11 +9,14 @@ from plotly.graph_objects import Figure  # type: ignore
 import pandas as pd
 
 from activity_validator.hetus_data_processing import (
-    profile_category,
     pandas_utils,
     hetus_constants,
 )
-from activity_validator import validation_statistics, comparison_indicators
+from activity_validator import (
+    profile_category,
+    validation_statistics,
+    comparison_indicators,
+)
 from activity_validator.ui import data_utils, datapaths
 
 

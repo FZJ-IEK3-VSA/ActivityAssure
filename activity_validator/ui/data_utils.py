@@ -4,7 +4,7 @@ from activity_validator import activity_profile
 from plotly.graph_objects import Figure  # type: ignore
 
 from activity_validator.ui import datapaths
-from activity_validator.hetus_data_processing.profile_category import ProfileType
+from activity_validator.profile_category import ProfileType
 
 
 def ptype_to_label(profile_type: ProfileType) -> str:

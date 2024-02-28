@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import scipy  # type: ignore
 from activity_validator.hetus_data_processing import pandas_utils, utils
-from activity_validator.hetus_data_processing.profile_category import ProfileType
+from activity_validator.profile_category import ProfileType
 from activity_validator.validation_statistics import ValidationStatistics
 
 

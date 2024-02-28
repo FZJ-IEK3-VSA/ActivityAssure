@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 import pandas as pd
 
-from activity_validator.hetus_data_processing.profile_category import ProfileType
+from activity_validator.profile_category import ProfileType
 
 #: path for result data # TODO: move to config file
 VALIDATION_DATA_PATH = Path("data/validation data sets/latest")
