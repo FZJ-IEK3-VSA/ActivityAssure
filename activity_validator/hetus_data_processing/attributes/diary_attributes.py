@@ -9,10 +9,11 @@ import pandas as pd
 
 import activity_validator.hetus_data_processing.hetus_column_names as col
 import activity_validator.hetus_data_processing.hetus_column_values as val
-from activity_validator.hetus_data_processing import hetus_constants, utils
+from activity_validator.hetus_data_processing import hetus_constants
 from activity_validator.categorization_attributes import (
     DayType,
 )
+from activity_validator import utils
 
 
 MAP_DAYTYPE = {

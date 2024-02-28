@@ -5,9 +5,9 @@ Example script for validation the LoadProfileGenerator
 import logging
 from pathlib import Path
 
+from activity_validator import utils, pandas_utils
 from activity_validator.lpgvalidation import validation
 from activity_validator.hetus_data_processing.visualizations import metric_heatmaps
-from activity_validator.hetus_data_processing import pandas_utils, utils
 from activity_validator.validation_statistics import ValidationSet
 
 

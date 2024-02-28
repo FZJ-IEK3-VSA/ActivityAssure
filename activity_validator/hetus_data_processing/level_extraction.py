@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-from activity_validator.hetus_data_processing import utils
+from activity_validator import utils
 import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import filter
 

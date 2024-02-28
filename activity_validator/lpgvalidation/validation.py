@@ -12,8 +12,6 @@ import pandas as pd
 from activity_validator.hetus_data_processing import (
     hetus_constants,
     category_statistics,
-    pandas_utils,
-    utils,
 )
 
 from activity_validator.profile_category import ProfileType
@@ -24,6 +22,8 @@ from activity_validator import (
     activity_profile,
     categorization_attributes,
     comparison_indicators,
+    pandas_utils,
+    utils,
 )
 from activity_validator.activity_profile import (
     ExpandedActivityProfiles,
