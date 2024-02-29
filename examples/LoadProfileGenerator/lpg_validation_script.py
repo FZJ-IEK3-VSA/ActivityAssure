@@ -11,7 +11,9 @@ from activity_validator.comparison_indicators import ValidationIndicators
 # TODO: turn this into a function to show a quick overview at the end of the validate_lpg() function?
 #      E.g. overall best and worst categories/activities, worst according to each indicator etc.
 
-base_path = "data/lpg/results/metrics/default/metrics_per_category.csv"
+base_path = (
+    "data/lpg/results_tmp/validation_results/default/indicators_per_category.csv"
+)
 mean_idx = ValidationIndicators.mean_column
 
 data = pd.read_csv(base_path)

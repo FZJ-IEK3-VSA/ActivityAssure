@@ -66,7 +66,7 @@ def validate(compare_all_combinations: bool = False):
     """
     lpg_statistics_path = Path("data/lpg/results")
     valdiation_statistics_path = Path(
-        "data/validation data sets/country_sex_work status_day type"
+        "data/validation data sets/country_sex_work status_day type_mapped"
     )
 
     # load LPG statistics and validation statistics
