@@ -25,7 +25,7 @@ from activity_validator.hetus_data_processing import category_statistics
 from activity_validator import validation_statistics
 
 
-VALIDATION_DATA_PATH = Path("data/validation_data_sets/latest")
+BASE_RESULT_PATH = Path("data/validation_data_sets")
 
 
 @utils.timing
@@ -70,7 +70,9 @@ def prepare_hetus_data(
 
 
 @utils.timing
-def process_hetus_2010_data(data: pd.DataFrame, cat_attributes=None, save: bool = True):
+def process_hetus_2010_data(
+    data: pd.DataFrame, cat_attributes=None, save: bool = True, title: str = "latest"
+):
     """
     Produces a validation data set out of the passed HETUS data.
     Prepares and categorizes the data set and calculates statistics
@@ -101,7 +103,7 @@ def process_hetus_2010_data(data: pd.DataFrame, cat_attributes=None, save: bool 
 
     if save:
         # save the validation data set
-        validation_set.save(VALIDATION_DATA_PATH)
+        validation_set.save(BASE_RESULT_PATH / title)
     return validation_set
 
 
@@ -136,11 +138,11 @@ def cross_validation_split(data: pd.DataFrame):
     # create statistics for the split parts separately
     split1 = category_statistics.calc_statistics_per_category(categories1, activities)
     data_protection.apply_eurostat_requirements(split1)
-    split1.save(VALIDATION_DATA_PATH.parent / "Validation Split 1")
+    split1.save(BASE_RESULT_PATH / "Validation Split 1")
 
     split2 = category_statistics.calc_statistics_per_category(categories2, activities)
     data_protection.apply_eurostat_requirements(split2)
-    split2.save(VALIDATION_DATA_PATH.parent / "Validation Split 2")
+    split2.save(BASE_RESULT_PATH / "Validation Split 2")
 
 
 def process_all_hetus_countries_AT_separately(
@@ -186,7 +188,7 @@ def process_all_hetus_countries_AT_separately(
         # determine title automatically
         title = "_".join(s.lower() for s in cat_attributes)
     # rename result directory
-    combined.save(VALIDATION_DATA_PATH.parent / title)
+    combined.save(BASE_RESULT_PATH / title)
     logging.info(f"Finished creating the validation data set '{title}'")
 
 
@@ -213,10 +215,9 @@ def generate_all_dataset_variants(hetus_path: str, key: str | None = None):
     )
     # special case: variant without country is special (has to leave out AT data)
     data = load_data.load_all_hetus_files_except_AT(hetus_path, key)
-    process_hetus_2010_data(data)
-    Path(VALIDATION_DATA_PATH).rename(
-        VALIDATION_DATA_PATH.parent / "sex_work status_day type"
-    )
+    result = process_hetus_2010_data(data, [sex, work_status, day_type], save=False)
+    result.save(BASE_RESULT_PATH / "sex_work status_day type")
+
     # some other relevant variants
     process_all_hetus_countries_AT_separately(hetus_path, key, [country])
     process_all_hetus_countries_AT_separately(hetus_path, key, [country, sex])
