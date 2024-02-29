@@ -11,12 +11,10 @@ import activity_validator.hetus_data_processing.hetus_column_names as col
 
 #: path of the HETUS code file that maps each HETUS activity code to the
 #  corresponding activity name
-HETUS_CODES_PATH = Path(
-    "activity_validator/activity_types/hetus_activity_codes_2010.json"
-)
+HETUS_CODES_PATH = Path("activity_validator/activities/hetus_activity_codes_2010.json")
 #: path of the HETUS mapping file that maps each HETUS activity name to an
 #  activity of the joint activity set
-HETUS_MAPPING_PATH = Path("activity_validator/activity_types/mapping_hetus.json")
+HETUS_MAPPING_PATH = Path("activity_validator/activities/mapping_hetus.json")
 
 
 def get_aggregate_activity_codes(data: pd.DataFrame, digits: int = 1):
