@@ -1,6 +1,6 @@
 """
-Generates the person characteristics and the basic activity mapping for the 
-LoadProfileGenerator from the input database profilegenerator.db3.
+Generates the person characteristics for the LoadProfileGenerator
+from the input database profilegenerator.db3.
 """
 
 import json
@@ -55,6 +55,13 @@ def person_name(full_name: str) -> str:
 
 
 def define_person_mapping(database_path: Path, result_path: Path):
+    """
+    Extracts person information from the LoadProfileGenerator database
+    and creates a person characterstics file from that.
+
+    :param database_path: path of the database file
+    :param result_path: output path for the created characteristics file
+    """
     assert database_path.is_file(), f"Input database of LPG is missing: {database_path}"
     # query the person information, including name, gender and the living pattern tag each
     # person has in his/her household
@@ -74,58 +81,14 @@ from tblPersons inner join tblCHHPersons on tblPersons.ID == tblCHHPersons.Perso
     }
 
     # write all characteristics to a json file
-    dict_mapping = {n: p.to_title_dict() for n, p in mapping.items()}  # type: ignore
+    dict_mapping = {n: p.to_dict() for n, p in mapping.items()}  # type: ignore
     result_path.parent.mkdir(parents=True, exist_ok=True)
     with open(result_path, "w+", encoding="utf-8") as f:
         json.dump(dict_mapping, f, indent=4)
     print(f"Generated person characteristics file: {result_path}")
 
 
-def generate_raw_activity_mapping(database_path: str, output_file):
-    assert Path(
-        database_path
-    ).is_file(), f"Input database file of LPG is missing: {database_path}"
-    con = sqlite3.connect(database_path)
-    cur = con.cursor()
-    query = "SELECT Name, AffCategory FROM tblAffordances"
-    results = cur.execute(query)
-    rows: list[tuple] = results.fetchall()
-
-    # define preliminary mapping based on affordance category
-    # categories mapped to None are ambiguous and need manual assignment
-    category_mapping = {
-        "Active Entertainment (Computer, Internet etc)": "pc",
-        "Entertainment": None,
-        "Office": "work",
-        "Offline Entertainment": "other",
-        "Outside recreation": "not at home",
-        "Passive Entertainment (TV etc.)": None,
-        "child care": "other",
-        "cleaning": None,  # laundry is separate
-        "cooking": "cook",
-        "gardening and maintenance": "other",
-        "hygiene": "personal care",
-        "other": "other",
-        "school": "education",
-        "shopping": "not at home",
-        "sleep": "sleep",
-        "sports": None,
-        "work": "work",
-    }
-    affordances = [(row[0], row[1]) for row in rows]
-    mapping = {name: category_mapping[category] for name, category in affordances}
-    # manually add vacation affordance
-    mapping["taking a vacation"] = "not at home"
-
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(mapping, f, indent=4)
-    print(f"Generated basic activity mapping file: {output_file}")
-
-
 if __name__ == "__main__":
-    lpg_main_db = Path("data/lpg/profilegenerator.db3")
-    person_file = Path("data/lpg/person_characteristics.json")
+    lpg_main_db = Path("data/lpg_simulations/profilegenerator.db3")
+    person_file = Path("examples/LoadProfileGenerator/person_characteristics.json")
     define_person_mapping(lpg_main_db, person_file)
-
-    # output_file = "examples/activity_mapping_lpg.json"
-    # generate_raw_activity_mapping(lpg_main_db, output_file)

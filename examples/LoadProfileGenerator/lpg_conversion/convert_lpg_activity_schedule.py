@@ -1,3 +1,13 @@
+"""
+Loads activity profiles from the result database file of the LoadProfileGenerator
+and creates csv files from them that can be used in the validation framework.
+Also generates a preliminary activity mapping in the process using the activity
+categories defined in the LoadProfileGenerators. Some categories cannot be 
+assigned an activity unambiguously, so the mapping file needs to be checked
+and completed manually afterwards.
+If a mapping file already exists, it is loaded and expanded if necessary.
+"""
+
 import argparse
 from datetime import datetime
 import glob
@@ -34,6 +44,13 @@ CATEGORY_MAPPING = {
 
 
 def load_activity_profile_from_db(file: Path, result_dir: Path):
+    """
+    Converts LPG activity profiles to the target csv format.
+    Also creates or extends the LPG activity mapping file.
+
+    :param file: input database file
+    :param result_dir: output folder for the created csv files
+    """
     assert file.is_file(), f"File does not exist: {file}"
 
     # load activity mapping
