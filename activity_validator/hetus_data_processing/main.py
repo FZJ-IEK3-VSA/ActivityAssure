@@ -145,6 +145,7 @@ def cross_validation_split(data: pd.DataFrame):
     split2.save(BASE_RESULT_PATH / "Validation Split 2")
 
 
+@utils.timing
 def process_all_hetus_countries_AT_separately(
     hetus_path: str,
     hetus_key: str | None = None,

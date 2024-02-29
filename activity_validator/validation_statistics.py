@@ -10,6 +10,7 @@ from typing import ClassVar
 
 import pandas as pd
 
+from activity_validator import utils
 from activity_validator.profile_category import ProfileCategory
 from activity_validator.pandas_utils import (
     save_df,
@@ -237,6 +238,7 @@ class ValidationSet:
             )
         return sizes_df
 
+    @utils.timing
     def save(self, base_path: Path):
         """
         Saves all statistics for different profile types as well as
@@ -307,6 +309,7 @@ class ValidationSet:
             if p.is_file()
         }
 
+    @utils.timing
     @staticmethod
     def load(base_path: Path) -> "ValidationSet":
         assert base_path.is_dir(), f"Validation data directory not found: {base_path}"
