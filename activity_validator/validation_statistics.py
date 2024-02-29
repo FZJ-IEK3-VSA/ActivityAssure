@@ -159,15 +159,17 @@ class ValidationSet:
 
         :param min_size: the minimum size to keep a category
         """
-        total = 0
-        deleted = 0
-        for pt, stat in self.statistics.items():
+        total = len(self.statistics)
+        to_delete = []
+        # identify categories that are too small
+        for category, stat in self.statistics.items():
             assert stat.category_size is not None, "Missing category size in filtering"
-            total += stat.category_size
             if stat.category_size < min_size:
-                del self.statistics[pt]
-                deleted += 1
-        logging.info(f"Removed {deleted} out of {total} categories (too small).")
+                to_delete.append(category)
+        # delete the categories afterwards
+        for category in to_delete:
+            del self.statistics[category]
+        logging.info(f"Removed {len(to_delete)} out of {total} categories (too small).")
 
     def hide_small_category_sizes(self, size_ranges: list[int]):
         """
