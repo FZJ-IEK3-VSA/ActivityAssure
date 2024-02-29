@@ -12,12 +12,12 @@ from pathlib import Path
 
 @utils.timing
 def cross_validation():
-    output_path = Path("data/lpg/results")
+    output_path = Path("data/lpg_validation/cross_validation")
 
     # load the parts of the data
-    data_path1 = Path("data/validation data sets/Validation Split 1")
+    data_path1 = Path("data/validation_data_sets/Validation Split 1")
     data1 = validation.load_validation_data(data_path1)
-    data_path2 = Path("data/validation data sets/Validation Split 2")
+    data_path2 = Path("data/validation_data_sets/Validation Split 2")
     data2 = validation.load_validation_data(data_path2)
 
     # compare each category of data1 to each category of data2

@@ -23,7 +23,7 @@ def create_statistics_set(base_path: Path):
     PERSON_TRAIT_FILE = LPG_EXAMPLE_PATH / "person_characteristics.json"
 
     VALIDATION_STATS_PATH = (
-        base_path / "validation data sets/country_sex_work status_day type"
+        base_path / "validation_data_sets/country_sex_work status_day type"
     )
 
     OUTPUT_PATH = base_path / "lpg_validation"
@@ -68,7 +68,7 @@ def validate(base_path: Path, compare_all_combinations: bool = False):
     """
     lpg_statistics_path = base_path / "lpg_validation"
     valdiation_statistics_path = (
-        base_path / "validation data sets/country_sex_work status_day type_mapped"
+        base_path / "validation_data_sets/country_sex_work status_day type_mapped"
     )
 
     # load LPG statistics and validation statistics

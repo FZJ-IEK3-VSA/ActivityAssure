@@ -25,7 +25,7 @@ from activity_validator.hetus_data_processing import category_statistics
 from activity_validator import validation_statistics
 
 
-VALIDATION_DATA_PATH = Path("data/validation data sets/latest")
+VALIDATION_DATA_PATH = Path("data/validation_data_sets/latest")
 
 
 @utils.timing
