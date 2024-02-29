@@ -8,9 +8,6 @@ import pandas as pd
 
 from activity_validator.profile_category import ProfileCategory
 
-#: path for result data # TODO: move to config file
-VALIDATION_DATA_PATH = Path("data/validation data sets/latest")
-
 
 def create_result_path(
     subdir: str,
@@ -32,8 +29,8 @@ def create_result_path(
                       defaults to VALIDATION_DATA_PATH
     :param ext: file extension, defaults to "csv"
     """
-    if not base_path:
-        base_path = VALIDATION_DATA_PATH
+    # TODO: update signature instead of assert to make base_path mandatory
+    assert base_path, "No base path specified"
     if profile_type is not None:
         # add profile type to filename
         name = profile_type.construct_filename(name)
@@ -56,7 +53,7 @@ def save_df(
     subdir: str,
     name: str,
     profile_type: ProfileCategory | None = None,
-    base_path: Path = VALIDATION_DATA_PATH,
+    base_path: Path | None = None,
     ext: str = "csv",
 ) -> None:
     """
@@ -73,6 +70,8 @@ def save_df(
                       defaults to VALIDATION_DATA_PATH
     :param ext: file extension, defaults to "csv"
     """
+    # TODO: update signature instead of assert to make base_path mandatory
+    assert base_path, "No base path specified"
     path = create_result_path(subdir, name, profile_type, base_path, ext)
     data.to_csv(path)
     logging.debug(f"Created DataFrame file {path}")
