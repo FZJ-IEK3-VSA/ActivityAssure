@@ -16,11 +16,11 @@ if key[-1] != "=":
 
 fernet = Fernet(key.encode())
 
-hetus_path = Path(r"D:\Daten\HETUS Data\HETUS 2010 full set\DATA")
-enc_path = hetus_path.parent / "Data_encrypted"
+HETUS_PATH = Path("D:/Daten/HETUS Data/HETUS 2010 full set/DATA")
+enc_path = HETUS_PATH.parent / "Data_encrypted"
 enc_path.mkdir(parents=True, exist_ok=True)
 
-for path in load_data.get_hetus_file_names().values():
+for path in load_data.get_hetus_file_names(str(HETUS_PATH)).values():
     file_orig = Path(path)
     with open(file_orig) as f:
         content = f.read()

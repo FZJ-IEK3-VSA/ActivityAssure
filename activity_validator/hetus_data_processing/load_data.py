@@ -15,9 +15,6 @@ import logging
 from cryptography.fernet import Fernet
 
 
-# TODO: only used as default param value --> move to main?
-HETUS_PATH = r"D:\Daten\HETUS Data\HETUS 2010 full set\DATA"
-
 HETUS_FILENAME_PREFIX = "TUS_SUF_A_"
 HETUS_FILENAME_SUFFIX = "_2010.csv"
 
@@ -43,7 +40,7 @@ def get_country(path: str) -> str:
     return name.removeprefix(HETUS_FILENAME_PREFIX).removesuffix(HETUS_FILENAME_SUFFIX)
 
 
-def get_hetus_file_names(path: str = HETUS_PATH) -> dict[str, str]:
+def get_hetus_file_names(path: str) -> dict[str, str]:
     """
     Returns a dict containing all available HETUS countries and the respective
     file paths.
@@ -104,7 +101,9 @@ def read_key_as_arg() -> str:
     Parses the decryption key as an argument
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("key", type=str, help="Decryption key for HETUS data")
+    parser.add_argument(
+        "-k", "--key", type=str, help="Decryption key for HETUS data", default=""
+    )
     args = parser.parse_args()
     return args.key
 
@@ -153,9 +152,7 @@ def load_hetus_file_from_path(path: str, key: str | None = None) -> pd.DataFrame
     return data
 
 
-def load_hetus_file(
-    country: str, path: str = HETUS_PATH, key: str | None = None
-) -> pd.DataFrame:
+def load_hetus_file(country: str, path: str, key: str | None = None) -> pd.DataFrame:
     """
     Loads HETUS data of a sinlge country
 
@@ -172,7 +169,7 @@ def load_hetus_file(
 
 
 def load_hetus_files(
-    countries: Iterable[str], path: str = HETUS_PATH, key: str | None = None
+    countries: Iterable[str], path: str, key: str | None = None
 ) -> pd.DataFrame:
     """
     Loads HETUS data of multiple countries.
@@ -186,9 +183,7 @@ def load_hetus_files(
     return data
 
 
-def load_all_hetus_files(
-    path: str = HETUS_PATH, key: str | None = None
-) -> pd.DataFrame:
+def load_all_hetus_files(path: str, key: str | None = None) -> pd.DataFrame:
     """
     Loads all available HETUS files.
 
@@ -207,9 +202,7 @@ def load_all_hetus_files(
     return data
 
 
-def load_all_hetus_files_except_AT(
-    path: str = HETUS_PATH, key: str | None = None
-) -> pd.DataFrame:
+def load_all_hetus_files_except_AT(path: str, key: str | None = None) -> pd.DataFrame:
     """
     Loads all available HETUS files, except for the Austrian file.
     Austria uses 15 minute time slots instead of the usual 10 minute time slots,

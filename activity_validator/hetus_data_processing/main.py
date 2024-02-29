@@ -231,13 +231,13 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    HETUS_PATH = load_data.HETUS_PATH
+    HETUS_PATH = "D:/Daten/HETUS Data/HETUS 2010 full set/DATA"
+    key = load_data.read_key_as_arg()
+
+    # process_all_hetus_countries_AT_separately(HETUS_PATH, key)
     # generate_all_dataset_variants(HETUS_PATH, key)
 
-    # process_all_hetus_countries_AT_separately(HETUS_PATH)
-
     # tests on smaller data sets
-    # data = load_data.load_all_hetus_files_except_AT()
-    data = load_data.load_hetus_files(["DE"], HETUS_PATH)
+    data = load_data.load_hetus_files(["DE"], HETUS_PATH, key)
     process_hetus_2010_data(data)
     # cross_validation_split(data)
