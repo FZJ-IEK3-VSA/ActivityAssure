@@ -81,28 +81,6 @@ def validate_lpg():
     )
 
 
-@utils.timing
-def cross_validation():
-    output_path = Path("data/lpg/results")
-
-    # load the parts of the data
-    data_path1 = Path("data/validation data sets/Validation Split 1")
-    data1 = validation.load_validation_data(data_path1)
-    data_path2 = Path("data/validation data sets/Validation Split 2")
-    data2 = validation.load_validation_data(data_path2)
-
-    # compare each category of data1 to each category of data2
-    metrics = validation.validate_all_combinations(data1, data2)
-    validation.save_file_per_indicator_per_combination(metrics, output_path)
-
-    # plot a heatmap for each metric
-    plot_path = output_path / "heatmaps"
-    indicator_heatmaps.plot_category_comparison(metrics, plot_path / "total")
-    indicator_heatmaps.plot_category_comparison_per_activity(
-        metrics, plot_path / "per_activity"
-    )
-
-
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
