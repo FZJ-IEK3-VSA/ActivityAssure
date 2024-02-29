@@ -12,19 +12,21 @@ from activity_validator.validation_statistics import ValidationSet
 
 
 @utils.timing
-def create_statistics_set():
+def create_statistics_set(base_path: Path):
     """
     Generate the statistics set needed for validation out of the
     activity profile data from the LoadProfileGenerator.
     """
     LPG_EXAMPLE_PATH = Path("examples/LoadProfileGenerator")
-    INPUT_DATA_PATH = Path("data/lpg/preprocessed_single")
+    INPUT_DATA_PATH = base_path / "lpg_simulations/preprocessed"
     LPG_MAPPING_FILE = LPG_EXAMPLE_PATH / "activity_mapping_lpg.json"
     PERSON_TRAIT_FILE = LPG_EXAMPLE_PATH / "person_characteristics.json"
 
-    VALIDATION_STATS_PATH = Path("data/validation data sets/de")
+    VALIDATION_STATS_PATH = (
+        base_path / "validation data sets/country_sex_work status_day type"
+    )
 
-    OUTPUT_PATH = Path("data/lpg/results_tmp")
+    OUTPUT_PATH = base_path / "lpg_validation"
 
     # load validation data statistics
     validation_statistics = ValidationSet.load(VALIDATION_STATS_PATH)
@@ -54,7 +56,7 @@ def create_statistics_set():
 
 
 @utils.timing
-def validate(compare_all_combinations: bool = False):
+def validate(base_path: Path, compare_all_combinations: bool = False):
     """
     Load input and validation statistics and compare them
     using indicators and heatmaps.
@@ -64,9 +66,9 @@ def validate(compare_all_combinations: bool = False):
                                      of profile categories will be checked;
                                      defaults to False
     """
-    lpg_statistics_path = Path("data/lpg/results")
-    valdiation_statistics_path = Path(
-        "data/validation data sets/country_sex_work status_day type_mapped"
+    lpg_statistics_path = base_path / "lpg_validation"
+    valdiation_statistics_path = (
+        base_path / "validation data sets/country_sex_work status_day type_mapped"
     )
 
     # load LPG statistics and validation statistics
@@ -121,5 +123,6 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    create_statistics_set()
-    validate()
+    BASE_RESULT_PATH = Path("data")
+    create_statistics_set(BASE_RESULT_PATH)
+    validate(BASE_RESULT_PATH)
