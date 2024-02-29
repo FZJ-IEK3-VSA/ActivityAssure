@@ -153,8 +153,8 @@ def validate_similar_categories(
 
 
 def validate_all_combinations(
-    input_data_dict: dict[ProfileCategory, ValidationStatistics],
-    validation_data_dict: dict[ProfileCategory, ValidationStatistics],
+    input_statistics: ValidationSet,
+    validation_statistics: ValidationSet,
 ) -> dict[
     ProfileCategory, dict[ProfileCategory, comparison_indicators.ValidationIndicators]
 ]:
@@ -170,10 +170,13 @@ def validate_all_combinations(
     """
     # validate each profile type individually
     metrics_dict = {}
-    for profile_type, input_data in input_data_dict.items():
+    for profile_type, input_data in input_statistics.statistics.items():
         # select matching validation data
         dict_per_type = {}
-        for validation_type, validation_data in validation_data_dict.items():
+        for (
+            validation_type,
+            validation_data,
+        ) in validation_statistics.statistics.items():
             # calcluate and store comparison metrics
             try:
                 _, metrics = comparison_indicators.calc_comparison_indicators(
