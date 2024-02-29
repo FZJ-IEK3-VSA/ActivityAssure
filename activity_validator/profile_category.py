@@ -31,10 +31,10 @@ class ProfileCategory:
 
         :return: list of attribute names
         """
-        title_val_dict = self.to_dict(True)
+        title_val_dict = self.to_title_dict(True)
         return list(title_val_dict.keys())
 
-    def to_dict(self, only_used_attributes: bool = False) -> dict[str, Any]:
+    def to_title_dict(self, only_used_attributes: bool = False) -> dict[str, Any]:
         """
         Returns the profile type as a dict, mapping the attribute
         titles to the corresponding values.
