@@ -7,9 +7,9 @@ from pathlib import Path
 
 from activity_validator.validation_statistics import ValidationStatistics
 
-# TODO: load paths from config file
 
 # default data paths
+# TODO: load paths from config file
 validation_path = Path("data/validation_data_sets/de_mapped")
 input_data_path = Path("data/lpg_validation/latest")
 

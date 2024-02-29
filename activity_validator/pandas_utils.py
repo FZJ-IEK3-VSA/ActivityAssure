@@ -91,7 +91,6 @@ def load_df(
     if isinstance(path, str):
         path = Path(path)
     # load the data
-    # TODO: for duration data sometimes DtypeWarning: Columns (1,3,5,6,8,9,10,11,12,13,14,15) have mixed types. Specify dtype option on import or set low_memory=False.
     data = pd.read_csv(path, index_col=0)
     if timedelta_index:
         # convert the index to timedeltas

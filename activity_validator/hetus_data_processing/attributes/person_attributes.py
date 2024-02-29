@@ -83,8 +83,8 @@ def determine_work_status(row: pd.Series) -> WorkStatus:
             row[col.Person.FULL_OR_PART_TIME], WorkStatus.work_full_or_part
         )
     if status == WorkStatus.unemployed_or_retired:
-        # try to determine if retired
-        # TODO check for retirement
+        # try to determine if retired or unemployed
+        # This only occurs for a single person in the whole HETUS 2010 data set
         return WorkStatus.unemployed_or_retired
     return status
 
