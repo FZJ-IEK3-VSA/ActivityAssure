@@ -14,6 +14,8 @@ import logging
 
 from cryptography.fernet import Fernet
 
+from activity_validator import utils
+
 
 HETUS_FILENAME_PREFIX = "TUS_SUF_A_"
 HETUS_FILENAME_SUFFIX = "_2010.csv"
@@ -148,6 +150,12 @@ def load_hetus_file_from_path(path: str, key: str | None = None) -> pd.DataFrame
     logging.info(
         f"Loaded HETUS file for {get_country(path)} with {len(data)} entries and {len(data.columns)} columns in {time.time() - start:.1f} s"
     )
+    if len(data) == 0:
+        raise utils.ActValidatorException(
+            f"The file '{path} exists but could not be loaded. It either has the wrong "
+            "format or it is encrypted. In the latter case, please specify the key for "
+            "decryption."
+        )
     column_names_to_capitals(data)
     return data
 
