@@ -53,6 +53,7 @@ def create_statistics_set():
     input_statistics.save(OUTPUT_PATH)
 
 
+@utils.timing
 def validate(compare_all_combinations: bool = False):
     """
     Load input and validation statistics and compare them
@@ -121,3 +122,4 @@ if __name__ == "__main__":
     )
 
     create_statistics_set()
+    validate()

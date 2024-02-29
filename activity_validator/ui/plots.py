@@ -206,6 +206,9 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     data_in = pandas_utils.load_df(path_in)
 
     # get the probability profile differences
+    data_val, data_in = comparison_indicators.check_data_compatibility(
+        data_val, data_in
+    )
     diff = comparison_indicators.calc_probability_curves_diff(data_val, data_in)
     diff = diff.T
     diff = diff[ACTIVITY_ORDER_FOR_PLOTS]  # reorder

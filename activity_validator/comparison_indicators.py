@@ -182,19 +182,6 @@ def calc_probability_curves_diff(
     :param input: input data probability profiles
     :return: difference of validation and input data
     """
-    if len(validation.columns) != len(input.columns):
-        raise utils.ActValidatorException("Dataframes have different resolutions")
-    if not validation.columns.equals(input.columns):
-        # resolution is the same, just the names are different
-        validation.columns = input.columns
-    if not validation.index.equals(input.index):
-        # in one of the dataframes not all activity types are present, or
-        # the order is different
-        # determine common index with all activity types
-        common_index = validation.index.union(input.index)
-        # add rows full of zeros for missing activity types
-        validation = validation.reindex(common_index, fill_value=0)
-        input = input.reindex(common_index, fill_value=0)
     return input - validation
 
 
@@ -292,6 +279,37 @@ def normalize(data: pd.DataFrame) -> pd.DataFrame:
     return normalized
 
 
+def check_data_compatibility(
+    validation: pd.DataFrame, input: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Checks if two daily probability profiles are compatible and can be
+    compared.
+    If the indices of the data differ, they are aligned. In case of different
+    sets of activities, the union of activities is used and zero rows are added
+    for missing activities.
+
+    :param validation: validation probability profiles
+    :param input: input probability profiles
+    :raises utils.ActValidatorException: if the profiles don't match
+    :return: the aligned validation and input profiles
+    """
+    if len(validation.columns) != len(input.columns):
+        raise utils.ActValidatorException("Dataframes have different resolutions")
+    if not validation.columns.equals(input.columns):
+        # resolution is the same, just the names are different
+        validation.columns = input.columns
+    if not validation.index.equals(input.index):
+        # in one of the dataframes not all activity types are present, or
+        # the order is different
+        # determine common index with all activity types
+        common_index = validation.index.union(input.index)
+        # add rows full of zeros for missing activity types
+        validation = validation.reindex(common_index, fill_value=0)
+        input = input.reindex(common_index, fill_value=0)
+    return validation, input
+
+
 def calc_comparison_indicators(
     validation_data: ValidationStatistics,
     input_data: ValidationStatistics,
@@ -316,6 +334,10 @@ def calc_comparison_indicators(
     else:
         prob_profiles_val = validation_data.probability_profiles
         prob_profiles_in = input_data.probability_profiles
+
+    prob_profiles_val, prob_profiles_in = check_data_compatibility(
+        prob_profiles_val, prob_profiles_in
+    )
     differences = calc_probability_curves_diff(prob_profiles_val, prob_profiles_in)
 
     # calc KPIs per activity
