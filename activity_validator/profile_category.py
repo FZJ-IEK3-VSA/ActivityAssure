@@ -54,28 +54,28 @@ class ProfileCategory:
             value_dict = {k: v for k, v in value_dict.items() if v is not None}
         return value_dict
 
-    def to_tuple(self) -> tuple[str, str, str, str]:
+    def to_list(self) -> list[str]:
         """
-        Returns a tuple representation of this profile type.
+        Returns a list representation of this profile type.
 
-        :return: a tuple containing the characteristics of this
-                 profile type
+        :return: a list containing the characteristics of this
+                 profile category
         """
-        return (
+        return [
             str(self.country),
             str(self.sex),
             str(self.work_status),
             str(self.day_type),
-        )
+        ]
 
     def __str__(self) -> str:
         """
         Returns a string representation of this profile type
 
         :return: a str containing the characteristics of this
-                 profile type
+                 profile category
         """
-        return "_".join(str(c) for c in self.to_tuple())
+        return "_".join(str(c) for c in self.to_list())
 
     def construct_filename(self, name: str = "") -> str:
         return f"{name}_{self}"
