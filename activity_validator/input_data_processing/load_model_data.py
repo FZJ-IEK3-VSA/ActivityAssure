@@ -42,13 +42,11 @@ def get_person_traits(
 
 @utils.timing
 def load_activity_profiles_from_csv(
-    path: str | Path,
+    path: Path,
     person_trait_file: str,
     resolution: timedelta = activity_profile.DEFAULT_RESOLUTION,
 ) -> list[SparseActivityProfile]:
     """Loads the activity profiles in csv format from the specified folder"""
-    if not isinstance(path, Path):
-        path = Path(path)
     assert Path(path).is_dir(), f"Directory does not exist: {path}"
     person_traits = load_person_characteristics(person_trait_file)
     activity_profiles = []

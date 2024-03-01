@@ -64,7 +64,7 @@ def calc_statistics_per_category(
 @utils.timing
 def process_model_data(
     input_path: Path,
-    custom_mapping_path: Path,
+    mapping_path: Path,
     person_trait_file: Path,
     validation_activities: list[str] = [],
 ) -> ValidationSet:
@@ -73,8 +73,8 @@ def process_model_data(
 
     :param input_path: input data directory
     :param output_path: destination path for validation statistics
-    :param custom_mapping_path: path of the activity mapping file
-    :param person_trait_file: path of the person trait file
+    :param mapping_path: path to the activity mapping file
+    :param person_trait_file: path to the person trait file
     :param validation_activities: optionally, the activities list of the validation
                                   data can be passed to get the same list, which
                                   makes comparison easier
@@ -83,9 +83,7 @@ def process_model_data(
     full_year_profiles = load_model_data.load_activity_profiles_from_csv(
         input_path, person_trait_file
     )
-    mapping, activities = activity_mapping.load_mapping_and_activities(
-        custom_mapping_path
-    )
+    mapping, activities = activity_mapping.load_mapping_and_activities(mapping_path)
     if validation_activities != activities:
         activities = activity_mapping.check_activity_lists(
             activities, validation_activities
