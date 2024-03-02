@@ -51,18 +51,6 @@ class ValidationIndicators:
             decoder=lambda s: pd.read_json(s, typ="series"),
         )
     )
-    diff_of_max: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
-        )
-    )
-    timediff_of_max: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
-        )
-    )
 
     mean_column: ClassVar[str] = "mean"
 
@@ -85,8 +73,6 @@ class ValidationIndicators:
             rmse,
             wasserstein,
             self.pearson_corr,
-            self.diff_of_max,
-            self.timediff_of_max,
         )
 
     def add_metric_means(self) -> None:
@@ -102,7 +88,6 @@ class ValidationIndicators:
         self.rmse[ValidationIndicators.mean_column] = self.rmse.mean()
         self.pearson_corr[ValidationIndicators.mean_column] = self.pearson_corr.mean()
         self.wasserstein[ValidationIndicators.mean_column] = self.wasserstein.mean()
-        self.diff_of_max[ValidationIndicators.mean_column] = self.diff_of_max.mean()
 
     def get_metric_means(self) -> dict[str, float]:
         """
@@ -118,7 +103,6 @@ class ValidationIndicators:
             "rmse": self.rmse.mean(),
             "pearson correlation": self.pearson_corr.mean(),
             "wasserstein": self.wasserstein.mean(),
-            "max difference": self.diff_of_max.abs().mean(),
         }
         return metric_means
 
@@ -209,30 +193,6 @@ def calc_wasserstein(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
         for i in data1.index
     ]
     return pd.Series(distances, index=data1.index)
-
-
-def get_max_position(data: pd.DataFrame) -> pd.Series:
-    max_index = data.idxmax(axis=1)
-    max_pos = max_index.apply(lambda x: data.columns.get_loc(x))
-    return max_pos
-
-
-def circular_difference(diff, max_value):
-    half_max = max_value / 2
-    if diff > 0:
-        return diff if diff <= half_max else diff - max_value
-    return diff if diff >= -half_max else diff + max_value
-
-
-def calc_time_of_max_diff(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
-    max_pos1 = get_max_position(data1)
-    max_pos2 = get_max_position(data2)
-    diff = max_pos2 - max_pos1
-    length = len(data1.columns)
-    # take day-wrap into account: calculate the appropriate distance
-    capped_diff = diff.apply(lambda d: circular_difference(d, length))
-    difftime = capped_diff.apply(lambda d: timedelta(days=d / length))
-    return difftime
 
 
 def ks_test_per_activity(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
@@ -346,13 +306,8 @@ def calc_comparison_indicators(
     rmse = calc_rmse(differences)
     pearson_corr = calc_pearson_coeff(prob_profiles_val, prob_profiles_in)
     wasserstein = calc_wasserstein(prob_profiles_val, prob_profiles_in)
-    # calc difference of respective maximums
-    max_diff = prob_profiles_in.max(axis=1) - prob_profiles_val.max(axis=1)
-    time_of_max_diff = calc_time_of_max_diff(prob_profiles_val, prob_profiles_in)
 
-    metrics = ValidationIndicators(
-        mae, bias, rmse, wasserstein, pearson_corr, max_diff, time_of_max_diff
-    )
+    metrics = ValidationIndicators(mae, bias, rmse, wasserstein, pearson_corr)
     if add_kpi_means:
         metrics.add_metric_means()
     return differences, metrics
