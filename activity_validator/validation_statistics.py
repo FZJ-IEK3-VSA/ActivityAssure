@@ -221,7 +221,7 @@ class ValidationSet:
         names = any_profile_type.get_attribute_names()
         # collect the profile type attributes for each category
         index = pd.MultiIndex.from_tuples(
-            [pt.to_tuple() for pt in self.statistics.keys()], names=names
+            [pt.to_list() for pt in self.statistics.keys()], names=names
         )
         # collect the category sizes
         sizes = [stat.category_size for stat in self.statistics.values()]

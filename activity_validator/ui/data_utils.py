@@ -7,7 +7,7 @@ from activity_validator.profile_category import ProfileCategory
 
 
 def ptype_to_label(profile_type: ProfileCategory) -> str:
-    return " - ".join(profile_type.to_tuple())
+    return " - ".join(profile_type.to_list())
 
 
 def ptype_from_label(profile_type_str: str) -> ProfileCategory:

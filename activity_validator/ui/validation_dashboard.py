@@ -18,7 +18,7 @@ prob_paths = data_utils.get_profile_type_paths(
 )
 countries = list({p.country for p in prob_paths.keys()})
 global_profile_types = {dataclasses.replace(p, country="") for p in prob_paths.keys()}
-global_type_str = [" - ".join(pt.to_tuple()[1:]) for pt in prob_paths.keys()]
+global_type_str = [" - ".join(pt.to_list()[1:]) for pt in prob_paths.keys()]
 
 
 tab1_content = html.Div([MainValidationView()])
