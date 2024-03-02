@@ -91,7 +91,7 @@ def validate(base_path: Path, compare_all_combinations: bool = False):
         pandas_utils.save_df(
             metrics_df,
             "",
-            f"indicators_per_category",
+            "indicators_per_category",
             base_path=result_subdir,
         )
 

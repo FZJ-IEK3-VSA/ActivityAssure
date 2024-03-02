@@ -4,7 +4,7 @@ including all associated attribute values.
 """
 
 from pathlib import Path
-from typing import Any, ClassVar, Collection, Sequence
+from typing import Any, Collection, Sequence
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
@@ -154,7 +154,7 @@ class ProfileCategory:
         if isinstance(values, str):
             # pandas does not put single index values in a list
             values = [values]
-        assert len(names) == len(values), f"Number of names must match number of values"
+        assert len(names) == len(values), "Number of names must match number of values"
         value_dict = dict(zip(names, values))
         # extract used category attributes by their names
         country = value_dict.get(categorization_attributes.Country.title())
