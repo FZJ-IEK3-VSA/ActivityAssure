@@ -3,6 +3,7 @@ Functions for the whole input data processing, starting from loading
 data files and resulting in a complete validation statistics set.
 """
 
+from datetime import timedelta
 from pathlib import Path
 from activity_validator import activity_mapping, utils
 from activity_validator.activity_profile import (
@@ -66,7 +67,9 @@ def process_model_data(
     input_path: Path,
     mapping_path: Path,
     person_trait_file: Path,
+    resolution: timedelta,
     validation_activities: list[str] = [],
+    categories_per_person: bool = False,
 ) -> ValidationSet:
     """
     Processes the input data to produce the validation statistics.
@@ -78,10 +81,13 @@ def process_model_data(
     :param validation_activities: optionally, the activities list of the validation
                                   data can be passed to get the same list, which
                                   makes comparison easier
+    :param categories_per_person: if True, the person names will be part of the
+                                  person categorization, meaning that each person
+                                  will get their own categories; defaults to False
     """
     # load and preprocess all input data
     full_year_profiles = load_model_data.load_activity_profiles_from_csv(
-        input_path, person_trait_file
+        input_path, person_trait_file, resolution, categories_per_person
     )
     mapping, activities = activity_mapping.load_mapping_and_activities(mapping_path)
     if validation_activities != activities:
