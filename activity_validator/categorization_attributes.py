@@ -8,7 +8,7 @@ from enum import StrEnum
 
 class Country(str):
     """
-    Specifies the home country of a person:
+    Specifies the home country of a person
     """
 
     @staticmethod
@@ -69,6 +69,16 @@ class DayType(StrEnum):
     @staticmethod
     def title() -> str:
         return "day type"
+
+
+class Person(str):
+    """
+    Specifies the name or other identifier of a person
+    """
+
+    @staticmethod
+    def title() -> str:
+        return "person"
 
 
 def get_default_categorization_attributes() -> list[str]:

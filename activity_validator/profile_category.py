@@ -4,7 +4,7 @@ including all associated attribute values.
 """
 
 from pathlib import Path
-from typing import Any, Collection
+from typing import Any, ClassVar, Collection, Sequence
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
@@ -80,6 +80,18 @@ class ProfileCategory:
     def construct_filename(self, name: str = "") -> str:
         return f"{name}_{self}"
 
+    def to_personal_category(self, person: str) -> "PersonalProfileCategory":
+        """
+        Given a person name, creates a PersonalProfileCategory object out of
+        this ProfileCategory object.
+
+        :param person: the person name for the new category object
+        :return: the new category object including the person name
+        """
+        return PersonalProfileCategory(
+            self.country, self.sex, self.work_status, self.day_type, person
+        )
+
     @staticmethod
     def from_filename(filepath: Path) -> "ProfileCategory":
         components = filepath.stem.split("_")
@@ -91,7 +103,7 @@ class ProfileCategory:
         return profile_type
 
     @staticmethod
-    def from_iterable(values: Collection[str | None]) -> "ProfileCategory":
+    def from_iterable(values: Sequence[str | None]) -> "ProfileCategory":
         """
         Creates a ProfileType object from an iterable containing
         the characteristics as strings.
@@ -99,24 +111,31 @@ class ProfileCategory:
         :param values: the characteristics as strs
         :return: the corresponding ProfileType object
         """
-        assert len(values) == 4, f"Invalid number of characteristics: {values}"
+        assert 4 <= len(values) <= 5, f"Invalid number of characteristics: {values}"
+        if len(values) == 5:
+            person = values[-1] or ""
+            values = values[:4]
+        else:
+            person = ""
         # extract characteristics
-        country, sex, work_status, day_type = values
+        country, sex_str, work_status_str, day_type_str = values
         try:
             # convert the strings to enum values and create the ProfileType
-            profile_type = ProfileCategory(
-                country,
-                categorization_attributes.Sex(sex) if sex else None,
-                (
-                    categorization_attributes.WorkStatus(work_status)
-                    if work_status
-                    else None
-                ),
-                categorization_attributes.DayType(day_type) if day_type else None,
+            sex = categorization_attributes.Sex(sex_str) if sex_str else None
+            work_status = (
+                categorization_attributes.WorkStatus(work_status_str)
+                if work_status_str
+                else None
+            )
+            day_type = (
+                categorization_attributes.DayType(day_type_str)
+                if day_type_str
+                else None
             )
         except KeyError as e:
             assert False, f"Invalid enum key: {e}"
-        return profile_type
+        pc = PersonalProfileCategory(country, sex, work_status, day_type, person)
+        return pc
 
     @staticmethod
     def from_index_tuple(
@@ -142,4 +161,30 @@ class ProfileCategory:
         sex = value_dict.get(categorization_attributes.Sex.title())
         work_status = value_dict.get(categorization_attributes.WorkStatus.title())
         day_type = value_dict.get(categorization_attributes.DayType.title())
-        return ProfileCategory.from_iterable([country, sex, work_status, day_type])
+        person = value_dict.get(categorization_attributes.Person.title())
+        return ProfileCategory.from_iterable(
+            [country, sex, work_status, day_type, person]
+        )
+
+
+@dataclass(frozen=True)
+class PersonalProfileCategory(ProfileCategory):
+    """
+    A more specialized profile category that also includes
+    the name of the person, so that each person gets their own
+    set categories (usually two, working day and rest day).
+    """
+
+    person: str = ""
+
+    def to_title_dict(self, only_used_attributes: bool = False) -> dict[str, Any]:
+        d = super().to_title_dict(only_used_attributes)
+        if self.person:
+            d[categorization_attributes.Person.title()] = self.person
+        return d
+
+    def to_list(self) -> list[str]:
+        t = super().to_list()
+        if self.person:
+            t.append(self.person)
+        return t
