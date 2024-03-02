@@ -2,6 +2,7 @@
 Example script for validation of the LoadProfileGenerator
 """
 
+from datetime import timedelta
 import logging
 from pathlib import Path
 
@@ -26,7 +27,7 @@ def create_statistics_set(base_path: Path):
         base_path / "validation_data_sets/country_sex_work status_day type"
     )
 
-    OUTPUT_PATH = base_path / "lpg_validation"
+    resolution = timedelta(minutes=1)
 
     # load validation data statistics
     validation_statistics = ValidationSet.load(VALIDATION_STATS_PATH)
@@ -36,7 +37,9 @@ def create_statistics_set(base_path: Path):
         INPUT_DATA_PATH,
         LPG_MAPPING_FILE,
         PERSON_TRAIT_FILE,
+        resolution,
         validation_statistics.activities,
+        True,
     )
 
     # if necessary, apply another mapping to merge activities

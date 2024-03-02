@@ -11,7 +11,7 @@ from typing import ClassVar
 import pandas as pd
 
 from activity_validator import utils
-from activity_validator.profile_category import ProfileCategory
+from activity_validator.profile_category import PersonProfileCategory, ProfileCategory
 from activity_validator.pandas_utils import (
     save_df,
     load_df,
@@ -153,6 +153,25 @@ class ValidationSet:
     ACTIVITIES_DIR: ClassVar = "activities"
     ACTIVITIES_FILE: ClassVar = "activities.json"
     AVAILABLE_ACTIVITIES_KEY: ClassVar = "available activities"
+
+    def get_matching_statistics(
+        self, category: ProfileCategory
+    ) -> ValidationStatistics | None:
+        """
+        Returns matching category statistics for comparison. If not
+        exactly the same category is present and the category included
+        a person name, looks for the same category without person name.
+
+        :param category: the category to match
+        :return: the matching statistics, if there are any
+        """
+        if category in self.statistics:
+            # return the same category if it exists
+            return self.statistics[category]
+        if isinstance(category, PersonProfileCategory):
+            ppc = category.get_category_without_person()
+            return self.statistics.get(ppc, None)
+        return None
 
     def filter_categories(self, min_size: int):
         """
@@ -312,7 +331,7 @@ class ValidationSet:
     @utils.timing
     @staticmethod
     def load(base_path: Path) -> "ValidationSet":
-        assert base_path.is_dir(), f"Validation data directory not found: {base_path}"
+        assert base_path.is_dir(), f"Statistics directory not found: {base_path}"
         subdir_path = base_path / ValidationStatistics.PROBABILITY_PROFILE_DIR
         probability_profile_data = ValidationSet.load_validation_data_subdir(
             subdir_path
@@ -327,7 +346,7 @@ class ValidationSet:
             probability_profile_data.keys()
             == activity_frequency_data.keys()
             == activity_duration_data.keys()
-        ), "Missing data for some of the profile types"
+        ), "Missing statistics for some of the profile categories"
 
         category_sizes = ValidationSet.load_category_sizes(base_path)
         statistics = {
@@ -340,7 +359,7 @@ class ValidationSet:
             )
             for profile_type, prob_data in probability_profile_data.items()
         }
-        logging.info(f"Loaded statistics for {len(statistics)} profile types")
+        logging.info(f"Loaded statistics for {len(statistics)} profile categories")
 
         # load activities
         activities = ValidationSet.load_activities(base_path)

@@ -120,7 +120,12 @@ def validate_per_category(
     metrics_dict, scaled_dict, normed_dict = {}, {}, {}
     for profile_type, input_data in input_statistics.statistics.items():
         # select matching validation data
-        validation_data = validation_statistics.statistics[profile_type]
+        validation_data = validation_statistics.get_matching_statistics(profile_type)
+        if validation_data is None:
+            logging.warn(
+                f"No matching validation data found for category {profile_type}"
+            )
+            continue
         # calcluate and store comparison metrics
         _, metrics, scaled, normed = comparison_indicators.calc_all_indicator_variants(
             validation_data, input_data, False, profile_type, output_path

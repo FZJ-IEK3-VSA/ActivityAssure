@@ -4,11 +4,11 @@ person characteristics.
 """
 
 import logging
-from activity_validator import activity_profile, utils
+from activity_validator import utils
 from activity_validator.activity_profile import SparseActivityProfile
 from datetime import timedelta
 from pathlib import Path
-from activity_validator.profile_category import PersonalProfileCategory, ProfileCategory
+from activity_validator.profile_category import ProfileCategory
 
 import json
 

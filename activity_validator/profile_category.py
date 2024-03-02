@@ -80,7 +80,7 @@ class ProfileCategory:
     def construct_filename(self, name: str = "") -> str:
         return f"{name}_{self}"
 
-    def to_personal_category(self, person: str) -> "PersonalProfileCategory":
+    def to_personal_category(self, person: str) -> "PersonProfileCategory":
         """
         Given a person name, creates a PersonalProfileCategory object out of
         this ProfileCategory object.
@@ -88,7 +88,7 @@ class ProfileCategory:
         :param person: the person name for the new category object
         :return: the new category object including the person name
         """
-        return PersonalProfileCategory(
+        return PersonProfileCategory(
             self.country, self.sex, self.work_status, self.day_type, person
         )
 
@@ -111,12 +111,11 @@ class ProfileCategory:
         :param values: the characteristics as strs
         :return: the corresponding ProfileType object
         """
-        assert 4 <= len(values) <= 5, f"Invalid number of characteristics: {values}"
-        if len(values) == 5:
+        length = len(values)
+        assert 4 <= length <= 5, f"Invalid number of characteristics: {values}"
+        if length == 5:
             person = values[-1] or ""
             values = values[:4]
-        else:
-            person = ""
         # extract characteristics
         country, sex_str, work_status_str, day_type_str = values
         try:
@@ -134,8 +133,9 @@ class ProfileCategory:
             )
         except KeyError as e:
             assert False, f"Invalid enum key: {e}"
-        pc = PersonalProfileCategory(country, sex, work_status, day_type, person)
-        return pc
+        if length == 5 and person:
+            return PersonProfileCategory(country, sex, work_status, day_type, person)
+        return ProfileCategory(country, sex, work_status, day_type)
 
     @staticmethod
     def from_index_tuple(
@@ -168,7 +168,7 @@ class ProfileCategory:
 
 
 @dataclass(frozen=True)
-class PersonalProfileCategory(ProfileCategory):
+class PersonProfileCategory(ProfileCategory):
     """
     A more specialized profile category that also includes
     the name of the person, so that each person gets their own
@@ -179,12 +179,18 @@ class PersonalProfileCategory(ProfileCategory):
 
     def to_title_dict(self, only_used_attributes: bool = False) -> dict[str, Any]:
         d = super().to_title_dict(only_used_attributes)
-        if self.person:
-            d[categorization_attributes.Person.title()] = self.person
+        d[categorization_attributes.Person.title()] = self.person
         return d
 
     def to_list(self) -> list[str]:
         t = super().to_list()
-        if self.person:
-            t.append(self.person)
+        t.append(self.person)
         return t
+
+    def get_category_without_person(self) -> ProfileCategory:
+        """
+        Returns a more general profile category object without a person name
+
+        :return: the category object without person name
+        """
+        return ProfileCategory(self.country, self.sex, self.work_status, self.day_type)
