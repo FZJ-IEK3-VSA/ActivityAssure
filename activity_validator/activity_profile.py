@@ -14,9 +14,6 @@ from activity_validator.hetus_data_processing import hetus_constants
 from activity_validator.profile_category import ProfileCategory
 from activity_validator import utils
 
-#: default resolution for input data # TODO: remove?
-DEFAULT_RESOLUTION = timedelta(minutes=1)
-
 
 @dataclass
 class ActivityProfileEntry:
@@ -103,7 +100,7 @@ class SparseActivityProfile:
     def load_from_csv(
         path: Path,
         profile_type: ProfileCategory,
-        resolution: timedelta = DEFAULT_RESOLUTION,
+        resolution: timedelta,
         offset: timedelta | None = None,
     ) -> "SparseActivityProfile":
         """
