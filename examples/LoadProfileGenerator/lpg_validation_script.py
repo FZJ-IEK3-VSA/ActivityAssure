@@ -4,7 +4,6 @@ the best and worst person categories.
 """
 
 import pandas as pd
-from pathlib import Path
 
 from activity_validator.comparison_indicators import ValidationIndicators
 

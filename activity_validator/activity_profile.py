@@ -540,8 +540,7 @@ class ExpandedActivityProfiles:
             start = 0
             # iterate through groups of consecutive slots with the same code
             for code, group in itertools.groupby(row):
-                l = list(group)
-                length = len(l)
+                length = len(list(group))
                 entries.append(ActivityProfileEntry(code, start, length))
                 start += length
             # create ActivityProfile objects out of the activity entries
