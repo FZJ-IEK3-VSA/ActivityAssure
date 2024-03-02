@@ -75,9 +75,11 @@ def all_profile_types_of_same_country(country) -> list[ProfileCategory]:
         categorization_attributes.DayType.work,
         categorization_attributes.DayType.no_work,
     ]
+    # get all possible combinations; the last attribute is varied first
     combinations: Iterable = itertools.product(
         [country], day_types, work_statuses, sexes
     )
+    # change the attribute order so it matches the from_iterable function
     combinations = [(c, s, w, d) for c, d, w, s in combinations]
     profile_types = [ProfileCategory.from_iterable(c) for c in combinations]
     return profile_types
