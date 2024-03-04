@@ -2,7 +2,7 @@
 Loads activity profiles from the result database file of the LoadProfileGenerator
 and creates csv files from them that can be used in the validation framework.
 Also generates a preliminary activity mapping in the process using the activity
-categories defined in the LoadProfileGenerators. Some categories cannot be 
+categories defined in the LoadProfileGenerators. Some categories cannot be
 assigned an activity unambiguously, so the mapping file needs to be checked
 and completed manually afterwards.
 If a mapping file already exists, it is loaded and expanded if necessary.
@@ -54,7 +54,7 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
     assert file.is_file(), f"File does not exist: {file}"
 
     # load activity mapping
-    mapping_path = Path("examples/activity_mapping_lpg.json")
+    mapping_path = Path("examples/LoadProfileGenerator/activity_mapping_lpg.json")
     mapping = activity_mapping.load_mapping(mapping_path)
 
     # get all activities from LPG result database
@@ -94,8 +94,11 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
     base_result_dir.mkdir(parents=True, exist_ok=True)
     for person, rows in rows_by_person.items():
         data = pd.DataFrame(rows, columns=["Timestep", "Date", "Activity"])
-        short_name = person.split(" ")[1]
-        result_path = base_result_dir / f"{short_name}_{file.stem}.csv"
+        # result file pattern: "CHR01_142.sqlite"
+        repetition = file.stem.split("_")[-1]
+        # LPG person name pattern: "CHR01 Sami (25/Male)"
+        person_id = person.split(" (")[0]
+        result_path = base_result_dir / f"{person_id}_{repetition}.csv"
         data.to_csv(result_path)
 
 
@@ -106,7 +109,7 @@ if __name__ == "__main__":
         "--input",
         type=str,
         help="Root directory of the raw input data",
-        default="data/lpg/raw/",
+        default="data/lpg_simulations/raw",
         required=False,
     )
     parser.add_argument(
@@ -114,7 +117,7 @@ if __name__ == "__main__":
         "--output",
         type=str,
         help="Root directory for the preprocessed result data",
-        default="data/lpg/preprocessed",
+        default="data/lpg_simulations/preprocessed",
         required=False,
     )
     args = parser.parse_args()

@@ -12,21 +12,32 @@ from activity_validator.profile_category import ProfileCategory
 
 import json
 
+#: in input filenames, delimits the person name (first part) from the rest
+FILENAME_PERSON_DELIMITER = "_"
+
 
 def load_person_characteristics(path: str) -> dict:
     with open(path, encoding="utf-8") as f:
         traits: dict[str, dict] = json.load(f)
-    return {name: ProfileCategory.from_dict(d) for name, d in traits.items()}  # type: ignore
+    message = (
+        f"The person name delimiter '{FILENAME_PERSON_DELIMITER}' was found as a key in the "
+        "characteristics file 'path'. This is not allowed. The delimiter is used to separate the "
+        "person ID from additional information in the filename, so a person ID must not contain "
+        "the delimiter."
+    )
+    assert all(FILENAME_PERSON_DELIMITER not in name for name in traits.keys()), message
+    return {name: ProfileCategory.from_dict(d) for name, d in traits.items()}  # type: ignore[attr-defined]
 
 
 def get_person_from_filename(file: Path) -> str:
     """
-    Extracts the person name from the path of an activity profile file
+    Extracts the person name from the path of an activity profile file.
 
     :param file: the path of an activity profile file
     :return: the person name the profile belongs to
     """
-    return file.stem.split("_")[0]
+    # find the first delimiter and remove everything from there on
+    return file.stem.split(FILENAME_PERSON_DELIMITER)[0]
 
 
 def get_person_traits(

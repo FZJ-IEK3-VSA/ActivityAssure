@@ -43,17 +43,6 @@ WORK_STATUS_MAPPING = {
 }
 
 
-def person_name(full_name: str) -> str:
-    """
-    Extracts the actual person name out of the
-    full name string, e.g.: 'CHR01 Rubi' -> 'Rubi'
-
-    :param full_name: the full name incl. household id
-    :return: the short name
-    """
-    return full_name.split(" ")[1]
-
-
 def define_person_mapping(database_path: Path, result_path: Path):
     """
     Extracts person information from the LoadProfileGenerator database
@@ -74,7 +63,7 @@ from tblPersons inner join tblCHHPersons on tblPersons.ID == tblCHHPersons.Perso
 
     # map all fields
     mapping = {
-        person_name(person): profile_category.ProfileCategory(
+        person: profile_category.ProfileCategory(
             "DE", GENDER_MAPPING[gender], WORK_STATUS_MAPPING[tag]
         )
         for person, gender, tag in rows
