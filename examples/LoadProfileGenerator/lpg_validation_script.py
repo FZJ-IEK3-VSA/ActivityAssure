@@ -16,7 +16,9 @@ mean_idx = ValidationIndicators.mean_column
 
 data = pd.read_csv(base_path)
 data_scaled = pd.read_csv(base_path.replace("default", "scaled"))
-data_scaled = data_scaled.loc[:, ("mae", "rmse", "bias", "wasserstein")].add_prefix("scaled_")  # type: ignore
+data_scaled = data_scaled.loc[:, ["mae", "rmse", "bias", "wasserstein"]].add_prefix(
+    "scaled_"
+)
 data = pd.concat([data, data_scaled], axis=1)
 
 data["diff_mae"] = data["scaled_mae"] - data["mae"]
@@ -25,7 +27,6 @@ print(data.describe())
 
 # data.dropna(inplace=True)
 
-data = data
 data = data[data.iloc[:, 1] == mean_idx]
 # filter category
 # data = data[
@@ -35,4 +36,8 @@ data = data[data.iloc[:, 1] == mean_idx]
 # filter activity
 
 data = data.sort_values(by="prod")
-print(data)
+
+print("--- Best")
+print(data[:20])
+print("\n--- Worst")
+print(data[-20:])
