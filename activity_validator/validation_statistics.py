@@ -252,9 +252,7 @@ class ValidationSet:
             # not be loaded anymore
             sizes_df.reset_index(inplace=True)
             cols = list(sizes_df.columns)
-            sizes_df = sizes_df.reset_index().pivot(
-                index=cols[1:-1], columns=cols[0], values=colname
-            )
+            sizes_df = sizes_df.pivot(index=cols[1:-1], columns=cols[0], values=colname)
         return sizes_df
 
     @utils.timing
