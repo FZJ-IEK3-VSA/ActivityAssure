@@ -74,7 +74,8 @@ def extract_day_profiles(
     # this also removes profiles with missing activity durations
     day_profiles = filter_complete_day_profiles(day_profiles)
     # remove days with only a single activity (e.g., vacation)
-    day_profiles = filter_min_activity_count(day_profiles, 2)
+    # TODO: commented out to not distort the probabilities; can be removed if this works
+    # day_profiles = filter_min_activity_count(day_profiles, 2)
     logging.info(f"Extracted {len(day_profiles)} single-day activity profiles")
     return day_profiles
 
