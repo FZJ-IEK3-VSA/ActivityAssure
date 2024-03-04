@@ -169,7 +169,7 @@ def stacked_prob_curves(filepath: Path | None) -> Figure | None:
     )
     fig.update_xaxes(tickformat="%H:%M")
     fig.update_layout(
-        title=f"Stacked Probability Curves",
+        title="Stacked Probability Curves",
         xaxis_title="Time",
         yaxis_title="Probability",
     )
@@ -222,7 +222,7 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     )
     fig.update_xaxes(tickformat="%H:%M")
     fig.update_layout(
-        title=f"Probability Curve Differences (Input - Validation)",
+        title="Probability Curve Differences (Input - Validation)",
         xaxis_title="Time",
         yaxis_title="Probability Difference",
     )

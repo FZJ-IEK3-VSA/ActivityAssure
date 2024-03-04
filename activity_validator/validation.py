@@ -10,16 +10,16 @@ from typing import Iterable
 
 import pandas as pd
 
-from activity_validator.profile_category import ProfileCategory
 from activity_validator import (
     categorization_attributes,
     comparison_indicators,
     pandas_utils,
     utils,
 )
+from activity_validator.profile_category import ProfileCategory
 from activity_validator.validation_statistics import (
-    ValidationStatistics,
     ValidationSet,
+    ValidationStatistics,
 )
 
 
@@ -86,7 +86,7 @@ def all_profile_types_of_same_country(country) -> list[ProfileCategory]:
 
 
 def indicator_dict_to_df(
-    metrics: dict[ProfileCategory, comparison_indicators.ValidationIndicators]
+    metrics: dict[ProfileCategory, comparison_indicators.ValidationIndicators],
 ) -> pd.DataFrame:
     """
     Convert the per-category metrics dict to a single dataframe
