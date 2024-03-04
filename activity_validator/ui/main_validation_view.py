@@ -1,10 +1,7 @@
-from pathlib import Path
-from dash import Dash, Output, Input, State, html, dcc, callback, no_update, MATCH  # type: ignore
+from dash import Output, Input, State, html, dcc, callback, no_update, MATCH  # type: ignore
 import dash_bootstrap_components as dbc  # type: ignore
-import plotly.express as px  # type: ignore
 import uuid
 
-from activity_validator import activity_profile
 from activity_validator import comparison_indicators
 from activity_validator.ui import data_utils, datapaths, plots
 
@@ -18,46 +15,61 @@ class MainValidationView(html.Div):
 
     class ids:
         # A set of functions that create pattern-matching callbacks of the subcomponents
-        dropdown_valid = lambda aio_id: {
-            "component": "MainValidationView",
-            "subcomponent": "dropdown_validation",
-            "aio_id": aio_id,
-        }
-        dropdown_input = lambda aio_id: {
-            "component": "MainValidationView",
-            "subcomponent": "dropdown_input",
-            "aio_id": aio_id,
-        }
-        checklist_sync = lambda aio_id: {
-            "component": "MainValidationView",
-            "subcomponent": "checklist_sync",
-            "aio_id": aio_id,
-        }
-        validation_graph = lambda aio_id: {
-            "component": "MainValidationView",
-            "subcomponent": "validation probability graph",
-            "aio_id": aio_id,
-        }
-        input_graph = lambda aio_id: {
-            "component": "MainValidationView",
-            "subcomponent": "input probability graph",
-            "aio_id": aio_id,
-        }
-        difference_graph = lambda aio_id: {
-            "component": "MainValidationView",
-            "subcomponent": "probability difference graph",
-            "aio_id": aio_id,
-        }
-        kpi_view = lambda aio_id: {
-            "component": "MainValidationView",
-            "subcomponent": "kpi view",
-            "aio_id": aio_id,
-        }
-        per_activity_graphs = lambda aio_id: {
-            "component": "MainValidationView",
-            "subcomponent": "graphs per activity",
-            "aio_id": aio_id,
-        }
+        def dropdown_valid(aio_id):
+            return {
+                "component": "MainValidationView",
+                "subcomponent": "dropdown_validation",
+                "aio_id": aio_id,
+            }
+
+        def dropdown_input(aio_id):
+            return {
+                "component": "MainValidationView",
+                "subcomponent": "dropdown_input",
+                "aio_id": aio_id,
+            }
+
+        def checklist_sync(aio_id):
+            return {
+                "component": "MainValidationView",
+                "subcomponent": "checklist_sync",
+                "aio_id": aio_id,
+            }
+
+        def validation_graph(aio_id):
+            return {
+                "component": "MainValidationView",
+                "subcomponent": "validation probability graph",
+                "aio_id": aio_id,
+            }
+
+        def input_graph(aio_id):
+            return {
+                "component": "MainValidationView",
+                "subcomponent": "input probability graph",
+                "aio_id": aio_id,
+            }
+
+        def difference_graph(aio_id):
+            return {
+                "component": "MainValidationView",
+                "subcomponent": "probability difference graph",
+                "aio_id": aio_id,
+            }
+
+        def kpi_view(aio_id):
+            return {
+                "component": "MainValidationView",
+                "subcomponent": "kpi view",
+                "aio_id": aio_id,
+            }
+
+        def per_activity_graphs(aio_id):
+            return {
+                "component": "MainValidationView",
+                "subcomponent": "graphs per activity",
+                "aio_id": aio_id,
+            }
 
     synchronize_option = "Synchronize data types"
 
