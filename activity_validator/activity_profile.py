@@ -139,6 +139,20 @@ class SparseActivityProfile:
         profile.filename = path.name
         return profile
 
+    def to_df(self) -> pd.DataFrame:
+        """
+        Turns this activity profile into a DataFrame
+
+        :return: activity profile as DataFrame
+        """
+        timesteps = [a.start for a in self.activities]
+        dates = [self.offset + t * self.resolution for t in timesteps]
+        activities = [a.name for a in self.activities]
+        df = pd.DataFrame(
+            {"Timestep": timesteps, "Date": dates, "Activity": activities}
+        )
+        return df
+
     def remove_timestep_offset(self) -> None:
         """
         Removes any timestep offset, so that the first activity
