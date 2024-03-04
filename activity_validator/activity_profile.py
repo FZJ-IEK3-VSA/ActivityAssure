@@ -124,10 +124,17 @@ class SparseActivityProfile:
             lambda row: ActivityProfileEntry(row[activity_col], row[timestep_col]),
             axis=1,
         ).to_list()
-        if offset is None:
-            # calculate offset (timedelta since last midnight)
+        if date_col in data.columns:
+            # calculate offset based on the datetime column in the data (timedelta since last midnight)
             first_date = datetime.fromisoformat(data[date_col][0])
-            offset = first_date - datetime.combine(first_date.date(), time())
+            offset_ = first_date - datetime.combine(first_date.date(), time())
+            assert (
+                offset is None or offset == offset_
+            ), f"Passed offset ({offset}) and calculated offset ({offset_}) don't match."
+            offset = offset_
+        elif offset is None:
+            # default offset of 0 (profile starts at 00:00)
+            offset = timedelta(0)
         assert offset % resolution == timedelta(
             0
         ), "Start time has to be a divisor of the resolution"
