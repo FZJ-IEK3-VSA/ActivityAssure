@@ -102,6 +102,17 @@ class MainValidationView(html.Div):
             datapaths.input_data_path / datapaths.prob_dir
         )
         all_types = sorted(list(set(validation_types) | set(input_types)))
+        common_types = sorted(list(set(validation_types) & set(input_types)))
+        if not common_types:
+            # no common categories - select the first category each
+            initial_val = validation_types[0]
+            initial_input = input_types[0]
+            initial_sync = []
+        else:
+            # select the first common category
+            initial_val = common_types[0]
+            initial_input = common_types[0]
+            initial_sync = [MainValidationView.synchronize_option]
 
         # Define the component's layout
         super().__init__(
@@ -133,8 +144,8 @@ class MainValidationView(html.Div):
                                                 dbc.Row(
                                                     [
                                                         dcc.Dropdown(
-                                                            all_types,
-                                                            input_types[0],
+                                                            validation_types,
+                                                            initial_val,
                                                             id=self.ids.dropdown_valid(
                                                                 aio_id
                                                             ),
@@ -143,7 +154,7 @@ class MainValidationView(html.Div):
                                                         ),
                                                         dcc.Dropdown(
                                                             all_types,
-                                                            input_types[0],
+                                                            initial_input,
                                                             id=self.ids.dropdown_input(
                                                                 aio_id
                                                             ),
@@ -159,9 +170,7 @@ class MainValidationView(html.Div):
                                                     options=[
                                                         MainValidationView.synchronize_option
                                                     ],
-                                                    value=[
-                                                        MainValidationView.synchronize_option
-                                                    ],
+                                                    value=initial_sync,
                                                     id=self.ids.checklist_sync(aio_id),
                                                 )
                                             ),
