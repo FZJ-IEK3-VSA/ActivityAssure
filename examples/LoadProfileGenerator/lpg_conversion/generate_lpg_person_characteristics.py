@@ -70,7 +70,7 @@ from tblPersons inner join tblCHHPersons on tblPersons.ID == tblCHHPersons.Perso
     }
 
     # write all characteristics to a json file
-    dict_mapping = {n: p.to_dict() for n, p in mapping.items()}  # type: ignore
+    dict_mapping = {n: p.to_dict() for n, p in sorted(mapping.items())}  # type: ignore
     result_path.parent.mkdir(parents=True, exist_ok=True)
     with open(result_path, "w+", encoding="utf-8") as f:
         json.dump(dict_mapping, f, indent=4)

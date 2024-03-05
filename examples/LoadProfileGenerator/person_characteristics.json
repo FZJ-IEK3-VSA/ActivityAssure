@@ -1,4 +1,16 @@
 {
+    "CHR01 Rubi": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR01 Sami": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
     "CHR02 Katee": {
         "country": "DE",
         "sex": "female",
@@ -29,16 +41,16 @@
         "work_status": "student",
         "day_type": null
     },
-    "CHR04 Jim": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
-        "day_type": null
-    },
     "CHR04 Amy": {
         "country": "DE",
         "sex": "female",
         "work_status": "unemployed",
+        "day_type": null
+    },
+    "CHR04 Jim": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
         "day_type": null
     },
     "CHR05 Liz": {
@@ -47,16 +59,16 @@
         "work_status": "full time",
         "day_type": null
     },
-    "CHR05 Nate": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
-        "day_type": null
-    },
     "CHR05 Mark": {
         "country": "DE",
         "sex": "male",
         "work_status": "student",
+        "day_type": null
+    },
+    "CHR05 Nate": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
         "day_type": null
     },
     "CHR05 Will": {
@@ -155,6 +167,12 @@
         "work_status": "student",
         "day_type": null
     },
+    "CHR15 Adam": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "student",
+        "day_type": null
+    },
     "CHR15 Eddie": {
         "country": "DE",
         "sex": "male",
@@ -171,12 +189,6 @@
         "country": "DE",
         "sex": "male",
         "work_status": "full time",
-        "day_type": null
-    },
-    "CHR15 Adam": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "student",
         "day_type": null
     },
     "CHR15 Rebekah": {
@@ -200,6 +212,12 @@
     "CHR17 Joachim": {
         "country": "DE",
         "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR17 Maya": {
+        "country": "DE",
+        "sex": "female",
         "work_status": "full time",
         "day_type": null
     },
@@ -227,10 +245,34 @@
         "work_status": "student",
         "day_type": null
     },
+    "CHR19 Jenny": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR19 Molly": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR19 Richard": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
     "CHR20 Arthur": {
         "country": "DE",
         "sex": "male",
         "work_status": "full time",
+        "day_type": null
+    },
+    "CHR20 Cassie": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "part time",
         "day_type": null
     },
     "CHR20 Garreth": {
@@ -251,6 +293,30 @@
         "work_status": "student",
         "day_type": null
     },
+    "CHR21 Emily": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR21 John": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR22 Anja": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR22 Fiona": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
     "CHR23 James": {
         "country": "DE",
         "sex": "male",
@@ -261,90 +327,6 @@
         "country": "DE",
         "sex": "female",
         "work_status": "retired",
-        "day_type": null
-    },
-    "CHR17 Maya": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR19 Molly": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR19 Richard": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR32 Christin": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "unemployed",
-        "day_type": null
-    },
-    "CHR32 Jona": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "unemployed",
-        "day_type": null
-    },
-    "CHR46 Marita": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "unemployed",
-        "day_type": null
-    },
-    "CHR46 Kevin": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "student",
-        "day_type": null
-    },
-    "CHR51 Gustav": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "retired",
-        "day_type": null
-    },
-    "CHR60 Alexander": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR60 Julia": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "unemployed",
-        "day_type": null
-    },
-    "CHR60 Lea": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "student",
-        "day_type": null
-    },
-    "CHR21 John": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR21 Emily": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR20 Cassie": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "part time",
         "day_type": null
     },
     "CHR25 Marlene": {
@@ -371,16 +353,16 @@
         "work_status": "student",
         "day_type": null
     },
-    "CHR27 Tobias": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "student",
-        "day_type": null
-    },
     "CHR27 Melanie": {
         "country": "DE",
         "sex": "female",
         "work_status": "full time",
+        "day_type": null
+    },
+    "CHR27 Tobias": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "student",
         "day_type": null
     },
     "CHR28 Patrick": {
@@ -407,6 +389,18 @@
         "work_status": "retired",
         "day_type": null
     },
+    "CHR32 Christin": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "unemployed",
+        "day_type": null
+    },
+    "CHR32 Jona": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "unemployed",
+        "day_type": null
+    },
     "CHR33 Florian": {
         "country": "DE",
         "sex": "male",
@@ -417,6 +411,18 @@
         "country": "DE",
         "sex": "female",
         "work_status": "full time",
+        "day_type": null
+    },
+    "CHR34 Julia": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR34 Romeo": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "unemployed",
         "day_type": null
     },
     "CHR35 Heike": {
@@ -467,12 +473,6 @@
         "work_status": "unemployed",
         "day_type": null
     },
-    "CHR41 Maria": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
     "CHR41 Felix": {
         "country": "DE",
         "sex": "male",
@@ -491,13 +491,13 @@
         "work_status": "student",
         "day_type": null
     },
-    "CHR41 Peter": {
+    "CHR41 Maria": {
         "country": "DE",
-        "sex": "male",
+        "sex": "female",
         "work_status": "full time",
         "day_type": null
     },
-    "CHR42 Max": {
+    "CHR41 Peter": {
         "country": "DE",
         "sex": "male",
         "work_status": "full time",
@@ -509,22 +509,16 @@
         "work_status": "student",
         "day_type": null
     },
+    "CHR42 Max": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
     "CHR42 Moritz": {
         "country": "DE",
         "sex": "male",
         "work_status": "student",
-        "day_type": null
-    },
-    "CHR34 Romeo": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "unemployed",
-        "day_type": null
-    },
-    "CHR34 Julia": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
         "day_type": null
     },
     "CHR43 Lutz": {
@@ -563,10 +557,34 @@
         "work_status": "student",
         "day_type": null
     },
+    "CHR45 Alexander": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "unemployed",
+        "day_type": null
+    },
     "CHR45 Claudia": {
         "country": "DE",
         "sex": "female",
         "work_status": "student",
+        "day_type": null
+    },
+    "CHR45 Susann": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR46 Kevin": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR46 Marita": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "unemployed",
         "day_type": null
     },
     "CHR47 Diana": {
@@ -593,27 +611,27 @@
         "work_status": "unemployed",
         "day_type": null
     },
-    "CHR48 Martin": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "student",
-        "day_type": null
-    },
     "CHR48 Maggie": {
         "country": "DE",
         "sex": "female",
         "work_status": "student",
         "day_type": null
     },
-    "CHR49 March": {
+    "CHR48 Martin": {
         "country": "DE",
-        "sex": "female",
+        "sex": "male",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR48 Stefan": {
+        "country": "DE",
+        "sex": "male",
         "work_status": "unemployed",
         "day_type": null
     },
-    "CHR49 Wilhelm": {
+    "CHR49 March": {
         "country": "DE",
-        "sex": "male",
+        "sex": "female",
         "work_status": "unemployed",
         "day_type": null
     },
@@ -623,9 +641,9 @@
         "work_status": "student",
         "day_type": null
     },
-    "CHR50 Rita": {
+    "CHR49 Wilhelm": {
         "country": "DE",
-        "sex": "female",
+        "sex": "male",
         "work_status": "unemployed",
         "day_type": null
     },
@@ -645,6 +663,18 @@
         "country": "DE",
         "sex": "male",
         "work_status": "student",
+        "day_type": null
+    },
+    "CHR50 Rita": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "unemployed",
+        "day_type": null
+    },
+    "CHR51 Gustav": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "retired",
         "day_type": null
     },
     "CHR51 Maren": {
@@ -671,30 +701,6 @@
         "work_status": "student",
         "day_type": null
     },
-    "CHR45 Susann": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR45 Alexander": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "unemployed",
-        "day_type": null
-    },
-    "CHR48 Stefan": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "unemployed",
-        "day_type": null
-    },
-    "CHR53 Rosemarie": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
     "CHR53 Franz": {
         "country": "DE",
         "sex": "male",
@@ -713,6 +719,12 @@
         "work_status": "student",
         "day_type": null
     },
+    "CHR53 Rosemarie": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
     "CHR54 Emma": {
         "country": "DE",
         "sex": "female",
@@ -725,15 +737,21 @@
         "work_status": "retired",
         "day_type": null
     },
+    "CHR55 Nicole": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
     "CHR55 Stephan": {
         "country": "DE",
         "sex": "male",
         "work_status": "full time",
         "day_type": null
     },
-    "CHR55 Nicole": {
+    "CHR56 Andreas": {
         "country": "DE",
-        "sex": "female",
+        "sex": "male",
         "work_status": "full time",
         "day_type": null
     },
@@ -743,34 +761,34 @@
         "work_status": "student",
         "day_type": null
     },
-    "CHR56 Sandi": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "student",
-        "day_type": null
-    },
-    "CHR56 Andreas": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
-        "day_type": null
-    },
     "CHR56 Sabine": {
         "country": "DE",
         "sex": "female",
         "work_status": "unemployed",
         "day_type": null
     },
-    "CHR57 Reiner": {
+    "CHR56 Sandi": {
         "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
+        "sex": "female",
+        "work_status": "student",
         "day_type": null
     },
     "CHR57 Babs": {
         "country": "DE",
         "sex": "female",
         "work_status": "unemployed",
+        "day_type": null
+    },
+    "CHR57 Christoph": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR57 Reiner": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
         "day_type": null
     },
     "CHR57 Sarah": {
@@ -797,10 +815,10 @@
         "work_status": "full time",
         "day_type": null
     },
-    "CHR59 Sorra": {
+    "CHR59 Rachela": {
         "country": "DE",
         "sex": "female",
-        "work_status": "student",
+        "work_status": "unemployed",
         "day_type": null
     },
     "CHR59 Simo": {
@@ -809,16 +827,64 @@
         "work_status": "student",
         "day_type": null
     },
-    "CHR59 Rachela": {
+    "CHR59 Sonea": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR59 Sorra": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR60 Alexander": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR60 Julia": {
         "country": "DE",
         "sex": "female",
         "work_status": "unemployed",
         "day_type": null
     },
-    "CHR59 Sonea": {
+    "CHR60 Lea": {
         "country": "DE",
         "sex": "female",
         "work_status": "student",
+        "day_type": null
+    },
+    "CHR61 Avva": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR61 Fina": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR61 Lukas": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR62 Antje": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "unemployed",
+        "day_type": null
+    },
+    "CHR62 Marcus": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "unemployed",
         "day_type": null
     },
     "CHS01 Egon": {
@@ -851,6 +917,12 @@
         "work_status": "retired",
         "day_type": null
     },
+    "CHS04 Margot": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "retired",
+        "day_type": null
+    },
     "CHS12 Falk": {
         "country": "DE",
         "sex": "male",
@@ -863,82 +935,10 @@
         "work_status": "full time",
         "day_type": null
     },
-    "CHR57 Christoph": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "student",
-        "day_type": null
-    },
-    "CHR01 Rubi": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR01 Sami": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR19 Jenny": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR22 Fiona": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR22 Anja": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "student",
-        "day_type": null
-    },
-    "CHS04 Margot": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "retired",
-        "day_type": null
-    },
     "OR01 Ellen": {
         "country": "DE",
         "sex": "female",
         "work_status": "full time",
-        "day_type": null
-    },
-    "CHR61 Fina": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR61 Lukas": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "student",
-        "day_type": null
-    },
-    "CHR61 Avva": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "full time",
-        "day_type": null
-    },
-    "CHR62 Antje": {
-        "country": "DE",
-        "sex": "female",
-        "work_status": "unemployed",
-        "day_type": null
-    },
-    "CHR62 Marcus": {
-        "country": "DE",
-        "sex": "male",
-        "work_status": "unemployed",
         "day_type": null
     }
 }
