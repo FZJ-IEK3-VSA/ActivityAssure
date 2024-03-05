@@ -812,7 +812,7 @@
     "CHR59 Dani": {
         "country": "DE",
         "sex": "male",
-        "work_status": "full time",
+        "work_status": "unemployed",
         "day_type": null
     },
     "CHR59 Rachela": {
@@ -875,16 +875,16 @@
         "work_status": "student",
         "day_type": null
     },
-    "CHR62 Antje": {
+    "CHR62 Rubi": {
         "country": "DE",
         "sex": "female",
-        "work_status": "unemployed",
+        "work_status": "full time",
         "day_type": null
     },
-    "CHR62 Marcus": {
+    "CHR62 Sami": {
         "country": "DE",
         "sex": "male",
-        "work_status": "unemployed",
+        "work_status": "full time",
         "day_type": null
     },
     "CHS01 Egon": {

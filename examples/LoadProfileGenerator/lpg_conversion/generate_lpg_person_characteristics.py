@@ -43,6 +43,27 @@ WORK_STATUS_MAPPING = {
 }
 
 
+def get_person_id(person: str, template: str) -> str:
+    """
+    Generates the person ID from the person name and template name
+    from the LPG. The person name string from the LPG contains a
+    template ID, but sometimes persons are reused in other templates,
+    so the template ID has to be adjusted.
+
+    :param person: person name string from LPG
+    :param template: template name string from LPG
+    :return: combined person ID
+    """
+    # format of person: "CHR01 Rubi""
+    person_template, person_name = person.split(" ")
+    # format of template: "CHR01 Couple both at Work"
+    template_id = template.split(" ")[0]
+    if person_template == template_id:
+        return person
+    print(f"Info: person '{person}' is used in template '{template_id}'")
+    return f"{template_id} {person_name}"
+
+
 def define_person_mapping(database_path: Path, result_path: Path):
     """
     Extracts person information from the LoadProfileGenerator database
@@ -56,17 +77,20 @@ def define_person_mapping(database_path: Path, result_path: Path):
     # person has in his/her household
     con = sqlite3.connect(database_path)
     cur = con.cursor()
-    query = """select tblPersons.Name, tblPersons.Gender1, tblLivingPatternTags.Name
-from tblPersons inner join tblCHHPersons on tblPersons.ID == tblCHHPersons.PersonID inner join tblLivingPatternTags on tblCHHPersons.LivingPatternTagID == tblLivingPatternTags.ID"""
+    query = """select tblPersons.Name, tblHouseholdTemplates.Name, tblPersons.Gender1, tblLivingPatternTags.Name
+from tblPersons inner join tblHHTemplatePerson on tblPersons.ID == tblHHTemplatePerson.PersonID
+inner join tblLivingPatternTags on tblHHTemplatePerson.LivingPatternTagID == tblLivingPatternTags.ID
+inner join tblHouseholdTemplates on tblHHTemplatePerson.HHTemplateID == tblHouseholdTemplates.ID
+"""
     results = cur.execute(query)
     rows: list[tuple] = results.fetchall()
 
     # map all fields
     mapping = {
-        person: profile_category.ProfileCategory(
+        get_person_id(person, template): profile_category.ProfileCategory(
             "DE", GENDER_MAPPING[gender], WORK_STATUS_MAPPING[tag]
         )
-        for person, gender, tag in rows
+        for person, template, gender, tag in rows
     }
 
     # write all characteristics to a json file
