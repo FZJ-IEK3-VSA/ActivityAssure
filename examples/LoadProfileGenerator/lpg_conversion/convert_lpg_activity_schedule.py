@@ -43,7 +43,7 @@ CATEGORY_MAPPING = {
 }
 
 
-def load_activity_profile_from_db(file: Path, result_dir: Path):
+def load_activity_profile_from_db(file: Path, result_dir: Path | None):
     """
     Converts LPG activity profiles to the target csv format.
     Also creates or extends the LPG activity mapping file.
@@ -55,7 +55,12 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
 
     # load activity mapping
     mapping_path = Path("examples/LoadProfileGenerator/activity_mapping_lpg.json")
-    mapping = activity_mapping.load_mapping(mapping_path)
+    if mapping_path and mapping_path.is_file():
+        # load the existent mapping to extend it
+        mapping = activity_mapping.load_mapping(mapping_path)
+    else:
+        # initialize a new mapping
+        mapping = {}
 
     # get all activities from LPG result database
     con = sqlite3.connect(str(file))
