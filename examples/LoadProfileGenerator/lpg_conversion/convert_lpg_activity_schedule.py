@@ -20,6 +20,9 @@ import tqdm
 
 from activity_validator import activity_mapping
 
+import generate_lpg_person_characteristics as gen_lpg_char
+
+
 # preliminary affordance mappings according to affordance categories
 UNMAPPED_CATEGORY = "TODO"
 CATEGORY_MAPPING = {
@@ -99,10 +102,11 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
     base_result_dir.mkdir(parents=True, exist_ok=True)
     for person, rows in rows_by_person.items():
         data = pd.DataFrame(rows, columns=["Timestep", "Date", "Activity"])
-        # result file pattern: "CHR01_142.sqlite"
-        repetition = file.stem.split("_")[-1]
+        # file name pattern: "CHR01_142.sqlite"
+        template, repetition = file.stem.split("_")
         # LPG person name pattern: "CHR01 Sami (25/Male)"
-        person_id = person.split(" (")[0]
+        person_name = person.split(" (")[0]
+        person_id = gen_lpg_char.get_person_id(person_name, template)
         result_path = base_result_dir / f"{person_id}_{repetition}.csv"
         data.to_csv(result_path)
 
