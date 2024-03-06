@@ -163,7 +163,7 @@ class MainValidationView(html.Div):
                                                         ),
                                                     ]
                                                 ),
-                                                width=2,
+                                                width=3,
                                             ),
                                             dbc.Col(
                                                 dcc.Checklist(
