@@ -19,7 +19,11 @@ simulation_config = utspclient.helpers.lpg_helper.create_empty_calcspec(
     "2023-01-01",
     "2024-01-01",
     "00:01:00",
-    calc_options=[CalcOption.ActionEntries],
+    calc_options=[
+        CalcOption.ActionEntries,
+        CalcOption.AffordanceDefinitions,
+        CalcOption.BasicOverview,
+    ],
 )
 assert simulation_config.House is not None
 
@@ -33,7 +37,7 @@ print(f"UTSP-Server: {address}")
 result_file = "Results.HH1.sqlite"
 # templates = [HouseholdTemplates.CHR01_Couple_both_at_Work]
 templates = [v for k, v in vars(HouseholdTemplates).items() if not k.startswith("__")]
-repetitions_per_hh = 50
+repetitions_per_hh = 10
 
 template_guids_and_requests = []
 for template in templates:
@@ -49,7 +53,7 @@ for template in templates:
                 simulation_config.to_json(),  # type: ignore
                 "LPG",
                 guid=f"{i:02d}",
-                required_result_files=dict.fromkeys([result_file]),
+                # required_result_files=dict.fromkeys([result_file]),
             ),
         )
         for i in range(repetitions_per_hh)
@@ -82,9 +86,10 @@ for template, request, result in zip(template_names, requests, results):
             f.write(str(result))
     else:
         # write the results to file
-        result_path = base_result_path / template
+        result_path = base_result_path / template / request.guid
         result_path.mkdir(parents=True, exist_ok=True)
-        file_content = result.data[result_file]
-        filepath = result_path / filename
-        with open(filepath, "wb") as f:
-            f.write(file_content)
+        # save all result files
+        for name, file_content in result.data.items():
+            filepath = result_path / name
+            with open(filepath, "wb") as f:
+                f.write(file_content)

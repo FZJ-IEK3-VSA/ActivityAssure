@@ -10,7 +10,6 @@ If a mapping file already exists, it is loaded and expanded if necessary.
 
 import argparse
 from datetime import datetime
-import glob
 import json
 from pathlib import Path
 import sqlite3
@@ -46,15 +45,15 @@ CATEGORY_MAPPING = {
 }
 
 
-def load_activity_profile_from_db(file: Path, result_dir: Path):
+def load_activity_profile_from_db(raw_data_dir: Path, result_dir: Path):
     """
     Converts LPG activity profiles to the target csv format.
     Also creates or extends the LPG activity mapping file.
 
-    :param file: input database file
+    :param raw_data_dir: input raw data directory from one LPG calculation
     :param result_dir: output folder for the created csv files
     """
-    assert file.is_file(), f"File does not exist: {file}"
+    assert raw_data_dir.is_dir(), f"Raw data directory does not exist: {raw_data_dir}"
 
     # load activity mapping
     mapping_path = Path("examples/LoadProfileGenerator/activity_mapping_lpg.json")
@@ -65,8 +64,16 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
         # initialize a new mapping
         mapping = {}
 
+    main_db_file = raw_data_dir / "Results.HH1.sqlite"
+    assert main_db_file.is_file(), f"Result file does not exist: {main_db_file}"
+
+    # parse LPG template and calulcation iteration from directory names
+    iteration = raw_data_dir.name
+    assert iteration.isdigit(), f"Unexpected iteration number {iteration}"
+    template = raw_data_dir.parent.name
+
     # get all activities from LPG result database
-    con = sqlite3.connect(str(file))
+    con = sqlite3.connect(str(main_db_file))
     with con:
         cur = con.cursor()
         query = "SELECT * FROM PerformedActions"
@@ -102,12 +109,10 @@ def load_activity_profile_from_db(file: Path, result_dir: Path):
     base_result_dir.mkdir(parents=True, exist_ok=True)
     for person, rows in rows_by_person.items():
         data = pd.DataFrame(rows, columns=["Timestep", "Date", "Activity"])
-        # file name pattern: "CHR01_142.sqlite"
-        template, repetition = file.stem.split("_")
         # LPG person name pattern: "CHR01 Sami (25/Male)"
         person_name = person.split(" (")[0]
         person_id = gen_lpg_char.get_person_id(person_name, template)
-        result_path = base_result_dir / f"{person_id}_{repetition}.csv"
+        result_path = base_result_dir / f"{person_id}_{iteration}.csv"
         data.to_csv(result_path)
 
 
@@ -134,7 +139,10 @@ if __name__ == "__main__":
     result_dir = Path(args.output)
     assert input_dir.is_dir(), f"Invalid path: {input_dir}"
 
-    # process all sqlite files in the directory
-    pattern = str(input_dir / "*" / "*.sqlite")
-    for file in tqdm.tqdm(glob.glob(pattern)):
-        load_activity_profile_from_db(Path(file), result_dir)
+    # expected directory structure: one directory per LPG template
+    for template_dir in tqdm.tqdm(Path(input_dir).iterdir()):
+        assert template_dir.is_dir(), f"Unexpected file found: {template_dir}"
+        # each template directory contains one subdirectory per iteration
+        for iteration_dir in template_dir.iterdir():
+            assert iteration_dir.is_dir(), f"Unexpected file found: {iteration_dir}"
+            load_activity_profile_from_db(iteration_dir, result_dir)
