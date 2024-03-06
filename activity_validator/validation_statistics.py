@@ -11,6 +11,7 @@ from typing import ClassVar
 import pandas as pd
 
 from activity_validator import utils
+from activity_validator.categorization_attributes import Country, DayType
 from activity_validator.profile_category import PersonProfileCategory, ProfileCategory
 from activity_validator.pandas_utils import (
     save_df,
@@ -226,13 +227,15 @@ class ValidationSet:
         for data in self.statistics.values():
             data.map_activities(mapping)
 
-    def get_category_sizes_df(
-        self, format_for_readability: bool = False
-    ) -> pd.DataFrame:
+    def get_category_sizes_df(self, attribute_for_pivot: str = "") -> pd.DataFrame:
         """
         Collects the category sizes for this statistics object in
-        a single dataframe.
+        a single dataframe. Optionally, an attribute for pivoting the data can be
+        chosen to allow comparing some categories more easily.
 
+        :param attribute_for_pivot: optionally, specifies an attribute for pivoting;
+                                    its values will each create their own column in
+                                    the sizes dataframe, making it more readable
         :return: a dataframe containing the category sizes
         """
         # get any profile type to determine the attribute names in use
@@ -246,13 +249,20 @@ class ValidationSet:
         sizes = [stat.category_size for stat in self.statistics.values()]
         colname = "Sizes"
         sizes_df = pd.DataFrame({colname: sizes}, index=index)
-        if index.nlevels > 1 and format_for_readability:
+        if index.nlevels > 1 and attribute_for_pivot:
             # more than one profile type attribute: restructure dataframe for readability
             # this however leads to one index title missing in the csv file, which can then
             # not be loaded anymore
             sizes_df.reset_index(inplace=True)
             cols = list(sizes_df.columns)
-            sizes_df = sizes_df.pivot(index=cols[1:-1], columns=cols[0], values=colname)
+            assert (
+                attribute_for_pivot in cols
+            ), f"Invalid attribute for pivot: {attribute_for_pivot}"
+            cols.remove(attribute_for_pivot)
+            cols.remove(colname)
+            sizes_df = sizes_df.pivot(
+                index=cols, columns=attribute_for_pivot, values=colname
+            )
         return sizes_df
 
     @utils.timing
@@ -278,7 +288,7 @@ class ValidationSet:
                 {ValidationSet.AVAILABLE_ACTIVITIES_KEY: self.activities}, f, indent=4
             )
 
-        # save category sizes to file
+        # save category sizes to file; this version is used to load the sizes
         category_sizes = self.get_category_sizes_df()
         save_df(
             category_sizes,
@@ -286,12 +296,20 @@ class ValidationSet:
             ValidationSet.CATEGORY_SIZES_FILE,
             base_path=base_path,
         )
-        # additionally, save the more readable category sizes version
-        category_sizes = self.get_category_sizes_df(True)
+        # additionally, save a more readable category sizes version
+        category_sizes = self.get_category_sizes_df(Country.title())
         save_df(
             category_sizes,
             ValidationSet.CATEGORIES_DIR,
             "category_sizes_readable",
+            base_path=base_path,
+        )
+        # additionally, save another version to compare the distribution of day types
+        category_sizes = self.get_category_sizes_df(DayType.title())
+        save_df(
+            category_sizes,
+            ValidationSet.CATEGORIES_DIR,
+            "category_sizes_day_type",
             base_path=base_path,
         )
 
