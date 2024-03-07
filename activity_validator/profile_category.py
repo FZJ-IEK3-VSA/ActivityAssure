@@ -56,17 +56,19 @@ class ProfileCategory:
 
     def to_list(self) -> list[str]:
         """
-        Returns a list representation of this profile type.
+        Returns a list representation of this profile type. Only returns
+        attributes that are not None or empty.
 
         :return: a list containing the characteristics of this
                  profile category
         """
-        return [
-            str(self.country),
-            str(self.sex),
-            str(self.work_status),
-            str(self.day_type),
+        values = [
+            self.country,
+            self.sex,
+            self.work_status,
+            self.day_type,
         ]
+        return [str(v) for v in values if v]
 
     def __str__(self) -> str:
         """
