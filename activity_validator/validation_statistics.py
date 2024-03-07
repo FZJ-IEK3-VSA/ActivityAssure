@@ -130,7 +130,8 @@ class ValidationStatistics:
         )
         if not (freq_path.is_file() and dur_path.is_file() and prob_path.is_file()):
             raise RuntimeError(
-                f"Did not find all files for profile type {str(profile_type)} in base directory {base_path}"
+                f"Did not find all files for profile type {str(profile_type)} in base directory "
+                f"{base_path}"
             )
         freq = load_df(freq_path)
         dur = load_df(dur_path, True)
@@ -250,6 +251,12 @@ class ValidationSet:
         colname = "Sizes"
         sizes_df = pd.DataFrame({colname: sizes}, index=index)
         if index.nlevels > 1 and attribute_for_pivot:
+            if attribute_for_pivot not in names:
+                logging.warn(
+                    f"The attribute {attribute_for_pivot} is not part of the categorization. "
+                    "Returning the unpivoted dataframe instead."
+                )
+                return sizes_df
             # more than one profile type attribute: restructure dataframe for readability
             # this however leads to one index title missing in the csv file, which can then
             # not be loaded anymore
