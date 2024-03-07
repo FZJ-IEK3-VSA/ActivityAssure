@@ -117,10 +117,8 @@ def cross_validation_split(data: pd.DataFrame):
     """
     data, persondata, activities = prepare_hetus_data(data)
     cat_data = get_diary_data_for_categorization(data, persondata)
-    categorization_attributes = (
-        categorization_attributes.get_default_categorization_attributes()
-    )
-    categories = categorize(cat_data, categorization_attributes)
+    cat_attributes = categorization_attributes.get_default_categorization_attributes()
+    categories = categorize(cat_data, cat_attributes)
 
     # split data of each category
     categories1, categories2 = [], []
