@@ -139,10 +139,27 @@ if __name__ == "__main__":
     result_dir = Path(args.output)
     assert input_dir.is_dir(), f"Invalid path: {input_dir}"
 
+    # subdirectory where error messages from failed conversions are stored
+    errors_dir = "errors"
+
     # expected directory structure: one directory per LPG template
     for template_dir in tqdm.tqdm(Path(input_dir).iterdir()):
         assert template_dir.is_dir(), f"Unexpected file found: {template_dir}"
+        if template_dir.name == errors_dir:
+            # skip the errors directory
+            continue
         # each template directory contains one subdirectory per iteration
         for iteration_dir in template_dir.iterdir():
             assert iteration_dir.is_dir(), f"Unexpected file found: {iteration_dir}"
-            load_activity_profile_from_db(iteration_dir, result_dir)
+            try:
+                load_activity_profile_from_db(iteration_dir, result_dir)
+            except Exception as e:
+                print(f"An error occurred while processing '{iteration_dir}': {e}")
+                # if the LPG created a log file, move that to the errors directory
+                logfile = iteration_dir / "Log.CommandlineCalculation.txt"
+                if logfile.is_file():
+                    logfile.rename(
+                        input_dir
+                        / errors_dir
+                        / f"{template_dir.name}_{iteration_dir.name}_error.txt"
+                    )
