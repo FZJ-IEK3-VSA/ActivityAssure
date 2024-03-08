@@ -36,8 +36,14 @@ print(f"UTSP-Server: {address}")
 # Define templates to simulate
 result_file = "Results.HH1.sqlite"
 # templates = [HouseholdTemplates.CHR01_Couple_both_at_Work]
-templates = [v for k, v in vars(HouseholdTemplates).items() if not k.startswith("__")]
+templates: list[str] = [
+    v for k, v in vars(HouseholdTemplates).items() if not k.startswith("__")
+]
 repetitions_per_hh = 10
+
+print(f"--- Simulating the following {len(templates)} templates:")
+print("\n".join(templates))
+print("---")
 
 template_guids_and_requests = []
 for template in templates:
