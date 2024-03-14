@@ -2,6 +2,7 @@ from dash import Output, Input, State, html, dcc, callback, no_update, MATCH  # 
 import dash_bootstrap_components as dbc  # type: ignore
 import uuid
 
+from activity_validator.ui.config import config
 from activity_validator import comparison_indicators
 from activity_validator.ui import data_utils, datapaths, plots
 
@@ -133,7 +134,8 @@ class MainValidationView(html.Div):
                                                             className="mb-3",
                                                         ),
                                                         html.H4(
-                                                            "Input Profile Category",
+                                                            config["model_name"]
+                                                            + " Profile Category",
                                                             className="mb-3",
                                                         ),
                                                     ]
@@ -198,7 +200,7 @@ class MainValidationView(html.Div):
                                     html.Div(
                                         children=[
                                             html.H2(
-                                                "LoadProfileGenerator Data",
+                                                config["model_name"] + " Data",
                                                 style={"textAlign": "center"},
                                             ),
                                             dcc.Loading(
