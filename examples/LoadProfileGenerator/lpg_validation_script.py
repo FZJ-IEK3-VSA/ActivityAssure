@@ -7,10 +7,10 @@ import pandas as pd
 
 from activity_validator.comparison_indicators import ValidationIndicators
 
-# TODO: turn this into a function to show a quick overview at the end of the validate_lpg() function?
-#      E.g. overall best and worst categories/activities, worst according to each indicator etc.
+# result_dir = "per_person"
+result_dir = "default"
+# result_dir = "default_first"
 
-result_dir = "per_person"
 base_path = "data/lpg_validation/{}/validation_results/{}/indicators_per_category.csv"
 mean_idx = ValidationIndicators.mean_column
 
@@ -29,9 +29,9 @@ data["prod"] = data.loc[:, ["mae", "rmse", "wasserstein"]].product(axis=1) * 10*
 
 # data.dropna(inplace=True)
 
-data = data[data.iloc[:, 1] == mean_idx]
+data = data[data.iloc[:, 1] == "sleep"]
 # filter category
-data = data[(data.iloc[:, 0].str.startswith("DE_male_unemployed_rest day"))]
+data = data[(data.iloc[:, 0].str.contains("unemployed_rest"))]
 
 data = data.sort_values(by="prod")
 
