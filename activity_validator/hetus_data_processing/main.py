@@ -25,9 +25,6 @@ from activity_validator.hetus_data_processing import category_statistics
 from activity_validator import validation_statistics
 
 
-BASE_RESULT_PATH = Path("data/validation_data_sets")
-
-
 @utils.timing
 def prepare_hetus_data(
     data: pd.DataFrame,
@@ -57,22 +54,20 @@ def prepare_hetus_data(
         + [c for c in data.columns if c.startswith(col.Diary.MAIN_ACTIVITIES_PATTERN)]
     )
     data = data[relevant_columns]
-
     data.set_index(col.Diary.KEY, inplace=True)
-    utils.stats(data)
-
     activities = hetus_translations.translate_activity_codes(data)
 
     # extract households and persons
     data_valid_persons, persondata = level_extraction.get_usable_person_data(data)
-    utils.stats(data_valid_persons, persondata)
     # data_valid_hhs, hhdata = level_extraction.get_usable_household_data(data)
     return data, persondata, activities
 
 
 @utils.timing
 def process_hetus_2010_data(
-    data: pd.DataFrame, cat_attributes=None, save: bool = True, title: str = "latest"
+    data: pd.DataFrame,
+    cat_attributes=None,
+    result_path: Path | None = None,
 ):
     """
     Produces a validation data set out of the passed HETUS data.
@@ -81,7 +76,8 @@ def process_hetus_2010_data(
 
     :param data: the data to process
     :param cat_attributes: the attributes to use for categorization
-    :param save: whether the data set should be saved to files or not
+    :param result_path: the path to save the data set to; if None, the
+                        data is not saved to as files
     """
     data, persondata, activities = prepare_hetus_data(data)
 
@@ -102,13 +98,16 @@ def process_hetus_2010_data(
     # ensure Eurostat data protection requirements
     data_protection.apply_eurostat_requirements(validation_set)
 
-    if save:
+    if result_path is not None:
         # save the validation data set
-        validation_set.save(BASE_RESULT_PATH / title)
+        validation_set.save(result_path)
     return validation_set
 
 
-def cross_validation_split(data: pd.DataFrame):
+def cross_validation_split(
+    data: pd.DataFrame,
+    result_path: Path,
+):
     """
     Splits each category of the data set in half, and stores
     both halves in separate directory structures to allow
@@ -137,16 +136,17 @@ def cross_validation_split(data: pd.DataFrame):
     # create statistics for the split parts separately
     split1 = category_statistics.calc_statistics_per_category(categories1, activities)
     data_protection.apply_eurostat_requirements(split1)
-    split1.save(BASE_RESULT_PATH / "Validation Split 1")
+    split1.save(result_path / "Validation Split 1")
 
     split2 = category_statistics.calc_statistics_per_category(categories2, activities)
     data_protection.apply_eurostat_requirements(split2)
-    split2.save(BASE_RESULT_PATH / "Validation Split 2")
+    split2.save(result_path / "Validation Split 2")
 
 
 @utils.timing
 def process_all_hetus_countries_AT_separately(
     hetus_path: str,
+    result_path: Path,
     hetus_key: str | None = None,
     cat_attributes=None,
     title: str = "",
@@ -169,12 +169,12 @@ def process_all_hetus_countries_AT_separately(
     # process AT data separately (different resolution)
     logging.info("--- Processing HETUS data for AT ---")
     data_at = load_data.load_hetus_files(["AT"], hetus_path, hetus_key)
-    result_at = process_hetus_2010_data(data_at, cat_attributes, False)
+    result_at = process_hetus_2010_data(data_at, cat_attributes, None)
 
     # process remaining countries
     logging.info("--- Processing HETUS data for all countries except AT ---")
     data = load_data.load_all_hetus_files_except_AT(hetus_path, hetus_key)
-    result_eu = process_hetus_2010_data(data, cat_attributes, False)
+    result_eu = process_hetus_2010_data(data, cat_attributes, None)
 
     assert (
         result_at.statistics.keys() & result_eu.statistics.keys() == set()
@@ -188,11 +188,13 @@ def process_all_hetus_countries_AT_separately(
         # determine title automatically
         title = "_".join(s.lower() for s in cat_attributes)
     # rename result directory
-    combined.save(BASE_RESULT_PATH / title)
+    combined.save(result_path / title)
     logging.info(f"Finished creating the validation data set '{title}'")
 
 
-def generate_all_dataset_variants(hetus_path: str, key: str | None = None):
+def generate_all_dataset_variants(
+    hetus_path: str, result_path: Path, key: str | None = None
+):
     """
     Generates all relevant variants of the validation data set, each with a
     different set of categorization attributes.
@@ -203,26 +205,34 @@ def generate_all_dataset_variants(hetus_path: str, key: str | None = None):
     day_type = categorization_attributes.DayType.title()
     # default variant with full categorization
     process_all_hetus_countries_AT_separately(
-        hetus_path, key, [country, sex, work_status, day_type]
+        hetus_path, result_path, key, [country, sex, work_status, day_type]
     )
     # variants with only three categorization attributes
     process_all_hetus_countries_AT_separately(
-        hetus_path, key, [country, sex, work_status]
+        hetus_path, result_path, key, [country, sex, work_status]
     )
-    process_all_hetus_countries_AT_separately(hetus_path, key, [country, sex, day_type])
     process_all_hetus_countries_AT_separately(
-        hetus_path, key, [country, work_status, day_type]
+        hetus_path, result_path, key, [country, sex, day_type]
+    )
+    process_all_hetus_countries_AT_separately(
+        hetus_path, result_path, key, [country, work_status, day_type]
     )
     # special case: variant without country is special (has to leave out AT data)
-    data = load_data.load_all_hetus_files_except_AT(hetus_path, key)
-    result = process_hetus_2010_data(data, [sex, work_status, day_type], save=False)
-    result.save(BASE_RESULT_PATH / "sex_work status_day type")
+    data = load_data.load_all_hetus_files_except_AT(hetus_path, result_path, key)
+    result = process_hetus_2010_data(data, [sex, work_status, day_type], None)
+    result.save(result_path / "sex_work status_day type")
 
     # some other relevant variants
-    process_all_hetus_countries_AT_separately(hetus_path, key, [country])
-    process_all_hetus_countries_AT_separately(hetus_path, key, [country, sex])
-    process_all_hetus_countries_AT_separately(hetus_path, key, [country, day_type])
-    process_all_hetus_countries_AT_separately(hetus_path, key, [country, work_status])
+    process_all_hetus_countries_AT_separately(hetus_path, result_path, key, [country])
+    process_all_hetus_countries_AT_separately(
+        hetus_path, result_path, key, [country, sex]
+    )
+    process_all_hetus_countries_AT_separately(
+        hetus_path, result_path, key, [country, day_type]
+    )
+    process_all_hetus_countries_AT_separately(
+        hetus_path, result_path, key, [country, work_status]
+    )
 
 
 if __name__ == "__main__":
@@ -235,10 +245,10 @@ if __name__ == "__main__":
     HETUS_PATH = "D:/Daten/HETUS Data/HETUS 2010 full set/DATA"
     key = load_data.read_key_as_arg()
 
-    # process_all_hetus_countries_AT_separately(HETUS_PATH, key)
-    # generate_all_dataset_variants(HETUS_PATH, key)
+    RESULT_PATH = Path("data/validation_data_sets")
+
+    process_all_hetus_countries_AT_separately(HETUS_PATH, RESULT_PATH, key)
 
     # tests on smaller data sets
-    data = load_data.load_hetus_files(["DE"], HETUS_PATH, key)
-    process_hetus_2010_data(data)
-    # cross_validation_split(data)
+    # data = load_data.load_hetus_files(["DE"], HETUS_PATH, key)
+    # process_hetus_2010_data(data, result_path=RESULT_PATH / "latest")
