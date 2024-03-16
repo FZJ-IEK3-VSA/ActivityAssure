@@ -94,6 +94,8 @@ class SparseActivityProfile:
     profile_type: ProfileCategory = field(default_factory=ProfileCategory)
     #: name of the file this profile was loaded from, if applicable (for debugging)
     filename: str = ""
+    #: weight of this profile for calculating statistics
+    weight: float | None = None
 
     @utils.timing
     @staticmethod
@@ -496,11 +498,13 @@ class ExpandedActivityProfiles:
         profile_type: ProfileCategory,
         offset: timedelta,
         resolution: timedelta,
+        weights: pd.Series | None = None,
     ) -> None:
         self.data = data
         self.profile_type = profile_type
         self.offset = offset
         self.resolution = resolution
+        self.weights = weights
 
     def get_profile_count(self) -> int:
         """
@@ -564,6 +568,8 @@ class ExpandedActivityProfiles:
                 length = len(list(group))
                 entries.append(ActivityProfileEntry(code, start, length))
                 start += length
+            # determine the weight if there is one
+            weight = self.weights[index] if self.weights is not None else None  # type: ignore[call-overload]
             # create ActivityProfile objects out of the activity entries
             profiles.append(
                 SparseActivityProfile(
@@ -571,6 +577,7 @@ class ExpandedActivityProfiles:
                     self.offset,
                     self.resolution,
                     self.profile_type,
+                    weight=weight,
                 )
             )
         return profiles

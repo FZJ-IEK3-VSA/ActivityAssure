@@ -11,6 +11,7 @@ from activity_validator.activity_profile import (
     ProfileCategory,
 )
 
+import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator.hetus_data_processing import hetus_constants
 from activity_validator.hetus_data_processing.attributes import (
     person_attributes,
@@ -72,24 +73,38 @@ def get_diary_data_for_categorization(
 
 
 @utils.timing
-def categorize(data: pd.DataFrame, key: list[str]) -> list[ExpandedActivityProfiles]:
+def categorize(
+    data: pd.DataFrame, cat_attributes: list[str], include_weights: bool = False
+) -> list[ExpandedActivityProfiles]:
     """
     Groups all entries into categories, depending on the categorization
     keys. Each value combination of the specified key columns results in a
     separate category.
 
     :param data: the data to categorize
-    :param key: the column names to use for categorization
+    :param cat_attributes: the column names to use for categorization
+    :param include_weights: if HETUS weights should be included
     :return: the separated data sets for all categories
     """
-    categories = data.groupby(key)
+    # check if wheights are available if they shall be included
+    weights_ok = col.Diary.DAY_AND_PERSON_WEIGHT in data.columns or not include_weights
+    assert weights_ok, f"Weight column '{col.Diary.DAY_AND_PERSON_WEIGHT}' is missing"
+    categories = data.groupby(cat_attributes)
     logging.info(f"Sorted {len(data)} entries into {categories.ngroups} categories.")
+    groups = {
+        ProfileCategory.from_index_tuple(
+            cat_attributes,
+            group_key,  # type: ignore[arg-type]
+        ): categories.get_group(group_key)
+        for group_key in categories.groups
+    }
     return [
         ExpandedActivityProfiles(
-            categories.get_group(g),
-            (p := ProfileCategory.from_index_tuple(key, g)),  # type: ignore
+            col.get_activity_data(group),
+            profile_type,
             hetus_constants.PROFILE_OFFSET,
-            hetus_constants.get_resolution(p.country),
+            hetus_constants.get_resolution(profile_type.country),
+            group[col.Diary.DAY_AND_PERSON_WEIGHT] if include_weights else None,
         )
-        for g in categories.groups
+        for profile_type, group in groups.items()
     ]

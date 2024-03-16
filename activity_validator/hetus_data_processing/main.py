@@ -52,6 +52,7 @@ def prepare_hetus_data(
             col.Person.SEX,
             col.Diary.DAYTYPE,
             col.Diary.EMPLOYED_STUDENT,
+            col.Diary.DAY_AND_PERSON_WEIGHT,
         ]
         + [c for c in data.columns if c.startswith(col.Diary.MAIN_ACTIVITIES_PATTERN)]
     )

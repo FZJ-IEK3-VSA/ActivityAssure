@@ -10,7 +10,6 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-import activity_validator.hetus_data_processing.hetus_column_names as col
 from activity_validator import utils
 from activity_validator.activity_profile import (
     ExpandedActivityProfiles,
@@ -22,13 +21,13 @@ from activity_validator.validation_statistics import (
 )
 
 
-def calc_value_counts(data: pd.DataFrame) -> pd.DataFrame:
+def calc_value_distributions(data: pd.DataFrame) -> pd.DataFrame:
     """
     Counts number of occurrences of each value, for all columns
     separately.
 
     :param data: input data
-    :return: DataFrame containing value counts for each column
+    :return: DataFrame containing value distributions for each column
     """
     counts_per_col = {c: data[c].value_counts(normalize=True) for c in data.columns}
     for column, col_counts in counts_per_col.items():
@@ -38,6 +37,48 @@ def calc_value_counts(data: pd.DataFrame) -> pd.DataFrame:
     counts.fillna(0, inplace=True)
     counts.sort_index(inplace=True)
     return counts
+
+
+def calc_weighed_value_distributions(
+    data: pd.DataFrame, weights: pd.DataFrame | pd.Series | None = None
+) -> pd.DataFrame:
+    """
+    Counts number of occurrences of each value, for all columns
+    separately, optionally taking into account individual weights per row
+    or per value.
+
+    :param data: input data
+    :param weights: weight for the data; can be a Series (on weight per data row)
+                    or a DataFrame (one weight per data element), or None to apply
+                    no weights
+    :return: DataFrame containing value distributions for each column
+    """
+    if weights is None or weights.isna().all(axis=None):
+        # no weights - simply count occurrences of values per column
+        probabilities = data.apply(lambda x: x.value_counts(normalize=True))
+    else:
+        # take the weights into account
+        if isinstance(weights, pd.Series):
+            # the same weight for each row of data
+            assert data.index.equals(weights.index), "Weights don't match data"
+
+            def func(c):
+                return weights.groupby(c).sum()
+        else:
+            # individual weight for each element of data
+            assert data.shape == weights.shape, "Weights don't match data"
+
+            def func(c):
+                return weights[c.name].groupby(c).sum()
+
+        # get sum of weights per unique value, per column
+        counts = data.apply(func)
+        # convert to probabilities
+        probabilities = counts / counts.sum()
+    # remove NA and sort by values
+    probabilities.fillna(0, inplace=True)
+    probabilities.sort_index(inplace=True)
+    return probabilities
 
 
 @utils.timing
@@ -57,7 +98,9 @@ def calc_activity_group_frequencies(
     # create a DataFrame with all frequencies, using 0 for activities that did
     # not occur in some diary entries
     frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype()).fillna(0)
-    counts = calc_value_counts(frequencies)
+    # collect the weights; each weight belongs to the corresponding row in frequencies
+    weights = pd.Series((p.weight for p in activity_profiles))
+    counts = calc_weighed_value_distributions(frequencies, weights)
     return counts
 
 
@@ -76,26 +119,32 @@ def calc_activity_group_durations(
     assert all(
         p.resolution == resolution for p in activity_profiles
     ), "Not all profiles have the same resolution"
-    # get an iterable of all activities
+    # collect the durations of all activities, and the corresponding profile weights
     durations_by_activity: dict[str, list[timedelta]] = {}
+    weight_per_duration: dict[str, list[float | None]] = {}
     for activity_profile in activity_profiles:
         # use the merged activity list to take the day split into account and get
         # more realistic durations for sleep etc.
         activities = activity_profile.get_merged_activity_list()
         for a in activities:
             # collect durations by activity type, and convert from number of time slots
-            # to Timedelta
+            # to timedelta
             durations_by_activity.setdefault(a.name, []).append(a.duration * resolution)
+            weight_per_duration.setdefault(a.name, []).append(activity_profile.weight)
     # turn into a DataFrame (list comprehension is necessary due to different list lengths)
     durations_series = [pd.Series(d, name=k) for k, d in durations_by_activity.items()]
+    weights_series = [pd.Series(d, name=k) for k, d in weight_per_duration.items()]
+    # create a dataframe containing all durations, and one in the same shape containing the
+    # corresponding weight for each element in the durations dataframe
     durations = pd.concat(durations_series, axis=1)
-    counts = calc_value_counts(durations)
+    weights = pd.concat(weights_series, axis=1)
+    counts = calc_weighed_value_distributions(durations, weights)
     return counts
 
 
 @utils.timing
 def calc_probability_profiles(
-    data: pd.DataFrame, activity_types: list[str]
+    data: pd.DataFrame, activity_types: list[str], weights: pd.Series | None = None
 ) -> pd.DataFrame:
     """
     Calculates the daily activity probability profile for each activity type.
@@ -104,8 +153,7 @@ def calc_probability_profiles(
     :param activity_types: list of possible activity types
     :return: probability profiles for all activity types
     """
-    probabilities = data.apply(lambda x: x.value_counts(normalize=True))
-    probabilities.fillna(0.0, inplace=True)
+    probabilities = calc_weighed_value_distributions(data, weights)
     assert (
         np.isclose(probabilities.sum(), 1.0) | np.isclose(probabilities.sum(), 0.0)
     ).all(), "Calculation error: probabilities are not always 100 % (or 0 % for AT)"
@@ -128,9 +176,9 @@ def calc_statistics_per_category(
     """
     statistics = {}
     for profile_set in profile_sets:
-        # extract only the activity data
-        profile_set.data = col.get_activity_data(profile_set.data)
-        probabilities = calc_probability_profiles(profile_set.data, activity_types)
+        probabilities = calc_probability_profiles(
+            profile_set.data, activity_types, profile_set.weights
+        )
         # convert to sparse format to calculate more statistics
         activity_profiles = profile_set.create_sparse_profiles()
         frequencies = calc_activity_group_frequencies(activity_profiles)
