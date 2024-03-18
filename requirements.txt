@@ -4,8 +4,6 @@ dataclasses-json
 scipy
 cryptography
 tqdm
-
-# plotting
 plotly
 dash
 dash-bootstrap-components

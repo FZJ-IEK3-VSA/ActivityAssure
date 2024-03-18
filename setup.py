@@ -1,4 +1,5 @@
-import os, setuptools
+import os
+import setuptools
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(dir_path, "requirements.txt")) as f:
@@ -14,7 +15,7 @@ setuptools.setup(
     description="An activity profile validation framework",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://jugit.fz-juelich.de/iek-3/groups/urbanmodels/personal/neuroth/lpg-validation-framework",
+    url="TODO",
     include_package_data=True,
     packages=setuptools.find_packages(),
     install_requires=required_packages,
@@ -24,6 +25,14 @@ setuptools.setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-    ],  # TODO: Enter further classifiers if necessary (Read more: https://pypi.org/classifiers/)
-    keywords=["lpgvalidation", "load profile generator", "validation"],
+        "Framework :: Dash",
+        "Topic :: Scientific/Engineering",
+    ],
+    keywords=[
+        "activity validation",
+        "behavior model validation",
+        "occupant behavior",
+        "load profile generator",
+        "validation framework",
+    ],
 )
