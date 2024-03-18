@@ -27,7 +27,7 @@ def create_statistics_set(base_path: Path):
         base_path / "validation_data_sets/country_sex_work status_day type"
     )
 
-    per_person_validation = True
+    per_person_validation = False
     subdir = "per_person" if per_person_validation else "default"
     OUTPUT_PATH = base_path / f"lpg_validation/{subdir}"
 

@@ -11,7 +11,7 @@ from activity_validator.validation_statistics import ValidationStatistics
 # default data paths
 # TODO: load paths from config file
 validation_path = Path("data/validation_data_sets/de_mapped")
-input_data_path = Path("data/lpg_validation/latest")
+input_data_path = Path("data/lpg_validation/default")
 
 # data subdirectories
 prob_dir = ValidationStatistics.PROBABILITY_PROFILE_DIR
