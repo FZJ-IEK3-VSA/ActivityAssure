@@ -272,3 +272,22 @@ def calc_activity_share_per_profile_type(
         }
     )
     return shares_per_group
+
+
+def stats(data, persondata=None, hhdata=None):
+    """Print some basic statistics on HETUS data"""
+    import tabulate
+
+    print(
+        tabulate.tabulate(
+            [
+                ["Number of diaries", len(data)],
+                (
+                    ["Number of persons", len(persondata)]
+                    if persondata is not None
+                    else []
+                ),
+                ["Number of households", len(hhdata)] if hhdata is not None else [],
+            ]
+        )
+    )

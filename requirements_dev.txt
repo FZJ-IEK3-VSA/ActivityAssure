@@ -5,6 +5,10 @@
 PyPDF2
 matplotlib
 seaborn
+tabulate
+
+# LPG example
+utspclient
 
 pytest
 sphinx

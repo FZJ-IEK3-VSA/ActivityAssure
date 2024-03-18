@@ -28,10 +28,9 @@ simulation_config = utspclient.helpers.lpg_helper.create_empty_calcspec(
 assert simulation_config.House is not None
 
 # Define connection parameters
-address = "134.94.131.167:443"
-REQUEST_URL = f"http://{address}/api/v1/profilerequest"
-API_KEY = "OrjpZY93BcNWw8lKaMp0BEchbCc"
-print(f"UTSP-Server: {address}")
+REQUEST_URL = "134.94.131.167:443"
+API_KEY = ""
+print(f"UTSP-Server: {REQUEST_URL}")
 
 # Define templates to simulate
 result_file = "Results.HH1.sqlite"

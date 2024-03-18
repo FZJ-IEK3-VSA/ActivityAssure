@@ -1,16 +1,12 @@
 pandas
 numpy
-tabulate
 dataclasses-json
 scipy
 cryptography
-tabulate
+tqdm
 
 # plotting
 plotly
 dash
 dash-bootstrap-components
 kaleido
-
-# example
-tqdm

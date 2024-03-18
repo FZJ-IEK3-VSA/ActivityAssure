@@ -3,28 +3,9 @@ from functools import wraps
 import time
 from typing import Any
 
-from tabulate import tabulate
-
 
 class ActValidatorException(Exception):
     """Generic error in the activity validator"""
-
-
-def stats(data, persondata=None, hhdata=None):
-    """Print some basic statistics on HETUS data"""
-    print(
-        tabulate(
-            [
-                ["Number of diaries", len(data)],
-                (
-                    ["Number of persons", len(persondata)]
-                    if persondata is not None
-                    else []
-                ),
-                ["Number of households", len(hhdata)] if hhdata is not None else [],
-            ]
-        )
-    )
 
 
 def merge_dicts(dict1: dict[Any, list], dict2: dict[Any, list]) -> dict[Any, list]:
