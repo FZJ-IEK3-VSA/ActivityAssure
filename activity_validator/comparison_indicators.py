@@ -3,12 +3,10 @@ Module for calculating comparison metrics using input data and matching
 validation data
 """
 
-from dataclasses import dataclass, field, fields
-from datetime import timedelta
+from dataclasses import dataclass, fields
 import logging
 from pathlib import Path
 from typing import ClassVar
-from dataclasses_json import config, dataclass_json  # type: ignore
 import numpy as np
 import pandas as pd
 import scipy  # type: ignore
@@ -18,39 +16,13 @@ from activity_validator import utils
 from activity_validator.validation_statistics import ValidationStatistics
 
 
-@dataclass_json
 @dataclass
 class ValidationIndicators:
-    mae: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
-        )
-    )
-    bias: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
-        )
-    )
-    rmse: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
-        )
-    )
-    wasserstein: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
-        )
-    )
-    pearson_corr: pd.Series = field(
-        metadata=config(
-            encoder=lambda s: s.to_json(),
-            decoder=lambda s: pd.read_json(s, typ="series"),
-        )
-    )
+    mae: pd.Series
+    bias: pd.Series
+    rmse: pd.Series
+    wasserstein: pd.Series
+    pearson_corr: pd.Series
 
     mean_column: ClassVar[str] = "mean"
 
@@ -118,26 +90,6 @@ class ValidationIndicators:
         filename = profile_type.construct_filename(filename) + f".{extension}"
         filepath = result_directory / filename
         return filepath
-
-    def save_as_json(
-        self, result_directory: Path, profile_type: ProfileCategory
-    ) -> None:
-        filepath = self.__build_filename(result_directory, profile_type)
-        with open(filepath, "w", encoding="utf-8") as f:
-            json_str = self.to_json()  # type: ignore
-            f.write(json_str)
-        logging.debug(f"Created metrics file {filepath}")
-
-    @staticmethod
-    def load_from_json(
-        filepath: Path,
-    ) -> tuple[ProfileCategory | None, "ValidationIndicators"]:
-        with open(filepath) as f:
-            json_str = f.read()
-        metrics = ValidationIndicators.from_json(json_str)  # type: ignore
-        profile_type = ProfileCategory.from_filename(filepath)
-        logging.debug(f"Loaded metrics file {filepath}")
-        return profile_type, metrics
 
     def to_dataframe(self) -> pd.DataFrame:
         class_fields = fields(ValidationIndicators)
