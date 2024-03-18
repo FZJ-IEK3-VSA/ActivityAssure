@@ -74,7 +74,7 @@ def get_diary_data_for_categorization(
 
 @utils.timing
 def categorize(
-    data: pd.DataFrame, cat_attributes: list[str], include_weights: bool = False
+    data: pd.DataFrame, cat_attributes: list[str], include_weights: bool = True
 ) -> list[ExpandedActivityProfiles]:
     """
     Groups all entries into categories, depending on the categorization
