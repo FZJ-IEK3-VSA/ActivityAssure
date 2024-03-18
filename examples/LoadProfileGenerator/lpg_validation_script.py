@@ -29,9 +29,9 @@ data["prod"] = data.loc[:, ["mae", "rmse", "wasserstein"]].product(axis=1) * 10*
 
 # data.dropna(inplace=True)
 
-data = data[data.iloc[:, 1] == "sleep"]
+data = data[data.iloc[:, 1] == mean_idx]
 # filter category
-data = data[(data.iloc[:, 0].str.contains("unemployed_rest"))]
+# data = data[(data.iloc[:, 0].str.contains("unemployed_rest"))]
 
 data = data.sort_values(by="prod")
 
