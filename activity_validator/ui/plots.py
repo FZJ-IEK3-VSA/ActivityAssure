@@ -35,7 +35,7 @@ GLOBAL_GRAPH_CONFIG = {
 }
 
 # defines the color scheme for plots which show multiple ativities
-STACKED_PROB_CURVE_COLOR = px.colors.qualitative.Plotly
+STACKED_PROB_CURVE_COLOR = px.colors.qualitative.Plotly + px.colors.qualitative.Set1
 
 # defines a sensible default order of activities for plots which show multiple ativities
 _DEFAULT_ACTIVITY_ORDER = [
