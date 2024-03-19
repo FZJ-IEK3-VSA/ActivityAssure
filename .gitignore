@@ -1,5 +1,5 @@
 # data directory
-data/
+/data/
 
 # scripts and logs
 slurm_scripts
