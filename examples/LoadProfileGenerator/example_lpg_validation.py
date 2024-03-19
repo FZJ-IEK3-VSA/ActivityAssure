@@ -12,58 +12,31 @@ from activity_validator.visualizations import indicator_heatmaps
 from activity_validator.validation_statistics import ValidationSet
 
 
-@utils.timing
-def create_statistics_set(base_path: Path):
+def merge_activities(
+    validation_path: Path, merging_path: Path, new_path: Path | None = None
+):
     """
-    Generate the statistics set needed for validation out of the
-    activity profile data from the LoadProfileGenerator.
+    Loads validation statistics and merges activities according to the specified file.
+    The translated statistics are then saved with a new name
+
+    :param validation_path: path of validation statistics to adapt
+    :param merging_path: path of the merging file to use
+    :param new_name: new name for the adapted statistics, by default appends "_mapped"
     """
-    LPG_EXAMPLE_PATH = Path("examples/LoadProfileGenerator")
-    INPUT_DATA_PATH = base_path / "lpg_simulations/preprocessed"
-    LPG_MAPPING_FILE = LPG_EXAMPLE_PATH / "activity_mapping_lpg.json"
-    PERSON_TRAIT_FILE = LPG_EXAMPLE_PATH / "person_characteristics.json"
-
-    VALIDATION_STATS_PATH = (
-        base_path / "validation_data_sets/country_sex_work status_day type"
-    )
-
-    per_person_validation = False
-    subdir = "per_person" if per_person_validation else "default"
-    OUTPUT_PATH = base_path / f"lpg_validation/{subdir}"
-
-    resolution = timedelta(minutes=1)
-
-    # load validation data statistics
-    validation_statistics = ValidationSet.load(VALIDATION_STATS_PATH)
-
-    # calculate statistics for the input model data
-    input_statistics = process_model_data.process_model_data(
-        INPUT_DATA_PATH,
-        LPG_MAPPING_FILE,
-        PERSON_TRAIT_FILE,
-        resolution,
-        validation_statistics.activities,
-        per_person_validation,
-    )
-
-    # if necessary, apply another mapping to merge activities
-    CUSTOM_MAPPING_FILE = LPG_EXAMPLE_PATH / "activity_mapping_validation_lpg.json"
-    if CUSTOM_MAPPING_FILE is not None:
-        mapping, _ = activity_mapping.load_mapping_and_activities(CUSTOM_MAPPING_FILE)
-        input_statistics.map_statistics_activities(mapping)
-        validation_statistics.map_statistics_activities(mapping)
-
-        # the validation statistics have been changed and need to be saved again
-        mapped_validation_path = Path(f"{VALIDATION_STATS_PATH}_mapped")
-        validation_statistics.save(mapped_validation_path)
-        assert input_statistics.activities == validation_statistics.activities
-
-    # save the created statistics
-    input_statistics.save(OUTPUT_PATH)
+    # load statistics and merging map and apply the merging
+    validation_statistics = ValidationSet.load(validation_path)
+    mapping, _ = activity_mapping.load_mapping_and_activities(merging_path)
+    validation_statistics.map_statistics_activities(mapping)
+    # determine the new file name for the mapped statistics
+    new_path = new_path or f"{validation_path}_mapped"
+    # save the mapped statistics
+    validation_statistics.save(new_path)
 
 
 @utils.timing
-def validate(base_path: Path, compare_all_combinations: bool = False):
+def validate(
+    input_path: Path, validation_path: Path, compare_all_combinations: bool = False
+):
     """
     Load input and validation statistics and compare them
     using indicators and heatmaps.
@@ -73,20 +46,15 @@ def validate(base_path: Path, compare_all_combinations: bool = False):
                                      of profile categories will be checked;
                                      defaults to False
     """
-    lpg_statistics_path = base_path / "lpg_validation"
-    valdiation_statistics_path = (
-        base_path / "validation_data_sets/country_sex_work status_day type_mapped"
-    )
-
     # load LPG statistics and validation statistics
-    input_statistics = ValidationSet.load(lpg_statistics_path)
-    validation_statistics = ValidationSet.load(valdiation_statistics_path)
+    input_statistics = ValidationSet.load(input_path)
+    validation_statistics = ValidationSet.load(validation_path)
 
     # compare input and validation data statistics per profile category
     indicator_dict_variants = validation.validate_per_category(
-        input_statistics, validation_statistics, lpg_statistics_path
+        input_statistics, validation_statistics, input_path
     )
-    validation_result_path = lpg_statistics_path / "validation_results"
+    validation_result_path = input_path / "validation_results"
 
     # save indicators and heatmaps for each indicator variant
     for variant_name, metric_dict in indicator_dict_variants.items():
@@ -111,7 +79,7 @@ def validate(base_path: Path, compare_all_combinations: bool = False):
             input_statistics, validation_statistics
         )
         validation.save_file_per_indicator_per_combination(
-            indicators_all_combinations, lpg_statistics_path
+            indicators_all_combinations, input_path
         )
 
         # plot heatmaps to compare the different categories to each other
@@ -130,6 +98,34 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    BASE_RESULT_PATH = Path("data")
-    create_statistics_set(BASE_RESULT_PATH)
-    validate(BASE_RESULT_PATH)
+    # define all input and output paths and other parameters
+    # input data paths
+    lpg_input_dir = Path("examples/LoadProfileGenerator/data")
+    input_data_path = lpg_input_dir / "preprocessed"
+    merging_file = lpg_input_dir / "activity_merging.json"
+    mapping_file = lpg_input_dir / "activity_mapping.json"
+    person_trait_file = lpg_input_dir / "person_characteristics.json"
+    # statistics paths
+    validation_stats_path = Path("data/validation_data_sets/full")
+    merged_validation_stats_path = Path("data/validation_data_sets/full_mapped")
+    input_stats_path = Path("data/validation/lpg_per_person_local")
+    # other parameters
+    profile_resolution = timedelta(minutes=1)
+
+    # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
+    # two activities must be merged in the validation statistics
+    merge_activities(validation_stats_path, merging_file, merged_validation_stats_path)
+
+    # calculate statistics for the input model data
+    input_statistics = process_model_data.process_model_data(
+        input_data_path,
+        mapping_file,
+        person_trait_file,
+        profile_resolution,
+        categories_per_person=True,
+    )
+    # save the created statistics
+    input_statistics.save(input_stats_path)
+
+    # validate the input data using the statistics
+    validate(input_stats_path, merged_validation_stats_path)
