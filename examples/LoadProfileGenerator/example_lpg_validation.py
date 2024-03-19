@@ -1,5 +1,6 @@
 """
-Example script for validation of the LoadProfileGenerator
+Example that demonstrates usage of the activity validator by validating
+the LoadProfileGenerator.
 """
 
 from datetime import timedelta
