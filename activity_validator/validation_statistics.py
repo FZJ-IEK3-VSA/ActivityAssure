@@ -224,7 +224,9 @@ class ValidationSet:
 
         :param mapping: the mapping to apply
         """
-        self.activities = [mapping.get(a, a) for a in self.activities]
+        translated = [mapping.get(a, a) for a in self.activities]
+        # remove duplicates while keeping order
+        self.activities = list(dict.fromkeys(translated))
         for data in self.statistics.values():
             data.map_activities(mapping)
 
