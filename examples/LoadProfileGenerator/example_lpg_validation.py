@@ -29,7 +29,7 @@ def merge_activities(
     mapping, _ = activity_mapping.load_mapping_and_activities(merging_path)
     validation_statistics.map_statistics_activities(mapping)
     # determine the new file name for the mapped statistics
-    new_path = new_path or f"{statistics_path}_mapped"
+    new_path = new_path or Path(f"{statistics_path}_mapped")
     # save the mapped statistics
     validation_statistics.save(new_path)
 

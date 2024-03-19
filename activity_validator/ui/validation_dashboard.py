@@ -100,7 +100,6 @@ def country_overview_probs(country: str):
 
 @callback(Output(cross_country_div, "children"), Input(category_selector, "value"))
 def cross_country_overview(profile_type_str: str):
-    # TODO: maybe replace with three separate controls for sex, work_status, day_type
     sex, work_status, day_type = profile_type_str.split(" - ")
     # filter all profile types with the selected characteristics
     filtered_paths = {
