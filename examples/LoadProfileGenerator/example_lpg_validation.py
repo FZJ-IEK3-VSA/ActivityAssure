@@ -100,22 +100,23 @@ if __name__ == "__main__":
     )
 
     # define all input and output paths and other parameters
+    profile_resolution = timedelta(minutes=1)
     # input data paths
     lpg_input_dir = Path("examples/LoadProfileGenerator/data")
     input_data_path = lpg_input_dir / "preprocessed"
     merging_file = lpg_input_dir / "activity_merging.json"
     mapping_file = lpg_input_dir / "activity_mapping.json"
     person_trait_file = lpg_input_dir / "person_characteristics.json"
-    # statistics paths
+    # validation statistics paths
     validation_stats_path = Path("data/validation_data_sets/full")
-    merged_validation_stats_path = Path("data/validation_data_sets/full_mapped")
+    validation_stats_path_merged = Path("data/validation_data_sets/full_mapped")
+    # input statistics path
+    # here the statistics of the input data and the validation results will be stored
     input_stats_path = Path("data/validation/lpg_per_person_local")
-    # other parameters
-    profile_resolution = timedelta(minutes=1)
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    merge_activities(validation_stats_path, merging_file, merged_validation_stats_path)
+    merge_activities(validation_stats_path, merging_file, validation_stats_path_merged)
 
     # calculate statistics for the input model data
     input_statistics = process_model_data.process_model_data(
@@ -129,4 +130,4 @@ if __name__ == "__main__":
     input_statistics.save(input_stats_path)
 
     # validate the input data using the statistics
-    validate(input_stats_path, merged_validation_stats_path)
+    validate(input_stats_path, validation_stats_path_merged)
