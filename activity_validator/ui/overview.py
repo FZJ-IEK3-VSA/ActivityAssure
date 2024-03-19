@@ -8,8 +8,7 @@ from plotly.graph_objects import Figure  # type: ignore
 from dash import html  # type:ignore
 import dash_bootstrap_components as dbc  # type:ignore
 
-from activity_validator.ui import plots, data_utils
-from activity_validator.profile_category import ProfileCategory
+from activity_validator.ui import plots
 
 
 def chunks(lst, n):

@@ -1,5 +1,5 @@
 """
-Functions for the whole input data processing, starting from loading 
+Functions for the whole input data processing, starting from loading
 data files and resulting in a complete validation statistics set.
 """
 
@@ -90,6 +90,7 @@ def process_model_data(
         input_path, person_trait_file, resolution, categories_per_person
     )
     mapping, activities = activity_mapping.load_mapping_and_activities(mapping_path)
+    # check if the activity list matches that of the validation statistics
     if validation_activities != activities:
         activities = activity_mapping.check_activity_lists(
             activities, validation_activities
