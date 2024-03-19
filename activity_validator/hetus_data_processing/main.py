@@ -218,7 +218,7 @@ def generate_all_dataset_variants(
         hetus_path, result_path, key, [country, work_status, day_type]
     )
     # special case: variant without country is special (has to leave out AT data)
-    data = load_data.load_all_hetus_files_except_AT(hetus_path, result_path, key)
+    data = load_data.load_all_hetus_files_except_AT(hetus_path, key)
     result = process_hetus_2010_data(data, [sex, work_status, day_type], None)
     result.save(result_path / "sex_work status_day type")
 

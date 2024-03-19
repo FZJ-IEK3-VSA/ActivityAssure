@@ -4,6 +4,7 @@ of the HETUS data.
 """
 
 from activity_validator import utils, validation
+from activity_validator.validation_statistics import ValidationSet
 from activity_validator.visualizations import indicator_heatmaps
 
 
@@ -16,9 +17,9 @@ def cross_validation():
 
     # load the parts of the data
     data_path1 = Path("data/validation_data_sets/Validation Split 1")
-    data1 = validation.load_validation_data(data_path1)
+    data1 = ValidationSet.load(data_path1)
     data_path2 = Path("data/validation_data_sets/Validation Split 2")
-    data2 = validation.load_validation_data(data_path2)
+    data2 = ValidationSet.load(data_path2)
 
     # compare each category of data1 to each category of data2
     metrics = validation.validate_all_combinations(data1, data2)
