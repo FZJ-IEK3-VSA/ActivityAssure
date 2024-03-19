@@ -12,14 +12,6 @@ activity\_validator.hetus\_data\_processing.attributes.diary\_attributes module
    :undoc-members:
    :show-inheritance:
 
-activity\_validator.hetus\_data\_processing.attributes.hh\_attributes module
-----------------------------------------------------------------------------
-
-.. automodule:: activity_validator.hetus_data_processing.attributes.hh_attributes
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 activity\_validator.hetus\_data\_processing.attributes.person\_attributes module
 --------------------------------------------------------------------------------
 

@@ -12,14 +12,6 @@ Subpackages
 Submodules
 ----------
 
-activity\_validator.hetus\_data\_processing.activity\_profile module
---------------------------------------------------------------------
-
-.. automodule:: activity_validator.hetus_data_processing.activity_profile
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 activity\_validator.hetus\_data\_processing.categorize module
 -------------------------------------------------------------
 
@@ -36,18 +28,10 @@ activity\_validator.hetus\_data\_processing.category\_statistics module
    :undoc-members:
    :show-inheritance:
 
-activity\_validator.hetus\_data\_processing.data\_analysis module
------------------------------------------------------------------
+activity\_validator.hetus\_data\_processing.data\_protection module
+-------------------------------------------------------------------
 
-.. automodule:: activity_validator.hetus_data_processing.data_analysis
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-activity\_validator.hetus\_data\_processing.data\_checks module
----------------------------------------------------------------
-
-.. automodule:: activity_validator.hetus_data_processing.data_checks
+.. automodule:: activity_validator.hetus_data_processing.data_protection
    :members:
    :undoc-members:
    :show-inheritance:
@@ -60,10 +44,18 @@ activity\_validator.hetus\_data\_processing.filter module
    :undoc-members:
    :show-inheritance:
 
-activity\_validator.hetus\_data\_processing.hetus\_columns module
------------------------------------------------------------------
+activity\_validator.hetus\_data\_processing.hetus\_column\_names module
+-----------------------------------------------------------------------
 
-.. automodule:: activity_validator.hetus_data_processing.hetus_columns
+.. automodule:: activity_validator.hetus_data_processing.hetus_column_names
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+activity\_validator.hetus\_data\_processing.hetus\_column\_values module
+------------------------------------------------------------------------
+
+.. automodule:: activity_validator.hetus_data_processing.hetus_column_values
    :members:
    :undoc-members:
    :show-inheritance:
@@ -80,14 +72,6 @@ activity\_validator.hetus\_data\_processing.hetus\_translations module
 ----------------------------------------------------------------------
 
 .. automodule:: activity_validator.hetus_data_processing.hetus_translations
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-activity\_validator.hetus\_data\_processing.hetus\_values module
-----------------------------------------------------------------
-
-.. automodule:: activity_validator.hetus_data_processing.hetus_values
    :members:
    :undoc-members:
    :show-inheritance:
@@ -112,14 +96,6 @@ activity\_validator.hetus\_data\_processing.main module
 -------------------------------------------------------
 
 .. automodule:: activity_validator.hetus_data_processing.main
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-activity\_validator.hetus\_data\_processing.utils module
---------------------------------------------------------
-
-.. automodule:: activity_validator.hetus_data_processing.utils
    :members:
    :undoc-members:
    :show-inheritance:

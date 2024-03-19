@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "activity-validator"
-copyright = "2023, Forschungszentrum Jülich"
+copyright = "2024, Forschungszentrum Jülich"
 author = "David Neuroth"
 release = "0.1.0"
 
@@ -20,6 +20,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx_autodoc_typehints",
+    "sphinx_rtd_theme",
 ]
 
 templates_path = ["_templates"]
