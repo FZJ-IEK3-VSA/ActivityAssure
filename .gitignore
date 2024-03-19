@@ -5,6 +5,10 @@ data/
 slurm_scripts
 logs
 
+# setuptools build directories
+build
+dist
+
 # directories
 .vscode/
 .idea/

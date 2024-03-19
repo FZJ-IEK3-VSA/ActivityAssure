@@ -8,3 +8,4 @@ plotly
 dash
 dash-bootstrap-components
 kaleido
+sphinx-rtd-theme
