@@ -13,22 +13,22 @@ from activity_validator.validation_statistics import ValidationSet
 
 
 def merge_activities(
-    validation_path: Path, merging_path: Path, new_path: Path | None = None
+    statistics_path: Path, merging_path: Path, new_path: Path | None = None
 ):
     """
     Loads validation statistics and merges activities according to the specified file.
     The translated statistics are then saved with a new name
 
-    :param validation_path: path of validation statistics to adapt
+    :param statistics_path: path of validation statistics to adapt
     :param merging_path: path of the merging file to use
     :param new_name: new name for the adapted statistics, by default appends "_mapped"
     """
     # load statistics and merging map and apply the merging
-    validation_statistics = ValidationSet.load(validation_path)
+    validation_statistics = ValidationSet.load(statistics_path)
     mapping, _ = activity_mapping.load_mapping_and_activities(merging_path)
     validation_statistics.map_statistics_activities(mapping)
     # determine the new file name for the mapped statistics
-    new_path = new_path or f"{validation_path}_mapped"
+    new_path = new_path or f"{statistics_path}_mapped"
     # save the mapped statistics
     validation_statistics.save(new_path)
 
