@@ -1,9 +1,12 @@
 import glob
 from pathlib import Path
+import pandas as pd
 from plotly.graph_objects import Figure  # type: ignore
 
+from activity_validator import activity_mapping
 from activity_validator.ui import datapaths
 from activity_validator.profile_category import ProfileCategory
+from activity_validator.validation_statistics import ValidationSet
 
 
 def ptype_to_label(profile_type: ProfileCategory) -> str:
@@ -45,6 +48,43 @@ def get_file_path(
     if len(files) > 1:
         raise RuntimeError(f"Found multiple files for the same profile type: {files}")
     return Path(files[0])
+
+
+def get_final_activity_order(
+    path_val: Path,
+    path_input: Path,
+    default_order: list[str] = [],
+):
+    """
+    Returns the final activity order to use for all plots with multiple activities.
+
+    :param path_val: base path to the validation data
+    :param path_input: base path to the input data
+    :param default_order: a default activity ordering to apply, defaults to []
+    :return: ordered list of all actually occurring activities
+    """
+    act_val = ValidationSet.load_activities(path_val)
+    act_input = ValidationSet.load_activities(path_input)
+    combined = activity_mapping.check_activity_lists(act_input, act_val)
+    if not default_order:
+        return combined
+    # add all activities in default order if they actually occur
+    ordered = [a for a in default_order if a in combined]
+    # append all additional activities missing in default order
+    ordered += [a for a in combined if a not in ordered]
+    return ordered
+
+
+def reorder_activities(data: pd.DataFrame, order: list[str]) -> pd.DataFrame:
+    """
+    Orders the columns of the dataframe according to the passed list.
+
+    :param data: data to order
+    :param order: order to apply to the columns
+    :return: ordered data
+    """
+    ordered_cols = [a for a in order if a in data.columns]
+    return data[ordered_cols]
 
 
 def save_plot(

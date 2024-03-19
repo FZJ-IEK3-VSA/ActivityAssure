@@ -417,7 +417,7 @@ class MainValidationView(html.Div):
             == dur.keys()
             == prob.keys()
             == kpis.keys()
-            == set(plots.ACTIVITY_ORDER_FOR_PLOTS)
+            == set(plots.ACTIVITY_ORDER)
         ), "Missing data for some activity types"
         # build rows, one for each activity
         rows = [
@@ -428,6 +428,6 @@ class MainValidationView(html.Div):
                 ],
                 className="mb-3",
             )
-            for a in plots.ACTIVITY_ORDER_FOR_PLOTS
+            for a in plots.ACTIVITY_ORDER
         ]
         return rows

@@ -25,10 +25,20 @@ from activity_validator.ui import data_utils, datapaths
 # on initial app launch: https://github.com/plotly/plotly.py/issues/3441
 go.Figure(layout=dict(template="plotly"))
 
+
+# general config for all graphs
+GLOBAL_GRAPH_CONFIG = {
+    "toImageButtonOptions": {
+        "format": "svg",  # one of png, svg, jpeg, webp
+        # "filename": "custom_image",
+    }
+}
+
 # defines the color scheme for plots which show multiple ativities
 STACKED_PROB_CURVE_COLOR = px.colors.qualitative.Plotly
-# defines the order of activities in plots which show multiple ativities
-ACTIVITY_ORDER_FOR_PLOTS = [
+
+# defines a sensible default order of activities for plots which show multiple ativities
+_DEFAULT_ACTIVITY_ORDER = [
     "sleep",
     "work",
     "other",
@@ -45,15 +55,10 @@ ACTIVITY_ORDER_FOR_PLOTS = [
     "laundry",
     "radio/music",
 ]
-
-
-# general config for all graphs
-GLOBAL_GRAPH_CONFIG = {
-    "toImageButtonOptions": {
-        "format": "svg",  # one of png, svg, jpeg, webp
-        # "filename": "custom_image",
-    }
-}
+# determine the global activity order to use for all plots
+ACTIVITY_ORDER = data_utils.get_final_activity_order(
+    datapaths.validation_path, datapaths.input_data_path, _DEFAULT_ACTIVITY_ORDER
+)
 
 
 def replacement_text(text: str = "No data available"):
@@ -119,13 +124,22 @@ def join_to_pairs(
     """
     # join the valiation data with the input data for each activity type
     data_sets: dict[str, pd.DataFrame] = {}
-    for col in validation_data.columns:
-        d_val = validation_data[col]
+    columns = set(validation_data.columns) | set(input_data.columns)
+    for col in columns:
+        # get the respective columns, if they exist
+        d_val, d_in = None, None
+        if col in validation_data:
+            d_val = validation_data[col]
+            dtype = d_val.dtype
         if col in input_data:
             d_in = input_data[col]
-        else:
+            dtype = d_in.dtype
+        if d_val is None:
+            # no validation data for this activity type: create an empty column
+            d_val = pd.Series([], dtype=dtype)
+        if d_in is None:
             # no input data for this activity type: create an empty column
-            d_in = pd.Series([], dtype=d_val.dtype)
+            d_in = pd.Series([], dtype=dtype)
         # set new names for the curves
         d_val.name = "Validation"
         d_in.name = config["model_name"]
@@ -159,7 +173,7 @@ def stacked_prob_curves(filepath: Path | None) -> Figure | None:
     data = pandas_utils.load_df(filepath)
     # transpose data for plotting
     data = data.T
-    data = data[ACTIVITY_ORDER_FOR_PLOTS]  # reorder
+    data = data_utils.reorder_activities(data, ACTIVITY_ORDER)
     time_values = get_date_range(len(data))
     # plot the data
     fig = px.area(
@@ -214,7 +228,7 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     )
     diff = comparison_indicators.calc_probability_curves_diff(data_val, data_in)
     diff = diff.T
-    diff = diff[ACTIVITY_ORDER_FOR_PLOTS]  # reorder
+    diff = data_utils.reorder_activities(diff, ACTIVITY_ORDER)
     time_values = get_date_range(len(diff))
     # plot the data
     fig = px.line(
