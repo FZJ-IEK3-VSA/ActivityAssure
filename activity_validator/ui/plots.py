@@ -26,13 +26,19 @@ from activity_validator.ui import data_utils, datapaths
 go.Figure(layout=dict(template="plotly"))
 
 
-# general config for all graphs
+# general config for all plots
 GLOBAL_GRAPH_CONFIG = {
     "toImageButtonOptions": {
         "format": "svg",  # one of png, svg, jpeg, webp
         # "filename": "custom_image",
     }
 }
+# font settings for all plots
+GLOBAL_FONT = {
+    "size": 16,
+}
+# height for the stacked and difference pltos
+STACKED_HEIGHT = 500
 
 # defines the color scheme for plots which show multiple ativities
 STACKED_PROB_CURVE_COLOR = px.colors.qualitative.Plotly + px.colors.qualitative.Set1
@@ -187,6 +193,9 @@ def stacked_prob_curves(filepath: Path | None) -> Figure | None:
         title="Stacked Probability Curves",
         xaxis_title="Time",
         yaxis_title="Probability",
+        height=STACKED_HEIGHT,
+        font=GLOBAL_FONT,
+        legend_title_text="Activities",
     )
     return fig
 
@@ -242,6 +251,9 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
         title=f"Probability Curve Differences ({config['model_name']} - Validation)",
         xaxis_title="Time",
         yaxis_title="Probability Difference",
+        height=STACKED_HEIGHT,
+        font=GLOBAL_FONT,
+        legend_title_text="Activities",
     )
     return fig
 
@@ -292,6 +304,8 @@ def prob_curve_per_activity(
             title=f'Probability of "{activity}" Activities',
             xaxis_title="Time",
             yaxis_title="Probability",
+            font=GLOBAL_FONT,
+            legend_title_text="",
         )
         figures[activity] = dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)
     return figures
@@ -349,7 +363,11 @@ def histogram_per_activity(
     # set title, axis lables and tick format, if necessary
     for a, f in figures.items():
         f.update_layout(
-            title=f'"{a}" {title}', xaxis_title=xaxis_title, yaxis_title="Probability"
+            title=f'"{a}" {title}',
+            xaxis_title=xaxis_title,
+            yaxis_title="Probability",
+            font=GLOBAL_FONT,
+            legend_title_text="",
         )
         if duration_data:
             # set the correct format so only the time is shown, and not the date
