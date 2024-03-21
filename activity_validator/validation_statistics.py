@@ -238,7 +238,10 @@ class ValidationSet:
             data.map_activities(mapping)
 
     def merge_profile_categories(self, mapping):
-        raise NotImplementedError()
+        # TODO: implement merging of different activity profiles using the weights
+        raise NotImplementedError(
+            "Merging of profile categories has not been implemented yet."
+        )
 
     def pivot_dataframe(
         self, data: pd.DataFrame, attribute_for_pivot: str
@@ -379,6 +382,12 @@ class ValidationSet:
 
     @staticmethod
     def load_activities(base_path: Path) -> list[str]:
+        """
+        Loads the list of available activities from the json file.
+
+        :param base_path: base path of the data set
+        :return: list of activities
+        """
         with open(
             base_path / ValidationSet.ACTIVITIES_DIR / ValidationSet.ACTIVITIES_FILE
         ) as f:
@@ -389,6 +398,15 @@ class ValidationSet:
     def load_validation_data_subdir(
         path: Path, as_timedelta: bool = False
     ) -> dict[ProfileCategory, pd.DataFrame]:
+        """
+        Loads all statistics from one subdirectory of the data set, e.g.
+        only the activity frequencies.
+
+        :param path: the full path of the subdirectory to load
+        :param as_timedelta: whether the data to load contains time data (should be True for
+                             durations); defaults to False
+        :return: a dict of loaded statistics DataFrames, one per profile category
+        """
         return {
             ProfileCategory.from_filename(p): load_df(p, as_timedelta)
             for p in path.iterdir()
