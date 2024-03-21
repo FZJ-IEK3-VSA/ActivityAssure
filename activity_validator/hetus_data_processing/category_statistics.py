@@ -183,12 +183,17 @@ def calc_statistics_per_category(
         activity_profiles = profile_set.create_sparse_profiles()
         frequencies = calc_activity_group_frequencies(activity_profiles)
         durations = calc_activity_group_durations(activity_profiles)
+        # calculate the total weight for this category
+        total_weight = (
+            profile_set.weights.sum() if profile_set.weights is not None else None
+        )
         vs = ValidationStatistics(
             profile_set.profile_type,
             probabilities,
             frequencies,
             durations,
             profile_set.get_profile_count(),
+            total_weight,
         )
         statistics[profile_set.profile_type] = vs
     logging.info(f"Created result files for {len(profile_sets)} categories")

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, Callable, ClassVar
 
 import pandas as pd
 
@@ -31,6 +31,7 @@ class ValidationStatistics:
     activity_frequencies: pd.DataFrame
     activity_durations: pd.DataFrame
     category_size: int | None = None
+    category_weight: float | None = None
 
     # subdirectory names for file storage
     PROBABILITY_PROFILE_DIR: ClassVar = "probability_profiles"
@@ -144,6 +145,11 @@ class ValidationSet:
     """
     A full validation data set, including statistics for all profile
     types and common metadata.
+
+    When saving a ValidationSet, it is stored as a directory. The data from
+    each contained statistics object is stored in multiple files, and common
+    information on all statistics objects, e.g. sizes and weights, is collected
+    and stored in single DataFrame csv files, to give a better overview.
     """
 
     statistics: dict[ProfileCategory, ValidationStatistics]
@@ -152,6 +158,7 @@ class ValidationSet:
     # directory and file names for file storage
     CATEGORIES_DIR: ClassVar = "categories"
     CATEGORY_SIZES_FILE: ClassVar = "category_sizes.csv"
+    CATEGORY_WEIGHTS_FILE: ClassVar = "category_weights.csv"
     ACTIVITIES_DIR: ClassVar = "activities"
     ACTIVITIES_FILE: ClassVar = "activities.json"
     AVAILABLE_ACTIVITIES_KEY: ClassVar = "available activities"
@@ -230,15 +237,55 @@ class ValidationSet:
         for data in self.statistics.values():
             data.map_activities(mapping)
 
-    def get_category_sizes_df(self, attribute_for_pivot: str = "") -> pd.DataFrame:
-        """
-        Collects the category sizes for this statistics object in
-        a single dataframe. Optionally, an attribute for pivoting the data can be
-        chosen to allow comparing some categories more easily.
+    def merge_profile_categories(self, mapping):
+        raise NotImplementedError()
 
-        :param attribute_for_pivot: optionally, specifies an attribute for pivoting;
-                                    its values will each create their own column in
-                                    the sizes dataframe, making it more readable
+    def pivot_dataframe(
+        self, data: pd.DataFrame, attribute_for_pivot: str
+    ) -> pd.DataFrame:
+        """
+        Pivots the DataFrame if it has a MultiIndex and only one column, so that one of the index
+        levels is instead represented in the form of columns. This is helpful to make long
+        DataFrames with a single column more readable.
+        The name of the attribute used for pivoting is however not contained in the resulting
+        csv file anymore, so a file created from the resulting DataFrame cannot be loaded again.
+
+        :param data: the DataFrame to transform
+        :param attribute_for_pivot: the attribute in the index to move to columns
+        :return: the transformed DataFrame
+        """
+        assert len(data.columns) == 1, "DataFrame must have one column only"
+        colname = data.columns[0]
+        if data.index.nlevels == 1 or attribute_for_pivot not in data.index.names:
+            logging.warn(
+                f"The DataFrame only has one index level or the attribute '{attribute_for_pivot}'"
+                "is not part of the categorization. Returning the unpivoted dataframe instead."
+            )
+            return data
+        # this however leads to one index title missing in the csv file, which can then
+        # not be loaded anymore
+        data_reset = data.reset_index()
+        cols = list(data_reset.columns)
+        assert (
+            attribute_for_pivot in cols
+        ), f"Invalid attribute for pivot: {attribute_for_pivot}"
+        cols.remove(attribute_for_pivot)
+        cols.remove(colname)
+        transformed = data_reset.pivot(
+            index=cols, columns=attribute_for_pivot, values=colname
+        )
+        return transformed
+
+    def get_category_info_dataframe(
+        self, column_name: str, func: Callable[[ValidationStatistics], Any]
+    ) -> pd.DataFrame:
+        """
+        Collects a specific value (e.g. size) for each profile category and combines
+        all values in a single dataframe.
+
+        :param column_name: the name of the value, used as column header
+        :param func: the function to get the value; is called on each ValidationStatistics
+                     object separately
         :return: a dataframe containing the category sizes
         """
         # get any profile type to determine the attribute names in use
@@ -249,29 +296,8 @@ class ValidationSet:
             [pt.to_list() for pt in self.statistics.keys()], names=names
         )
         # collect the category sizes
-        sizes = [stat.category_size for stat in self.statistics.values()]
-        colname = "Sizes"
-        sizes_df = pd.DataFrame({colname: sizes}, index=index)
-        if index.nlevels > 1 and attribute_for_pivot:
-            if attribute_for_pivot not in names:
-                logging.warn(
-                    f"The attribute {attribute_for_pivot} is not part of the categorization. "
-                    "Returning the unpivoted dataframe instead."
-                )
-                return sizes_df
-            # more than one profile type attribute: restructure dataframe for readability
-            # this however leads to one index title missing in the csv file, which can then
-            # not be loaded anymore
-            sizes_df.reset_index(inplace=True)
-            cols = list(sizes_df.columns)
-            assert (
-                attribute_for_pivot in cols
-            ), f"Invalid attribute for pivot: {attribute_for_pivot}"
-            cols.remove(attribute_for_pivot)
-            cols.remove(colname)
-            sizes_df = sizes_df.pivot(
-                index=cols, columns=attribute_for_pivot, values=colname
-            )
+        sizes = [func(stat) for stat in self.statistics.values()]
+        sizes_df = pd.DataFrame({column_name: sizes}, index=index)
         return sizes_df
 
     @utils.timing
@@ -297,43 +323,59 @@ class ValidationSet:
                 {ValidationSet.AVAILABLE_ACTIVITIES_KEY: self.activities}, f, indent=4
             )
 
-        # save category sizes to file; this version is used to load the sizes
-        category_sizes = self.get_category_sizes_df()
+        # save category sizes and weights to file; this version is used to load the sizes
+        category_sizes = self.get_category_info_dataframe(
+            "Sizes", lambda stat: stat.category_size
+        )
+        category_weights = self.get_category_info_dataframe(
+            "Weights", lambda stat: stat.category_weight
+        )
         save_df(
             category_sizes,
             ValidationSet.CATEGORIES_DIR,
             ValidationSet.CATEGORY_SIZES_FILE,
             base_path=base_path,
         )
-        # additionally, save a more readable category sizes version
-        category_sizes = self.get_category_sizes_df(Country.title())
         save_df(
-            category_sizes,
+            category_weights,
+            ValidationSet.CATEGORIES_DIR,
+            ValidationSet.CATEGORY_WEIGHTS_FILE,
+            base_path=base_path,
+        )
+        # additionally, save a more readable category sizes version
+        category_sizes_readable = self.pivot_dataframe(category_sizes, Country.title())
+        save_df(
+            category_sizes_readable,
             ValidationSet.CATEGORIES_DIR,
             "category_sizes_readable",
             base_path=base_path,
         )
         # additionally, save another version to compare the distribution of day types
-        category_sizes = self.get_category_sizes_df(DayType.title())
+        category_sizes_day_type = self.pivot_dataframe(category_sizes, DayType.title())
         save_df(
-            category_sizes,
+            category_sizes_day_type,
             ValidationSet.CATEGORIES_DIR,
             "category_sizes_day_type",
             base_path=base_path,
         )
 
     @staticmethod
-    def load_category_sizes(base_path: Path) -> dict[ProfileCategory, int]:
-        sizes = pd.read_csv(
-            base_path / ValidationSet.CATEGORIES_DIR / ValidationSet.CATEGORY_SIZES_FILE
-        )
-        # the last column contains the sizes, the others the profile type attributes
-        pt_names = sizes.columns[:-1]
-        category_sizes = {
+    def load_category_info_dataframe(path: Path) -> dict[ProfileCategory, int]:
+        """
+        Loads a DataFrame from csv which contains one value per profile category.
+        The value can e.g. be a size or a weight. Returns a dict for easy access.
+
+        :param path: path of the csv file
+        :return: a dict mapping each profile category to its value from the file
+        """
+        data = pd.read_csv(path)
+        # the last column contains the values, the others the profile type attributes
+        pt_names = data.columns[:-1]
+        values = {
             ProfileCategory.from_index_tuple(pt_names, values[:-1]): values[-1]
-            for values in sizes.itertuples(index=False)
+            for values in data.itertuples(index=False)
         }
-        return category_sizes
+        return values
 
     @staticmethod
     def load_activities(base_path: Path) -> list[str]:
@@ -357,35 +399,48 @@ class ValidationSet:
     @staticmethod
     def load(base_path: Path) -> "ValidationSet":
         assert base_path.is_dir(), f"Statistics directory not found: {base_path}"
-        subdir_path = base_path / ValidationStatistics.PROBABILITY_PROFILE_DIR
-        probability_profile_data = ValidationSet.load_validation_data_subdir(
-            subdir_path
+        # load the statistics per profile category
+        prob_path = base_path / ValidationStatistics.PROBABILITY_PROFILE_DIR
+        freq_path = base_path / ValidationStatistics.FREQUENCY_DIR
+        dur_path = base_path / ValidationStatistics.DURATION_DIR
+        prob_data = ValidationSet.load_validation_data_subdir(prob_path)
+        freq_data = ValidationSet.load_validation_data_subdir(freq_path)
+        dur_data = ValidationSet.load_validation_data_subdir(dur_path, True)
+
+        # load further info (size, weight) from single csv files
+        sizes_path = (
+            base_path / ValidationSet.CATEGORIES_DIR / ValidationSet.CATEGORY_SIZES_FILE
         )
-        subdir_path = base_path / ValidationStatistics.FREQUENCY_DIR
-        activity_frequency_data = ValidationSet.load_validation_data_subdir(subdir_path)
-        subdir_path = base_path / ValidationStatistics.DURATION_DIR
-        activity_duration_data = ValidationSet.load_validation_data_subdir(
-            subdir_path, True
+        weights_path = (
+            base_path
+            / ValidationSet.CATEGORIES_DIR
+            / ValidationSet.CATEGORY_WEIGHTS_FILE
         )
+        category_sizes = ValidationSet.load_category_info_dataframe(sizes_path)
+        category_weights = ValidationSet.load_category_info_dataframe(weights_path)
+
         assert (
-            probability_profile_data.keys()
-            == activity_frequency_data.keys()
-            == activity_duration_data.keys()
+            prob_data.keys()
+            == freq_data.keys()
+            == dur_data.keys()
+            == category_sizes.keys()
+            == category_weights.keys()
         ), "Missing statistics for some of the profile categories"
 
-        category_sizes = ValidationSet.load_category_sizes(base_path)
+        # assemble the ValidationStatistics objects from the data dicts
         statistics = {
             profile_type: ValidationStatistics(
                 profile_type,
-                prob_data,
-                activity_frequency_data[profile_type],
-                activity_duration_data[profile_type],
+                prob_data[profile_type],
+                freq_data[profile_type],
+                dur_data[profile_type],
                 category_sizes[profile_type],
+                category_weights[profile_type],
             )
-            for profile_type, prob_data in probability_profile_data.items()
+            for profile_type in prob_data.keys()
         }
         logging.info(f"Loaded statistics for {len(statistics)} profile categories")
 
-        # load activities
+        # load activity list
         activities = ValidationSet.load_activities(base_path)
         return ValidationSet(statistics, activities)
