@@ -192,49 +192,6 @@ def process_all_hetus_countries_AT_separately(
     logging.info(f"Finished creating the validation data set '{title}'")
 
 
-def generate_all_dataset_variants(
-    hetus_path: str, result_path: Path, key: str | None = None
-):
-    """
-    Generates all relevant variants of the validation data set, each with a
-    different set of categorization attributes.
-    """
-    country = categorization_attributes.Country.title()
-    sex = categorization_attributes.Sex.title()
-    work_status = categorization_attributes.WorkStatus.title()
-    day_type = categorization_attributes.DayType.title()
-    # default variant with full categorization
-    process_all_hetus_countries_AT_separately(
-        hetus_path, result_path, key, [country, sex, work_status, day_type]
-    )
-    # variants with only three categorization attributes
-    process_all_hetus_countries_AT_separately(
-        hetus_path, result_path, key, [country, sex, work_status]
-    )
-    process_all_hetus_countries_AT_separately(
-        hetus_path, result_path, key, [country, sex, day_type]
-    )
-    process_all_hetus_countries_AT_separately(
-        hetus_path, result_path, key, [country, work_status, day_type]
-    )
-    # special case: variant without country is special (has to leave out AT data)
-    data = load_data.load_all_hetus_files_except_AT(hetus_path, key)
-    result = process_hetus_2010_data(data, [sex, work_status, day_type], None)
-    result.save(result_path / "sex_work status_day type")
-
-    # some other relevant variants
-    process_all_hetus_countries_AT_separately(hetus_path, result_path, key, [country])
-    process_all_hetus_countries_AT_separately(
-        hetus_path, result_path, key, [country, sex]
-    )
-    process_all_hetus_countries_AT_separately(
-        hetus_path, result_path, key, [country, day_type]
-    )
-    process_all_hetus_countries_AT_separately(
-        hetus_path, result_path, key, [country, work_status]
-    )
-
-
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
