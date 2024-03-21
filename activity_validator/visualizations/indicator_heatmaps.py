@@ -1,5 +1,5 @@
 """
-Generates indicator heatmaps. Each heatmap gives an overview on indicator 
+Generates indicator heatmaps. Each heatmap gives an overview on indicator
 values along two axes. The axes can be profile categories, activities, or
 different indicators.
 """
@@ -78,7 +78,7 @@ def convert_to_indicator_mean_dataframe(
     indicator_dict: dict[
         ProfileCategory,
         dict[ProfileCategory, comparison_indicators.ValidationIndicators],
-    ]
+    ],
 ) -> dict[str, pd.DataFrame]:
     """
     Converts a nested metric dict to a set of dataframes, one for each metric.
@@ -105,7 +105,7 @@ def convert_to_indicator_dataframe_per_activity(
     metrics_dict: dict[
         ProfileCategory,
         dict[ProfileCategory, comparison_indicators.ValidationIndicators],
-    ]
+    ],
 ) -> dict[str, dict[str, pd.DataFrame]]:
     """
     Converts a nested metric dict to a set of dataframes, one for each metric and
@@ -155,9 +155,9 @@ def plot_indicator_heatmap(data: pd.DataFrame, output_path: Path):
     )
     # fig.show()
     # decrease font size for image file to include all axis labels
-    fig.update_layout(font_size=8, title_font_size=18)
+    fig.update_layout(font_size=9, title_font_size=18, coloraxis_colorbar_x=0.75)
     output_path.mkdir(parents=True, exist_ok=True)
-    file = output_path / f"heatmap_{data.Name}.png"
+    file = output_path / f"heatmap_{data.Name}.svg"
     try:
         fig.write_image(file, engine="kaleido")
     except Exception as e:

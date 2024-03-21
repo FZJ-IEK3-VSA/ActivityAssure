@@ -13,12 +13,12 @@ from pathlib import Path
 
 @utils.timing
 def cross_validation():
-    output_path = Path("data/lpg_validation/cross_validation")
+    output_path = Path("data/validation/cross_validation")
 
     # load the parts of the data
     data_path1 = Path("data/validation_data_sets/Validation Split 1")
-    data1 = ValidationSet.load(data_path1)
     data_path2 = Path("data/validation_data_sets/Validation Split 2")
+    data1 = ValidationSet.load(data_path1)
     data2 = ValidationSet.load(data_path2)
 
     # compare each category of data1 to each category of data2
@@ -31,3 +31,7 @@ def cross_validation():
     indicator_heatmaps.plot_category_comparison_per_activity(
         metrics, plot_path / "per_activity"
     )
+
+
+if __name__ == "__main__":
+    cross_validation()
