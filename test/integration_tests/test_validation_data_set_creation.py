@@ -2,19 +2,7 @@ from activity_validator import categorization_attributes
 from activity_validator.hetus_data_processing import load_data
 from activity_validator.hetus_data_processing import main
 from activity_validator.profile_category import ProfileCategory
-from activity_validator.validation_statistics import ValidationStatistics
-
-
-def check_validation_statistics_size(statistics: ValidationStatistics, activities: int):
-    assert (
-        list(statistics.probability_profiles.index) == activities
-    ), "Wrong probabiliies row labels"
-    assert set(statistics.activity_durations.columns).issubset(
-        activities
-    ), "Wrong durations column labels"
-    assert set(statistics.activity_frequencies.columns).issubset(
-        activities
-    ), "Wrong frequencies column labels"
+from test_statistics import check_validation_statistics_size
 
 
 def test_validation_data_set_ceation():
