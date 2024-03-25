@@ -68,7 +68,8 @@ def process_hetus_2010_data(
     data: pd.DataFrame,
     cat_attributes=None,
     result_path: Path | None = None,
-):
+    hetus_data_protection: bool = True,
+) -> validation_statistics.ValidationSet:
     """
     Produces a validation data set out of the passed HETUS data.
     Prepares and categorizes the data set and calculates statistics
@@ -95,8 +96,9 @@ def process_hetus_2010_data(
         categories, activities
     )
 
-    # ensure Eurostat data protection requirements
-    data_protection.apply_eurostat_requirements(validation_set)
+    if hetus_data_protection:
+        # ensure Eurostat data protection requirements
+        data_protection.apply_eurostat_requirements(validation_set)
 
     if result_path is not None:
         # save the validation data set
