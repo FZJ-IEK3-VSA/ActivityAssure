@@ -1,5 +1,4 @@
 import os
-from typing import Any
 import pandas as pd
 import seaborn as sns  # type: ignore
 import matplotlib.pyplot as plt
@@ -17,8 +16,8 @@ def plot_heatmap_diary(data: pd.DataFrame, tick_labels, name):
         data,
         linewidths=0.5,
         square=True,
-        cmap="RdYlGn",
-        norm=LogNorm(vmin=10, vmax=10e2),
+        cmap="flare",
+        norm=LogNorm(vmin=50, vmax=10e2),
         cbar_kws={"label": "Number of Diary Entries", "shrink": 0.75},
     )
     # heatmap.set_facecolor("black")
@@ -50,12 +49,12 @@ def plot_heatmaps_diary_filtered_and_unfiltered(name: str, dir: str):
     tick_labels: list[tuple] = [data.index[0]]
     for i in range(1, len(data.index)):
         a, b, c = data.index[i]
-        l: tuple = (c,)
+        label: tuple = (c,)
         if data.index[i - 1][0] != a:
-            l = a, b, c
+            label = a, b, c
         elif data.index[i - 1][1] != b:
-            l = b, c
-        tick_labels.append(l)
+            label = b, c
+        tick_labels.append(label)
     tick_labels_str = [
         " - ".join([str(y).replace("_", " ") for y in x]) for x in tick_labels
     ]
@@ -114,12 +113,12 @@ def plot_heatmap_person(name: str, dir: str):
     tick_labels: list[tuple] = [data.index[0]]
     for i in range(1, len(data.index)):
         a, b = data.index[i]
-        l: tuple = (b,)
+        label: tuple = (b,)
         if data.index[i - 1][0] != a:
-            l = a, b
+            label = a, b
         # elif data.index[i-1][1] != b:
         #     l = b,c
-        tick_labels.append(l)
+        tick_labels.append(label)
     tick_labels_strs = [
         " - ".join([y.replace("_", " ") for y in x]) for x in tick_labels
     ]
@@ -137,6 +136,6 @@ def plot_heatmap_person(name: str, dir: str):
 
 
 if __name__ == "__main__":
-    dir = ".\\data\\validation_data_sets\\country_sex_work status_day type\\categories"
+    dir = ".\\data\\validation_data_sets\\full\\categories"
     name = "category_sizes_readable"
     plot_heatmaps_diary_filtered_and_unfiltered(name, dir)
