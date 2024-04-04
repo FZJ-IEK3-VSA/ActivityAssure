@@ -288,6 +288,9 @@ def prob_curve_per_activity(
     validation_data = validation_data.T * -1
     input_data = input_data.T
     data_per_activity = join_to_pairs(validation_data, input_data)
+    # define tick values and labels
+    tickvals = [-1, -0.5, 0, 0.5, 1]
+    ticklabels = [abs(x) for x in tickvals]
 
     # create the plots
     figures = {}
@@ -303,7 +306,12 @@ def prob_curve_per_activity(
         figure.update_layout(
             title=f'Probability of "{activity}" Activities',
             xaxis_title="Time",
-            yaxis_title="Probability",
+            yaxis=dict(
+                title="Probability",
+                tickmode="array",
+                tickvals=tickvals,
+                ticktext=ticklabels,
+            ),
             font=GLOBAL_FONT,
             legend_title_text="",
         )
