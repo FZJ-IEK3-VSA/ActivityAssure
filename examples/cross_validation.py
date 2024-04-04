@@ -16,8 +16,8 @@ def cross_validation():
     output_path = Path("data/validation/cross_validation")
 
     # load the parts of the data
-    data_path1 = Path("data/validation_data_sets/Validation Split 1")
-    data_path2 = Path("data/validation_data_sets/Validation Split 2")
+    data_path1 = Path("data/validation_data_sets/cross validation/validation split 1")
+    data_path2 = Path("data/validation_data_sets/cross validation/validation split 2")
     data1 = ValidationSet.load(data_path1)
     data2 = ValidationSet.load(data_path2)
 

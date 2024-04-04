@@ -138,11 +138,11 @@ def cross_validation_split(
     # create statistics for the split parts separately
     split1 = category_statistics.calc_statistics_per_category(categories1, activities)
     data_protection.apply_eurostat_requirements(split1)
-    split1.save(result_path / "Validation Split 1")
+    split1.save(result_path / "validation split 1")
 
     split2 = category_statistics.calc_statistics_per_category(categories2, activities)
     data_protection.apply_eurostat_requirements(split2)
-    split2.save(result_path / "Validation Split 2")
+    split2.save(result_path / "validation split 2")
 
 
 @utils.timing
