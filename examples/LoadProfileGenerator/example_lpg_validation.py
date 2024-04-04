@@ -112,7 +112,7 @@ if __name__ == "__main__":
     validation_stats_path_merged = Path("data/validation_data_sets/full_mapped")
     # input statistics path
     # here the statistics of the input data and the validation results will be stored
-    input_stats_path = Path("data/validation/lpg")
+    input_stats_path = Path("data/validation/lpg_example")
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
