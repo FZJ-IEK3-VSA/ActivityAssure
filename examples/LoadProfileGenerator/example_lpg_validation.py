@@ -108,8 +108,10 @@ if __name__ == "__main__":
     mapping_file = lpg_input_dir / "activity_mapping.json"
     person_trait_file = lpg_input_dir / "person_characteristics.json"
     # validation statistics paths
-    validation_stats_path = Path("data/validation_data_sets/full")
-    validation_stats_path_merged = Path("data/validation_data_sets/full_mapped")
+    validation_stats_path = Path(
+        "data/validation_data_sets/activity_validation_data_set"
+    )
+    validation_stats_path_merged = Path(f"{validation_stats_path}_merged")
     # input statistics path
     # here the statistics of the input data and the validation results will be stored
     input_stats_path = Path("data/validation/lpg_example")

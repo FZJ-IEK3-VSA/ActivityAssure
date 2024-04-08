@@ -201,13 +201,10 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    HETUS_PATH = "D:/Daten/HETUS Data/HETUS 2010 full set/DATA"
+    HETUS_PATH = "data/HETUS data/HETUS 2010 full set/DATA"
     key = load_data.read_key_as_arg()
 
     RESULT_PATH = Path("data/validation_data_sets")
 
-    process_all_hetus_countries_AT_separately(HETUS_PATH, RESULT_PATH, key)
-
-    # tests on smaller data sets
-    # data = load_data.load_hetus_files(["DE"], HETUS_PATH, key)
-    # process_hetus_2010_data(data, result_path=RESULT_PATH / "latest")
+    title = "activity_validation_data_set2"
+    process_all_hetus_countries_AT_separately(HETUS_PATH, RESULT_PATH, key, None, title)
