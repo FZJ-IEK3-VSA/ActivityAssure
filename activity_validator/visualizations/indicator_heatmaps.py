@@ -155,7 +155,7 @@ def plot_indicator_heatmap(data: pd.DataFrame, output_path: Path):
     )
     # fig.show()
     # decrease font size for image file to include all axis labels
-    fig.update_layout(font_size=9, title_font_size=18, coloraxis_colorbar_x=0.75)
+    fig.update_layout(font_size=9, title_font_size=18)  # , coloraxis_colorbar_x=0.75)
     output_path.mkdir(parents=True, exist_ok=True)
     file = output_path / f"heatmap_{data.Name}.svg"
     try:
