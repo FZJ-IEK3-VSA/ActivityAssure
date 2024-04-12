@@ -12,7 +12,7 @@ To set up the Activity Validator for usage, clone this repository and install it
 
     pip install .
 
-Next, download the [activity validation data set]() and extract it, for example to a ```data``` subdirectory within the main repository directory.
+Next, download the [activity validation data set]() and extract it, for example to a ```data/validation_data_sets``` subdirectory within the main repository directory.
 
 ## Validating a Model
 To validate activity profiles from a model, you need to provide the input profiles in csv format, and an activity mapping and a person characteristics file in json format. Optionally, an activity merging file can be specified.
@@ -35,7 +35,7 @@ The [LoadProfileGenerator](examples/LoadProfileGenerator) example demonstrates u
 To run the example, set the correct path to the validation data set in [example_lpg_validation.py](examples/LoadProfileGenerator/example_lpg_validation.py) and execute this file. This should generate activity statistics for the LoadProfileGenerator data, as well as comparison indicators for evaluating its similarity to the validation data.
 
 ## Running the Dash web app
-To run the interactive Dash validation web app, execute the following:
+To run the interactive Dash validation web app, set the correct paths to the valdiation data set and your model statistics data set in [datapaths.py](activity_validator/ui/datapaths.py). Then execute the following command:
 
     python activity_validator/ui/validation_dashboard.py
 
