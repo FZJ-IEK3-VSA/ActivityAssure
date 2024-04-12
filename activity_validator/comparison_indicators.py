@@ -65,13 +65,16 @@ class ValidationIndicators:
         """
         Gets the mean of each metric across all activity groups to
         obtain metrics for the whole profile type.
+        Returns the mean of absolute values for the bias, because it
+        is the only indicator with positive and negative values, and
+        the normal mean of bias would always be zero.
 
         :return: a dict containing name and value of each
                  averaged metric
         """
         metric_means = {
             "mae": self.mae.mean(),
-            "bias": self.bias.abs().mean(),  # TODO: should the mean of bias be calculated normally, so it is always zero?
+            "bias": self.bias.abs().mean(),
             "rmse": self.rmse.mean(),
             "pearson correlation": self.pearson_corr.mean(),
             "wasserstein": self.wasserstein.mean(),
