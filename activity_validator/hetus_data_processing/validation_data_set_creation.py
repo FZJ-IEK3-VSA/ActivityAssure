@@ -1,3 +1,9 @@
+"""
+Main module for processing HETUS data.
+Loads HETUS data, categorizes and processes it and generates a
+validation data set out of it.
+"""
+
 import logging
 from pathlib import Path
 
@@ -206,5 +212,5 @@ if __name__ == "__main__":
 
     RESULT_PATH = Path("data/validation_data_sets")
 
-    title = "activity_validation_data_set2"
+    title = "activity_validation_data_set"
     process_all_hetus_countries_AT_separately(HETUS_PATH, RESULT_PATH, key, None, title)
