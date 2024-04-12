@@ -1,3 +1,8 @@
+"""
+Generates heatmaps showing the availability of diaries for all
+different profile categories.
+"""
+
 import os
 import pandas as pd
 import seaborn as sns  # type: ignore

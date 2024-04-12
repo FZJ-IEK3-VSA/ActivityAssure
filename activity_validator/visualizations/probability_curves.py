@@ -1,5 +1,5 @@
 """
-Plots probability profiles for activity groups
+Plots stacked daily probability curves.
 """
 
 from datetime import datetime, timedelta

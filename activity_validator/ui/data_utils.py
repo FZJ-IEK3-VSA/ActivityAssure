@@ -1,3 +1,7 @@
+"""
+Helper functions for handling data, paths and labels for the web app.
+"""
+
 import glob
 from pathlib import Path
 import pandas as pd
@@ -38,6 +42,16 @@ def get_profile_type_labels(path: Path) -> list[str]:
 def get_file_path(
     directory: Path, profile_type: ProfileCategory, ext: str = "*"
 ) -> Path | None:
+    """
+    Searches for the statistics file belonging to a specific ProfileCategory
+    in a certain subdirectory.
+
+    :param directory: the subdirectory to search in
+    :param profile_type: the ProfileCategory for which to look up the path
+    :param ext: file extension, defaults to "*"
+    :raises RuntimeError: if the file could not be identified unambiguously
+    :return: the path of the matching file, or None if no file was found
+    """
     filter = directory / ("*" + profile_type.construct_filename() + f".{ext}")
 
     # find the correct file
