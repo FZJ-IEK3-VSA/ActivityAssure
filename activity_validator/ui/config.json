@@ -1,0 +1,5 @@
+{
+    "validation_path": "data/validation_data_sets/activity_validation_data_set_merged",
+    "input_path": "data/validation/lpg",
+    "model_name": "LoadProfileGenerator"
+}

@@ -134,7 +134,7 @@ class MainValidationView(html.Div):
                                                             className="mb-3",
                                                         ),
                                                         html.H4(
-                                                            config["model_name"]
+                                                            config.model_name
                                                             + " Profile Category",
                                                             className="mb-3",
                                                         ),
@@ -200,7 +200,7 @@ class MainValidationView(html.Div):
                                     html.Div(
                                         children=[
                                             html.H2(
-                                                config["model_name"] + " Data",
+                                                config.model_name + " Data",
                                                 style={"textAlign": "center"},
                                             ),
                                             dcc.Loading(

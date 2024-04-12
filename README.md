@@ -35,7 +35,7 @@ The [LoadProfileGenerator](examples/LoadProfileGenerator) example demonstrates u
 To run the example, set the correct path to the validation data set in [example_lpg_validation.py](examples/LoadProfileGenerator/example_lpg_validation.py) and execute this file. This should generate activity statistics for the LoadProfileGenerator data, as well as comparison indicators for evaluating its similarity to the validation data.
 
 ## Running the Dash web app
-To run the interactive Dash validation web app, set the correct paths to the valdiation data set and your model statistics data set in [datapaths.py](activity_validator/ui/datapaths.py). Then execute the following command:
+To run the interactive Dash validation web app, set the correct paths to the valdiation data set and your model statistics data set in [config.json](activity_validator/ui/config.json). Then execute the following command:
 
     python activity_validator/ui/validation_dashboard.py
 

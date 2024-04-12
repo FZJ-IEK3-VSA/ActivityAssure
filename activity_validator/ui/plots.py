@@ -148,7 +148,7 @@ def join_to_pairs(
             d_in = pd.Series([], dtype=dtype)
         # set new names for the curves
         d_val.name = "Validation"
-        d_in.name = config["model_name"]
+        d_in.name = config.model_name
         joined = pd.concat([d_val, d_in], axis=1)
         data_sets[col] = joined
     return data_sets
@@ -211,9 +211,7 @@ def update_stacked_prob_curves(profile_type_str: str, directory: Path):
     data_utils.save_plot(
         figure,
         "probability profiles",
-        name="validation"
-        if "valid" in str(directory).lower()
-        else config["model_name"],
+        name="validation" if "valid" in str(directory).lower() else config.model_name,
         profile_type=profile_type,
     )
     return [dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)]
@@ -248,7 +246,7 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     )
     fig.update_xaxes(tickformat="%H:%M")
     fig.update_layout(
-        title=f"Probability Curve Differences ({config['model_name']} - Validation)",
+        title=f"Probability Curve Differences ({config.model_name} - Validation)",
         xaxis_title="Time",
         yaxis_title="Probability Difference",
         height=STACKED_HEIGHT,
@@ -297,7 +295,7 @@ def prob_curve_per_activity(
     for activity, data in data_per_activity.items():
         figure = px.line(data)
         # fill the areas between the curves and the x-axis
-        figure.update_traces(fill="tozeroy", selector={"name": config["model_name"]})
+        figure.update_traces(fill="tozeroy", selector={"name": config.model_name})
         figure.update_traces(fill="tozeroy", selector={"name": "Validation"})
         # use the same y-axis range for all plots
         figure.update_yaxes(range=[-1, 1])

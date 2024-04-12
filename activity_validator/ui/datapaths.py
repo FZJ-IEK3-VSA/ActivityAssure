@@ -6,19 +6,17 @@ for validation.
 from pathlib import Path
 
 from activity_validator.validation_statistics import ValidationStatistics
+from activity_validator.ui.config import config
 
 
-# default data paths
-# TODO: load paths from config file
-validation_path = Path("data/validation_data_sets/full_mapped")
-input_data_path = Path("data/validation/lpg")
+# data paths
+validation_path = Path(config.validation_path)
+input_data_path = Path(config.input_path)
 
 # data subdirectories
 prob_dir = ValidationStatistics.PROBABILITY_PROFILE_DIR
 freq_dir = ValidationStatistics.FREQUENCY_DIR
 duration_dir = ValidationStatistics.DURATION_DIR
-# metrics_dir = "metrics"
-# diff_dir = "differences"
 
 # directory for generated plots
 output_path = Path("data/validation_plots")
