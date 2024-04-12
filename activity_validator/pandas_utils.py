@@ -10,50 +10,38 @@ from activity_validator.profile_category import ProfileCategory
 
 
 def create_result_path(
-    subdir: str,
+    path: Path,
     name: str,
     profile_type: ProfileCategory | None = None,
-    base_path: Path | None = None,
     ext: str = "csv",
 ) -> Path:
     """
     Creates a full result path for saving a file within
     the main result data directory.
 
-    :param subdir: subdirectory to save the file at
+    :param path: base directory for the file
     :param name: base name of the file
     :param profile_type: the category of the profile data,
                          if applicable; is appended to the
                          filename; defaults to None
-    :param base_path: base directory for the file,
-                      defaults to VALIDATION_DATA_PATH
     :param ext: file extension, defaults to "csv"
     """
-    # TODO: update signature instead of assert to make base_path mandatory
-    assert base_path, "No base path specified"
     if profile_type is not None:
         # add profile type to filename
         name = profile_type.construct_filename(name)
     if ext and not name.endswith(f".{ext}"):
+        # add the file extension
         name += f".{ext}"
-    if subdir:
-        base_path /= subdir
-    base_path.mkdir(parents=True, exist_ok=True)
-    path = base_path / name
+    path.mkdir(parents=True, exist_ok=True)
+    path = path / name
     return path
-
-
-def convert_to_timedelta(data: pd.DataFrame) -> None:
-    for col in data.columns:
-        data[col] = pd.to_timedelta(data[col])
 
 
 def save_df(
     data: pd.DataFrame | pd.Series,
-    subdir: str,
+    path: Path,
     name: str,
     profile_type: ProfileCategory | None = None,
-    base_path: Path | None = None,
     ext: str = "csv",
 ) -> None:
     """
@@ -61,35 +49,27 @@ def save_df(
     main data directory.
 
     :param data: data to save
-    :param subdir: subdirectory to save the file at
+    :param base_path: directory to save the file in
     :param name: base name of the file
     :param profile_type: the category of the profile data,
                          if applicable; is appended to the
                          filename; defaults to None
-    :param base_path: base directory for the file,
-                      defaults to VALIDATION_DATA_PATH
     :param ext: file extension, defaults to "csv"
     """
-    # TODO: update signature instead of assert to make base_path mandatory
-    assert base_path, "No base path specified"
-    path = create_result_path(subdir, name, profile_type, base_path, ext)
+    path = create_result_path(path, name, profile_type, ext)
     data.to_csv(path)
     logging.debug(f"Created DataFrame file {path}")
 
 
-def load_df(
-    path: str | Path, timedelta_index: bool = False
-) -> pd.DataFrame:  # TODO: make obsolete?
+def load_df(path: Path, timedelta_index: bool = False) -> pd.DataFrame:
     """
-    Loads a data frame from a csv file.
+    Loads a DataFrame from a csv file.
 
     :param path: path to the csv file
-    :param as_timedelta: whether the DataFrame contains a timedelta
-                         index, defaults to False
+    :param as_timedelta: whether the index of the DataFrame consists of timedeltas,
+                         defaults to False
     :return: the loaded DataFrame
     """
-    if isinstance(path, str):
-        path = Path(path)
     # load the data
     data = pd.read_csv(path, index_col=0)
     if timedelta_index:

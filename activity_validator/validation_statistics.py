@@ -47,24 +47,21 @@ class ValidationStatistics:
         """
         save_df(
             self.activity_frequencies,
-            ValidationStatistics.FREQUENCY_DIR,
+            base_path / ValidationStatistics.FREQUENCY_DIR,
             "freq",
             self.profile_type,
-            base_path=base_path,
         )
         save_df(
             self.activity_durations,
-            ValidationStatistics.DURATION_DIR,
+            base_path / ValidationStatistics.DURATION_DIR,
             "dur",
             self.profile_type,
-            base_path=base_path,
         )
         save_df(
             self.probability_profiles,
-            ValidationStatistics.PROBABILITY_PROFILE_DIR,
+            base_path / ValidationStatistics.PROBABILITY_PROFILE_DIR,
             "prob",
             self.profile_type,
-            base_path=base_path,
         )
 
     @staticmethod
@@ -118,16 +115,15 @@ class ValidationStatistics:
                  profile type
         """
         freq_path = create_result_path(
-            ValidationStatistics.FREQUENCY_DIR, "freq", profile_type, base_path
+            base_path / ValidationStatistics.FREQUENCY_DIR, "freq", profile_type
         )
         dur_path = create_result_path(
-            ValidationStatistics.DURATION_DIR, "dur", profile_type, base_path
+            base_path / ValidationStatistics.DURATION_DIR, "dur", profile_type
         )
         prob_path = create_result_path(
-            ValidationStatistics.PROBABILITY_PROFILE_DIR,
+            base_path / ValidationStatistics.PROBABILITY_PROFILE_DIR,
             "prob",
             profile_type,
-            base_path,
         )
         if not (freq_path.is_file() and dur_path.is_file() and prob_path.is_file()):
             raise RuntimeError(
@@ -316,9 +312,8 @@ class ValidationSet:
 
         # save activities
         path = create_result_path(
-            ValidationSet.ACTIVITIES_DIR,
+            base_path / ValidationSet.ACTIVITIES_DIR,
             ValidationSet.ACTIVITIES_FILE,
-            base_path=base_path,
             ext="",
         )
         with open(path, "w", encoding="utf-8") as f:
@@ -335,31 +330,27 @@ class ValidationSet:
         )
         save_df(
             category_sizes,
-            ValidationSet.CATEGORIES_DIR,
+            base_path / ValidationSet.CATEGORIES_DIR,
             ValidationSet.CATEGORY_SIZES_FILE,
-            base_path=base_path,
         )
         save_df(
             category_weights,
-            ValidationSet.CATEGORIES_DIR,
+            base_path / ValidationSet.CATEGORIES_DIR,
             ValidationSet.CATEGORY_WEIGHTS_FILE,
-            base_path=base_path,
         )
         # additionally, save a more readable category sizes version
         category_sizes_readable = self.pivot_dataframe(category_sizes, Country.title())
         save_df(
             category_sizes_readable,
-            ValidationSet.CATEGORIES_DIR,
+            base_path / ValidationSet.CATEGORIES_DIR,
             "category_sizes_readable",
-            base_path=base_path,
         )
         # additionally, save another version to compare the distribution of day types
         category_sizes_day_type = self.pivot_dataframe(category_sizes, DayType.title())
         save_df(
             category_sizes_day_type,
-            ValidationSet.CATEGORIES_DIR,
+            base_path / ValidationSet.CATEGORIES_DIR,
             "category_sizes_day_type",
-            base_path=base_path,
         )
 
     @staticmethod

@@ -222,5 +222,8 @@ def save_file_per_indicator_per_combination(
                 {p: getattr(m, kpi.name) for p, m in metrics_per_type.items()}
             )
             pandas_utils.save_df(
-                df, "metrics/all_combinations", kpi.name, profile_type, output_path
+                df,
+                output_path / "metrics" / "all_combinations",
+                kpi.name,
+                profile_type,
             )

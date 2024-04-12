@@ -63,9 +63,8 @@ def validate(
         metrics_df = validation.indicator_dict_to_df(metric_dict)
         pandas_utils.save_df(
             metrics_df,
-            "",
+            result_subdir,
             "indicators_per_category",
-            base_path=result_subdir,
         )
 
         # plot heatmaps to compare indicator values

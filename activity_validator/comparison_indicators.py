@@ -311,7 +311,7 @@ def calc_all_indicator_variants(
         assert profile_type is not None, "Must specify a profile type for saving"
         assert output_path is not None, "Must specify an output path for saving"
         pandas_utils.save_df(
-            differences, "differences", "diff", profile_type, output_path
+            differences, output_path / "differences", "diff", profile_type
         )
         indicators.save_as_csv(output_path, profile_type, "normal")
         scaled.save_as_csv(output_path, profile_type, "scaled")
