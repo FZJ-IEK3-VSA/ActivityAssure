@@ -8,38 +8,34 @@ import pandas as pd
 from activity_validator.comparison_indicators import ValidationIndicators
 
 if __name__ == "__main__":
-    # result_dir = "per_person"
-    result_dir = "default"
-    # result_dir = "default_first"
-
+    # path template for the indicator file for different indicator variants
     base_path = (
-        "data/lpg_validation/{}/validation_results/{}/indicators_per_category.csv"
+        "data/validation/lpg_example/validation_results/{}/indicators_per_category.csv"
     )
     mean_idx = ValidationIndicators.mean_column
 
-    data = pd.read_csv(base_path.format(result_dir, "default"))
-    data_scaled = pd.read_csv(base_path.format(result_dir, "scaled"))
+    # load the indicators
+    indicators_default = pd.read_csv(base_path.format("default"))
+    indicators_scaled = pd.read_csv(base_path.format("scaled"))
     # add the scaled indicators to the default dataframe
-    data_scaled = data_scaled.loc[:, ["mae", "rmse", "bias", "wasserstein"]].add_prefix(
-        "scaled_"
+    indicators_scaled = indicators_scaled.loc[
+        :, ["mae", "rmse", "bias", "wasserstein"]
+    ].add_prefix("scaled_")
+    indicators_default = pd.concat([indicators_default, indicators_scaled], axis=1)
+
+    # calculate the product of the indicators as a new composite indicator
+    indicators_default["product"] = (
+        indicators_default.loc[:, ["mae", "rmse", "wasserstein"]].product(axis=1)
+        * 10**3
     )
-    data = pd.concat([data, data_scaled], axis=1)
 
-    # check various composite indicators
-    data["diff_mae"] = data["scaled_mae"] - data["mae"]
-    data["prod"] = data.loc[:, ["mae", "rmse", "wasserstein"]].product(axis=1) * 10**3
-    # print(data.describe())
+    # only select the mean indicators, exclude per-activity indicators
+    indicators_default = indicators_default[indicators_default.iloc[:, 1] == mean_idx]
 
-    # data.dropna(inplace=True)
-
-    data = data[data.iloc[:, 1] == mean_idx]
-    # filter category
+    # filter by category
     # data = data[(data.iloc[:, 0].str.contains("unemployed_rest"))]
 
-    data = data.sort_values(by="prod")
+    # choose an indicator to sort by
+    indicators_default = indicators_default.sort_values(by="product")
 
-    print(data)
-    # print("\n--- Best")
-    # print(data[:20])
-    # print("\n--- Worst")
-    # print(data[-20:])
+    print(indicators_default)
