@@ -2,7 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 from activity_validator import activity_mapping, categorization_attributes
 from activity_validator.hetus_data_processing import load_data
-from activity_validator.hetus_data_processing import main
+from activity_validator.hetus_data_processing import validation_data_set_creation
 from activity_validator.input_data_processing import process_model_data
 from activity_validator.profile_category import ProfileCategory
 from test_statistics import (
@@ -21,7 +21,7 @@ def test_lpg_example():
 
     HETUS_PATH = "test/test_data/time use survey data"
     data = load_data.load_hetus_files(["TEST"], HETUS_PATH)
-    validation_statistics = main.process_hetus_2010_data(
+    validation_statistics = validation_data_set_creation.process_hetus_2010_data(
         data, hetus_data_protection=False
     )
     # merge activities for LPG example

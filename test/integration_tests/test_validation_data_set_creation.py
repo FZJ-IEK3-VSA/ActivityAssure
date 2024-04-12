@@ -1,6 +1,6 @@
 from activity_validator import categorization_attributes
 from activity_validator.hetus_data_processing import load_data
-from activity_validator.hetus_data_processing import main
+from activity_validator.hetus_data_processing import validation_data_set_creation
 from activity_validator.profile_category import ProfileCategory
 from test_statistics import check_validation_statistics_size
 
@@ -12,7 +12,9 @@ def test_validation_data_set_ceation():
     # load and process an artifical time use survey data set in HETUS format
     HETUS_PATH = "test/test_data/time use survey data"
     data = load_data.load_hetus_files(["TEST"], HETUS_PATH)
-    result = main.process_hetus_2010_data(data, hetus_data_protection=False)
+    result = validation_data_set_creation.process_hetus_2010_data(
+        data, hetus_data_protection=False
+    )
 
     assert len(result.activities) == 15, "Incorrect activity list"
     assert len(result.statistics) == 20, "Missing profile categories"
