@@ -1,7 +1,7 @@
-activity_validator
-==================
+activityassure
+==============
 
 .. toctree::
    :maxdepth: 4
 
-   activity_validator
+   activityassure
