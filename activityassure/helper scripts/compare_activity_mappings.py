@@ -7,7 +7,7 @@ import collections
 import json
 
 # file that contains all mappings
-path = r"activity_validator\activity_types\mappings.json"
+path = r"activityassure\activity_types\mappings.json"
 
 with open(path, "r") as f:
     content: dict[str, dict] = json.load(f)

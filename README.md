@@ -5,7 +5,7 @@ The concept of the framework is to categorize activity profiles by country, sex,
 
 The framework provides modules for preprocessing and categorizing activity profiles, and for comparing them to the statistics of the validation data set. For the latter, a Dash web application is provided that shows interactive comparison plots and indicators to individually assess each category.
 
-The [hetus_data_processing](activity_validator/hetus_data_processing) subpackage contains the code that was used to generate the aforementioned validation data set from the HETUS 2010 time use survey.
+The [hetus_data_processing](activityassure/hetus_data_processing) subpackage contains the code that was used to generate the aforementioned validation data set from the HETUS 2010 time use survey.
 
 ## Installation
 To set up the Activity Validator for usage, clone this repository and install it, e.g. with pip:
@@ -20,7 +20,7 @@ To validate activity profiles from a model, you need to provide the input profil
 Each input profile needs to have at least two columns: 'Timestep', which contains the simulation timestep (the temporal resolution used must be specified later), and 'Activity', which is a string that denotes the activity of the person at that timestep. Each file only contains the profile for a single person, but it may arbitrarily long. However, only full days will be processed. By default, the profile is assumed to start at 00:00 o'clock. If it does not, an additional 'Date' column with ISO8601 timestamps may be specified, from which the starting time will then be read. All input profiles must be located in a single directory, and adhere to the following naming scheme: ```personid_number.csv```.
 ```personid``` must be a unique identifier for the person, that means your model configuration which produced the activity profile. It can be anything, but it must be unique. Optionally, any free text can be added, which can be used to distinguish between multiple profiles from the same person. If used, it must be delimited by a single underscore ```_```.
 
-The person characteristics file contains the necessary categorization attributes for each of your persons. That means, for each person, the person ID must be mapped to the corresponding sex, employment status and country. The person IDs in this file must match those in the filenames of the csv data files. Possible values for each of the categorization attributes can be found in [categorization_attributes.py](activity_validator/categorization_attributes.py). For the country, the [two-letter codes from Eurostat](https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Glossary:Country_codes) are used.
+The person characteristics file contains the necessary categorization attributes for each of your persons. That means, for each person, the person ID must be mapped to the corresponding sex, employment status and country. The person IDs in this file must match those in the filenames of the csv data files. Possible values for each of the categorization attributes can be found in [categorization_attributes.py](activityassure/categorization_attributes.py). For the country, the [two-letter codes from Eurostat](https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Glossary:Country_codes) are used.
 
 The activity mapping is a dictionary that maps each custom activity from your model to one of the 15 activities used in the framework. The available activities can be seen in the ```activities``` subdirectory of the validation data set.
 
@@ -35,8 +35,8 @@ The [LoadProfileGenerator](examples/LoadProfileGenerator) example demonstrates u
 To run the example, set the correct path to the validation data set in [example_lpg_validation.py](examples/LoadProfileGenerator/example_lpg_validation.py) and execute this file. This should generate activity statistics for the LoadProfileGenerator data, as well as comparison indicators for evaluating its similarity to the validation data.
 
 ## Running the Dash web app
-To run the interactive Dash validation web app, set the correct paths to the valdiation data set and your model statistics data set in [config.json](activity_validator/ui/config.json). Then execute the following command:
+To run the interactive Dash validation web app, set the correct paths to the valdiation data set and your model statistics data set in [config.json](activityassure/ui/config.json). Then execute the following command:
 
-    python activity_validator/ui/validation_dashboard.py
+    python activityassure/ui/validation_dashboard.py
 
 This will start the app with the Dash development server (which should be enough for local usage). The server will print the address where the web app is available (e.g., http://127.0.0.1:8050/). Open the URL in a browser to access the validation app.

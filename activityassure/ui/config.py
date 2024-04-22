@@ -24,7 +24,7 @@ class Config:
 
 
 # parse the content file
-config_file = "activity_validator/ui/config.json"
+config_file = "activityassure/ui/config.json"
 with open(config_file) as f:
     content = f.read()
 config: Config = Config.from_json(content)

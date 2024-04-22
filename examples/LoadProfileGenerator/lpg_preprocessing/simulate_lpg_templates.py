@@ -77,7 +77,7 @@ print(
 
 # save all result files
 base_result_path = Path(
-    "/storage_cluster/projects/2022-d-neuroth-phd/results/activity_validator/lpg_simulations/raw"
+    "/storage_cluster/projects/2022-d-neuroth-phd/results/activityassure/lpg_simulations/raw"
 )
 errors_path = base_result_path / "errors"
 errors_path.mkdir(parents=True, exist_ok=True)
