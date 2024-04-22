@@ -1,14 +1,16 @@
-# Activity Validator
+# ETHOS.ActivityAssure
 
-The Activity Validator is a validation framework for activity profiles and behavior models that generate them. For proper usage, a validation data set is required, which is available [on Zenodo](https://doi.org/10.5281/zenodo.10835209).
+ETHOS.ActivityAssure is a validation framework for activity profiles and behavior models that generate them. For proper usage, a validation data set is required, which is available [on Zenodo](https://doi.org/10.5281/zenodo.10835209).
 The concept of the framework is to categorize activity profiles by country, sex, employment status, and day type, calculate statistics for each category, and then compare activity statistics from the same categories.
 
 The framework provides modules for preprocessing and categorizing activity profiles, and for comparing them to the statistics of the validation data set. For the latter, a Dash web application is provided that shows interactive comparison plots and indicators to individually assess each category.
 
 The [hetus_data_processing](activityassure/hetus_data_processing) subpackage contains the code that was used to generate the aforementioned validation data set from the HETUS 2010 time use survey.
 
+ETHOS.ActivityAssure belongs to the [ETHOS Model Suite](https://www.fz-juelich.de/de/iek/iek-3/leistungen/model-services).
+
 ## Installation
-To set up the Activity Validator for usage, clone this repository and install it, e.g. with pip:
+To set up the ETHOS.ActivityAssure for usage, clone this repository and install it, e.g. with pip:
 
     pip install .
 
