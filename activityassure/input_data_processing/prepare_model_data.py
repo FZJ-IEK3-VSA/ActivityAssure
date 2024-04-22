@@ -5,8 +5,8 @@ according to their category.
 
 import dataclasses
 import logging
-from activity_validator import categorization_attributes, utils
-from activity_validator.activity_profile import (
+from activityassure import categorization_attributes, utils
+from activityassure.activity_profile import (
     ActivityProfileEntry,
     SparseActivityProfile,
 )
@@ -14,10 +14,10 @@ from activity_validator.activity_profile import (
 
 from datetime import timedelta
 from typing import Iterable
-from activity_validator.hetus_data_processing import hetus_constants
+from activityassure.hetus_data_processing import hetus_constants
 
-from activity_validator.hetus_data_processing.attributes import diary_attributes
-from activity_validator.profile_category import ProfileCategory
+from activityassure.hetus_data_processing.attributes import diary_attributes
+from activityassure.profile_category import ProfileCategory
 
 
 def filter_complete_day_profiles(

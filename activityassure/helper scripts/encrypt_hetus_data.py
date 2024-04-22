@@ -6,7 +6,7 @@ import getpass
 from pathlib import Path
 from cryptography.fernet import Fernet
 
-from activity_validator.hetus_data_processing import load_data
+from activityassure.hetus_data_processing import load_data
 
 # print(Fernet.generate_key().decode())
 

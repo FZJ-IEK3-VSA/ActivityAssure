@@ -10,10 +10,10 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 import scipy  # type: ignore
-from activity_validator import pandas_utils
-from activity_validator.profile_category import ProfileCategory
-from activity_validator import utils
-from activity_validator.validation_statistics import ValidationStatistics
+from activityassure import pandas_utils
+from activityassure.profile_category import ProfileCategory
+from activityassure import utils
+from activityassure.validation_statistics import ValidationStatistics
 
 
 @dataclass

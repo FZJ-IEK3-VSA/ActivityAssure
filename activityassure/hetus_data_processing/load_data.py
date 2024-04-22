@@ -14,7 +14,7 @@ import logging
 
 from cryptography.fernet import Fernet
 
-from activity_validator import utils
+from activityassure import utils
 
 
 HETUS_FILENAME_PREFIX = "TUS_SUF_A_"

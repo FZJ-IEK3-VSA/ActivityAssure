@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
 
-from activity_validator.hetus_data_processing import hetus_constants
+from activityassure.hetus_data_processing import hetus_constants
 
 
 def plot_heatmap_diary(data: pd.DataFrame, tick_labels, name):

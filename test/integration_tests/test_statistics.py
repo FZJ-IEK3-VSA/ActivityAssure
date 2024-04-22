@@ -2,7 +2,7 @@
 Contains functions for testing the validity of statistics objects
 """
 
-from activity_validator.validation_statistics import ValidationStatistics
+from activityassure.validation_statistics import ValidationStatistics
 
 
 def check_validation_statistics_size(

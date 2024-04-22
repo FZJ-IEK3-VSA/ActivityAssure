@@ -4,18 +4,18 @@ specific aspects of the HETUS data if necessary.
 """
 
 import pandas as pd
-from activity_validator import activity_mapping
-from activity_validator.hetus_data_processing import hetus_translations
-from activity_validator.activity_profile import (
+from activityassure import activity_mapping
+from activityassure.hetus_data_processing import hetus_translations
+from activityassure.activity_profile import (
     ExpandedActivityProfiles,
 )
-from activity_validator.hetus_data_processing import category_statistics
-from activity_validator.categorization_attributes import (
+from activityassure.hetus_data_processing import category_statistics
+from activityassure.categorization_attributes import (
     DayType,
 )
 
-import activity_validator.hetus_data_processing.hetus_column_names as col
-from activity_validator.hetus_data_processing import level_extraction
+import activityassure.hetus_data_processing.hetus_column_names as col
+from activityassure.hetus_data_processing import level_extraction
 
 
 def detect_household_level_columns(data: pd.DataFrame) -> pd.Index:

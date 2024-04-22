@@ -7,13 +7,13 @@ from datetime import timedelta
 import logging
 import pandas as pd
 
-import activity_validator.hetus_data_processing.hetus_column_names as col
-import activity_validator.hetus_data_processing.hetus_column_values as val
-from activity_validator.hetus_data_processing import hetus_constants
-from activity_validator.categorization_attributes import (
+import activityassure.hetus_data_processing.hetus_column_names as col
+import activityassure.hetus_data_processing.hetus_column_values as val
+from activityassure.hetus_data_processing import hetus_constants
+from activityassure.categorization_attributes import (
     DayType,
 )
-from activity_validator import utils
+from activityassure import utils
 
 
 MAP_DAYTYPE = {

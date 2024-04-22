@@ -7,10 +7,10 @@ from pathlib import Path
 import pandas as pd
 from plotly.graph_objects import Figure  # type: ignore
 
-from activity_validator import activity_mapping
-from activity_validator.ui import datapaths
-from activity_validator.profile_category import ProfileCategory
-from activity_validator.validation_statistics import ValidationSet
+from activityassure import activity_mapping
+from activityassure.ui import datapaths
+from activityassure.profile_category import ProfileCategory
+from activityassure.validation_statistics import ValidationSet
 
 
 def ptype_to_label(profile_type: ProfileCategory) -> str:

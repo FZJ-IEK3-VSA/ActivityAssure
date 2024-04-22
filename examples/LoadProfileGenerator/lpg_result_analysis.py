@@ -5,7 +5,7 @@ the best and worst person categories.
 
 import pandas as pd
 
-from activity_validator.comparison_indicators import ValidationIndicators
+from activityassure.comparison_indicators import ValidationIndicators
 
 if __name__ == "__main__":
     # path template for the indicator file for different indicator variants

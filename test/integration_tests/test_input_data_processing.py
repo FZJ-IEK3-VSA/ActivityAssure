@@ -1,10 +1,10 @@
 from datetime import timedelta
 from pathlib import Path
-from activity_validator import activity_mapping, categorization_attributes
-from activity_validator.hetus_data_processing import load_data
-from activity_validator.hetus_data_processing import validation_data_set_creation
-from activity_validator.input_data_processing import process_model_data
-from activity_validator.profile_category import ProfileCategory
+from activityassure import activity_mapping, categorization_attributes
+from activityassure.hetus_data_processing import load_data
+from activityassure.hetus_data_processing import validation_data_set_creation
+from activityassure.input_data_processing import process_model_data
+from activityassure.profile_category import ProfileCategory
 from test_statistics import (
     check_validation_statistics_size,
 )

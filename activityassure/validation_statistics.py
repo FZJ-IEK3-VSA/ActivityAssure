@@ -10,10 +10,10 @@ from typing import Any, Callable, ClassVar
 
 import pandas as pd
 
-from activity_validator import utils
-from activity_validator.categorization_attributes import Country, DayType
-from activity_validator.profile_category import PersonProfileCategory, ProfileCategory
-from activity_validator.pandas_utils import (
+from activityassure import utils
+from activityassure.categorization_attributes import Country, DayType
+from activityassure.profile_category import PersonProfileCategory, ProfileCategory
+from activityassure.pandas_utils import (
     save_df,
     load_df,
     create_result_path,

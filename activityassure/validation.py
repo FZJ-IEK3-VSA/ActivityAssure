@@ -10,14 +10,14 @@ from typing import Iterable
 
 import pandas as pd
 
-from activity_validator import (
+from activityassure import (
     categorization_attributes,
     comparison_indicators,
     pandas_utils,
     utils,
 )
-from activity_validator.profile_category import ProfileCategory
-from activity_validator.validation_statistics import (
+from activityassure.profile_category import ProfileCategory
+from activityassure.validation_statistics import (
     ValidationSet,
     ValidationStatistics,
 )

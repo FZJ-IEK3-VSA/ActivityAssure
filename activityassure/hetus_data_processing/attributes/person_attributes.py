@@ -6,10 +6,10 @@ be used for categorization.
 import logging
 import pandas as pd
 
-from activity_validator import utils
-import activity_validator.hetus_data_processing.hetus_column_names as col
-import activity_validator.hetus_data_processing.hetus_column_values as val
-from activity_validator.categorization_attributes import (
+from activityassure import utils
+import activityassure.hetus_data_processing.hetus_column_names as col
+import activityassure.hetus_data_processing.hetus_column_values as val
+from activityassure.categorization_attributes import (
     WorkStatus,
     Sex,
     Country,

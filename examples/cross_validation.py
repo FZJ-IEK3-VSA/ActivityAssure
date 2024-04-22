@@ -3,9 +3,9 @@ Example of testing the validation framework with cross-validation
 of the HETUS data.
 """
 
-from activity_validator import utils, validation
-from activity_validator.validation_statistics import ValidationSet
-from activity_validator.visualizations import indicator_heatmaps
+from activityassure import utils, validation
+from activityassure.validation_statistics import ValidationSet
+from activityassure.visualizations import indicator_heatmaps
 
 
 from pathlib import Path

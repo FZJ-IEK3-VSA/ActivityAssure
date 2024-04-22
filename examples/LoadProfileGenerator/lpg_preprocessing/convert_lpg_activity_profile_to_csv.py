@@ -17,7 +17,7 @@ import sqlite3
 import pandas as pd
 import tqdm
 
-from activity_validator import activity_mapping
+from activityassure import activity_mapping
 
 import create_lpg_person_characteristics as create_lpg_char
 

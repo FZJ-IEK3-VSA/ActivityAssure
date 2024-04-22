@@ -5,15 +5,15 @@ data files and resulting in a complete validation statistics set.
 
 from datetime import timedelta
 from pathlib import Path
-from activity_validator import activity_mapping, utils
-from activity_validator.activity_profile import (
+from activityassure import activity_mapping, utils
+from activityassure.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
 )
-from activity_validator.hetus_data_processing import category_statistics
-from activity_validator.input_data_processing import load_model_data, prepare_model_data
-from activity_validator.profile_category import ProfileCategory
-from activity_validator.validation_statistics import ValidationSet, ValidationStatistics
+from activityassure.hetus_data_processing import category_statistics
+from activityassure.input_data_processing import load_model_data, prepare_model_data
+from activityassure.profile_category import ProfileCategory
+from activityassure.validation_statistics import ValidationSet, ValidationStatistics
 
 
 def calc_input_data_statistics(

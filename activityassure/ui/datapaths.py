@@ -5,8 +5,8 @@ for validation.
 
 from pathlib import Path
 
-from activity_validator.validation_statistics import ValidationStatistics
-from activity_validator.ui.config import config
+from activityassure.validation_statistics import ValidationStatistics
+from activityassure.ui.config import config
 
 
 # data paths

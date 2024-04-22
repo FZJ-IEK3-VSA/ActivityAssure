@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 import pandas as pd
 
-from activity_validator.profile_category import ProfileCategory
+from activityassure.profile_category import ProfileCategory
 
 
 def create_result_path(

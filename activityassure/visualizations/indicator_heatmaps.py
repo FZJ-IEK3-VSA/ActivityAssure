@@ -10,8 +10,8 @@ import warnings
 import pandas as pd
 import plotly.express as px  # type: ignore
 
-from activity_validator.profile_category import ProfileCategory
-from activity_validator import comparison_indicators
+from activityassure.profile_category import ProfileCategory
+from activityassure import comparison_indicators
 
 
 def clean_activity_name(activity_name: str) -> str:

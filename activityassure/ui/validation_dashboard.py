@@ -1,10 +1,10 @@
 import dataclasses
 from dash import Dash, html, dcc, callback, Output, Input  # type:ignore
 import dash_bootstrap_components as dbc  # type:ignore
-from activity_validator.ui import data_utils, datapaths, overview
+from activityassure.ui import data_utils, datapaths, overview
 
-from activity_validator.ui import plots
-from activity_validator.ui.main_validation_view import MainValidationView
+from activityassure.ui import plots
+from activityassure.ui.main_validation_view import MainValidationView
 
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])

@@ -2,9 +2,9 @@ from dash import Output, Input, State, html, dcc, callback, no_update, MATCH  # 
 import dash_bootstrap_components as dbc  # type: ignore
 import uuid
 
-from activity_validator.ui.config import config
-from activity_validator import comparison_indicators
-from activity_validator.ui import data_utils, datapaths, plots
+from activityassure.ui.config import config
+from activityassure import comparison_indicators
+from activityassure.ui import data_utils, datapaths, plots
 
 
 class MainValidationView(html.Div):

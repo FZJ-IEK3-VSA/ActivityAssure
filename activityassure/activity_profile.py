@@ -10,9 +10,9 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from activity_validator.hetus_data_processing import hetus_constants
-from activity_validator.profile_category import ProfileCategory
-from activity_validator import utils
+from activityassure.hetus_data_processing import hetus_constants
+from activityassure.profile_category import ProfileCategory
+from activityassure import utils
 
 
 @dataclass

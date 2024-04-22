@@ -10,12 +10,12 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from activity_validator import utils
-from activity_validator.activity_profile import (
+from activityassure import utils
+from activityassure.activity_profile import (
     ExpandedActivityProfiles,
     SparseActivityProfile,
 )
-from activity_validator.validation_statistics import (
+from activityassure.validation_statistics import (
     ValidationStatistics,
     ValidationSet,
 )

@@ -8,7 +8,7 @@ from typing import Any, Collection, Sequence
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
-from activity_validator import categorization_attributes
+from activityassure import categorization_attributes
 
 
 @dataclass_json

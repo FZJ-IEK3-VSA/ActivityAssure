@@ -8,17 +8,17 @@ import plotly.graph_objects as go  # type: ignore
 from plotly.graph_objects import Figure  # type: ignore
 import pandas as pd
 
-from activity_validator.ui.config import config
-from activity_validator.hetus_data_processing import (
+from activityassure.ui.config import config
+from activityassure.hetus_data_processing import (
     hetus_constants,
 )
-from activity_validator import (
+from activityassure import (
     pandas_utils,
     profile_category,
     validation_statistics,
     comparison_indicators,
 )
-from activity_validator.ui import data_utils, datapaths
+from activityassure.ui import data_utils, datapaths
 
 
 # workaround for an unresolved bug that randomly causes exceptions

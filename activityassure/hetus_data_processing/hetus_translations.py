@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from activity_validator import activity_mapping
-import activity_validator.hetus_data_processing.hetus_column_names as col
+from activityassure import activity_mapping
+import activityassure.hetus_data_processing.hetus_column_names as col
 
 #: path of the HETUS code file that maps each HETUS activity code to the
 #  corresponding activity name

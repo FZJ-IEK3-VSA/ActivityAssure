@@ -5,15 +5,15 @@ the diary entries.
 
 import logging
 import pandas as pd
-from activity_validator import categorization_attributes, utils
-from activity_validator.activity_profile import (
+from activityassure import categorization_attributes, utils
+from activityassure.activity_profile import (
     ExpandedActivityProfiles,
     ProfileCategory,
 )
 
-import activity_validator.hetus_data_processing.hetus_column_names as col
-from activity_validator.hetus_data_processing import hetus_constants
-from activity_validator.hetus_data_processing.attributes import (
+import activityassure.hetus_data_processing.hetus_column_names as col
+from activityassure.hetus_data_processing import hetus_constants
+from activityassure.hetus_data_processing.attributes import (
     person_attributes,
     diary_attributes,
 )

@@ -8,27 +8,27 @@ import logging
 from pathlib import Path
 
 import pandas as pd
-from activity_validator.activity_profile import (
+from activityassure.activity_profile import (
     ExpandedActivityProfiles,
 )
 
-import activity_validator.hetus_data_processing.hetus_column_names as col
-from activity_validator.hetus_data_processing import (
+import activityassure.hetus_data_processing.hetus_column_names as col
+from activityassure.hetus_data_processing import (
     data_protection,
     hetus_translations,
     level_extraction,
 )
-from activity_validator.hetus_data_processing import load_data
-from activity_validator import pandas_utils, utils
-from activity_validator import (
+from activityassure.hetus_data_processing import load_data
+from activityassure import pandas_utils, utils
+from activityassure import (
     categorization_attributes,
 )
-from activity_validator.hetus_data_processing.categorize import (
+from activityassure.hetus_data_processing.categorize import (
     categorize,
     get_diary_data_for_categorization,
 )
-from activity_validator.hetus_data_processing import category_statistics
-from activity_validator import validation_statistics
+from activityassure.hetus_data_processing import category_statistics
+from activityassure import validation_statistics
 
 
 @utils.timing

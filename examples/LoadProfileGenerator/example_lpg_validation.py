@@ -7,10 +7,10 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 
-from activity_validator import activity_mapping, utils, pandas_utils, validation
-from activity_validator.input_data_processing import process_model_data
-from activity_validator.visualizations import indicator_heatmaps
-from activity_validator.validation_statistics import ValidationSet
+from activityassure import activity_mapping, utils, pandas_utils, validation
+from activityassure.input_data_processing import process_model_data
+from activityassure.visualizations import indicator_heatmaps
+from activityassure.validation_statistics import ValidationSet
 
 
 def merge_activities(
