@@ -5,7 +5,7 @@ from typing import Any
 
 
 class ActValidatorException(Exception):
-    """Generic error in the activity validator"""
+    """Generic error in ActivityAssure"""
 
 
 def merge_dicts(dict1: dict[Any, list], dict2: dict[Any, list]) -> dict[Any, list]:

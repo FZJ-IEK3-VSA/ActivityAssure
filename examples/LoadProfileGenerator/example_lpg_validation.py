@@ -1,5 +1,5 @@
 """
-Example that demonstrates usage of the activity validator by validating
+Example that demonstrates usage of ETHOS.ActivityAssure by validating
 the LoadProfileGenerator.
 """
 

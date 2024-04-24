@@ -8,7 +8,7 @@ from activityassure.ui.main_validation_view import MainValidationView
 
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
-app.title = "Activity Validator"
+app.title = "ETHOS.ActivityAssure"
 app._favicon = "stacked.ico"
 
 
