@@ -59,7 +59,7 @@ tab3_content = html.Div(
 
 app.layout = html.Div(
     [
-        html.H1(children="Activity Profile Validator", style={"textAlign": "center"}),
+        html.H1(children="ActivityAssure", style={"textAlign": "center"}),
         tabs := dcc.Tabs(
             children=[
                 tab1 := dcc.Tab(tab1_content, label="Validation"),
