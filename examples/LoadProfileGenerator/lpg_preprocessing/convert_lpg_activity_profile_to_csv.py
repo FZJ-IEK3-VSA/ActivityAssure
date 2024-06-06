@@ -2,7 +2,7 @@
 Loads activity profiles from the result database file of the LoadProfileGenerator
 and creates csv files from them that can be used in the validation framework.
 Also generates a preliminary activity mapping in the process using the activity
-categories defined in the LoadProfileGenerators. Some categories cannot be
+categories defined in the LoadProfileGenerator. Some categories cannot be
 assigned an activity unambiguously, so the mapping file needs to be checked
 and completed manually afterwards.
 If a mapping file already exists, it is loaded and expanded if necessary.
