@@ -144,18 +144,42 @@ def plot_indicator_heatmap(data: pd.DataFrame, output_path: Path):
     :param output_path: base output directory
     """
     # turn index to str
-    data.index = pd.Index([str(x) for x in data.index])
-    data.columns = pd.Index([str(x) for x in data.columns])
+    data.index = pd.Index([str(x).replace("_", " ") for x in data.index])
+    data.columns = pd.Index([str(x).replace("_", " ") for x in data.columns])
     fig = px.imshow(
         data,
-        title=data.Name,
+        # title=data.Name,
         labels={"x": "Input Data Category", "y": "Validation Data Category"},
+        # labels={"x": "Subset 1", "y": "Subset 2"},
+        color_continuous_scale="RdYlGn_r",
+        # color_continuous_scale=[[0, "green"], [1, "red"]],
         # zmin=-1,
         # zmax=1,
     )
     # fig.show()
     # decrease font size for image file to include all axis labels
-    fig.update_layout(font_size=9, title_font_size=18)  # , coloraxis_colorbar_x=0.75)
+    fig.update_layout(font_size=9, title_font_size=18, coloraxis_colorbar_x=0.75)
+
+    # add explanatory labels to the colorbar
+    fig.add_annotation(
+        x=0.93,
+        y=1,
+        text="High deviation",
+        showarrow=False,
+        xref="paper",
+        yref="paper",
+        font={"size": 12},
+    )
+    fig.add_annotation(
+        x=0.93,
+        y=0,
+        text="Low deviation",
+        showarrow=False,
+        xref="paper",
+        yref="paper",
+        font={"size": 12},
+    )
+
     output_path.mkdir(parents=True, exist_ok=True)
     file = output_path / f"heatmap_{data.Name}.svg"
     try:
