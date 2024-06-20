@@ -21,21 +21,20 @@ if __name__ == "__main__":
     indicators_scaled = indicators_scaled.loc[
         :, ["mae", "rmse", "bias", "wasserstein"]
     ].add_prefix("scaled_")
-    indicators_default = pd.concat([indicators_default, indicators_scaled], axis=1)
+    indicators = pd.concat([indicators_default, indicators_scaled], axis=1)
 
     # calculate the product of the indicators as a new composite indicator
-    indicators_default["product"] = (
-        indicators_default.loc[:, ["mae", "rmse", "wasserstein"]].product(axis=1)
-        * 10**3
+    indicators["product"] = (
+        indicators.loc[:, ["mae", "rmse", "wasserstein"]].product(axis=1) * 10**3
     )
 
     # only select the mean indicators, exclude per-activity indicators
-    indicators_default = indicators_default[indicators_default.iloc[:, 1] == mean_idx]
+    indicators = indicators[indicators.iloc[:, 1] == mean_idx]
 
     # filter by category
     # data = data[(data.iloc[:, 0].str.contains("unemployed_rest"))]
 
     # choose an indicator to sort by
-    indicators_default = indicators_default.sort_values(by="product")
+    indicators = indicators.sort_values(by="product")
 
-    print(indicators_default)
+    print(indicators)
