@@ -412,19 +412,25 @@ class MainValidationView(html.Div):
         if not freq:
             # no data available for this profile type
             return plots.titled_card(plots.replacement_text())
-        assert (
+        if not (
             freq.keys()
             == dur.keys()
             == prob.keys()
             == kpis.keys()
             == set(plots.ACTIVITY_ORDER)
-        ), "Missing data for some activity types"
+        ):
+            # this should only happen if an activity type is missing in both validation and input data set
+            print("Warning: missing data for some activity types")
         # build rows, one for each activity
         rows = [
             dbc.Row(
                 [
-                    dbc.Col(plots.titled_card(x, a.title()))
-                    for x in (freq[a], dur[a], prob[a], kpis[a])
+                    dbc.Col(
+                        plots.titled_card(x, a.title())
+                        if x is not None
+                        else dbc.Card(dbc.CardBody(plots.replacement_text()))
+                    )
+                    for x in (freq.get(a), dur.get(a), prob.get(a), kpis.get(a))
                 ],
                 className="mb-3",
             )
