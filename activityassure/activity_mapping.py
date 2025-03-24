@@ -51,7 +51,7 @@ def check_activity_lists(
     types_custom = set(activities)
     types_val = set(validation_activities)
     if types_custom != types_val:
-        logging.warn(
+        logging.warning(
             "The applied activity mapping does not use the same set of activity types as the "
             "validation data.\n"
             f"Missing activity types: {types_val - types_custom}\n"
