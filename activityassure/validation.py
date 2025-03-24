@@ -122,7 +122,7 @@ def validate_per_category(
         # select matching validation data
         validation_data = validation_statistics.get_matching_statistics(profile_type)
         if validation_data is None:
-            logging.warn(
+            logging.warning(
                 f"No matching validation data found for category {profile_type}"
             )
             continue
@@ -191,7 +191,7 @@ def validate_all_combinations(
                 )
                 dict_per_type[validation_type] = metrics
             except utils.ActValidatorException as e:
-                logging.warn(
+                logging.warning(
                     f"Could not compare input data category '{profile_type}' "
                     f"to validation data category '{validation_type}': {e}"
                 )

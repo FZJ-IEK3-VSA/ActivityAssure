@@ -111,7 +111,7 @@ def check_activity_data(data):
     a3 = col.get_activity_data(data)
     non_na_share = a3.count().sum() / (len(a3) * len(a3.columns))
     print(
-        f"Share of missing 10 min activity entries in total: {(1 - non_na_share)*100:.1f} %"
+        f"Share of missing 10 min activity entries in total: {(1 - non_na_share) * 100:.1f} %"
     )
     non_na_per_row = a3.count(axis=1)
     rows_with_na = len(non_na_per_row[non_na_per_row < 144]) / len(a3)
@@ -124,7 +124,7 @@ def check_countries(data):
     if len(countries) != 17:
         all = load_data.get_hetus_file_names().keys()
         missing = [c for c in all if c not in countries]
-        logging.warning(f"Missing countries: {missing}")
+        logging.warninging(f"Missing countries: {missing}")
     else:
         logging.info("All countries covered")
 

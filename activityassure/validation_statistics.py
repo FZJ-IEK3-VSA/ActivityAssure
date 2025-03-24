@@ -206,9 +206,9 @@ class ValidationSet:
 
         :param size_ranges: defines the size ranges to apply (e.g., [20, 50])
         """
-        assert size_ranges == sorted(
-            size_ranges
-        ), "Unclear parameter: size_ranges must be sorted"
+        assert size_ranges == sorted(size_ranges), (
+            "Unclear parameter: size_ranges must be sorted"
+        )
         hidden = 0
         for stat in self.statistics.values():
             old_size = stat.category_size
@@ -256,7 +256,7 @@ class ValidationSet:
         assert len(data.columns) == 1, "DataFrame must have one column only"
         colname = data.columns[0]
         if data.index.nlevels == 1 or attribute_for_pivot not in data.index.names:
-            logging.warn(
+            logging.warning(
                 f"The DataFrame only has one index level or the attribute '{attribute_for_pivot}'"
                 "is not part of the categorization. Returning the unpivoted dataframe instead."
             )
@@ -265,9 +265,9 @@ class ValidationSet:
         # not be loaded anymore
         data_reset = data.reset_index()
         cols = list(data_reset.columns)
-        assert (
-            attribute_for_pivot in cols
-        ), f"Invalid attribute for pivot: {attribute_for_pivot}"
+        assert attribute_for_pivot in cols, (
+            f"Invalid attribute for pivot: {attribute_for_pivot}"
+        )
         cols.remove(attribute_for_pivot)
         cols.remove(colname)
         transformed = data_reset.pivot(

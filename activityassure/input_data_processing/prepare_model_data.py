@@ -87,9 +87,9 @@ def determine_day_type(activity_profile: SparseActivityProfile) -> None:
     durations = [a.duration for a in activity_profile.activities if is_work_activity(a)]
     # calculate total working time on this day
     work_sum = sum(durations)
-    assert (
-        work_sum is not None
-    ), "Cannot determine day type for profiles with missing durations"
+    assert work_sum is not None, (
+        "Cannot determine day type for profiles with missing durations"
+    )
     # set the day type depending on the total working time
     day_type = (
         categorization_attributes.DayType.work
@@ -133,10 +133,14 @@ def prepare_input_data(
         logging.debug(f"Preparing profile from file {full_year_profile.filename}")
         # skip empty profiles
         if not full_year_profile.activities or len(full_year_profile.activities) < 5:
-            logging.warn(f"Skipping empty/short profile {full_year_profile.filename}")
+            logging.warning(
+                f"Skipping empty/short profile {full_year_profile.filename}"
+            )
             continue
         # resample profiles to validation data resolution
-        full_year_profile.resample(hetus_constants.get_resolution(full_year_profile.profile_type.country))
+        full_year_profile.resample(
+            hetus_constants.get_resolution(full_year_profile.profile_type.country)
+        )
         # translate activities to the common set of activity types
         full_year_profile.apply_activity_mapping(activity_mapping)
         # split the full year profiles into single-day profiles
@@ -147,5 +151,5 @@ def prepare_input_data(
 
         all_profiles_by_type = utils.merge_dicts(all_profiles_by_type, profiles_by_type)
     if empty_profiles > 0:
-        logging.warn(f"Skipped {empty_profiles} empty/short profiles.")
+        logging.warning(f"Skipped {empty_profiles} empty/short profiles.")
     return all_profiles_by_type
