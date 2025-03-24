@@ -136,7 +136,7 @@ def prepare_input_data(
             logging.warn(f"Skipping empty/short profile {full_year_profile.filename}")
             continue
         # resample profiles to validation data resolution
-        full_year_profile.resample(hetus_constants.RESOLUTION)
+        full_year_profile.resample(hetus_constants.get_resolution(full_year_profile.profile_type.country))
         # translate activities to the common set of activity types
         full_year_profile.apply_activity_mapping(activity_mapping)
         # split the full year profiles into single-day profiles
