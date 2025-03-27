@@ -47,14 +47,14 @@ CATEGORY_MAPPING = {
 }
 
 
-def load_activity_profile_from_db(database_filepath: Path) -> dict[str, pd.DataFrame]:
+def load_activity_profile_from_db(database_file: Path) -> dict[str, pd.DataFrame]:
     """
     Converts LPG activity profiles to the target csv format.
     Also creates or extends the LPG activity mapping file.
 
-    :param raw_data_dir: input raw data directory from one LPG calculation
+    :param db_file: the database file to load
     """
-    assert database_filepath.is_file(), f"Database file not found: {database_filepath}"
+    assert database_file.is_file(), f"Database file not found: {database_file}"
 
     # load activity mapping
     mapping_path = Path("examples/LoadProfileGenerator/activity_mapping_lpg.json")
@@ -66,7 +66,7 @@ def load_activity_profile_from_db(database_filepath: Path) -> dict[str, pd.DataF
         mapping = {}
 
     # get all activities from LPG result database
-    con = sqlite3.connect(str(database_filepath))
+    con = sqlite3.connect(str(database_file))
     with con:
         cur = con.cursor()
         query = "SELECT * FROM PerformedActions"
@@ -97,7 +97,7 @@ def load_activity_profile_from_db(database_filepath: Path) -> dict[str, pd.DataF
         merged = mapping | unmapped_affordances
         with open(mapping_path, "w") as f:
             # add unmapped affordances to mapping file
-            json.dump(merged, f, indent=4)
+            json.dump(merged, f, indent=4, encoding="utf8")
 
     # store the activities in one DataFrame per person
     profiles = {
@@ -108,7 +108,7 @@ def load_activity_profile_from_db(database_filepath: Path) -> dict[str, pd.DataF
 
 
 def convert_activity_profile_from_db_to_csv(
-    raw_data_dir: Path, result_dir: Path, hh_key: str = "HH1"
+    db_file: Path, result_dir: Path, id: str, template: str
 ):
     """
     Loads a single LPG result database file and converts the contained activity
@@ -118,28 +118,22 @@ def convert_activity_profile_from_db_to_csv(
     :param raw_data_dir: LPG result directory containing the database file
     :param result_dir: output folder for the created csv files
     :param hh_key: household key of the file to load, defaults to "HH1"
+
+    :param db_file: the database file to load
+    :param result_dir: the result directory to store the csv files
+    :param id: ID of the calculation to distinguish results for the same template
+    :param template: the household template name
     """
-    assert raw_data_dir.is_dir(), f"Raw data directory does not exist: {raw_data_dir}"
-    # determine the database filepath
-    main_db_file = raw_data_dir / f"Results.{hh_key}.sqlite"
-    assert main_db_file.is_file(), f"Result file does not exist: {main_db_file}"
-
-    # parse LPG template and calculation iteration from directory names
-    iteration = raw_data_dir.name
-    assert iteration.isdigit(), f"Unexpected iteration number {iteration}"
-    template = raw_data_dir.parent.name
-
     # get the profiles as dataframes
-    profile_per_person = load_activity_profile_from_db(main_db_file)
+    profile_per_person = load_activity_profile_from_db(db_file)
 
     # store each dataframe as a csv file
-    base_result_dir = Path(result_dir)
-    base_result_dir.mkdir(parents=True, exist_ok=True)
+    result_dir.mkdir(parents=True, exist_ok=True)
     for person, data in profile_per_person.items():
         # LPG person name pattern: "CHR01 Sami (25/Male)"
         person_name = person.split(" (")[0]
         person_id = create_lpg_char.get_person_id(person_name, template)
-        result_path = base_result_dir / f"{person_id}_{iteration}.csv"
+        result_path = result_dir / f"{person_id}_{id}.csv"
         data.to_csv(result_path)
 
 
@@ -178,8 +172,15 @@ if __name__ == "__main__":
         # each template directory contains one subdirectory per iteration
         for iteration_dir in template_dir.iterdir():
             assert iteration_dir.is_dir(), f"Unexpected file found: {iteration_dir}"
+            # parse the template and calculation iteration from the directory
+            id = iteration_dir.name
+            template = iteration_dir.parent.name
+            # determine the database filepath
+            db_file = iteration_dir / "Results.HH1.sqlite"
             try:
-                convert_activity_profile_from_db_to_csv(iteration_dir, result_dir)
+                convert_activity_profile_from_db_to_csv(
+                    db_file, result_dir, id, template
+                )
             except Exception as e:
                 print(f"An error occurred while processing '{iteration_dir}': {e}")
                 # if the LPG created a log file, move that to the errors directory
