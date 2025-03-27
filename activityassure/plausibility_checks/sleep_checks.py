@@ -2,7 +2,7 @@ from datetime import timedelta
 from activityassure.activity_profile import SparseActivityProfile
 from activityassure.plausibility_checks.profile_report import (
     FailedTestResult,
-    ProfileReport,
+    ResultCollection,
     SuccessfulTest,
     TestResult,
 )
@@ -28,7 +28,7 @@ def check_error_list(
         return SuccessfulTest(True, check)
 
 
-def check_sleep_each_night(profile: SparseActivityProfile, report: ProfileReport):
+def check_sleep_each_night(profile: SparseActivityProfile, report: ResultCollection):
     sleep_activities = [a for a in profile.activities if a.name == "sleep"]
     if not sleep_activities:
         result: TestResult = FailedTestResult(
