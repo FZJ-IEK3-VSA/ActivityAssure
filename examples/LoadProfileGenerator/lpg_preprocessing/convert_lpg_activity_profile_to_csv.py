@@ -9,6 +9,7 @@ If a mapping file already exists, it is loaded and expanded if necessary.
 """
 
 import argparse
+from collections import defaultdict
 from datetime import datetime
 import json
 from pathlib import Path
@@ -22,8 +23,9 @@ from activityassure import activity_mapping
 import create_lpg_person_characteristics as create_lpg_char
 
 
-# preliminary affordance mappings according to affordance categories
+#: used as a placeholder for ambiguous categories
 UNMAPPED_CATEGORY = "TODO"
+#: preliminary affordance mappings according to affordance categories
 CATEGORY_MAPPING = {
     "Active Entertainment (Computer, Internet etc)": "pc",
     "Entertainment": UNMAPPED_CATEGORY,
@@ -45,15 +47,14 @@ CATEGORY_MAPPING = {
 }
 
 
-def load_activity_profile_from_db(raw_data_dir: Path, result_dir: Path):
+def load_activity_profile_from_db(database_filepath: Path) -> dict[str, pd.DataFrame]:
     """
     Converts LPG activity profiles to the target csv format.
     Also creates or extends the LPG activity mapping file.
 
     :param raw_data_dir: input raw data directory from one LPG calculation
-    :param result_dir: output folder for the created csv files
     """
-    assert raw_data_dir.is_dir(), f"Raw data directory does not exist: {raw_data_dir}"
+    assert database_filepath.is_file(), f"Database file not found: {database_filepath}"
 
     # load activity mapping
     mapping_path = Path("examples/LoadProfileGenerator/activity_mapping_lpg.json")
@@ -64,16 +65,8 @@ def load_activity_profile_from_db(raw_data_dir: Path, result_dir: Path):
         # initialize a new mapping
         mapping = {}
 
-    main_db_file = raw_data_dir / "Results.HH1.sqlite"
-    assert main_db_file.is_file(), f"Result file does not exist: {main_db_file}"
-
-    # parse LPG template and calulcation iteration from directory names
-    iteration = raw_data_dir.name
-    assert iteration.isdigit(), f"Unexpected iteration number {iteration}"
-    template = raw_data_dir.parent.name
-
     # get all activities from LPG result database
-    con = sqlite3.connect(str(main_db_file))
+    con = sqlite3.connect(str(database_filepath))
     with con:
         cur = con.cursor()
         query = "SELECT * FROM PerformedActions"
@@ -81,21 +74,23 @@ def load_activity_profile_from_db(raw_data_dir: Path, result_dir: Path):
         activity_list: list[tuple[str, str]] = results.fetchall()
     # parse the json info column for each activity
     parsed_json_list = [json.loads(act) for name, act in activity_list]
-    # sort activities by person
-    rows_by_person: dict[str, list[tuple[int, datetime, str]]] = {}
+    # the list contains activities of all persons, so they need to be grouped
+    rows_by_person: dict[str, list[tuple[int, datetime, str]]] = defaultdict(list)
     unmapped_affordances = {}
     for entry in parsed_json_list:
         start_date = datetime.fromisoformat(entry["DateTime"])
         affordance = entry["AffordanceName"]
         category = entry["Category"]
+        # check for unmapped affordances
         if affordance not in mapping and affordance not in unmapped_affordances:
             unmapped_affordances[affordance] = CATEGORY_MAPPING.get(
                 category, UNMAPPED_CATEGORY
             )
+        # store the relevant information for each activity
         person = entry["PersonName"]
         start_step = entry["TimeStep"]["ExternalStep"]
         activity_entry = (start_step, start_date, affordance)
-        rows_by_person.setdefault(person, []).append(activity_entry)
+        rows_by_person[person].append(activity_entry)
 
     if unmapped_affordances:
         print(f"Found {len(unmapped_affordances)} unmapped affordances")
@@ -104,11 +99,43 @@ def load_activity_profile_from_db(raw_data_dir: Path, result_dir: Path):
             # add unmapped affordances to mapping file
             json.dump(merged, f, indent=4)
 
-    # store the activities in a DataFrame
+    # store the activities in one DataFrame per person
+    profiles = {
+        person: pd.DataFrame(rows, columns=["Timestep", "Date", "Activity"])
+        for person, rows in rows_by_person.items()
+    }
+    return profiles
+
+
+def convert_activity_profile_from_db_to_csv(
+    raw_data_dir: Path, result_dir: Path, hh_key: str = "HH1"
+):
+    """
+    Loads a single LPG result database file and converts the contained activity
+    profiles to csv files. Writes any new, still uncategorized affordances into the
+    mapping file.
+
+    :param raw_data_dir: LPG result directory containing the database file
+    :param result_dir: output folder for the created csv files
+    :param hh_key: household key of the file to load, defaults to "HH1"
+    """
+    assert raw_data_dir.is_dir(), f"Raw data directory does not exist: {raw_data_dir}"
+    # determine the database filepath
+    main_db_file = raw_data_dir / f"Results.{hh_key}.sqlite"
+    assert main_db_file.is_file(), f"Result file does not exist: {main_db_file}"
+
+    # parse LPG template and calculation iteration from directory names
+    iteration = raw_data_dir.name
+    assert iteration.isdigit(), f"Unexpected iteration number {iteration}"
+    template = raw_data_dir.parent.name
+
+    # get the profiles as dataframes
+    profile_per_person = load_activity_profile_from_db(main_db_file)
+
+    # store each dataframe as a csv file
     base_result_dir = Path(result_dir)
     base_result_dir.mkdir(parents=True, exist_ok=True)
-    for person, rows in rows_by_person.items():
-        data = pd.DataFrame(rows, columns=["Timestep", "Date", "Activity"])
+    for person, data in profile_per_person.items():
         # LPG person name pattern: "CHR01 Sami (25/Male)"
         person_name = person.split(" (")[0]
         person_id = create_lpg_char.get_person_id(person_name, template)
@@ -152,7 +179,7 @@ if __name__ == "__main__":
         for iteration_dir in template_dir.iterdir():
             assert iteration_dir.is_dir(), f"Unexpected file found: {iteration_dir}"
             try:
-                load_activity_profile_from_db(iteration_dir, result_dir)
+                convert_activity_profile_from_db_to_csv(iteration_dir, result_dir)
             except Exception as e:
                 print(f"An error occurred while processing '{iteration_dir}': {e}")
                 # if the LPG created a log file, move that to the errors directory
