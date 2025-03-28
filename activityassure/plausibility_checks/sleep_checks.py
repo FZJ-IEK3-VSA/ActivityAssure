@@ -43,7 +43,7 @@ def check_sleep_each_night(profile: SparseActivityProfile, report: ResultCollect
         result = FailedTestResult(
             False,
             "sleep",
-            f"Overall sleeping time is too low at {sleep_share * 100:1f}%",
+            f"Overall sleeping time is too low at {sleep_share * 100:.1f}%",
         )
         report.add(result)
         return
