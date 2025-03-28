@@ -940,5 +940,47 @@
         "sex": "female",
         "work_status": "full time",
         "day_type": null
+    },
+    "CHR52 Ashley": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR52 Matthew": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR52 Mia": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "student",
+        "day_type": null
+    },
+    "CHR60 Amelia": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "unemployed",
+        "day_type": null
+    },
+    "CHR60 Oliver": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR62 Lucas": {
+        "country": "DE",
+        "sex": "male",
+        "work_status": "full time",
+        "day_type": null
+    },
+    "CHR62 Sophie": {
+        "country": "DE",
+        "sex": "female",
+        "work_status": "full time",
+        "day_type": null
     }
 }
