@@ -47,17 +47,19 @@ CATEGORY_MAPPING = {
 }
 
 
-def load_activity_profile_from_db(database_file: Path) -> dict[str, pd.DataFrame]:
+def load_activity_profile_from_db(
+    database_file: Path, mapping_path: Path
+) -> dict[str, pd.DataFrame]:
     """
     Converts LPG activity profiles to the target csv format.
     Also creates or extends the LPG activity mapping file.
 
     :param db_file: the database file to load
+    :param mapping_path: path to the affordance mapping file
     """
     assert database_file.is_file(), f"Database file not found: {database_file}"
 
     # load activity mapping
-    mapping_path = Path("examples/LoadProfileGenerator/activity_mapping_lpg.json")
     if mapping_path.is_file():
         # load the existent mapping to extend it
         mapping = activity_mapping.load_mapping(mapping_path)
@@ -79,8 +81,13 @@ def load_activity_profile_from_db(database_file: Path) -> dict[str, pd.DataFrame
     unmapped_affordances = {}
     for entry in parsed_json_list:
         start_date = datetime.fromisoformat(entry["DateTime"])
-        affordance = entry["AffordanceName"]
+        affordance: str = entry["AffordanceName"]
         category = entry["Category"]
+        # check if the action was traveling
+        if affordance.startswith("travel on "):
+            # use a single name for all travel activities
+            affordance = "travel"
+            category = "travel"
         # check for unmapped affordances
         if affordance not in mapping and affordance not in unmapped_affordances:
             unmapped_affordances[affordance] = CATEGORY_MAPPING.get(
@@ -95,9 +102,9 @@ def load_activity_profile_from_db(database_file: Path) -> dict[str, pd.DataFrame
     if unmapped_affordances:
         print(f"Found {len(unmapped_affordances)} unmapped affordances")
         merged = mapping | unmapped_affordances
-        with open(mapping_path, "w") as f:
+        with open(mapping_path, "w", encoding="utf8") as f:
             # add unmapped affordances to mapping file
-            json.dump(merged, f, indent=4, encoding="utf8")
+            json.dump(merged, f, indent=4)
 
     # store the activities in one DataFrame per person
     profiles = {
@@ -108,7 +115,7 @@ def load_activity_profile_from_db(database_file: Path) -> dict[str, pd.DataFrame
 
 
 def convert_activity_profile_from_db_to_csv(
-    db_file: Path, result_dir: Path, id: str, template: str
+    db_file: Path, result_dir: Path, mapping_path: Path, id: str, template: str = ""
 ):
     """
     Loads a single LPG result database file and converts the contained activity
@@ -125,14 +132,18 @@ def convert_activity_profile_from_db_to_csv(
     :param template: the household template name
     """
     # get the profiles as dataframes
-    profile_per_person = load_activity_profile_from_db(db_file)
+    profile_per_person = load_activity_profile_from_db(db_file, mapping_path)
 
     # store each dataframe as a csv file
     result_dir.mkdir(parents=True, exist_ok=True)
     for person, data in profile_per_person.items():
         # LPG person name pattern: "CHR01 Sami (25/Male)"
         person_name = person.split(" (")[0]
-        person_id = create_lpg_char.get_person_id(person_name, template)
+        if template:
+            # template was externally set, compare it to the person name
+            person_id = create_lpg_char.get_person_id(person_name, template)
+        else:
+            person_id = person_name
         result_path = result_dir / f"{person_id}_{id}.csv"
         data.to_csv(result_path)
 
@@ -163,6 +174,8 @@ if __name__ == "__main__":
     # subdirectory where error messages from failed conversions are stored
     errors_dir = "errors"
 
+    mapping_path = Path("examples/LoadProfileGenerator/activity_mapping_lpg.json")
+
     # expected directory structure: one directory per LPG template
     for template_dir in tqdm.tqdm(Path(input_dir).iterdir()):
         assert template_dir.is_dir(), f"Unexpected file found: {template_dir}"
@@ -179,7 +192,7 @@ if __name__ == "__main__":
             db_file = iteration_dir / "Results.HH1.sqlite"
             try:
                 convert_activity_profile_from_db_to_csv(
-                    db_file, result_dir, id, template
+                    db_file, result_dir, mapping_path, id, template
                 )
             except Exception as e:
                 print(f"An error occurred while processing '{iteration_dir}': {e}")

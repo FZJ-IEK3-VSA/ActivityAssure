@@ -373,5 +373,6 @@
     "join golfing (go golfing)": "not at home",
     "go to community college together (go to community college)": "education",
     "join someone for a visit to the children (visit children (6 h))": "not at home",
-    "watch the grandchildren together (watch the grandchildren)": "other"
+    "watch the grandchildren together (watch the grandchildren)": "other",
+    "travel": "not at home"
 }
