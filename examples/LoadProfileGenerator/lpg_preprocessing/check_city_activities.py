@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 from pathlib import Path
 
 from tqdm import tqdm
@@ -42,6 +43,12 @@ def load_and_check_profiles(input_dir, mapping_file, person_trait_file):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
     # preprocess the city simulation results to csv files
     input_dir = Path(r"D:\LPG\Results\scenario_city-heimbach-street-lindenweg")
     result_dir = Path("data/city_preprocessed/")

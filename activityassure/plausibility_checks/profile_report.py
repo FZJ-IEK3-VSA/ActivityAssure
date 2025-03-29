@@ -1,3 +1,4 @@
+import abc
 from collections import defaultdict
 from dataclasses import dataclass, field
 
@@ -6,17 +7,21 @@ from activityassure.activity_profile import SparseActivityProfile
 
 @dataclass(frozen=True)
 class TestResult:
-    ok: bool
     check_id: str
 
     def get_message(self) -> str:
-        result_str = "ok" if self.ok else "failed"
+        result_str = "ok" if self.ok() else "failed"
         return f"Check '{self.check_id}': {result_str}"
+
+    @abc.abstractmethod
+    def ok(self) -> bool:
+        pass
 
 
 @dataclass(frozen=True)
 class SuccessfulTest(TestResult):
-    pass
+    def ok(self) -> bool:
+        return True
 
 
 @dataclass(frozen=True)
@@ -24,6 +29,10 @@ class FailedTestResult(TestResult):
     message: str
     occurrences: int = -1
     share: float = -1
+    details: str = ""
+
+    def ok(self) -> bool:
+        return False
 
     def get_message(self) -> str:
         m = super().get_message()
@@ -32,7 +41,9 @@ class FailedTestResult(TestResult):
         if self.occurrences >= 0:
             m += f", {self.occurrences} occurrences"
         if self.share >= 0:
-            m += f", {self.share * 100:2f}% affected"
+            m += f", {self.share * 100:.1f}% affected"
+        if self.details:
+            m += "\n" + self.details
         return m
 
 
@@ -43,7 +54,7 @@ class ResultCollection:
     description: str = ""
 
     def add(self, entry: TestResult):
-        if entry.ok:
+        if entry.ok():
             self.successes.append(entry)
         else:
             self.errors.append(entry)
