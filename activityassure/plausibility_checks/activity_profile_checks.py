@@ -9,9 +9,11 @@ from activityassure.plausibility_checks import sleep_checks
 
 def check_activity_profile(profile: SparseActivityProfile):
     report = ResultCollection(description=f"profile {profile.filename}")
-    sleep = sleep_checks.SleepChecks(profile, report)
+    # TODO: check total profile duration = 1 year, max. activity duration < XY, number of activities > XY
+    # basic_checks.OneYearChecks(profile, report)
+    sleep = sleep_checks.SleepChecks(profile, report, ignore=["vacation"])
     sleep.check_sleep()
-    logging.info(report.get_str_report())
+    logging.info(report.get_str_report(False))
     return report
 
 
@@ -22,6 +24,5 @@ def check_activity_profiles(full_year_profiles):
         report = check_activity_profile(profile)
         full_report.add_report(profile, report)
 
-    test_rates = full_report.get_fail_rate_by_check()
-    test_rates_str = "\n".join(f"{k}: {100 * v:.1f}%" for k, v in test_rates.items())
-    logging.info(f"Failure rates per test:\n{test_rates_str}")
+    result_per_test = full_report.get_result_overview_per_test()
+    logging.info(f"Failures per test:\n{result_per_test}")

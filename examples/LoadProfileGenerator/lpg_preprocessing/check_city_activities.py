@@ -45,13 +45,13 @@ def load_and_check_profiles(input_dir, mapping_file, person_trait_file):
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(message)s",
-        level=logging.DEBUG,
+        level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     # preprocess the city simulation results to csv files
     input_dir = Path(r"D:\LPG\Results\scenario_city-heimbach-street-lindenweg")
-    result_dir = Path("data/city_preprocessed/")
+    result_dir = Path("data/city_preprocessed/") / input_dir.name
 
     # load the csvs and check the profiles
     preprocessed_dir = Path("data/city_preprocessed")
@@ -61,4 +61,4 @@ if __name__ == "__main__":
 
     convert_activity_profiles(input_dir, result_dir, mapping_file)
 
-    load_and_check_profiles(preprocessed_dir, mapping_file, person_trait_file)
+    load_and_check_profiles(result_dir, mapping_file, person_trait_file)

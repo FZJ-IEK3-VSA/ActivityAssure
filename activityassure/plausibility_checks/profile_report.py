@@ -69,13 +69,16 @@ class ResultCollection:
         return self.successes + self.errors
 
     def get_str_report(self, include_successful: bool = True):
-        report = f"Test results for {self.description}:\n"
+        header = f"Test results for {self.description}:\n"
+        report = ""
         if include_successful:
             for e in self.successes:
                 report += e.get_message() + "\n"
         for e in self.errors:
             report += e.get_message() + "\n"
-        return report
+        if not include_successful and not report:
+            return ""
+        return header + report
 
 
 @dataclass
@@ -101,3 +104,11 @@ class PlausibilityReport:
         return {
             check: collection.get_fail_rate() for check, collection in results.items()
         }
+
+    def get_result_overview_per_test(self) -> str:
+        results = self.get_results_by_check()
+        test_rates_str = "\n".join(
+            f"{check}: {len(collection.get_errors())}, ({100 * collection.get_fail_rate():.1f}%)"
+            for check, collection in results.items()
+        )
+        return test_rates_str
