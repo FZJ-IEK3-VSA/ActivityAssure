@@ -9,7 +9,7 @@ from activityassure.plausibility_checks import sleep_checks
 
 def check_activity_profile(profile: SparseActivityProfile):
     report = ResultCollection(description=f"profile {profile.filename}")
-    # TODO: check total profile duration = 1 year, max. activity duration < XY, number of activities > XY
+    # TODO: check total profile duration = 1 year, max. activity duration < XY, number of activities > XY, max_duration per activity
     # basic_checks.OneYearChecks(profile, report)
     sleep = sleep_checks.SleepChecks(profile, report, ignore=["vacation"])
     sleep.check_sleep()
