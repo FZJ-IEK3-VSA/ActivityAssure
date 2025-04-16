@@ -13,11 +13,13 @@ def check_activity_profile(profile: SparseActivityProfile):
     # basic_checks.OneYearChecks(profile, report)
     sleep = sleep_checks.SleepChecks(profile, report, ignore=["vacation"])
     sleep.check_sleep()
-    logging.info(report.get_str_report(False))
+    report_message = report.get_str_report(False)
+    if report_message:
+        logging.info(report_message)
     return report
 
 
-def check_activity_profiles(full_year_profiles):
+def check_activity_profiles(full_year_profiles: list[SparseActivityProfile]):
     logging.info(f"Starting plausibility check of {len(full_year_profiles)} profiles")
     full_report = PlausibilityReport()
     for profile in full_year_profiles:
