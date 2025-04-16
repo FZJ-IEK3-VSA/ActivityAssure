@@ -1,9 +1,7 @@
 from datetime import timedelta
-import logging
 from pathlib import Path
 
-from tqdm import tqdm
-
+from activityassure import utils
 from activityassure import activity_mapping
 from activityassure.input_data_processing import load_model_data
 from activityassure.plausibility_checks import activity_profile_checks
@@ -26,16 +24,11 @@ def load_and_check_profiles(input_dir, mapping_file, person_trait_file):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        format="%(message)s",
-        level=logging.INFO,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
     # preprocess the city simulation results to csv files
-    input_dir = Path("D:/LPG/Results/scenario_city-julich")
-    # input_dir = Path("R:/city_simulation_results/scenario_city-julich_25")
+    input_dir = Path("D:/LPG/Results/scenario_city-julich_25_incomplete")
     result_dir = Path("data/city_preprocessed/") / input_dir.name
+
+    utils.init_logging_stdout_and_file(Path("logs") / f"{input_dir.name}.txt")
 
     # load the csvs and check the profiles
     preprocessed_dir = Path("data/city_preprocessed")

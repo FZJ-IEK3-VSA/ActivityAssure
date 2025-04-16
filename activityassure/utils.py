@@ -1,5 +1,7 @@
 import logging
 from functools import wraps
+from pathlib import Path
+import sys
 import time
 from typing import Any
 
@@ -37,3 +39,42 @@ def timing(f):
         return result
 
     return wrap
+
+
+def configure_log_handler(handler):
+    """
+    Configures a log handler with the default settings
+
+    :param handler: the handler to configure
+    """
+    handler.setLevel(logging.DEBUG)
+    # formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
+    formatter = logging.Formatter("%(message)s")
+    formatter.datefmt = "%Y-%m-%d %H:%M:%S"
+    handler.setFormatter(formatter)
+
+
+def init_logging_stdout_and_file(logfile: Path) -> logging.Logger:
+    """
+    Sets up logging with two handlers: one for the console and one for a log file.
+
+    :param logfile: path for the log file
+    :return: the configured logger object
+    """
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    # remove the default handler
+    logger.handlers.clear()
+
+    # add a handler writing to the console
+    console_handler = logging.StreamHandler(sys.stdout)
+    configure_log_handler(console_handler)
+    logger.addHandler(console_handler)
+
+    # add a handler writing to a log file in the specified directory
+    logfile.parent.mkdir(parents=True, exist_ok=True)
+    logfile_handler = logging.FileHandler(logfile, "w", "utf-8")
+    configure_log_handler(logfile_handler)
+    logger.addHandler(logfile_handler)
+    return logger
