@@ -12,7 +12,6 @@ import pandas as pd
 import scipy  # type: ignore
 from activityassure import pandas_utils
 from activityassure.profile_category import ProfileCategory
-from activityassure import utils
 from activityassure.validation_statistics import ValidationStatistics
 
 
@@ -52,9 +51,9 @@ class ValidationIndicators:
         Adds the mean of each KPI across all activities as another
         value.
         """
-        assert (
-            ValidationIndicators.mean_column not in self.mae.index
-        ), f"Cannot add the indicator mean: there is already an activity called {ValidationIndicators.mean_column}"
+        assert ValidationIndicators.mean_column not in self.mae.index, (
+            f"Cannot add the indicator mean: there is already an activity called {ValidationIndicators.mean_column}"
+        )
         self.mae[ValidationIndicators.mean_column] = self.mae.mean()
         self.bias[ValidationIndicators.mean_column] = self.bias.mean()
         self.rmse[ValidationIndicators.mean_column] = self.rmse.mean()
@@ -194,7 +193,50 @@ def normalize(data: pd.DataFrame) -> pd.DataFrame:
     return normalized
 
 
-def check_data_compatibility(
+def resample_columns(df, target_cols):
+    """
+    Resample the columns of a DataFrame to a fixed number of columns,
+    using linear interpolation. Just uses the number of columns, does
+    not require any time index.
+
+    :param df: the DataFrame to resample
+    :param target_cols: the desired number of columns
+    :return: the rsampled dataframe
+    """
+    original_cols = len(df.columns)
+    x_old = np.linspace(0, 1, original_cols)
+    x_new = np.linspace(0, 1, target_cols)
+
+    # Interpolate each row
+    df_resampled = pd.DataFrame(
+        np.array([np.interp(x_new, x_old, row) for row in df.to_numpy()]),
+        index=df.index,
+    )
+    return df_resampled
+
+
+def resample_df_columns_to_match(df1, df2) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Resamples the columns of two DataFrames to match each other.
+    Always resamples the DataFrame with fewer columns to match the other one.
+
+    :param df1: first dataframe
+    :param df2: second dataframe
+    :return: the resampled dataframes
+    """
+    len1 = len(df1.columns)
+    len2 = len(df2.columns)
+    if len1 == len2:
+        # return dataframes unchanged
+        return df1, df2
+    if len1 > len2:
+        # resample df2 to match df1
+        return df1, resample_columns(df2, len1)
+    # resample df1 to match df2
+    return resample_columns(df1, len2), df2
+
+
+def make_probability_dfs_compatible(
     validation: pd.DataFrame, input: pd.DataFrame
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
@@ -210,7 +252,8 @@ def check_data_compatibility(
     :return: the aligned validation and input profiles
     """
     if len(validation.columns) != len(input.columns):
-        raise utils.ActValidatorException("Dataframes have different resolutions")
+        logging.info("Resampling probability profile DataFrames column-wise to match.")
+        validation, input = resample_df_columns_to_match(validation, input)
     if not validation.columns.equals(input.columns):
         # resolution is the same, just the names are different
         validation.columns = input.columns
@@ -250,7 +293,7 @@ def calc_comparison_indicators(
         prob_profiles_val = validation_data.probability_profiles
         prob_profiles_in = input_data.probability_profiles
 
-    prob_profiles_val, prob_profiles_in = check_data_compatibility(
+    prob_profiles_val, prob_profiles_in = make_probability_dfs_compatible(
         prob_profiles_val, prob_profiles_in
     )
     differences = calc_probability_curves_diff(prob_profiles_val, prob_profiles_in)

@@ -231,7 +231,7 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     data_in = pandas_utils.load_df(path_in)
 
     # get the probability profile differences
-    data_val, data_in = comparison_indicators.check_data_compatibility(
+    data_val, data_in = comparison_indicators.make_probability_dfs_compatible(
         data_val, data_in
     )
     diff = comparison_indicators.calc_probability_curves_diff(data_val, data_in)
@@ -274,6 +274,11 @@ def prob_curve_per_activity(
     # load both files
     validation_data = pandas_utils.load_df(path_val)
     input_data = pandas_utils.load_df(path_in)
+
+    # make sure the data is compatible for plotting
+    validation_data, input_data = comparison_indicators.make_probability_dfs_compatible(
+        validation_data, input_data
+    )
 
     # assign time values for the timesteps
     time_values = get_date_range(len(validation_data.columns))
