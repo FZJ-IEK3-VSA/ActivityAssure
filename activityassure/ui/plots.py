@@ -27,7 +27,7 @@ go.Figure(layout=dict(template="plotly"))
 
 
 # general config for all plots
-GLOBAL_GRAPH_CONFIG = {
+GLOBAL_GRAPH_CONFIG: dcc.Graph.Config = {
     "toImageButtonOptions": {
         "format": "svg",  # one of png, svg, jpeg, webp
         # "filename": "custom_image",
@@ -168,6 +168,7 @@ def remove_trailing_zero_rows(data: pd.DataFrame) -> pd.DataFrame:
     # find the last non-zero row
     last_nonzero_row = (data != 0).any(axis=1).cumsum().idxmax()
     last_nonzero_position = data.index.get_loc(last_nonzero_row)
+    assert isinstance(last_nonzero_position, int), "Unexpected index type"
     # cut off the last zero-rows
     return data.iloc[: last_nonzero_position + 1]
 
