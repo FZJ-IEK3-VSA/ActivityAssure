@@ -158,12 +158,12 @@ def plot_indicator_heatmap(data: pd.DataFrame, output_path: Path):
     )
     # fig.show()
     # decrease font size for image file to include all axis labels
-    fig.update_layout(font_size=9, title_font_size=18, coloraxis_colorbar_x=0.75)
+    fig.update_layout(font_size=9, title_font_size=18, coloraxis_colorbar_x=0.80)
 
     # add explanatory labels to the colorbar
     fig.add_annotation(
-        x=0.93,
-        y=1,
+        x=0.95,
+        y=1.05,
         text="High deviation",
         showarrow=False,
         xref="paper",
@@ -171,8 +171,8 @@ def plot_indicator_heatmap(data: pd.DataFrame, output_path: Path):
         font={"size": 12},
     )
     fig.add_annotation(
-        x=0.93,
-        y=0,
+        x=0.95,
+        y=-0.05,
         text="Low deviation",
         showarrow=False,
         xref="paper",
