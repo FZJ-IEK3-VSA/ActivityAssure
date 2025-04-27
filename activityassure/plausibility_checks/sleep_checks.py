@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import timedelta
 from typing import Iterable
 from activityassure.activity_profile import SparseActivityProfile
+from activityassure.plausibility_checks.activity_statistics import StatisticsCalculator
 from activityassure.plausibility_checks.profile_report import (
     FailedTestResult,
     ResultCollection,
@@ -25,13 +26,11 @@ class SleepChecks:
         self.sleep_act = sleep_name
         self.profile = profile
         self.ignore = set(ignore)
-        self.sleep_activities = [
-            a for a in profile.activities if a.name == self.sleep_act
-        ]
+        self.statcalc = StatisticsCalculator(profile, sleep_name, ignore=ignore)
         self.report = report
 
     def check_sleep(self) -> None:
-        if not self.sleep_activities:
+        if not self.statcalc.activities:
             result: TestResult = FailedTestResult(
                 "sleep", "Did not find a single sleep activity"
             )
@@ -49,8 +48,7 @@ class SleepChecks:
 
     def check_overall_sleep_ratio(self) -> TestResult:
         check = "sleep - overall ratio"
-        sleep_duration = sum(a.duration for a in self.sleep_activities)
-        sleep_share = sleep_duration / self.profile.length()
+        sleep_share = self.statcalc.overall_share()
         if sleep_share < SleepChecks.MIN_SLEEP_SHARE:
             return FailedTestResult(
                 check,
@@ -61,18 +59,14 @@ class SleepChecks:
 
     def check_sleep_durations(self) -> TestResult:
         check = "sleep - duration"
-        too_long_sleep_durs = [
-            duration
-            for a in self.sleep_activities
-            if (duration := a.duration * self.profile.resolution)
-            > SleepChecks.MAX_SLEEP_TIME
-        ]
+        durations = self.statcalc.durations()
+        too_long_sleep_durs = [d for d in durations if d > SleepChecks.MAX_SLEEP_TIME]
         if too_long_sleep_durs:
             return FailedTestResult(
                 check,
                 f"Person slept for longer than {SleepChecks.MAX_SLEEP_TIME} (max.: {max(too_long_sleep_durs)})",
                 len(too_long_sleep_durs),
-                len(too_long_sleep_durs) / len(self.sleep_activities),
+                len(too_long_sleep_durs) / len(self.statcalc.activities),
             )
         else:
             return SuccessfulTest(check)
@@ -121,6 +115,6 @@ class SleepChecks:
             check,
             f"Person was awake for longer than {SleepChecks.MAX_AWAKE_TIME} (max.: {max_awake})",
             len(too_long_awake),
-            len(too_long_awake) / len(self.sleep_activities),
+            len(too_long_awake) / len(self.statcalc.activities),
             f"Responsible activities:\n{wake_time_str}",
         )
