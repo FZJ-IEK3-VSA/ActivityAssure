@@ -2,5 +2,6 @@
     "cook": "cook and eat",
     "eat": "cook and eat",
     "idle": "other",
-    "vacation": "not at home"
+    "vacation": "not at home",
+    "travel": "not at home"
 }
