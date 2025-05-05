@@ -1,5 +1,52 @@
+from dataclasses import dataclass
+from datetime import timedelta
+from pathlib import Path
 from typing import Iterable
+
+import pandas as pd
 from activityassure.activity_profile import SparseActivityProfile
+
+
+@dataclass
+class ActivityStatistics:
+    activity: str
+    shares: list[float]
+    durations: list[timedelta]
+    durations_without: list[timedelta]
+
+    def save(self, path: Path) -> None:
+        """
+        Save the statistics to a file
+        :param path: path to the file
+        """
+        path.parent.mkdir(parents=True, exist_ok=True)
+        shares_series = pd.Series(self.shares, name="shares")
+        durations_series = pd.Series(self.durations, name="durations")
+        durations_without_series = pd.Series(
+            self.durations_without, name="durations_without"
+        )
+        data = pd.concat(
+            [shares_series, durations_series, durations_without_series], axis=1
+        )
+        data.to_csv(path)
+
+    @staticmethod
+    def load(path: Path) -> "ActivityStatistics":
+        """
+        Load the statistics from a file
+        :param path: path to the file
+        :return: ActivityStatistics object
+        """
+        data = pd.read_csv(path)
+        shares = data["shares"].tolist()
+        durations = pd.to_timedelta(data["durations"]).tolist()
+        durations_without = pd.to_timedelta(data["durations_without"]).tolist()
+        return ActivityStatistics(
+            activity=path.stem,
+            shares=shares,
+            durations=durations,
+            durations_without=durations_without,
+        )
 
 
 class StatisticsCalculator:
