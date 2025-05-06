@@ -10,13 +10,15 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 import scipy  # type: ignore
-from activityassure import pandas_utils
+from activityassure import pandas_utils, utils
 from activityassure.profile_category import ProfileCategory
 from activityassure.validation_statistics import ValidationStatistics
 
 
 @dataclass
 class ValidationIndicators:
+    """Stores a set of indicators for a single comparison, e.g., for a single
+    activity profile type"""
     mae: pd.Series
     bias: pd.Series
     rmse: pd.Series
@@ -45,6 +47,19 @@ class ValidationIndicators:
             wasserstein,
             self.pearson_corr,
         )
+    
+    def get_indicators_for_activity(self, activity: str) -> dict[str, float]:
+        """Returns all indicators for a single activity
+
+        :param activity: the activity to get indicators for
+        :raises utils.ActValidatorException: if there are no indicators for the activity
+        :return: the indicators for the activity in a dict
+        """
+        if activity not in self.mae.index:
+            raise utils.ActValidatorException("No indicators for {activity} found")
+        series_dict = self.get_as_series_dict()
+        activity_values = {indicator: series[activity] for indicator, series in series_dict.items()}
+        return activity_values
 
     def add_metric_means(self) -> None:
         """
@@ -64,21 +79,13 @@ class ValidationIndicators:
         """
         Gets the mean of each metric across all activity groups to
         obtain metrics for the whole profile type.
-        Returns the mean of absolute values for the bias, because it
-        is the only indicator with positive and negative values, and
-        the normal mean of bias would always be zero.
 
         :return: a dict containing name and value of each
                  averaged metric
         """
-        metric_means = {
-            "mae": self.mae.mean(),
-            "bias": self.bias.abs().mean(),
-            "rmse": self.rmse.mean(),
-            "pearson correlation": self.pearson_corr.mean(),
-            "wasserstein": self.wasserstein.mean(),
-        }
-        return metric_means
+        series_dict = self.get_as_series_dict()
+        means = {indicator: series.mean() for indicator, series in series_dict.items()}
+        return means
 
     def __build_filename(
         self,
@@ -93,9 +100,18 @@ class ValidationIndicators:
         filepath = result_directory / filename
         return filepath
 
-    def to_dataframe(self) -> pd.DataFrame:
+    def get_as_series_dict(self) -> dict[str, pd.Series]:
+        """
+        Collects all indicator Series in a dict, using the indicator name (e.g., mae)
+        as key
+
+        :return: a dict containing all indicator Series
+        """
         class_fields = fields(ValidationIndicators)
-        columns = {f.name: getattr(self, f.name) for f in class_fields}
+        return {f.name: getattr(self, f.name) for f in class_fields}
+
+    def to_dataframe(self) -> pd.DataFrame:
+        columns = self.get_as_series_dict()
         return pd.DataFrame(columns)
 
     def save_as_csv(
