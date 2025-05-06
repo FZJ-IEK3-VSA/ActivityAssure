@@ -104,6 +104,7 @@ def validate_per_category(
     input_statistics: ValidationSet,
     validation_statistics: ValidationSet,
     output_path: Path,
+    ignore_country: bool = False
 ) -> dict[str, dict[ProfileCategory, comparison_indicators.ValidationIndicators]]:
     """
     Compares each category of input data to the same category
@@ -120,9 +121,9 @@ def validate_per_category(
     metrics_dict, scaled_dict, normed_dict = {}, {}, {}
     for profile_type, input_data in input_statistics.statistics.items():
         # select matching validation data
-        validation_data = validation_statistics.get_matching_statistics(profile_type)
+        validation_data = validation_statistics.get_matching_statistics(profile_type, ignore_country=ignore_country)
         if validation_data is None:
-            logging.warning(
+            logging.warn(
                 f"No matching validation data found for category {profile_type}"
             )
             continue
@@ -191,7 +192,7 @@ def validate_all_combinations(
                 )
                 dict_per_type[validation_type] = metrics
             except utils.ActValidatorException as e:
-                logging.warning(
+                logging.warn(
                     f"Could not compare input data category '{profile_type}' "
                     f"to validation data category '{validation_type}': {e}"
                 )

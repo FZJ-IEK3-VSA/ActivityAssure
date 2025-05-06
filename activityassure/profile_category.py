@@ -10,6 +10,17 @@ from dataclasses_json import dataclass_json
 
 from activityassure import categorization_attributes
 
+@dataclass_json
+@dataclass(frozen=True)
+class BaseProfileCategory:
+    """As the ProfileCategory but it does not contain
+    country information.
+    """
+    
+    sex: categorization_attributes.Sex | None = None
+    work_status: categorization_attributes.WorkStatus | None = None
+    day_type: categorization_attributes.DayType | None = None
+
 
 @dataclass_json
 @dataclass(frozen=True)
@@ -19,11 +30,11 @@ class ProfileCategory:
     single-day activity profile and identifies matching
     validation data.
     """
-
     country: str | None = None
     sex: categorization_attributes.Sex | None = None
     work_status: categorization_attributes.WorkStatus | None = None
     day_type: categorization_attributes.DayType | None = None
+
 
     def get_attribute_names(self) -> list[str]:
         """
@@ -92,6 +103,17 @@ class ProfileCategory:
         """
         return PersonProfileCategory(
             self.country, self.sex, self.work_status, self.day_type, person
+        )
+    
+    def to_base_category(self) -> "BaseProfileCategory":
+        """
+        Creates a BaseProfileCategory object without country information out of
+        this ProfileCategory object.
+
+        :return: the new category object including the person name
+        """
+        return BaseProfileCategory(
+            self.sex, self.work_status, self.day_type
         )
 
     @staticmethod
