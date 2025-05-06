@@ -22,6 +22,8 @@ from activityassure.validation_statistics import (
     ValidationStatistics,
 )
 
+from activityassure.comparison_indicators import ValidationIndicators
+
 
 def get_similar_categories(profile_type: ProfileCategory) -> list[ProfileCategory]:
     """
@@ -228,3 +230,16 @@ def save_file_per_indicator_per_combination(
                 kpi.name,
                 profile_type,
             )
+
+def calc_activity_mean_indicators(indicator_set: dict[ProfileCategory, comparison_indicators.ValidationIndicators]) -> ValidationIndicators:
+    dflist = [indicators.to_dataframe() for indicators in indicator_set.values()]
+    combined_df = pd.concat(dflist, axis="index")
+
+    activity_means = combined_df.groupby(combined_df.index).mean()
+
+    # add profile category weights TODO: weights of which of the two data sets?
+
+    return activity_means
+
+
+

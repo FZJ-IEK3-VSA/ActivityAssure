@@ -63,6 +63,14 @@ def validate(
             "indicators_per_category",
         )
 
+        activity_means = validation.calc_activity_mean_indicators(metric_dict)
+        pandas_utils.save_df(
+            activity_means,
+            result_subdir,
+            "indicator_means_per_activity",
+        )
+
+
         # plot heatmaps to compare indicator values
         plot_path_heatmaps = result_subdir / "heatmaps"
         indicator_heatmaps.plot_indicators_by_activity(metrics_df, plot_path_heatmaps)
