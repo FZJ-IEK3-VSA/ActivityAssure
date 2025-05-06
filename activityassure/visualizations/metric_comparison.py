@@ -9,6 +9,8 @@ def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_pa
     """
     Plots a barplot of all different profile types and activities and metrics.
     Expects metrics from a per-category validation.
+    The "top" values are the ones indicating the highest deviance between the values, i.e., for most error
+    metrics, this is the highest numeric value, whereas for correlation it's the lowest values.
 
     :param metrics: metric dataframe
     :param output_path: output path
@@ -28,7 +30,11 @@ def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_pa
         top5 = []
 
         for c in df.columns:
-            top5 = top5 + df[c].nlargest(top_x).index.tolist()
+            if i == 1:
+                top5 = top5 + df[c].nsmallest(top_x).index.tolist()
+            else:
+                top5 = top5 + df[c].nlargest(top_x).index.tolist()
+
 
         top5 = list(set(top5))
         top5 = df.loc[top5,:].sum(axis=1).sort_values(ascending=False).index.tolist()
