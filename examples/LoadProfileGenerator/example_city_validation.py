@@ -32,12 +32,14 @@ if __name__ == "__main__":
     validation_stats_path_merged = Path(f"{validation_stats_path}_merged")
     # input statistics path
     # here the statistics of the input data and the validation results will be stored
-    city_stats_path = Path("data/validation") / city_data_path.name
-    city_stats_path_merged = city_stats_path + "_merged"
+    city_stats_path = Path("data/city/validation") / city_data_path.name
+    city_stats_path_merged = Path(f"{city_stats_path}_merged")
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    lpgexample.merge_activities(validation_stats_path, merging_file, validation_stats_path_merged)
+    lpgexample.merge_activities(
+        validation_stats_path, merging_file, validation_stats_path_merged
+    )
 
     # calculate statistics for the input model data
     input_statistics = process_model_data.process_model_data(
@@ -55,4 +57,4 @@ if __name__ == "__main__":
     lpgexample.merge_activities(city_stats_path, merging_file, city_stats_path_merged)
 
     # validate the input data using the statistics
-    lpgexample.validate(city_stats_path, validation_stats_path_merged)
+    lpgexample.validate(city_stats_path_merged, validation_stats_path_merged)
