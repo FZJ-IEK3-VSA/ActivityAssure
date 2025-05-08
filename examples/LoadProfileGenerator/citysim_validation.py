@@ -18,7 +18,7 @@ def calc_activity_statistics(input_dir, mapping_file, person_trait_file, output_
         input_dir, person_trait_file, profile_resolution, False
     )
 
-    mapping, activities = activity_mapping.load_mapping_and_activities(mapping_file)
+    mapping, _ = activity_mapping.load_mapping_and_activities(mapping_file)
     for full_year_profile in full_year_profiles:
         full_year_profile.apply_activity_mapping(mapping)
     logging.info(f"Collecting statistics for {len(full_year_profiles)} profiles")
@@ -45,6 +45,6 @@ if __name__ == "__main__":
     mapping_file = lpg_example_dir / "activity_mapping_city.json"
     person_trait_file = lpg_example_dir / "person_characteristics.json"
 
-    output_dir = Path("data/city/plausibility_checks") / data_dir.name
+    output_dir = Path("data/city/validation_statistics") / data_dir.name
 
     calc_activity_statistics(data_dir, mapping_file, person_trait_file, output_dir)
