@@ -14,12 +14,12 @@ def check_validation_statistics_size(
     :param statistics: statistics object
     :param activities: activities list
     """
-    assert (
-        list(statistics.probability_profiles.index) == activities
-    ), "Wrong probabiliies row labels"
-    assert set(statistics.activity_durations.columns).issubset(
-        activities
-    ), "Wrong durations column labels"
-    assert set(statistics.activity_frequencies.columns).issubset(
-        activities
-    ), "Wrong frequencies column labels"
+    assert list(statistics.probability_profiles.index) == activities, (
+        "Wrong probabilities row labels"
+    )
+    assert set(statistics.activity_durations.columns).issubset(activities), (
+        "Wrong durations column labels"
+    )
+    assert set(statistics.activity_frequencies.columns).issubset(activities), (
+        "Wrong frequencies column labels"
+    )
