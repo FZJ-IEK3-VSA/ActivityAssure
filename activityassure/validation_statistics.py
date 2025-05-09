@@ -62,10 +62,11 @@ class ValidationStatistics:
         # use a larger tolerance to allow for rounding errors when merging categories with weights
         tolerance = 1e-4
         assert np.isclose(self.activity_frequencies.sum(), 1, atol=tolerance).all()
-        assert np.isclose(self.activity_durations.sum(), 1, atol=tolerance).all()
+        assert np.isclose(self.probability_profiles.sum(), 1, atol=tolerance).all()
+        # if columns for activities that never occurred are contained, the duration probabilities are all 0
         assert (
-            np.isclose(self.probability_profiles.sum(), 1, atol=tolerance)
-            | np.isclose(self.probability_profiles.sum(), 0, atol=tolerance)
+            np.isclose(self.activity_durations.sum(), 1, atol=tolerance)
+            | np.isclose(self.activity_durations.sum(), 0, atol=tolerance)
         ).all()
 
     def has_weight(self) -> bool:
@@ -119,7 +120,10 @@ class ValidationStatistics:
             combined_activities, fill_value=0
         )
 
-        # the activity durations cannot be extended, as no matching activity durations exist
+        # extend the activity durations by adding 0% for every duration, as no such activities occurred
+        self.activity_durations = self.activity_durations.reindex(
+            columns=combined_activities, fill_value=0
+        )
 
         # extend the activity frequencies
         freq = self.activity_frequencies.reindex(
@@ -130,6 +134,16 @@ class ValidationStatistics:
         # set the probability for frequency 0 to 100% for the new activities
         freq.loc[0, new_for_freq] = 1.0
         self.activity_frequencies = freq
+
+    def get_frequency_averages(self) -> pd.Series:
+        """
+        Get the average daily activity frequency for each activity.
+
+        :return: a series containing the average daily activity frequencies
+        """
+        return self.activity_frequencies.mul(
+            self.activity_frequencies.index, axis=0
+        ).sum()
 
     def save(self, base_path: Path):
         """
@@ -162,7 +176,7 @@ class ValidationStatistics:
         """
         Maps column names of a dataframe to new names. If
         two or more column names are mapped to the same new
-        name, the colums are added.
+        name, the colums are averaged.
 
         :param data: the data to rename
         :param mapping: the mapping to apply
@@ -171,7 +185,24 @@ class ValidationStatistics:
         # rename the columns, which might result in some with identical name
         data.rename(columns=mapping, inplace=True)
         # calculate the sum of all columns with the same name
-        data = data.T.groupby(level=0).sum().T
+        data = data.T.groupby(level=0).mean().T
+        return data
+
+    @staticmethod
+    def map_probabilities(data: pd.DataFrame, mapping: dict):
+        """
+        Maps row names of a dataframe to new names. If
+        two or more row names are mapped to the same new
+        name, the rows are added.
+
+        :param data: the data to rename
+        :param mapping: the mapping to apply
+        :return: the renamed data
+        """
+        # rename the rows, which might result in some with identical name
+        data.rename(index=mapping, inplace=True)
+        # calculate the sum of all rows with the same name
+        data = data.groupby(level=0).sum()
         return data
 
     def map_activities(self, mapping: dict):
@@ -180,16 +211,25 @@ class ValidationStatistics:
 
         :param mapping: a dict that maps old activity names to new names
         """
+        # calculate the average activity frequencies before merging
+        freq_averages = self.get_frequency_averages()
+
+        # when merging frequencies, the frequency probabilities are averaged
         self.activity_frequencies = ValidationStatistics.map_columns(
             self.activity_frequencies, mapping
         )
-        self.activity_durations = ValidationStatistics.map_columns(
-            self.activity_durations, mapping
+        # when merging activities, their probabilities are summed up
+        self.probability_profiles = ValidationStatistics.map_probabilities(
+            self.probability_profiles, mapping
         )
-        # probability profiles contain one row per activity --> transpose twice
-        self.probability_profiles = ValidationStatistics.map_columns(
-            self.probability_profiles.T, mapping
-        ).T
+
+        # The duration columns need to be weighted using the average activity frequency per day for the
+        # respective activity. This ensures that more frequent activities have a larger impact.
+        weighted_dur = self.activity_durations.mul(freq_averages, axis=1)
+        merged_dur = ValidationStatistics.map_columns(weighted_dur, mapping)
+        # normalize the durations again
+        self.activity_durations = merged_dur / merged_dur.sum()
+        pass
 
     @staticmethod
     def load(
