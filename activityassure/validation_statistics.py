@@ -59,11 +59,13 @@ class ValidationStatistics:
             self.extend_for_missing_activities(activities)
 
         # check if all dataframes are normalized
-        assert np.isclose(self.activity_frequencies.sum(), 1).all()
-        assert np.isclose(self.activity_durations.sum(), 1).all()
+        # use a larger tolerance to allow for rounding errors when merging categories with weights
+        tolerance = 1e-4
+        assert np.isclose(self.activity_frequencies.sum(), 1, atol=tolerance).all()
+        assert np.isclose(self.activity_durations.sum(), 1, atol=tolerance).all()
         assert (
-            np.isclose(self.probability_profiles.sum(), 1)
-            | np.isclose(self.probability_profiles.sum(), 0)
+            np.isclose(self.probability_profiles.sum(), 1, atol=tolerance)
+            | np.isclose(self.probability_profiles.sum(), 0, atol=tolerance)
         ).all()
 
     def has_weight(self) -> bool:
