@@ -23,8 +23,6 @@ from activityassure.validation_statistics import (
     ValidationStatistics,
 )
 
-from activityassure.comparison_indicators import ValidationIndicators
-
 
 def get_similar_categories(profile_type: ProfileCategory) -> list[ProfileCategory]:
     """

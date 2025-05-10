@@ -7,31 +7,10 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 
-from activityassure import activity_mapping, utils, pandas_utils, validation
+from activityassure import utils, validation
 from activityassure.input_data_processing import process_model_data
 from activityassure.visualizations import indicator_heatmaps
 from activityassure.validation_statistics import ValidationSet
-
-
-def merge_activities(
-    statistics_path: Path, merging_path: Path, new_path: Path | None = None
-):
-    """
-    Loads validation statistics and merges activities according to the specified file.
-    The translated statistics are then saved with a new name
-
-    :param statistics_path: path of validation statistics to adapt
-    :param merging_path: path of the merging file to use
-    :param new_name: new name for the adapted statistics, by default appends "_mapped"
-    """
-    # load statistics and merging map and apply the merging
-    validation_statistics = ValidationSet.load(statistics_path)
-    mapping, _ = activity_mapping.load_mapping_and_activities(merging_path)
-    validation_statistics.map_statistics_activities(mapping)
-    # determine the new file name for the mapped statistics
-    new_path = new_path or Path(f"{statistics_path}_mapped")
-    # save the mapped statistics
-    validation_statistics.save(new_path)
 
 
 @utils.timing
@@ -113,7 +92,9 @@ if __name__ == "__main__":
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    merge_activities(validation_stats_path, merging_file, validation_stats_path_merged)
+    process_model_data.merge_activities(
+        validation_stats_path, merging_file, validation_stats_path_merged
+    )
 
     # calculate statistics for the input model data
     input_statistics = process_model_data.process_model_data(
