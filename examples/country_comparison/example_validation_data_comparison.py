@@ -56,20 +56,14 @@ def validate(
     # save indicators and heatmaps for each indicator variant
     for variant_name, indicator_set in indicator_dict_variants.items():
         result_subdir = output_path / variant_name
-        metrics_df = indicator_set.indicator_dict_to_df()
-        pandas_utils.save_df(
-            metrics_df,
-            result_subdir,
-            "indicators_per_category",
-        )
+        metrics_df = indicator_set.save(result_subdir / "indicators_per_category")
 
-        activity_means = validation.calc_activity_mean_indicators(indicator_set.indicators)
+        activity_means = indicator_set.get_activity_indicators_averages()
         pandas_utils.save_df(
             activity_means,
             result_subdir,
             "indicator_means_per_activity",
         )
-
 
         # plot heatmaps to compare indicator values
         plot_path_heatmaps = result_subdir / "heatmaps"

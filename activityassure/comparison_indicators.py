@@ -19,6 +19,7 @@ from activityassure.validation_statistics import ValidationStatistics
 class ValidationIndicators:
     """Stores a set of indicators for a single comparison, e.g., for a single
     activity profile type"""
+
     mae: pd.Series
     bias: pd.Series
     rmse: pd.Series
@@ -47,7 +48,7 @@ class ValidationIndicators:
             wasserstein,
             self.pearson_corr,
         )
-    
+
     def get_indicators_for_activity(self, activity: str) -> dict[str, float]:
         """Returns all indicators for a single activity
 
@@ -58,7 +59,9 @@ class ValidationIndicators:
         if activity not in self.mae.index:
             raise utils.ActValidatorException("No indicators for {activity} found")
         series_dict = self.get_as_series_dict()
-        activity_values = {indicator: series[activity] for indicator, series in series_dict.items()}
+        activity_values = {
+            indicator: series[activity] for indicator, series in series_dict.items()
+        }
         return activity_values
 
     def add_metric_means(self) -> None:

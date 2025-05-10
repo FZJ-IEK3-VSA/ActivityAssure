@@ -60,12 +60,7 @@ def validate(
     # save indicators and heatmaps for each indicator variant
     for variant_name, indicator_set in indicator_set_variants.items():
         result_subdir = validation_result_path / variant_name
-        metrics_df = indicator_set.indicator_dict_to_df()
-        pandas_utils.save_df(
-            metrics_df,
-            result_subdir,
-            "indicators_per_category",
-        )
+        metrics_df = indicator_set.save(result_subdir / "indicators_per_category")
 
         # plot heatmaps to compare indicator values
         plot_path = result_subdir / "heatmaps"
