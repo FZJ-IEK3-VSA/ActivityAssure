@@ -54,16 +54,16 @@ def validate(
     )
 
     # save indicators and heatmaps for each indicator variant
-    for variant_name, metric_dict in indicator_dict_variants.items():
+    for variant_name, indicator_set in indicator_dict_variants.items():
         result_subdir = output_path / variant_name
-        metrics_df = validation.indicator_dict_to_df(metric_dict)
+        metrics_df = indicator_set.indicator_dict_to_df()
         pandas_utils.save_df(
             metrics_df,
             result_subdir,
             "indicators_per_category",
         )
 
-        activity_means = validation.calc_activity_mean_indicators(metric_dict)
+        activity_means = validation.calc_activity_mean_indicators(indicator_set.indicators)
         pandas_utils.save_df(
             activity_means,
             result_subdir,
@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     # validation statistics paths
     validation_stats_path = Path("data/validation_data_sets/activity_validation_data_set")
-    output_path = Path(f"../../data/country_comparison/{country1}-{country2}")
+    output_path = Path(f"data/country_comparison/{country1}-{country2}")
 
     # validate the input data using the statistics
     validate(validation_stats_path, country1, country2, output_path)

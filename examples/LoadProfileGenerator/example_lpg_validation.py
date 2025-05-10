@@ -52,15 +52,15 @@ def validate(
     validation_statistics = ValidationSet.load(validation_path)
 
     # compare input and validation data statistics per profile category
-    indicator_dict_variants = validation.validate_per_category(
+    indicator_set_variants = validation.validate_per_category(
         input_statistics, validation_statistics, input_path
     )
     validation_result_path = input_path / "validation_results"
 
     # save indicators and heatmaps for each indicator variant
-    for variant_name, metric_dict in indicator_dict_variants.items():
+    for variant_name, indicator_set in indicator_set_variants.items():
         result_subdir = validation_result_path / variant_name
-        metrics_df = validation.indicator_dict_to_df(metric_dict)
+        metrics_df = indicator_set.indicator_dict_to_df()
         pandas_utils.save_df(
             metrics_df,
             result_subdir,
@@ -92,7 +92,7 @@ def validate(
 
 
 if __name__ == "__main__":
-    country="DE"
+    country = "DE"
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
         level=logging.DEBUG,
