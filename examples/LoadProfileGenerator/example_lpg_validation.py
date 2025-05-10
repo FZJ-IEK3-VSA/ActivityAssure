@@ -7,31 +7,10 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 
-from activityassure import activity_mapping, utils, pandas_utils, validation
+from activityassure import utils, validation
 from activityassure.input_data_processing import process_model_data
 from activityassure.visualizations import indicator_heatmaps
 from activityassure.validation_statistics import ValidationSet
-
-
-def merge_activities(
-    statistics_path: Path, merging_path: Path, new_path: Path | None = None
-):
-    """
-    Loads validation statistics and merges activities according to the specified file.
-    The translated statistics are then saved with a new name
-
-    :param statistics_path: path of validation statistics to adapt
-    :param merging_path: path of the merging file to use
-    :param new_name: new name for the adapted statistics, by default appends "_mapped"
-    """
-    # load statistics and merging map and apply the merging
-    validation_statistics = ValidationSet.load(statistics_path)
-    mapping, _ = activity_mapping.load_mapping_and_activities(merging_path)
-    validation_statistics.map_statistics_activities(mapping)
-    # determine the new file name for the mapped statistics
-    new_path = new_path or Path(f"{statistics_path}_mapped")
-    # save the mapped statistics
-    validation_statistics.save(new_path)
 
 
 @utils.timing
@@ -52,20 +31,15 @@ def validate(
     validation_statistics = ValidationSet.load(validation_path)
 
     # compare input and validation data statistics per profile category
-    indicator_dict_variants = validation.validate_per_category(
+    indicator_set_variants = validation.validate_per_category(
         input_statistics, validation_statistics, input_path
     )
     validation_result_path = input_path / "validation_results"
 
     # save indicators and heatmaps for each indicator variant
-    for variant_name, metric_dict in indicator_dict_variants.items():
+    for variant_name, indicator_set in indicator_set_variants.items():
         result_subdir = validation_result_path / variant_name
-        metrics_df = validation.indicator_dict_to_df(metric_dict)
-        pandas_utils.save_df(
-            metrics_df,
-            result_subdir,
-            "indicators_per_category",
-        )
+        metrics_df = indicator_set.save(result_subdir / "indicators_per_category")
 
         # plot heatmaps to compare indicator values
         plot_path = result_subdir / "heatmaps"
@@ -92,6 +66,7 @@ def validate(
 
 
 if __name__ == "__main__":
+    country = "DE"
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
         level=logging.DEBUG,
@@ -105,7 +80,7 @@ if __name__ == "__main__":
     input_data_path = lpg_input_dir / "preprocessed"
     merging_file = lpg_input_dir / "activity_merging.json"
     mapping_file = lpg_input_dir / "activity_mapping.json"
-    person_trait_file = lpg_input_dir / "person_characteristics.json"
+    person_trait_file = lpg_input_dir / f"person_characteristics_{country}.json"
     # validation statistics paths
     validation_stats_path = Path(
         "data/validation_data_sets/activity_validation_data_set"
@@ -113,11 +88,13 @@ if __name__ == "__main__":
     validation_stats_path_merged = Path(f"{validation_stats_path}_merged")
     # input statistics path
     # here the statistics of the input data and the validation results will be stored
-    input_stats_path = Path("data/validation/lpg_example")
+    input_stats_path = Path(f"data/validation/lpg_example/{country}")
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    merge_activities(validation_stats_path, merging_file, validation_stats_path_merged)
+    process_model_data.merge_activities(
+        validation_stats_path, merging_file, validation_stats_path_merged
+    )
 
     # calculate statistics for the input model data
     input_statistics = process_model_data.process_model_data(

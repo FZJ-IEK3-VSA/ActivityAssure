@@ -13,6 +13,18 @@ from activityassure import categorization_attributes
 
 @dataclass_json
 @dataclass(frozen=True)
+class BaseProfileCategory:
+    """As the ProfileCategory but it does not contain
+    country information.
+    """
+
+    sex: categorization_attributes.Sex | None = None
+    work_status: categorization_attributes.WorkStatus | None = None
+    day_type: categorization_attributes.DayType | None = None
+
+
+@dataclass_json
+@dataclass(frozen=True)
 class ProfileCategory:
     """
     A set of characteristics that defines the category of a
@@ -94,6 +106,15 @@ class ProfileCategory:
             self.country, self.sex, self.work_status, self.day_type, person
         )
 
+    def to_base_category(self) -> "BaseProfileCategory":
+        """
+        Creates a BaseProfileCategory object without country information out of
+        this ProfileCategory object.
+
+        :return: the new category object including the person name
+        """
+        return BaseProfileCategory(self.sex, self.work_status, self.day_type)
+
     @staticmethod
     def from_filename(filepath: Path) -> "ProfileCategory":
         components = filepath.stem.split("_")
@@ -114,25 +135,31 @@ class ProfileCategory:
         :return: the corresponding ProfileType object
         """
         length = len(values)
-        assert 4 <= length <= 5, f"Invalid number of characteristics: {values}"
-        if length == 5:
-            person = values[-1] or ""
-            values = values[:4]
-        # extract characteristics
-        country, sex_str, work_status_str, day_type_str = values
+        assert 0 < length <= 5, f"Invalid number of characteristics: {values}"
+        # extract characteristics in the order of the class attributes
         try:
             # convert the strings to enum values and create the ProfileType
-            sex = categorization_attributes.Sex(sex_str) if sex_str else None
-            work_status = (
-                categorization_attributes.WorkStatus(work_status_str)
-                if work_status_str
-                else None
-            )
-            day_type = (
-                categorization_attributes.DayType(day_type_str)
-                if day_type_str
-                else None
-            )
+            country = values[0]
+            sex, work_status, day_type = None, None, None
+            if length >= 2:
+                sex_str = values[1]
+                sex = categorization_attributes.Sex(sex_str) if sex_str else None
+            if length >= 3:
+                work_status_str = values[2]
+                work_status = (
+                    categorization_attributes.WorkStatus(work_status_str)
+                    if work_status_str
+                    else None
+                )
+            if length >= 4:
+                day_type_str = values[3]
+                day_type = (
+                    categorization_attributes.DayType(day_type_str)
+                    if day_type_str
+                    else None
+                )
+            if length >= 5:
+                person = values[4] or ""
         except KeyError as e:
             assert False, f"Invalid enum key: {e}"
         if length == 5 and person:

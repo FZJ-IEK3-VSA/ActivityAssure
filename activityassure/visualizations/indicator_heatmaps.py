@@ -6,6 +6,7 @@ different indicators.
 
 import logging
 from pathlib import Path
+from typing import Optional
 import warnings
 import pandas as pd
 import plotly.express as px  # type: ignore
@@ -135,7 +136,12 @@ def convert_to_indicator_dataframe_per_activity(
     return dataframes
 
 
-def plot_indicator_heatmap(data: pd.DataFrame, output_path: Path):
+def plot_indicator_heatmap(
+    data: pd.DataFrame,
+    output_path: Path,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+):
     """
     Plots a single metric heatmap
 
@@ -149,7 +155,10 @@ def plot_indicator_heatmap(data: pd.DataFrame, output_path: Path):
     fig = px.imshow(
         data,
         # title=data.Name,
-        labels={"x": "Input Data Category", "y": "Validation Data Category"},
+        labels={
+            "x": xlabel or "Input Data Category",
+            "y": ylabel or "Validation Data Category",
+        },
         # labels={"x": "Subset 1", "y": "Subset 2"},
         color_continuous_scale="RdYlGn_r",
         # color_continuous_scale=[[0, "green"], [1, "red"]],
@@ -275,7 +284,7 @@ def plot_category_comparison_per_activity(metrics_dict, output_path: Path):
             # replace invalid characters for file names
             clean_act_name = clean_activity_name(activity)
             df.Name = f"{name}_{clean_act_name}"
-            plot_indicator_heatmap(df, path)
+            plot_indicator_heatmap(df, path, xlabel="error measure", ylabel="activity")
 
 
 def plot_indicators_by_profile_type(metrics: pd.DataFrame, output_path: Path):
@@ -294,12 +303,12 @@ def plot_indicators_by_profile_type(metrics: pd.DataFrame, output_path: Path):
         df = order_profile_type_index(df)
         df = make_metrics_comparable(df)
         df.Name = clean_activity_name(activity)  # type: ignore
-        plot_indicator_heatmap(df, output_path)
+        plot_indicator_heatmap(df, output_path, xlabel="error metric", ylabel="profile")
 
 
 def plot_indicators_by_activity(metrics: pd.DataFrame, output_path: Path):
     """
-    Plots a heatmap of all different metrics and activities.
+    Plots a heatmap of all different metrics and profile types.
     Expects metrics from a per-category validation.
 
     :param metrics: metric dataframe
@@ -312,7 +321,9 @@ def plot_indicators_by_activity(metrics: pd.DataFrame, output_path: Path):
         df = df.droplevel(level)
         df = make_metrics_comparable(df)
         df.Name = str(profile_type)
-        plot_indicator_heatmap(df, output_path)
+        plot_indicator_heatmap(
+            df, output_path, xlabel="error metric", ylabel="activity"
+        )
 
 
 def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
@@ -334,4 +345,4 @@ def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
             columns += [mean_idx]
             df = df[columns]
         df.Name = metric_name
-        plot_indicator_heatmap(df, output_path)
+        plot_indicator_heatmap(df, output_path, xlabel="activity", ylabel="profile")

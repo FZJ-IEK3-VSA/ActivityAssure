@@ -16,6 +16,7 @@ from activityassure import (
     pandas_utils,
     utils,
 )
+from activityassure.indicator_set import ValidationIndicatorSet
 from activityassure.profile_category import ProfileCategory
 from activityassure.validation_statistics import (
     ValidationSet,
@@ -85,26 +86,12 @@ def all_profile_types_of_same_country(country) -> list[ProfileCategory]:
     return profile_types
 
 
-def indicator_dict_to_df(
-    metrics: dict[ProfileCategory, comparison_indicators.ValidationIndicators],
-) -> pd.DataFrame:
-    """
-    Convert the per-category metrics dict to a single dataframe
-    containing all indicators, means and per activity.
-
-    :param metrics: the metrics dict
-    :return: the KPI dataframe
-    """
-    dataframes = {pt: v.to_dataframe() for pt, v in metrics.items()}
-    combined = pd.concat(dataframes.values(), keys=dataframes.keys())
-    return combined
-
-
 def validate_per_category(
     input_statistics: ValidationSet,
     validation_statistics: ValidationSet,
     output_path: Path,
-) -> dict[str, dict[ProfileCategory, comparison_indicators.ValidationIndicators]]:
+    ignore_country: bool = False,
+) -> dict[str, ValidationIndicatorSet]:
     """
     Compares each category of input data to the same category
     of validation data. Calculates the full set of metrics of
@@ -120,9 +107,11 @@ def validate_per_category(
     metrics_dict, scaled_dict, normed_dict = {}, {}, {}
     for profile_type, input_data in input_statistics.statistics.items():
         # select matching validation data
-        validation_data = validation_statistics.get_matching_statistics(profile_type)
+        validation_data = validation_statistics.get_matching_statistics(
+            profile_type, ignore_country=ignore_country
+        )
         if validation_data is None:
-            logging.warning(
+            logging.warn(
                 f"No matching validation data found for category {profile_type}"
             )
             continue
@@ -133,7 +122,13 @@ def validate_per_category(
         metrics_dict[profile_type] = metrics
         scaled_dict[profile_type] = scaled
         normed_dict[profile_type] = normed
-    return {"default": metrics_dict, "scaled": scaled_dict, "normed": normed_dict}
+    default_set = ValidationIndicatorSet(metrics_dict, "default")
+    scaled_set = ValidationIndicatorSet(scaled_dict, "scaled")
+    normed_set = ValidationIndicatorSet(normed_dict, "normed")
+    indicator_dicts = {s.variant: s for s in (default_set, scaled_set, normed_set)}
+    # for indicator_dict in indicator_dicts.values():
+    #     activity_means = calc_activity_mean_indicators(indicator_dict)
+    return indicator_dicts
 
 
 def validate_similar_categories(
@@ -191,7 +186,7 @@ def validate_all_combinations(
                 )
                 dict_per_type[validation_type] = metrics
             except utils.ActValidatorException as e:
-                logging.warning(
+                logging.warn(
                     f"Could not compare input data category '{profile_type}' "
                     f"to validation data category '{validation_type}': {e}"
                 )

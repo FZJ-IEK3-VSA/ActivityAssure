@@ -99,3 +99,41 @@ def process_model_data(
     # calc and save input data statistics
     statistics_set = calc_statistics_per_category(input_data_dict, activities)
     return statistics_set
+
+
+def merge_activities(
+    statistics_path: Path, merging_path: Path, new_path: Path | None = None
+):
+    """
+    Loads validation statistics and merges activities according to the specified file.
+    The translated statistics are then saved with a new name
+
+    :param statistics_path: path of validation statistics to adapt
+    :param merging_path: path of the merging file to use
+    :param new_name: new name for the adapted statistics, by default appends "_mapped"
+    """
+    # load statistics and merging map and apply the merging
+    validation_statistics = ValidationSet.load(statistics_path)
+    mapping, _ = activity_mapping.load_mapping_and_activities(merging_path)
+    validation_statistics.map_statistics_activities(mapping)
+    # determine the new file name for the mapped statistics
+    new_path = new_path or Path(f"{statistics_path}_mapped")
+    # save the mapped statistics
+    validation_statistics.save(new_path)
+
+
+def aggregate_to_national_level(validation_data_path: Path, result_path):
+    """
+    Aggregates statistics of all profile types of the same country. Saves
+    the aggreagted per-country statistics as a new validation data set.
+
+    :param validation_data_path: path to the validation statistics to aggregate
+    :param result_path: result filepath to save the aggregated statistics
+    """
+    # load the statistics
+    set = ValidationSet.load(validation_data_path)
+    # aggregate them to national level
+    mapping = {p: ProfileCategory(p.country) for p in set.statistics.keys()}
+    set.merge_profile_categories(mapping)
+    # save the aggregated statistics
+    set.save(result_path)
