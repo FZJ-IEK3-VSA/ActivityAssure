@@ -120,3 +120,20 @@ def merge_activities(
     new_path = new_path or Path(f"{statistics_path}_mapped")
     # save the mapped statistics
     validation_statistics.save(new_path)
+
+
+def aggregate_to_national_level(validation_data_path: Path, result_path):
+    """
+    Aggregates statistics of all profile types of the same country. Saves
+    the aggreagted per-country statistics as a new validation data set.
+
+    :param validation_data_path: path to the validation statistics to aggregate
+    :param result_path: result filepath to save the aggregated statistics
+    """
+    # load the statistics
+    set = ValidationSet.load(validation_data_path)
+    # aggregate them to national level
+    mapping = {p: ProfileCategory(p.country) for p in set.statistics.keys()}
+    set.merge_profile_categories(mapping)
+    # save the aggregated statistics
+    set.save(result_path)

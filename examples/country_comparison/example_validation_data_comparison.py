@@ -8,6 +8,7 @@ from pathlib import Path
 
 from activityassure import utils, pandas_utils, validation
 from activityassure.hetus_data_processing import hetus_constants
+from activityassure.input_data_processing import process_model_data
 from activityassure.visualizations import indicator_heatmaps, metric_comparison
 from activityassure.validation_statistics import ValidationSet
 
@@ -106,3 +107,13 @@ if __name__ == "__main__":
 
     # validate the input data using the statistics
     validate(validation_stats_path, country1, country2, output_path)
+
+    # paths for aggregated validation statistics
+    national_stats_path = Path(f"{validation_stats_path}_national")
+    output_path_national = Path(f"{output_path}_national")
+
+    # validate the input data using the statistics on a national level
+    process_model_data.aggregate_to_national_level(
+        validation_stats_path, national_stats_path
+    )
+    validate(national_stats_path, country1, country2, output_path_national)
