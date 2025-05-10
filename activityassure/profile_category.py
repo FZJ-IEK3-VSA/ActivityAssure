@@ -119,9 +119,9 @@ class ProfileCategory:
     @staticmethod
     def from_filename(filepath: Path) -> "ProfileCategory":
         components = filepath.stem.split("_")
-        assert (
-            len(components) > 1
-        ), f"Could not parse profile type from path '{filepath}'"
+        assert len(components) > 1, (
+            f"Could not parse profile type from path '{filepath}'"
+        )
         # basename = components[0] # not needed
         profile_type = ProfileCategory.from_iterable(components[1:])
         return profile_type
