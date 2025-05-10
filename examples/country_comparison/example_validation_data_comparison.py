@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 
 from activityassure import utils, pandas_utils, validation
+from activityassure import comparison_indicators
 from activityassure.hetus_data_processing import hetus_constants
 from activityassure.input_data_processing import process_model_data
 from activityassure.visualizations import indicator_heatmaps, metric_comparison
@@ -40,13 +41,9 @@ def validate(
             v.activity_durations.index = v.activity_durations.index.ceil('30min')
             v.activity_durations = v.activity_durations.resample('30min').sum()
 
-            # probability profiles
-            # 10 minute resolution with target 30 minutes -> merge three columns
-            # 15 minute resolution with target 30 minutes -> merge two columns
-            current_resolution = 10 if len(v.probability_profiles.columns) == 144 else 15
-            v.probability_profiles.columns = [i * current_resolution for i in range(0, len(v.probability_profiles.columns))]
-            v.probability_profiles = v.probability_profiles.T.groupby(lambda x: x // 30 * 30).mean().T
-            v.probability_profiles.columns = [f"MACT{i}" for i in range(1, len(v.probability_profiles.columns)+1)]
+            # interpolate probability profiles to 10 minute resolution
+            if len(v.probability_profiles.columns) != 144:
+                v.probability_profiles = comparison_indicators.resample_columns(v.probability_profiles, 144)
 
 
     # compare input and validation data statistics per profile category
