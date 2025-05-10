@@ -99,7 +99,7 @@ def calc_activity_group_frequencies(
     # not occur in some diary entries
     frequencies = pd.DataFrame(counters, dtype=pd.Int64Dtype()).fillna(0)
     # collect the weights; each weight belongs to the corresponding row in frequencies
-    weights = pd.Series(p.weight for p in activity_profiles)
+    weights = pd.Series(p.weight for p in activity_profiles)  # type: ignore
     counts = calc_weighed_value_distributions(frequencies, weights)
     return counts
 
@@ -116,9 +116,9 @@ def calc_activity_group_durations(
     """
     # determine the profile resolution (must be the same for all profiles)
     resolution = activity_profiles[0].resolution
-    assert all(
-        p.resolution == resolution for p in activity_profiles
-    ), "Not all profiles have the same resolution"
+    assert all(p.resolution == resolution for p in activity_profiles), (
+        "Not all profiles have the same resolution"
+    )
     # collect the durations of all activities, and the corresponding profile weights
     durations_by_activity: dict[str, list[timedelta]] = {}
     weight_per_duration: dict[str, list[float | None]] = {}
