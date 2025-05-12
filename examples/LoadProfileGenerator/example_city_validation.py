@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    lpgexample.merge_activities(
+    process_model_data.merge_activities(
         validation_stats_path, merging_file, validation_stats_path_merged
     )
 
@@ -52,9 +52,10 @@ if __name__ == "__main__":
     # save the created statistics
     input_statistics.save(city_stats_path)
 
-    # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
-    # two activities must be merged in the validation statistics
-    lpgexample.merge_activities(city_stats_path, merging_file, city_stats_path_merged)
+    # apply the activity merging to the city simulation results as well
+    process_model_data.merge_activities(
+        city_stats_path, merging_file, city_stats_path_merged
+    )
 
     # validate the input data using the statistics
     lpgexample.validate(city_stats_path_merged, validation_stats_path_merged)
