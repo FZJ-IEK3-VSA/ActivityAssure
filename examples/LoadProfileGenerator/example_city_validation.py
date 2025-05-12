@@ -59,3 +59,15 @@ if __name__ == "__main__":
 
     # validate the input data using the statistics
     lpgexample.validate(city_stats_path_merged, validation_stats_path_merged)
+
+    # additionally, aggregate both statistics to national level and validate with that
+    validation_national = Path(f"{validation_stats_path_merged}_national")
+    process_model_data.aggregate_to_national_level(
+        validation_stats_path_merged, validation_national
+    )
+    citysim_national = Path(f"{city_stats_path_merged}_national")
+    process_model_data.aggregate_to_national_level(
+        city_stats_path_merged, citysim_national
+    )
+
+    lpgexample.validate(citysim_national, validation_national)
