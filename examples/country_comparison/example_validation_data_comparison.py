@@ -7,7 +7,9 @@ import logging
 from pathlib import Path
 
 from activityassure import utils, pandas_utils, validation
+from activityassure import comparison_indicators
 from activityassure.hetus_data_processing import hetus_constants
+from activityassure.input_data_processing import process_model_data
 from activityassure.visualizations import indicator_heatmaps, metric_comparison
 from activityassure.validation_statistics import ValidationSet
 
@@ -39,13 +41,9 @@ def validate(
             v.activity_durations.index = v.activity_durations.index.ceil('30min')
             v.activity_durations = v.activity_durations.resample('30min').sum()
 
-            # probability profiles
-            # 10 minute resolution with target 30 minutes -> merge three columns
-            # 15 minute resolution with target 30 minutes -> merge two columns
-            current_resolution = 10 if len(v.probability_profiles.columns) == 144 else 15
-            v.probability_profiles.columns = [i * current_resolution for i in range(0, len(v.probability_profiles.columns))]
-            v.probability_profiles = v.probability_profiles.T.groupby(lambda x: x // 30 * 30).mean().T
-            v.probability_profiles.columns = [f"MACT{i}" for i in range(1, len(v.probability_profiles.columns)+1)]
+            # interpolate probability profiles to 10 minute resolution
+            if len(v.probability_profiles.columns) != 144:
+                v.probability_profiles = comparison_indicators.resample_columns(v.probability_profiles, 144)
 
 
     # compare input and validation data statistics per profile category
@@ -54,13 +52,15 @@ def validate(
     )
 
     # save indicators and heatmaps for each indicator variant
-    for variant_name, metric_dict in indicator_dict_variants.items():
+    for variant_name, indicator_set in indicator_dict_variants.items():
         result_subdir = output_path / variant_name
-        metrics_df = validation.indicator_dict_to_df(metric_dict)
+        metrics_df = indicator_set.save(result_subdir / "indicators_per_category")
+
+        activity_means = indicator_set.get_activity_indicators_averages()
         pandas_utils.save_df(
-            metrics_df,
+            activity_means,
             result_subdir,
-            "indicators_per_category",
+            "indicator_means_per_activity",
         )
 
         # plot heatmaps to compare indicator values
@@ -101,7 +101,17 @@ if __name__ == "__main__":
 
     # validation statistics paths
     validation_stats_path = Path("data/validation_data_sets/activity_validation_data_set")
-    output_path = Path(f"../../data/country_comparison/{country1}-{country2}")
+    output_path = Path(f"data/country_comparison/{country1}-{country2}")
 
     # validate the input data using the statistics
     validate(validation_stats_path, country1, country2, output_path)
+
+    # paths for aggregated validation statistics
+    national_stats_path = Path(f"{validation_stats_path}_national")
+    output_path_national = Path(f"{output_path}_national")
+
+    # validate the input data using the statistics on a national level
+    process_model_data.aggregate_to_national_level(
+        validation_stats_path, national_stats_path
+    )
+    validate(national_stats_path, country1, country2, output_path_national)

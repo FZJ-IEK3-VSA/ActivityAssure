@@ -2,12 +2,14 @@
 Defines classes for storing and handling activity profile validation data.
 """
 
+from collections import defaultdict
 from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Optional
+from typing import Any, Callable, ClassVar, Optional, Iterable
 
+import numpy as np
 import pandas as pd
 
 from activityassure import utils
@@ -37,6 +39,111 @@ class ValidationStatistics:
     PROBABILITY_PROFILE_DIR: ClassVar = "probability_profiles"
     FREQUENCY_DIR: ClassVar = "activity_frequencies"
     DURATION_DIR: ClassVar = "activity_durations"
+
+    def __post_init__(self):
+        # check activity lists in all dataframes
+        if not (
+            set(self.probability_profiles.index)
+            == set(self.activity_frequencies.columns)
+            == set(self.activity_durations.columns)
+        ):
+            logging.info(
+                f"Activity lists in {self.profile_type} did not match. Extending to make them consistent."
+            )
+            # determine the total lsit of activities
+            activities = list(
+                self.probability_profiles.index.union(
+                    self.activity_frequencies.columns
+                ).union(self.activity_durations.columns)
+            )
+            self.extend_for_missing_activities(activities)
+
+        # check if all dataframes are normalized
+        # use a larger tolerance to allow for rounding errors when merging categories with weights
+        tolerance = 1e-4
+        assert np.isclose(self.activity_frequencies.sum(), 1, atol=tolerance).all()
+        assert np.isclose(self.probability_profiles.sum(), 1, atol=tolerance).all()
+        # if columns for activities that never occurred are contained, the duration probabilities are all 0
+        assert (
+            np.isclose(self.activity_durations.sum(), 1, atol=tolerance)
+            | np.isclose(self.activity_durations.sum(), 0, atol=tolerance)
+        ).all()
+
+    def has_weight(self) -> bool:
+        """
+        Returns whether a weight is set for this profile category.
+
+        :return: True if a weight is set, False otherwise
+        """
+        return self.category_weight is not None and not pd.isna(self.category_weight)
+
+    def get_weight(self) -> float:
+        """
+        Returns the weight of the profile category. If no weight is set, 1 is returned.
+
+        :return: the weight of the profile category
+        """
+        if self.has_weight():
+            return self.category_weight  # type: ignore[return-value]
+        return 1
+
+    def get_activities(self) -> list[str]:
+        """
+        Returns the list of activities for this profile category.
+
+        :return: the list of activities
+        """
+        return self.probability_profiles.index.tolist()
+
+    def extend_for_missing_activities(self, activities: list[str]):
+        """
+        Extends the statistics dataframes to include missing activities. The
+        statistics are adapted assuming that the new activities never occurred for
+        this category.
+        Any activities not specified in the list are still kept in the dataframes.
+
+        :param activities: the full list of activities to include
+        """
+        # determine which activities are new for which dataframes (freq and duration should be the same)
+        new_for_freq = self.activity_frequencies.columns.symmetric_difference(
+            activities
+        )
+        new_for_prob = self.probability_profiles.index.symmetric_difference(activities)
+        if len(new_for_freq) == 0 and len(new_for_prob) == 0:
+            # no new activities to add
+            return
+        # determine the full set of activities, including both old and new ones, keeping the original order
+        combined_activities = self.probability_profiles.index.append(new_for_prob)
+
+        # add new activities with probability 0 (as these activities never occurred)
+        self.probability_profiles = self.probability_profiles.reindex(
+            combined_activities, fill_value=0
+        )
+
+        # extend the activity durations by adding 0% for every duration, as no such activities occurred
+        self.activity_durations = self.activity_durations.reindex(
+            columns=combined_activities, fill_value=0
+        )
+
+        # extend the activity frequencies
+        freq = self.activity_frequencies.reindex(
+            columns=combined_activities, fill_value=0
+        )
+        # add a row for frequency 0 if it does not exist yet
+        freq = freq.reindex(freq.index.union([0]), fill_value=0)
+        # set the probability for frequency 0 to 100% for the new activities
+        freq.loc[0, new_for_freq] = 1.0
+        self.activity_frequencies = freq
+
+    def get_frequency_averages(self) -> pd.Series:
+        """
+        Get the average daily activity frequency for each activity.
+
+        :return: a series containing the average daily activity frequencies
+        """
+        return self.activity_frequencies.mul(
+            self.activity_frequencies.index, axis=0
+        ).sum()
 
     def save(self, base_path: Path):
         """
@@ -69,7 +176,7 @@ class ValidationStatistics:
         """
         Maps column names of a dataframe to new names. If
         two or more column names are mapped to the same new
-        name, the colums are added.
+        name, the colums are averaged.
 
         :param data: the data to rename
         :param mapping: the mapping to apply
@@ -78,7 +185,24 @@ class ValidationStatistics:
         # rename the columns, which might result in some with identical name
         data.rename(columns=mapping, inplace=True)
         # calculate the sum of all columns with the same name
-        data = data.T.groupby(level=0).sum().T
+        data = data.T.groupby(level=0).mean().T
+        return data
+
+    @staticmethod
+    def map_probabilities(data: pd.DataFrame, mapping: dict):
+        """
+        Maps row names of a dataframe to new names. If
+        two or more row names are mapped to the same new
+        name, the rows are added.
+
+        :param data: the data to rename
+        :param mapping: the mapping to apply
+        :return: the renamed data
+        """
+        # rename the rows, which might result in some with identical name
+        data.rename(index=mapping, inplace=True)
+        # calculate the sum of all rows with the same name
+        data = data.groupby(level=0).sum()
         return data
 
     def map_activities(self, mapping: dict):
@@ -87,16 +211,25 @@ class ValidationStatistics:
 
         :param mapping: a dict that maps old activity names to new names
         """
+        # calculate the average activity frequencies before merging
+        freq_averages = self.get_frequency_averages()
+
+        # when merging frequencies, the frequency probabilities are averaged
         self.activity_frequencies = ValidationStatistics.map_columns(
             self.activity_frequencies, mapping
         )
-        self.activity_durations = ValidationStatistics.map_columns(
-            self.activity_durations, mapping
+        # when merging activities, their probabilities are summed up
+        self.probability_profiles = ValidationStatistics.map_probabilities(
+            self.probability_profiles, mapping
         )
-        # probability profiles contain one row per activity --> transpose twice
-        self.probability_profiles = ValidationStatistics.map_columns(
-            self.probability_profiles.T, mapping
-        ).T
+
+        # The duration columns need to be weighted using the average activity frequency per day for the
+        # respective activity. This ensures that more frequent activities have a larger impact.
+        weighted_dur = self.activity_durations.mul(freq_averages, axis=1)
+        merged_dur = ValidationStatistics.map_columns(weighted_dur, mapping)
+        # normalize the durations again
+        self.activity_durations = merged_dur / merged_dur.sum()
+        pass
 
     @staticmethod
     def load(
@@ -134,6 +267,49 @@ class ValidationStatistics:
         dur = load_df(dur_path, True)
         prob = load_df(prob_path)
         return ValidationStatistics(profile_type, prob, freq, dur, size)
+
+    @staticmethod
+    def merge_statistics(
+        statistics: Iterable["ValidationStatistics"],
+        profile_type: ProfileCategory,
+    ) -> "ValidationStatistics":
+        """
+        Merges multiple ValidationStatistics into one.
+        The resulting statistics contain the weighted averages of all activity frequencies, durations,
+        and probability profiles.
+
+        :param statistics: the statistics to merge
+        :param profile_type: the profile category of the resulting statistics
+        :return: the merged statistics
+        """
+        # collect the combined list of activities
+        activities = {act for stat in statistics for act in stat.get_activities()}
+        # extend the statistics to ensure they all include the same activities
+        for stat in statistics:
+            stat.extend_for_missing_activities(list(activities))
+
+        total_weight = sum(stat.get_weight() for stat in statistics)
+        durations = []
+        frequencies = []
+        probabilities = []
+        for stat in statistics:
+            factor = stat.get_weight() / total_weight
+            dur = stat.activity_durations * factor
+            durations.append(dur)
+            freq = stat.activity_frequencies * factor
+            frequencies.append(freq)
+            prob = stat.probability_profiles * factor
+            probabilities.append(prob)
+
+        merged_dur = pd.concat(durations).groupby(level=0).sum()
+        # durations need to be normalized in case activities were missing in some categories
+        merged_dur = merged_dur / merged_dur.sum()
+        merged_freq = pd.concat(frequencies).groupby(level=0).sum()
+        merged_prob = pd.concat(probabilities).groupby(level=0).sum()
+        total_size = sum(stat.category_size or 1 for stat in statistics)
+        return ValidationStatistics(
+            profile_type, merged_prob, merged_freq, merged_dur, total_size, total_weight
+        )
 
 
 @dataclass
@@ -177,7 +353,11 @@ class ValidationSet:
             ppc = category.get_category_without_person()
             return self.statistics.get(ppc, None)
         if ignore_country:
-            matchings = [v for k, v in self.statistics.items() if k.to_base_category() == category.to_base_category()]
+            matchings = [
+                v
+                for k, v in self.statistics.items()
+                if k.to_base_category() == category.to_base_category()
+            ]
             assert len(matchings) == 1
             return matchings[0]
         return None
@@ -210,9 +390,9 @@ class ValidationSet:
 
         :param size_ranges: defines the size ranges to apply (e.g., [20, 50])
         """
-        assert size_ranges == sorted(
-            size_ranges
-        ), "Unclear parameter: size_ranges must be sorted"
+        assert size_ranges == sorted(size_ranges), (
+            "Unclear parameter: size_ranges must be sorted"
+        )
         hidden = 0
         for stat in self.statistics.values():
             old_size = stat.category_size
@@ -237,11 +417,43 @@ class ValidationSet:
         for data in self.statistics.values():
             data.map_activities(mapping)
 
-    def merge_profile_categories(self, mapping):
-        # TODO: implement merging of different activity profiles using the weights
-        raise NotImplementedError(
-            "Merging of profile categories has not been implemented yet."
-        )
+    def merge_profile_categories(self, mapping: dict[ProfileCategory, ProfileCategory]):
+        """
+        Merge multiple profile categories into one. The mapping is a dict that maps each profile category
+        to merge to its respective target category. The target category must not exist yet.
+
+        :param mapping: dict mapping old categories to new categories
+        :raises ActValidatorException: if the validation set has inconsistent weights
+        """
+        # group all current categories by their common new category
+        category_groups = defaultdict(list)
+        for old_category, new_category in mapping.items():
+            assert old_category in self.statistics, (
+                f"Invalid mapping: category {old_category} not found"
+            )
+            assert new_category not in self.statistics, (
+                f"Invalid mapping: statistics for the target category {new_category} already exist"
+            )
+            category_groups[new_category].append(old_category)
+
+        # check if weight are set consistently
+        weights_set = [stat.has_weight() for stat in self.statistics.values()]
+        if any(weights_set) and not all(weights_set):
+            raise utils.ActValidatorException(
+                "Cannot merge profile categories, because some categories have weights, and others do not."
+            )
+
+        # merge each group of statistics
+        for new_category, old_categories in category_groups.items():
+            statistics_to_merge = [self.statistics[cat] for cat in old_categories]
+            merged = ValidationStatistics.merge_statistics(
+                statistics_to_merge, new_category
+            )
+            # remove the old categories from the statistics dict
+            for cat in old_categories:
+                del self.statistics[cat]
+            # add the new category to the statistics dict
+            self.statistics[new_category] = merged
 
     def pivot_dataframe(
         self, data: pd.DataFrame, attribute_for_pivot: str
@@ -269,9 +481,9 @@ class ValidationSet:
         # not be loaded anymore
         data_reset = data.reset_index()
         cols = list(data_reset.columns)
-        assert (
-            attribute_for_pivot in cols
-        ), f"Invalid attribute for pivot: {attribute_for_pivot}"
+        assert attribute_for_pivot in cols, (
+            f"Invalid attribute for pivot: {attribute_for_pivot}"
+        )
         cols.remove(attribute_for_pivot)
         cols.remove(colname)
         transformed = data_reset.pivot(
@@ -358,7 +570,9 @@ class ValidationSet:
         )
 
     @staticmethod
-    def load_category_info_dataframe(path: Path, country: Optional[str] = None) -> dict[ProfileCategory, int]:
+    def load_category_info_dataframe(
+        path: Path, country: Optional[str] = None
+    ) -> dict[ProfileCategory, int]:
         """
         Loads a DataFrame from csv which contains one value per profile category.
         The value can e.g. be a size or a weight. Returns a dict for easy access.
@@ -419,9 +633,15 @@ class ValidationSet:
         prob_path = base_path / ValidationStatistics.PROBABILITY_PROFILE_DIR
         freq_path = base_path / ValidationStatistics.FREQUENCY_DIR
         dur_path = base_path / ValidationStatistics.DURATION_DIR
-        prob_data = ValidationSet.load_validation_data_subdir(prob_path, f"prob_{country}" if country else "")
-        freq_data = ValidationSet.load_validation_data_subdir(freq_path, f"freq_{country}" if country else "")
-        dur_data = ValidationSet.load_validation_data_subdir(dur_path, f"dur_{country}" if country else "", True)
+        prob_data = ValidationSet.load_validation_data_subdir(
+            prob_path, f"prob_{country}" if country else ""
+        )
+        freq_data = ValidationSet.load_validation_data_subdir(
+            freq_path, f"freq_{country}" if country else ""
+        )
+        dur_data = ValidationSet.load_validation_data_subdir(
+            dur_path, f"dur_{country}" if country else "", True
+        )
 
         # load further info (size, weight) from single csv files
         sizes_path = (
@@ -432,8 +652,12 @@ class ValidationSet:
             / ValidationSet.CATEGORIES_DIR
             / ValidationSet.CATEGORY_WEIGHTS_FILE
         )
-        category_sizes = ValidationSet.load_category_info_dataframe(sizes_path, country=country)
-        category_weights = ValidationSet.load_category_info_dataframe(weights_path, country=country)
+        category_sizes = ValidationSet.load_category_info_dataframe(
+            sizes_path, country=country
+        )
+        category_weights = ValidationSet.load_category_info_dataframe(
+            weights_path, country=country
+        )
 
         assert (
             prob_data.keys()
