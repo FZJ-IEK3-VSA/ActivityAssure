@@ -231,9 +231,14 @@ def order_profile_type_index(data: pd.DataFrame) -> pd.DataFrame:
     :param data: metrics dataframe
     :return: ordered metrics dataframe
     """
-    new_index = sorted(
-        data.index, key=lambda p: (p.country, p.day_type, p.work_status, p.sex)
-    )
+    try: 
+        new_index = sorted(
+            data.index, key=lambda p: (p.country, p.day_type, p.work_status, p.sex)
+        )
+    except AttributeError:
+        new_index = sorted(
+            data.index, key=lambda p: (p.day_type, p.work_status, p.sex)
+        )
     return data.reindex(new_index)
 
 

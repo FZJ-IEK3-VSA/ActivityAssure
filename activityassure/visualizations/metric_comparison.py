@@ -45,4 +45,28 @@ def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_pa
         axs[i].legend(loc='lower right', bbox_to_anchor=(1, 1.05), ncol=2)
         axs[i].set_yticklabels([l.get_text().replace(" - ", "\n") for l in axs[i].get_yticklabels()])
         fig.tight_layout()
-        fig.savefig(output_path)
+        fig.savefig(output_path, dpi=600)
+        fig.savefig(output_path.with_suffix(".svg"))
+
+
+def plot_bar_plot_metrics_aggregated(metrics: pd.DataFrame, output_path: Path, aggregation_category: str):
+    assert aggregation_category in ["activity", "person_profile"]
+    output_path /= f"mean_per_{aggregation_category}.png"
+    os.makedirs(output_path.parent, exist_ok=True)
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(9, 6))
+    level = 1 if aggregation_category == "person_profile" else 0
+    metrics = metrics[metrics.index.get_level_values(level) == 'mean']
+    metrics.index = metrics.index.droplevel(level=level).astype(str)
+    df2 = metrics[["pearson_corr"]]
+    df1 = metrics.drop(columns=["pearson_corr"])
+    df1 = df1.abs()
+
+    for i, df in enumerate([df1, df2]):
+        subdf = df.melt(ignore_index=False, var_name='metric')
+        sns.barplot(subdf.sort_values(by="value", ascending=True if i == 1 else False).reset_index(), y='index', x='value', orient='h', hue='metric', ax=axs[i])
+        axs[i].set_ylabel("")
+        axs[i].legend(loc='lower right', bbox_to_anchor=(1, 1.05), ncol=2)
+        axs[i].set_yticklabels([l.get_text().replace(" - ", "\n") for l in axs[i].get_yticklabels()])
+        fig.tight_layout()
+        fig.savefig(output_path, dpi=600)
+        fig.savefig(output_path.with_suffix(".svg"))

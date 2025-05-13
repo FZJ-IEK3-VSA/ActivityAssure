@@ -21,6 +21,30 @@ class BaseProfileCategory:
     work_status: categorization_attributes.WorkStatus | None = None
     day_type: categorization_attributes.DayType | None = None
 
+    def to_list(self) -> list[str]:
+        """
+        Returns a list representation of this profile type. Only returns
+        attributes that are not None or empty.
+
+        :return: a list containing the characteristics of this
+                 profile category
+        """
+        values = [
+            self.sex,
+            self.work_status,
+            self.day_type,
+        ]
+        return [str(v) for v in values if v]
+    
+    def __str__(self) -> str:
+        """
+        Returns a string representation of this profile type
+
+        :return: a str containing the characteristics of this
+                 profile category
+        """
+        return "_".join(str(c) for c in self.to_list())
+
 
 @dataclass_json
 @dataclass(frozen=True)

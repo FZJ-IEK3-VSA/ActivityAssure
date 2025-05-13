@@ -123,7 +123,7 @@ def validate_per_category(
         # select matching validation data
         validation_data = validation_statistics.get_matching_statistics(profile_type, ignore_country=ignore_country)
         if validation_data is None:
-            logging.warn(
+            logging.warning(
                 f"No matching validation data found for category {profile_type}"
             )
             continue
@@ -131,6 +131,7 @@ def validate_per_category(
         _, metrics, scaled, normed = comparison_indicators.calc_all_indicator_variants(
             validation_data, input_data, False, profile_type, output_path
         )
+        profile_type = profile_type if not ignore_country else profile_type.to_base_category()
         metrics_dict[profile_type] = metrics
         scaled_dict[profile_type] = scaled
         normed_dict[profile_type] = normed

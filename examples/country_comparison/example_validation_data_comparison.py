@@ -69,6 +69,7 @@ def validate(
         indicator_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path_heatmaps)
         indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path_heatmaps)
         metric_comparison.plot_bar_plot_metrics_profile_type_activity(metrics_df, result_subdir / "bars", top_x=5)
+        metric_comparison.plot_bar_plot_metrics_aggregated(metrics_df, result_subdir / "bars", "person_profile")
 
     if compare_all_combinations:
         # compare statistics for each combination of profile categories
