@@ -54,9 +54,11 @@ def plot_bar_plot_metrics_aggregated(metrics: pd.DataFrame, output_path: Path, a
     output_path /= f"mean_per_{aggregation_category}.png"
     os.makedirs(output_path.parent, exist_ok=True)
     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(9, 6))
-    level = 1 if aggregation_category == "person_profile" else 0
-    metrics = metrics[metrics.index.get_level_values(level) == 'mean']
-    metrics.index = metrics.index.droplevel(level=level).astype(str)
+    if aggregation_category == "person_profile":
+        level = 1
+        metrics = metrics[metrics.index.get_level_values(level) == 'mean']
+        metrics.index = metrics.index.droplevel(level=level).astype(str)
+
     df2 = metrics[["pearson_corr"]]
     df1 = metrics.drop(columns=["pearson_corr"])
     df1 = df1.abs()
