@@ -38,8 +38,7 @@ WORK_STATUS_MAPPING = {
     "Living Pattern / University / Student Independent": WorkStatus.student,
     "Living Pattern / University / Student Living at Home": WorkStatus.student,
     "Living Pattern / Work From Home": WorkStatus.full_time,
-    "Living Pattern / Work From Home / Full Time 5 days": WorkStatus.full_time,
-    "Living Pattern / Work From Home / Part Time": WorkStatus.part_time,
+    "Living Pattern / Work From Home Part Time": WorkStatus.part_time,
 }
 
 
@@ -77,7 +76,7 @@ def define_person_mapping(database_path: Path, result_path: Path):
     # person has in his/her household
     con = sqlite3.connect(database_path)
     cur = con.cursor()
-    query = """select tblPersons.Name, tblHouseholdTemplates.Name, tblPersons.Gender1, tblLivingPatternTags.Name
+    query = """select tblPersons.Name, tblPersons.Age, tblHouseholdTemplates.Name, tblPersons.Gender1, tblLivingPatternTags.Name
 from tblPersons inner join tblHHTemplatePerson on tblPersons.ID == tblHHTemplatePerson.PersonID
 inner join tblLivingPatternTags on tblHHTemplatePerson.LivingPatternTagID == tblLivingPatternTags.ID
 inner join tblHouseholdTemplates on tblHHTemplatePerson.HHTemplateID == tblHouseholdTemplates.ID
@@ -90,7 +89,7 @@ inner join tblHouseholdTemplates on tblHHTemplatePerson.HHTemplateID == tblHouse
         get_person_id(person, template): profile_category.ProfileCategory(
             "DE", GENDER_MAPPING[gender], WORK_STATUS_MAPPING[tag]
         )
-        for person, template, gender, tag in rows
+        for person, age, template, gender, tag in rows
     }
 
     # write all characteristics to a json file
@@ -103,5 +102,5 @@ inner join tblHouseholdTemplates on tblHHTemplatePerson.HHTemplateID == tblHouse
 
 if __name__ == "__main__":
     lpg_main_db = Path("data/lpg_simulations/profilegenerator.db3")
-    person_file = Path("examples/LoadProfileGenerator/person_characteristics.json")
+    person_file = Path("examples/LoadProfileGenerator/data/person_characteristics.json")
     define_person_mapping(lpg_main_db, person_file)
