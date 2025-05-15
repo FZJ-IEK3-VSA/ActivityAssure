@@ -16,7 +16,7 @@ import json
 FILENAME_PERSON_DELIMITER = "_"
 
 
-def load_person_characteristics(path: str) -> dict:
+def load_person_characteristics(path: Path | str) -> dict:
     with open(path, encoding="utf-8") as f:
         traits: dict[str, dict] = json.load(f)
     message = (
@@ -66,7 +66,7 @@ def get_person_traits(
 @utils.timing
 def load_activity_profiles_from_csv(
     path: Path,
-    person_trait_file: str,
+    person_trait_file: Path,
     resolution: timedelta,
     categories_per_person: bool = False,
 ) -> list[SparseActivityProfile]:
