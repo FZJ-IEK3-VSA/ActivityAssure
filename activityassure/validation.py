@@ -15,6 +15,7 @@ from activityassure import (
     comparison_indicators,
     pandas_utils,
     utils,
+    validation,
 )
 from activityassure.indicator_set import ValidationIndicatorSet
 from activityassure.profile_category import ProfileCategory
@@ -22,6 +23,7 @@ from activityassure.validation_statistics import (
     ValidationSet,
     ValidationStatistics,
 )
+from activityassure.visualizations import indicator_heatmaps
 
 
 def get_similar_categories(profile_type: ProfileCategory) -> list[ProfileCategory]:
@@ -119,7 +121,9 @@ def validate_per_category(
         _, metrics, scaled, normed = comparison_indicators.calc_all_indicator_variants(
             validation_data, input_data, False, profile_type, output_path
         )
-        profile_type = profile_type if not ignore_country else profile_type.to_base_category()
+        profile_type = (
+            profile_type if not ignore_country else profile_type.to_base_category()
+        )
         metrics_dict[profile_type] = metrics
         scaled_dict[profile_type] = scaled
         normed_dict[profile_type] = normed
@@ -223,3 +227,35 @@ def save_file_per_indicator_per_combination(
                 kpi.name,
                 profile_type,
             )
+
+
+@utils.timing
+def default_validation(model_path: Path, validation_path: Path):
+    """
+    Default validation routine. Loads model and validation statistics
+    and compares matching categories individually by generating
+    indicators and heatmaps.
+
+    :param model_path: path of the model statistics dataset
+    :param validation_path: path of the validation dataset
+    """
+    # load LPG statistics and validation statistics
+    input_statistics = ValidationSet.load(model_path)
+    validation_statistics = ValidationSet.load(validation_path)
+
+    # compare input and validation data statistics per profile category
+    indicator_set_variants = validation.validate_per_category(
+        input_statistics, validation_statistics, model_path
+    )
+    validation_result_path = model_path / "validation_results"
+
+    # save indicators and heatmaps for each indicator variant
+    for variant_name, indicator_set in indicator_set_variants.items():
+        result_subdir = validation_result_path / variant_name
+        metrics_df = indicator_set.save(result_subdir / "indicators_per_category")
+
+        # plot heatmaps to compare indicator values
+        plot_path = result_subdir / "heatmaps"
+        indicator_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path)
+        indicator_heatmaps.plot_indicators_by_activity(metrics_df, plot_path)
+        indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path)
