@@ -6,6 +6,7 @@ PyPDF2
 matplotlib
 seaborn
 tabulate
+psutil
 
 # LPG example
 utspclient
