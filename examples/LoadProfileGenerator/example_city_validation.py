@@ -19,9 +19,11 @@ if __name__ == "__main__":
 
     # define all input and output paths and other parameters
     profile_resolution = timedelta(minutes=1)
-    # preprocessed input data paths
-    lpg_example_data_dir = Path("examples/LoadProfileGenerator/data")
+    # preprocessed input data path
     city_data_path = Path("data/city/preprocessed/scenario_city-julich_mini")
+
+    # additional files with mappings and person information
+    lpg_example_data_dir = Path("examples/LoadProfileGenerator/data")
     merging_file = lpg_example_data_dir / "activity_merging_city.json"
     mapping_file = lpg_example_data_dir / "activity_mapping_city.json"
     person_trait_file = lpg_example_data_dir / "person_characteristics.json"
@@ -71,3 +73,8 @@ if __name__ == "__main__":
     )
 
     lpgexample.validate(citysim_national, validation_national)
+
+    # TODO: futher validation steps:
+    # - include POI validation
+    # - add travel validation
+    # - activity statistics, if that adds anything to this
