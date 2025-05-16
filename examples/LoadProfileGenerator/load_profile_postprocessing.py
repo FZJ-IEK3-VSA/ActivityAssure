@@ -40,9 +40,10 @@ def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
 
         # print progress
         if datetime.now() - last_update > timedelta(seconds=30):
-            ram = psutil.Process().memory_info().rss / 1024**2
+            ram = round(psutil.Process().memory_info().rss / 1024**2)
             print(
-                f"Progress: {i}/{house_num} ({100 * i / house_num:.1f}%), RAM usage: {ram:.2f} MiB"
+                f"Progress: {i}/{house_num} ({100 * i / house_num:.1f}%), RAM usage: {ram} MiB",
+                flush=True,
             )
 
     data = pd.concat(all_profiles, axis="columns")
