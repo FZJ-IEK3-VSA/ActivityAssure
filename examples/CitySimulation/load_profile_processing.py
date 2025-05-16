@@ -4,6 +4,7 @@ sum profiles for the whole city"""
 from datetime import datetime, timedelta
 import gc
 import itertools
+import logging
 from pathlib import Path
 from typing import Iterable
 
@@ -25,7 +26,7 @@ def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
     house_num = len(house_dirs)
     output_dir.mkdir(parents=True, exist_ok=True)
     result_file_path = output_dir / "City.SumProfiles.Electricity.csv"
-    print(f"Aggregating load profiles from {house_num} houses.")
+    logging.info(f"Aggregating load profiles from {house_num} houses.")
 
     # parse first file completely, including time stamps
     data = pd.read_csv(
@@ -63,21 +64,29 @@ def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
             data = pd.concat(all_profiles, axis="columns")
             # reset the list to release the individual dataframes
             collected_profiles = []
-            gc.collect()
+            # gc.collect() # does this actually do anything?
 
-        # print progress
+        # log progress
         if datetime.now() - last_update > timedelta(seconds=30):
             ram = round(psutil.Process().memory_info().rss / 1024**2)
-            print(
-                f"Progress: {i}/{house_num} ({100 * i / house_num:.1f}%), RAM usage: {ram} MiB",
-                flush=True,
+            logging.info(
+                f"Progress: {i}/{house_num} ({100 * i / house_num:.1f}%), RAM usage: {ram} MiB"
             )
+            last_update = datetime.now()
 
+    logging.info(
+        f"Finished merging profiles, storing the resulting dataframe in {result_file_path}"
+    )
     assert data is not None
     data.to_csv(result_file_path)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     city_result_dir = Path(
         "/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25"
     )
