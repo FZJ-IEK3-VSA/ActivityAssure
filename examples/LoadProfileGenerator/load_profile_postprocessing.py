@@ -20,6 +20,7 @@ def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
     houses_subdir = city_result_dir / "Houses"
     house_dirs = list(houses_subdir.iterdir())
     house_num = len(house_dirs)
+    print(f"Aggregating load profiles from {house_num} houses.")
 
     # parse the sum profiles from all houses
     all_profiles = []
