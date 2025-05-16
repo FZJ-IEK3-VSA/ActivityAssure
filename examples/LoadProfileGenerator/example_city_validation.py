@@ -7,20 +7,13 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 
+from activityassure import validation
 from activityassure.input_data_processing import process_model_data
-import example_lpg_validation as lpgexample
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.DEBUG,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
 
+def calc_citysim_statistics_and_validate(preprocessed_data_path: Path):
     # define all input and output paths and other parameters
     profile_resolution = timedelta(minutes=1)
-    # preprocessed input data path
-    city_data_path = Path("data/city/preprocessed/scenario_city-julich_mini")
 
     # additional files with mappings and person information
     lpg_example_data_dir = Path("examples/LoadProfileGenerator/data")
@@ -34,7 +27,7 @@ if __name__ == "__main__":
     validation_stats_path_merged = Path(f"{validation_stats_path}_merged")
     # input statistics path
     # here the statistics of the input data and the validation results will be stored
-    city_stats_path = Path("data/city/validation") / city_data_path.name
+    city_stats_path = Path("data/city/validation") / preprocessed_data_path.name
     city_stats_path_merged = Path(f"{city_stats_path}_merged")
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
@@ -45,7 +38,7 @@ if __name__ == "__main__":
 
     # calculate statistics for the input model data
     input_statistics = process_model_data.process_model_data(
-        city_data_path,
+        preprocessed_data_path,
         mapping_file,
         person_trait_file,
         profile_resolution,
@@ -60,7 +53,7 @@ if __name__ == "__main__":
     )
 
     # validate the input data using the statistics
-    lpgexample.validate(city_stats_path_merged, validation_stats_path_merged)
+    validation.default_validation(city_stats_path_merged, validation_stats_path_merged)
 
     # additionally, aggregate both statistics to national level and validate with that
     validation_national = Path(f"{validation_stats_path_merged}_national")
@@ -72,9 +65,25 @@ if __name__ == "__main__":
         city_stats_path_merged, citysim_national
     )
 
-    lpgexample.validate(citysim_national, validation_national)
+    validation.default_validation(citysim_national, validation_national)
 
     # TODO: futher validation steps:
     # - include POI validation
     # - add travel validation
     # - activity statistics, if that adds anything to this
+
+
+def main():
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    # path to a directory with preprocessed activitiy profiles in csv format
+    preprocessed_city_data = Path("data/city/preprocessed/scenario_city-julich_mini")
+    calc_citysim_statistics_and_validate(preprocessed_city_data)
+
+
+if __name__ == "__main__":
+    main()
