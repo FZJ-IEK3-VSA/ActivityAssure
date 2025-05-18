@@ -51,7 +51,8 @@ def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
         collected_profiles.append(profile)
 
         # regularly combine all collected dataframes
-        if i % 500 == 0 or i == house_num - 1:
+        is_last_iteration = house_dir == house_dirs[-1]
+        if i % 500 == 0 or is_last_iteration:
             if data is not None:
                 # add the alread concatenated profiles
                 all_profiles: Iterable[pd.DataFrame] = itertools.chain(
