@@ -2,7 +2,6 @@
 sum profiles for the whole city"""
 
 from datetime import datetime, timedelta
-import gc
 import itertools
 import logging
 from pathlib import Path
@@ -14,7 +13,7 @@ import pandas as pd
 
 def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
     dateformat_de = "%d.%m.%Y %H:%M"
-    dateformat_en = "%-m/%-d/%Y %-I:%M %p"
+    dateformat_en = "%m/%d/%Y %I:%M %p"
     dateformat = dateformat_en
 
     # relative path of the LPG result file to aggregate
@@ -63,9 +62,8 @@ def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
 
             # concatenate the dataframes
             data = pd.concat(all_profiles, axis="columns")
-            # reset the list to release the individual dataframes
+            # reset the list
             collected_profiles = []
-            # gc.collect() # does this actually do anything?
 
         # log progress
         if datetime.now() - last_update > timedelta(seconds=30):
