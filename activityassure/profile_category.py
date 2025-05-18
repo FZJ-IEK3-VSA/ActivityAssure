@@ -7,8 +7,23 @@ from pathlib import Path
 from typing import Any, Collection, Sequence
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
+import pandas as pd
 
 from activityassure import categorization_attributes
+
+
+def get_attribute_value(value, attribute_type: type) -> Any:
+    """
+    Turns a parsed value of one of the profile categorization attributes
+    into the corresponding enum value.
+
+    :param value: the value to parse
+    :param attribute_type: the expected categorization enum type
+    :return: the enum value (always of the specified type, or None)
+    """
+    if value is None or pd.isna(value):
+        return None
+    return attribute_type(value)
 
 
 @dataclass_json
@@ -36,7 +51,7 @@ class BaseProfileCategory:
             self.day_type,
         ]
         return [str(v) for v in values if v]
-    
+
     def __str__(self) -> str:
         """
         Returns a string representation of this profile type
@@ -164,23 +179,19 @@ class ProfileCategory:
         try:
             # convert the strings to enum values and create the ProfileType
             country = values[0]
-            sex, work_status, day_type = None, None, None
+            sex, work_status, day_type, person = None, None, None, None
             if length >= 2:
                 sex_str = values[1]
-                sex = categorization_attributes.Sex(sex_str) if sex_str else None
+                sex = get_attribute_value(sex_str, categorization_attributes.Sex)
             if length >= 3:
                 work_status_str = values[2]
-                work_status = (
-                    categorization_attributes.WorkStatus(work_status_str)
-                    if work_status_str
-                    else None
+                work_status = get_attribute_value(
+                    work_status_str, categorization_attributes.WorkStatus
                 )
             if length >= 4:
                 day_type_str = values[3]
-                day_type = (
-                    categorization_attributes.DayType(day_type_str)
-                    if day_type_str
-                    else None
+                day_type = get_attribute_value(
+                    day_type_str, categorization_attributes.DayType
                 )
             if length >= 5:
                 person = values[4] or ""

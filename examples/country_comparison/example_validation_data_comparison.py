@@ -8,8 +8,11 @@ from pathlib import Path
 
 from activityassure import utils, pandas_utils, validation
 from activityassure import comparison_indicators
+from activityassure import categorization_attributes
+from activityassure.categorization_attributes import WorkStatus
 from activityassure.hetus_data_processing import hetus_constants
 from activityassure.input_data_processing import process_model_data
+from activityassure.profile_category import ProfileCategory
 from activityassure.visualizations import indicator_heatmaps, metric_comparison
 from activityassure.validation_statistics import ValidationSet
 
@@ -20,7 +23,7 @@ def validate(
     country1: str,
     country2: str,
     output_path: Path,
-    compare_all_combinations: bool = False
+    compare_all_combinations: bool = False,
 ):
     """
     Load validation statistics and compare them using indicators and heatmaps.
@@ -31,24 +34,37 @@ def validate(
                                      defaults to False
     """
     # load LPG statistics and validation statistics
-    validation_dataset_country1 = ValidationSet.load(validation_data_path, country=country1)
-    validation_dataset_country2 = ValidationSet.load(validation_data_path, country=country2)
+    validation_dataset_country1 = ValidationSet.load(
+        validation_data_path, country=country1
+    )
+    validation_dataset_country2 = ValidationSet.load(
+        validation_data_path, country=country2
+    )
 
     # Prepare validation data, convert resolution
-    if hetus_constants.get_resolution(country1) != hetus_constants.get_resolution(country2):
-        for _, v in (validation_dataset_country1.statistics | validation_dataset_country2.statistics).items():
+    if hetus_constants.get_resolution(country1) != hetus_constants.get_resolution(
+        country2
+    ):
+        for _, v in (
+            validation_dataset_country1.statistics
+            | validation_dataset_country2.statistics
+        ).items():
             # durations
-            v.activity_durations.index = v.activity_durations.index.ceil('30min')
-            v.activity_durations = v.activity_durations.resample('30min').sum()
+            v.activity_durations.index = v.activity_durations.index.ceil("30min")
+            v.activity_durations = v.activity_durations.resample("30min").sum()
 
             # interpolate probability profiles to 10 minute resolution
             if len(v.probability_profiles.columns) != 144:
-                v.probability_profiles = comparison_indicators.resample_columns(v.probability_profiles, 144)
-
+                v.probability_profiles = comparison_indicators.resample_columns(
+                    v.probability_profiles, 144
+                )
 
     # compare input and validation data statistics per profile category
     indicator_dict_variants = validation.validate_per_category(
-        validation_dataset_country1, validation_dataset_country2, output_path, ignore_country=True
+        validation_dataset_country1,
+        validation_dataset_country2,
+        output_path,
+        ignore_country=True,
     )
 
     # save indicators and heatmaps for each indicator variant
@@ -66,11 +82,19 @@ def validate(
         # plot heatmaps to compare indicator values
         plot_path_heatmaps = result_subdir / "heatmaps"
         indicator_heatmaps.plot_indicators_by_activity(metrics_df, plot_path_heatmaps)
-        indicator_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path_heatmaps)
+        indicator_heatmaps.plot_indicators_by_profile_type(
+            metrics_df, plot_path_heatmaps
+        )
         indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path_heatmaps)
-        metric_comparison.plot_bar_plot_metrics_profile_type_activity(metrics_df, result_subdir / "bars", top_x=5)
-        metric_comparison.plot_bar_plot_metrics_aggregated(metrics_df, result_subdir / "bars", "person_profile")
-        metric_comparison.plot_bar_plot_metrics_aggregated(activity_means, result_subdir / "bars", "activity")
+        metric_comparison.plot_bar_plot_metrics_profile_type_activity(
+            metrics_df, result_subdir / "bars", top_x=5
+        )
+        metric_comparison.plot_bar_plot_metrics_aggregated(
+            metrics_df, result_subdir / "bars", "person_profile"
+        )
+        metric_comparison.plot_bar_plot_metrics_aggregated(
+            activity_means, result_subdir / "bars", "activity"
+        )
 
     if compare_all_combinations:
         # compare statistics for each combination of profile categories
@@ -90,9 +114,29 @@ def validate(
         )
 
 
+def merge_unemployed_categories(data_path: Path, result_path: Path):
+    """Merge categories for work days and non-working days of unemployed people"""
+    # load the statistics
+    set = ValidationSet.load(data_path)
+    # combine all 'unemployed' categories which only differ in day type
+    mapping = {
+        p: ProfileCategory(
+            p.country,
+            p.sex,
+            p.work_status,
+            categorization_attributes.DayType.undetermined,
+        )
+        for p in set.statistics.keys()
+        if p.work_status == WorkStatus.unemployed
+    }
+    set.merge_profile_categories(mapping)
+    # save the aggregated statistics
+    set.save(result_path)
+
+
 if __name__ == "__main__":
-    country1="AT"
-    country2="DE"
+    country1 = "AT"
+    country2 = "DE"
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
@@ -101,18 +145,23 @@ if __name__ == "__main__":
     )
 
     # validation statistics paths
-    validation_stats_path = Path("data/validation_data_sets/activity_validation_data_set")
+    validation_stats_path = Path(
+        "data/validation_data_sets/activity_validation_data_set"
+    )
+    validation_path_merged = Path(f"{validation_stats_path}_merged_unemployed")
     output_path = Path(f"data/country_comparison/{country1}-{country2}")
 
+    merge_unemployed_categories(validation_stats_path, validation_path_merged)
+
     # validate the input data using the statistics
-    validate(validation_stats_path, country1, country2, output_path)
+    validate(validation_path_merged, country1, country2, output_path)
 
     # paths for aggregated validation statistics
-    national_stats_path = Path(f"{validation_stats_path}_national")
+    national_stats_path = Path(f"{validation_path_merged}_national")
     output_path_national = Path(f"{output_path}_national")
 
     # validate the input data using the statistics on a national level
     process_model_data.aggregate_to_national_level(
-        validation_stats_path, national_stats_path
+        validation_path_merged, national_stats_path
     )
     validate(national_stats_path, country1, country2, output_path_national)

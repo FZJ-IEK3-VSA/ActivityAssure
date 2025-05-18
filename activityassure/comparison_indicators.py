@@ -151,7 +151,7 @@ def calc_mae(differences: pd.DataFrame) -> pd.Series:
 
 
 def calc_rmse(differences: pd.DataFrame) -> pd.Series:
-    return np.sqrt((differences**2).mean(axis=1))
+    return np.sqrt((differences**2).mean(axis=1))  # type: ignore
 
 
 def calc_pearson_coeff(data1: pd.DataFrame, data2: pd.DataFrame) -> pd.Series:
@@ -359,9 +359,12 @@ def calc_all_indicator_variants(
     differences, indicators = calc_comparison_indicators(
         validation_data, input_data, add_kpi_means=False
     )
-    # calc metrics as normal, scaled and normalized variants
-    shares = validation_data.probability_profiles.mean(axis=1)
+    # determine the average share of each activity in both datasets for scaling
+    shares_val = validation_data.probability_profiles.mean(axis=1)
+    shares_in = input_data.probability_profiles.mean(axis=1)
+    shares = pd.concat([shares_val, shares_in], axis="columns").mean(axis="columns")
     scaled = indicators.get_scaled(shares)
+    # calc metrics as normal, scaled and normalized variants
     if add_means:
         # add metric means only after obtaining the scaled metrics
         indicators.add_metric_means()
