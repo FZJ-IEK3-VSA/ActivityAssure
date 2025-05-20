@@ -1,0 +1,53 @@
+"""Starts all result postprocessing of a single city simulation"""
+
+import logging
+from pathlib import Path
+
+from activityassure.preprocessing.lpg import activity_profiles
+
+import load_profile_processing
+
+
+def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: Path):
+    """
+    Converts all activity profiles generated in an LPG City Simulation to CSV files.
+
+    :param input_dir: result directory of the city simulation
+    :param result_dir: result directory to save the activity profiles to
+    :param mapping_path: path to the activity mapping file to use
+    """
+    houses_dir = input_dir / "Houses"
+    result_dir.mkdir(parents=True, exist_ok=True)
+    # the Houses directory contains one subdirectory per house
+    for house_dir in houses_dir.iterdir():
+        assert house_dir.is_dir(), f"Unexpected file found: {house_dir}"
+        # import each household database file from the house
+        for db_file in house_dir.glob("Results.HH*.sqlite"):
+            activity_profiles.convert_activity_profile_from_db_to_csv(
+                db_file, result_dir, mapping_path, house_dir.name
+            )
+
+
+def postprocess_city_results(city_result_dir: Path):
+    output_dir = city_result_dir / "Postprocessed"
+    # output_dir = Path(f"data/city/postprocessed/{city_result_dir.name}")
+    load_profile_processing.main(city_result_dir, output_dir)
+
+    mapping_file = Path("examples/LoadProfileGenerator/data/activity_mapping_city.json")
+    convert_activity_profiles(
+        city_result_dir, output_dir / "activity_profiles", mapping_file
+    )
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    city_result_dir = Path(
+        "/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25"
+    )
+    city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+    postprocess_city_results(city_result_dir)

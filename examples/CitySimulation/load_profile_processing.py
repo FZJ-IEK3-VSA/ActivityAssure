@@ -147,15 +147,22 @@ def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path)
     aggregate_house_load_profiles(data, output_dir)
 
 
+def main(city_result_dir: Path, output_dir: Path):
+    combine_house_profiles_to_single_df(city_result_dir, output_dir)
+    # TODO: household profile merging
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
         level=logging.DEBUG,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
     city_result_dir = Path(
         "/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25"
     )
     # city_result_dir = Path("D:/LPG/Results/test")
     output_dir = Path(f"data/city/postprocessed/{city_result_dir.name}")
-    combine_house_profiles_to_single_df(city_result_dir, output_dir)
+
+    main(city_result_dir, output_dir)
