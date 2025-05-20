@@ -31,12 +31,11 @@ def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: P
 def postprocess_city_results(city_result_dir: Path):
     output_dir = city_result_dir / "Postprocessed"
     # output_dir = Path(f"data/city/postprocessed/{city_result_dir.name}")
-    load_profile_processing.main(city_result_dir, output_dir)
+    load_profile_processing.main(city_result_dir, output_dir / "loads")
 
     mapping_file = Path("examples/LoadProfileGenerator/data/activity_mapping_city.json")
-    convert_activity_profiles(
-        city_result_dir, output_dir / "activity_profiles", mapping_file
-    )
+    activity_profiles_dir = output_dir / "activity_profiles"
+    convert_activity_profiles(city_result_dir, activity_profiles_dir, mapping_file)
 
 
 if __name__ == "__main__":
