@@ -11,10 +11,73 @@ import psutil
 import pandas as pd
 
 
-def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
+class Files:
+    """File names for aggregated load profile data"""
+
+    STATS = "stat_profiles.csv"
+    TOTALS = "total_load_per_house.csv"
+    CITYSUM = "city_profile.csv"
+    MEANDAY = "mean_day_profile.csv"
+    MEANDAY_STATS = "mean_day_stats.csv"
+
+
+def get_stats_df(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates statistics profiles for the given dataframe.
+
+    :param data: dataframe with all house load profiles of a city
+    :return: statistics dataframe
+    """
+    stats = pd.DataFrame()
+    stats.index = data.index
+    stats["mean"] = data.mean(axis=1)
+    stats["min"] = data.min(axis=1)
+    stats["max"] = data.max(axis=1)
+    stats["median"] = data.quantile(axis=1, q=0.5)
+    stats["q1"] = data.quantile(axis=1, q=0.25)
+    stats["q3"] = data.quantile(axis=1, q=0.75)
+    return stats
+
+
+def aggregate_house_load_profiles(data: pd.DataFrame, result_dir: Path):
+    """
+    Generate some aggregated profiles and statistics from a dataframe
+    containing all house load profiles.
+
+    :param data: dataframe with all house load profiles of a city
+    :param result_dir: ouput directory for the aggregated data
+    """
+    # data.drop(columns="Electricity.Timestep", inplace=True)
+    # data.drop(columns="Unnamed: 0", inplace=True)
+    data.set_index("Time", inplace=True)
+
+    totals = data.sum()
+    totals.name = "Load [kWh]"
+    totals.index.name = "House"
+    totals.to_csv(result_dir / Files.TOTALS)
+    city_profile = data.sum(axis=1)
+    city_profile.name = "Load [kWh]"
+    city_profile.to_csv(result_dir / Files.CITYSUM)
+
+    stats = get_stats_df(data)
+    stats.to_csv(result_dir / Files.STATS)
+
+    meanday = data.groupby(data.index.time).mean()  # type: ignore
+    meanday.to_csv(result_dir / Files.MEANDAY)
+
+
+def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path):
+    """
+    Loads all house sum electricity profiles from a city simulation and merges them
+    into a single dataframe. The resulting dataframe is saved to the output directory,
+    along with some aggregated data.
+
+    :param city_result_dir: result directory of the city simulation
+    :param output_dir: output directory for the merged dataframe
+    """
     dateformat_de = "%d.%m.%Y %H:%M"
     dateformat_en = "%m/%d/%Y %I:%M %p"
-    dateformat = dateformat_en
+    dateformat = dateformat_de
 
     # relative path of the LPG result file to aggregate
     filename = Path("Results/Overall.SumProfiles.Electricity.csv")
@@ -37,6 +100,7 @@ def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
         dtype={0: int, data_col_name: float},
     )
     data.rename(columns={data_col_name: house_dirs[0].name}, inplace=True)
+    data.set_index("Electricity.Timestep", inplace=True)
 
     # parse the sum profiles from all other houses
     collected_profiles = []
@@ -79,6 +143,9 @@ def aggregate_load_sum_profiles(city_result_dir: Path, output_dir: Path):
     assert data is not None
     data.to_csv(result_file_path)
 
+    # also calculate and save agggregated values from the merged dataframe
+    aggregate_house_load_profiles(data, output_dir)
+
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -91,4 +158,4 @@ if __name__ == "__main__":
     )
     # city_result_dir = Path("D:/LPG/Results/test")
     output_dir = Path(f"data/city/postprocessed/{city_result_dir.name}")
-    aggregate_load_sum_profiles(city_result_dir, output_dir)
+    combine_house_profiles_to_single_df(city_result_dir, output_dir)
