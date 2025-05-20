@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 
 import convert_lpg_activity_profile_to_csv as lpg_profile_conversion
+from activityassure.preprocessing.lpg import activity_profiles
 
 
 def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: Path):
@@ -16,7 +17,7 @@ def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: P
         assert house_dir.is_dir(), f"Unexpected file found: {house_dir}"
         # import each household database file from the house
         for db_file in house_dir.glob("Results.HH*.sqlite"):
-            lpg_profile_conversion.convert_activity_profile_from_db_to_csv(
+            activity_profiles.convert_activity_profile_from_db_to_csv(
                 db_file, result_dir, mapping_path, house_dir.name
             )
 
