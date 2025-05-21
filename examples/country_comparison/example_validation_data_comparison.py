@@ -118,7 +118,8 @@ def merge_unemployed_categories(data_path: Path, result_path: Path):
     """Merge categories for work days and non-working days of unemployed people"""
     # load the statistics
     set = ValidationSet.load(data_path)
-    # combine all 'unemployed' categories which only differ in day type
+    # combine all 'unemployed' and 'retired' categories which only differ in day type
+    WORK_TYPES_TO_MERGE = [WorkStatus.unemployed, WorkStatus.retired]
     mapping = {
         p: ProfileCategory(
             p.country,
@@ -127,7 +128,7 @@ def merge_unemployed_categories(data_path: Path, result_path: Path):
             categorization_attributes.DayType.undetermined,
         )
         for p in set.statistics.keys()
-        if p.work_status == WorkStatus.unemployed
+        if p.work_status in WORK_TYPES_TO_MERGE
     }
     set.merge_profile_categories(mapping)
     # save the aggregated statistics
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     validation_stats_path = Path(
         "data/validation_data_sets/activity_validation_data_set"
     )
-    validation_path_merged = Path(f"{validation_stats_path}_merged_unemployed")
+    validation_path_merged = Path(f"{validation_stats_path}_merged_daytypes")
     output_path = Path(f"data/country_comparison/{country1}-{country2}")
 
     merge_unemployed_categories(validation_stats_path, validation_path_merged)
