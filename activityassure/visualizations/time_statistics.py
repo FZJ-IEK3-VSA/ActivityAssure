@@ -5,14 +5,27 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 
-def plot_total_time_spent(statistics_country_1: dict[ProfileCategory, ValidationStatistics], statistics_country_2: dict[ProfileCategory, ValidationStatistics]):
+def category_to_plot_label(category: ProfileCategory) -> str:
+    """Helper function to convert a profile category to a plot label"""
+    category_parts = str(category).split("_", 1)
+    if len(category_parts) == 1:
+        return category_parts[0]
+    return category_parts[1] + '_' + category_parts[0]
+
+
+
+def plot_total_time_spent(
+        statistics_country_1: dict[ProfileCategory, ValidationStatistics],
+        statistics_country_2: dict[ProfileCategory, ValidationStatistics],
+        national_statistics: dict[ProfileCategory, ValidationStatistics],
+    ):
     time_activity_distribution = {}
-    for _, v in (statistics_country_1 | statistics_country_2).items():
+    for _, v in (statistics_country_1 | statistics_country_2 | national_statistics).items():
         time_activity_distribution[v.profile_type] = v.probability_profiles.mean(axis=1) * 24
 
     fig, ax = plt.subplots(figsize=(16*CM_TO_INCH, 16*CM_TO_INCH))
     combined_df = pd.DataFrame(time_activity_distribution)
-    sorted_cols = sorted(combined_df.columns, key=lambda x: str(x).split('_', 1)[1] + '_' + str(x).split('_', 1)[0])
+    sorted_cols = sorted(combined_df.columns, key=category_to_plot_label)  # type: ignore
     combined_df[sorted_cols].T.plot(kind='barh', stacked=True, ax=ax)
 
     ax.legend(loc='lower right', bbox_to_anchor=(1, 1), ncol=3)    
