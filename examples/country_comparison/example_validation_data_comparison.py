@@ -13,7 +13,7 @@ from activityassure.categorization_attributes import WorkStatus
 from activityassure.hetus_data_processing import hetus_constants
 from activityassure.input_data_processing import process_model_data
 from activityassure.profile_category import ProfileCategory
-from activityassure.visualizations import indicator_heatmaps, metric_comparison
+from activityassure.visualizations import indicator_heatmaps, metric_comparison, time_statistics
 from activityassure.validation_statistics import ValidationSet
 
 
@@ -58,6 +58,9 @@ def validate(
                 v.probability_profiles = comparison_indicators.resample_columns(
                     v.probability_profiles, 144
                 )
+    
+    # Plot total time spent
+    time_statistics.plot_total_time_spent(validation_dataset_country1.statistics, validation_dataset_country2.statistics)
 
     # compare input and validation data statistics per profile category
     indicator_dict_variants = validation.validate_per_category(
