@@ -1,6 +1,7 @@
 """Aggregates result load profiles produced by the city simulation to get
 sum profiles for the whole city"""
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 import itertools
 import logging
@@ -9,6 +10,12 @@ from typing import Iterable
 
 import psutil
 import pandas as pd
+
+@dataclass
+class ProfileInfo:
+    """Information to identify and load a profile from a csv file"""
+    id: str
+    path: Path
 
 
 class Files:
@@ -39,13 +46,14 @@ def get_stats_df(data: pd.DataFrame) -> pd.DataFrame:
     return stats
 
 
-def aggregate_house_load_profiles(data: pd.DataFrame, result_dir: Path):
+def aggregate_load_profiles(data: pd.DataFrame, result_dir: Path, instance_type: str = "Household"):
     """
     Generate some aggregated profiles and statistics from a dataframe
     containing all house load profiles.
 
     :param data: dataframe with all house load profiles of a city
     :param result_dir: ouput directory for the aggregated data
+    :param instances:
     """
     # data.drop(columns="Electricity.Timestep", inplace=True)
     # data.drop(columns="Unnamed: 0", inplace=True)
@@ -53,7 +61,7 @@ def aggregate_house_load_profiles(data: pd.DataFrame, result_dir: Path):
 
     totals = data.sum()
     totals.name = "Load [kWh]"
-    totals.index.name = "House"
+    totals.index.name = instance_type
     totals.to_csv(result_dir / Files.TOTALS)
     city_profile = data.sum(axis=1)
     city_profile.name = "Load [kWh]"
@@ -84,37 +92,44 @@ def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path)
     data_col_name = "Sum [kWh]"
 
     houses_subdir = city_result_dir / "Houses"
-    house_dirs = list(houses_subdir.iterdir())
-    house_num = len(house_dirs)
+    files = [ProfileInfo(d.name, d / filename) for d in houses_subdir.iterdir()]
     output_dir.mkdir(parents=True, exist_ok=True)
     result_file_path = output_dir / "City.SumProfiles.Electricity.csv"
-    logging.info(f"Aggregating load profiles from {house_num} houses.")
 
     # parse first file completely, including time stamps
+    data = combine_dataframes(files, dateformat, data_col_name, result_file_path)
+
+    # also calculate and save agggregated values from the merged dataframe
+    aggregate_load_profiles(data, output_dir, "House")
+
+
+def combine_dataframes(profiles: list[ProfileInfo], dateformat, data_col_name, result_file_path):
+    house_num = len(profiles)
+    logging.info(f"Aggregating load profiles from {house_num} houses.")
+
     data = pd.read_csv(
-        house_dirs[0] / filename,
+        profiles[0].path,
         sep=";",
         index_col=False,
         parse_dates=["Time"],
         date_format=dateformat,
         dtype={0: int, data_col_name: float},
     )
-    data.rename(columns={data_col_name: house_dirs[0].name}, inplace=True)
+    data.rename(columns={data_col_name: profiles[0].id}, inplace=True)
     data.set_index("Electricity.Timestep", inplace=True)
 
     # parse the sum profiles from all other houses
     collected_profiles = []
     last_update = datetime.now()
-    for i, house_dir in enumerate(house_dirs[1:]):
-        profile_path = house_dir / filename
+    for i, profile_info in enumerate(profiles[1:]):
         profile = pd.read_csv(
-            profile_path, sep=";", index_col=False, usecols=[data_col_name]
+            profile_info.path, sep=";", index_col=False, usecols=[data_col_name]
         )
-        profile.rename(columns={data_col_name: house_dir.name}, inplace=True)
+        profile.rename(columns={data_col_name: profile_info.id}, inplace=True)
         collected_profiles.append(profile)
 
         # regularly combine all collected dataframes
-        is_last_iteration = house_dir == house_dirs[-1]
+        is_last_iteration = profile_info == profiles[-1]
         if i % 500 == 0 or is_last_iteration:
             if data is not None:
                 # add the alread concatenated profiles
@@ -142,9 +157,7 @@ def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path)
     )
     assert data is not None
     data.to_csv(result_file_path)
-
-    # also calculate and save agggregated values from the merged dataframe
-    aggregate_house_load_profiles(data, output_dir)
+    return data
 
 
 def main(city_result_dir: Path, output_dir: Path):
