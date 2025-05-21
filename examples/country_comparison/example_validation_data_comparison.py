@@ -135,7 +135,7 @@ def merge_unemployed_categories(data_path: Path, result_path: Path):
     set.save(result_path)
 
 
-def plot_total_time_bar_chart(validation_data_path: Path, national_stats_path: Path, countries: list[str]):
+def plot_total_time_bar_chart(validation_data_path: Path, national_stats_path: Path, countries: list[str], output_path: Path):
     # load LPG statistics and validation statistics
     datasets = [ValidationSet.load(
         validation_data_path, country=country
@@ -152,7 +152,7 @@ def plot_total_time_bar_chart(validation_data_path: Path, national_stats_path: P
     national_stats = national_data1.statistics | national_data2.statistics
     
     # Plot total time spent
-    time_statistics.plot_total_time_spent(validation_data1.statistics, validation_data2.statistics, national_stats)
+    time_statistics.plot_total_time_spent(validation_data1.statistics, validation_data2.statistics, national_stats, output_path)
 
 
 if __name__ == "__main__":
@@ -187,4 +187,4 @@ if __name__ == "__main__":
     )
     # validate(national_stats_path, country1, country2, output_path_national)
 
-    plot_total_time_bar_chart(validation_path_merged, national_stats_path, [country1, country2])
+    plot_total_time_bar_chart(validation_path_merged, national_stats_path, [country1, country2], output_path)
