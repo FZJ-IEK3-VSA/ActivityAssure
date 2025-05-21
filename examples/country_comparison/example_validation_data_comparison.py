@@ -172,10 +172,10 @@ if __name__ == "__main__":
     validation_path_merged = Path(f"{validation_stats_path}_merged_daytypes")
     output_path = Path(f"data/country_comparison/{country1}-{country2}")
 
-    # merge_unemployed_categories(validation_stats_path, validation_path_merged)
+    merge_unemployed_categories(validation_stats_path, validation_path_merged)
 
     # validate the input data using the statistics
-    # validate(validation_path_merged, country1, country2, output_path)
+    validate(validation_path_merged, country1, country2, output_path)
 
     # paths for aggregated validation statistics
     national_stats_path = Path(f"{validation_path_merged}_national")
@@ -185,6 +185,6 @@ if __name__ == "__main__":
     process_model_data.aggregate_to_national_level(
         validation_path_merged, national_stats_path
     )
-    # validate(national_stats_path, country1, country2, output_path_national)
+    validate(national_stats_path, country1, country2, output_path_national)
 
     plot_total_time_bar_chart(validation_path_merged, national_stats_path, [country1, country2], output_path)
