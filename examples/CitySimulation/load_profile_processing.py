@@ -28,9 +28,9 @@ class ProfileInfo:
 class Files:
     """File names for aggregated load profile data"""
 
+    TOTALS = "profile_sums.csv"
+    SUMPROFILE = "sum_profile.csv"
     STATS = "stat_profiles.csv"
-    TOTALS = "total_load_per_house.csv"
-    CITYSUM = "city_profile.csv"
     MEANDAY = "mean_day_profile.csv"
     MEANDAY_STATS = "mean_day_stats.csv"
 
@@ -77,7 +77,7 @@ def aggregate_load_profiles(
     totals.to_csv(result_dir / Files.TOTALS)
     city_profile = data.sum(axis=1)
     city_profile.name = "Load [kWh]"
-    city_profile.to_csv(result_dir / Files.CITYSUM)
+    city_profile.to_csv(result_dir / Files.SUMPROFILE)
 
     stats = get_stats_df(data)
     stats.to_csv(result_dir / Files.STATS)
@@ -115,6 +115,10 @@ def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: 
         date_format=DATEFORMAT,
         dtype={0: int, data_col: float},
     )
+    assert data["Time"].dtype == "datetime64[ns]", (
+        f"Time column not parsed correctly (first value: {data['Time'][0]}, specified dateformat: {DATEFORMAT})"
+    )
+
     TIMESTEP_COL = "Electricity.Timestep"
     data.set_index(TIMESTEP_COL, inplace=True)
     data.rename(columns={data_col: profiles[0].id}, inplace=True)
