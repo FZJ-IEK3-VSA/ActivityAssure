@@ -1,11 +1,16 @@
 """Create all plots for the validation of the city simulation in the dissertation."""
 
+import logging
 from pathlib import Path
-from matplotlib import pyplot as plt
-import seaborn as sns
+
 import pandas as pd
+import seaborn as sns
+from matplotlib import pyplot as plt
 
-
+import activity_statistics_validation
+import calc_statistics
+import city_simulation_analysis
+import poi_validation
 from activityassure.profile_category import ProfileCategory
 from activityassure.ui import data_utils, datapaths, plots
 
@@ -29,7 +34,7 @@ def population_statistics(path: Path, result_dir: Path):
     plt.show()
 
 
-def main():
+def create_selected_activity_assure_plots():
     citysim_path = Path("data/city/validation/scenario_city-julich_25_merged")
     citysim_national = Path(f"{citysim_path}_national")
     # validation_national = Path(
@@ -55,5 +60,22 @@ def main():
     )
 
 
+def main():
+    city_result_dir = Path(
+        "/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25"
+    )
+    city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+
+    # path to a directory with preprocessed activitiy profiles in csv format
+    postproc_path = city_result_dir / "Postprocessed"
+
+    activity_statistics_validation.calc_citysim_statistics_and_validate(postproc_path)
+
+
 if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     main()
