@@ -1,5 +1,6 @@
 """Create all plots for the validation of the city simulation in the dissertation."""
 
+import argparse
 import logging
 from pathlib import Path
 
@@ -61,10 +62,26 @@ def create_selected_activity_assure_plots():
 
 
 def main():
-    city_result_dir = Path(
-        "/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25"
+    # init logging
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        level=logging.DEBUG,
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+    # parse command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        help="Root directory of the city simulation result data",
+        default="/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25",
+        required=False,
+    )
+    args = parser.parse_args()
+    city_result_dir = Path(args.input)
+    # city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+    assert city_result_dir.is_dir(), f"Invalid input directory: {city_result_dir}"
 
     # path to a directory with preprocessed activitiy profiles in csv format
     postproc_path = city_result_dir / "Postprocessed"
@@ -73,9 +90,4 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.DEBUG,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
     main()
