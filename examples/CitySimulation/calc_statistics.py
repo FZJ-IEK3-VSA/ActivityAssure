@@ -41,9 +41,9 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
 
     # load the csvs and check the profiles
-    example_data_dir = Path("examples/CitySimulation/data")
-    mapping_file = example_data_dir / "activity_mapping_city.json"
-    person_trait_file = Path("examples/LoadProfileGenerator/data/person_characteristics.json")
+    lpg_example_dir = Path("examples/LoadProfileGenerator/data")
+    mapping_file = lpg_example_dir / "activity_mapping_city.json"
+    person_trait_file = lpg_example_dir / "person_characteristics.json"
 
     output_dir = Path("data/city/validation_statistics") / data_dir.name
 

@@ -16,10 +16,10 @@ def calc_citysim_statistics_and_validate(preprocessed_data_path: Path):
     profile_resolution = timedelta(minutes=1)
 
     # additional files with mappings and person information
-    example_data_dir = Path("examples/CitySimulation/data")
-    merging_file = example_data_dir / "activity_merging_city.json"
-    mapping_file = example_data_dir / "activity_mapping_city.json"
-    person_trait_file = Path("examples/LoadProfileGenerator/data/person_characteristics.json")
+    lpg_example_data_dir = Path("examples/LoadProfileGenerator/data")
+    merging_file = lpg_example_data_dir / "activity_merging_city.json"
+    mapping_file = lpg_example_data_dir / "activity_mapping_city.json"
+    person_trait_file = lpg_example_data_dir / "person_characteristics.json"
     # validation statistics paths
     validation_stats_path = Path(
         "data/validation_data_sets/activity_validation_data_set"
