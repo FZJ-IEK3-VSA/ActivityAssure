@@ -42,53 +42,37 @@ def total_load_distribution(path: Path, result_dir: Path):
     ax.set_xticklabels([])
     ax.xaxis.set_label_text("Häuser")
     ax.yaxis.set_label_text("Elektrische Last [kWh]")
-    fig.savefig(result_dir / "total_per_house.svg")
+    fig.savefig(result_dir / "profile_sums.svg")
 
 
-def city_duration_curve(path: Path, result_dir: Path):
-    totals = pd.read_csv(path / Files.CITYSUM)
+def sum_duration_curve(path: Path, result_dir: Path):
+    totals = pd.read_csv(path / Files.SUMPROFILE)
     totals.sort_values("Load [kWh]", inplace=True, ascending=False)
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
     sns.lineplot(totals, ax=ax, y="Load [kWh]", x=range(len(totals)))
-    ax.xaxis.set_label_text("Dauer [min]")
+    ax.xaxis.set_label_text("Dauer [min]")  # TODO: not correct for 600s HH data
     ax.yaxis.set_label_text("Elektrische Last [kWh]")
-    fig.savefig(result_dir / "city_duration_curve.svg")
+    fig.savefig(result_dir / "sum_duration_curve.svg")
 
 
-def population_statistics(path: Path, result_dir: Path):
-    # TODO: read json files and build dataframe from that instead
-    path = Path(
-        r"R:\repos\activityassure\data\city\postprocessed\scenario_city-julich_25\population_stats.csv"
-    )
-    stats = pd.read_csv(path)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    df_long = stats.melt(id_vars="measure", var_name="Dataset", value_name="Value")
-
-    sns.barplot(x="measure", ax=ax, y="Value", hue="Dataset", data=df_long)
-    fig.savefig(result_dir / "city_duration_curve.svg")
-    plt.show()
-
-
-def create_plots(path: Path, result_dir: Path):
+def create_load_stat_plots(path: Path, result_dir: Path):
     result_dir.mkdir(parents=True, exist_ok=True)
-    # stat_curves(path, result_dir)
-    # total_load_distribution(path, result_dir)
-    # city_duration_curve(path, result_dir)
-    population_statistics(path, result_dir)
+    stat_curves(path, result_dir)
+    total_load_distribution(path, result_dir)
+    sum_duration_curve(path, result_dir)
 
 
-def main():
-    plot_path = Path("data/city/results/load")
-    postproc_path = Path(
-        "R:/repos/activityassure/data/city/postprocessed/scenario_city-julich_25"
-    )
-    create_plots(postproc_path, plot_path)
+def main(postproc_path: Path, plot_path: Path):
+    hh_data_path = postproc_path / "loads/aggregated_household"
+    create_load_stat_plots(hh_data_path, plot_path / "household")
+    house_data_path = postproc_path / "loads/aggregated_house"
+    create_load_stat_plots(house_data_path, plot_path / "house")
 
 
 if __name__ == "__main__":
-    main()
+    postproc_path = Path("D:/LPG/Results/scenario_julich-grosse-rurstr/Postprocessed")
+    plot_path = postproc_path / "plots"
+    main(postproc_path, plot_path)
