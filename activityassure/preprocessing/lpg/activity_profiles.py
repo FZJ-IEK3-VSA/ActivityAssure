@@ -43,6 +43,12 @@ CATEGORY_MAPPING = {
     "sports": UNMAPPED_CATEGORY,
     "work": "work",
 }
+#: Mappings for affordances that start with a certain prefix. These are
+#  usually auto-generated affordances.
+AFFORDANCE_PREFIX_MAPPING = {
+    "travel on ": "travel",
+    "Idleness for ": "idle",
+}
 
 
 def load_activity_profile_from_db(
@@ -82,10 +88,14 @@ def load_activity_profile_from_db(
         affordance: str = entry["AffordanceName"]
         category = entry["Category"]
         # check if the action was traveling
-        if affordance.startswith("travel on "):
-            # use a single name for all travel activities
-            affordance = "travel"
-            category = "travel"
+        for prefix, mapped_category in AFFORDANCE_PREFIX_MAPPING.items():
+            if affordance.startswith(prefix):
+                # The affordance matches the pattern, use the specified category.
+                # Also overwrite the affordance name, as the auto-generated travel/idleness
+                # affordance names are not useful.
+                affordance = mapped_category
+                category = mapped_category
+                break
         # check for unmapped affordances
         if affordance not in mapping and affordance not in unmapped_affordances:
             unmapped_affordances[affordance] = CATEGORY_MAPPING.get(
