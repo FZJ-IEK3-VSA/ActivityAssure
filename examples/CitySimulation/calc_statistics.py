@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # load the csvs and check the profiles
     lpg_example_dir = Path("examples/LoadProfileGenerator/data")
-    mapping_file = lpg_example_dir / "activity_mapping_city.json"
+    mapping_file = lpg_example_dir / "activity_mapping.json"
     person_trait_file = lpg_example_dir / "person_characteristics.json"
 
     output_dir = Path("data/city/validation_statistics") / data_dir.name

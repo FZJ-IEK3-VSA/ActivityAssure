@@ -286,14 +286,9 @@
     "sleep bed 01 (09 h)": "sleep",
     "sleep bed 02 (07 h)": "sleep",
     "sleep bed 02 (09 h)": "sleep",
-    "Replacement Activity A": "other",
-    "Replacement Activity B": "other",
-    "Replacement Activity C": "other",
-    "Replacement Activity D": "other",
     "work on the laptop (1 h) while working from home A1": "work",
     "work on the laptop (1 h) while working from home A2": "work",
     "work on the laptop (1 h) while working from home A3": "work",
-    "taking a vacation": "not at home",
     "eat a cooked meal (interrupting) (make frozen pizza and eat it)": "cook and eat",
     "eat a cooked meal (interrupting) (cook pasta and eat it)": "cook and eat",
     "eat a cooked meal (interrupting) (cook weekend lunch for the family)": "cook and eat",
@@ -374,5 +369,12 @@
     "go to community college together (go to community college)": "education",
     "join someone for a visit to the children (visit children (6 h))": "not at home",
     "watch the grandchildren together (watch the grandchildren)": "other",
-    "travel": "not at home"
+    "eat a cooked meal (interrupting) (make frozen pizza in mini oven)": "cook and eat",
+    "Replacement Activity A": "other",
+    "Replacement Activity B": "other",
+    "Replacement Activity C": "other",
+    "Replacement Activity D": "other",
+    "taking a vacation": "vacation",
+    "travel": "travel",
+    "idle": "idle"
 }

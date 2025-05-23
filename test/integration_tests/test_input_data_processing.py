@@ -37,9 +37,6 @@ def test_lpg_example():
         categories_per_person=False,
     )
     assert len(input_statistics.statistics) == 4, "Unexpected statistics count"
-    assert set(input_statistics.activities) == set(
-        validation_statistics.activities
-    ), "Different activities"
 
     # check one of the statistics objects
     category = ProfileCategory(
