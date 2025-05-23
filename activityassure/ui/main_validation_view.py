@@ -6,9 +6,6 @@ from activityassure.ui.config import config
 from activityassure import comparison_indicators
 from activityassure.ui import data_utils, datapaths, plots
 
-
-datapaths.check_paths()
-
 class MainValidationView(html.Div):
     """
     A reusable component containing a profile category selector

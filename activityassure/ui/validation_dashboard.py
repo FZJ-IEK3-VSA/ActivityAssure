@@ -7,6 +7,9 @@ from activityassure.ui import plots
 from activityassure.ui.main_validation_view import MainValidationView
 
 
+# check if the specified data paths exist
+datapaths.check_paths()
+
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "ETHOS.ActivityAssure"
 app._favicon = "stacked.ico"
