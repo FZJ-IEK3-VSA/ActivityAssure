@@ -1,5 +1,6 @@
 from activityassure.profile_category import ProfileCategory
 from activityassure.ui import data_utils, datapaths, plots
+# TODO: Probleme mit import von ui.plots, wenn die Pfade in der config nicht existieren
 
 
 from pathlib import Path
