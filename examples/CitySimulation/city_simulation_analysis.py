@@ -88,6 +88,11 @@ def main():
 
     activity_statistics_validation.calc_citysim_statistics_and_validate(postproc_path)
 
+    # TODO: futher validation steps:
+    # - include POI validation
+    # - add travel validation
+    # - activity statistics, if that adds anything to this
+
 
 if __name__ == "__main__":
     main()

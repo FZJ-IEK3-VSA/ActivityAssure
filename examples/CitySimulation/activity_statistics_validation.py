@@ -67,11 +67,6 @@ def calc_citysim_statistics_and_validate(preprocessed_data_path: Path):
 
     validation.default_validation(citysim_national, validation_national)
 
-    # TODO: futher validation steps:
-    # - include POI validation
-    # - add travel validation
-    # - activity statistics, if that adds anything to this
-
 
 def main():
     logging.basicConfig(
