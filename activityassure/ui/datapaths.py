@@ -38,6 +38,3 @@ def check_paths():
         path = input_data_path / subdir
         assert path.is_dir(), f"Input data incomplete: {subdir} missing"
         assert len(list(path.glob("*"))), f"Input subdirectory {subdir} is empty"
-
-
-check_paths()
