@@ -4,34 +4,11 @@ import argparse
 import logging
 from pathlib import Path
 
-import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot as plt
-
 import paths
 import activity_statistics_validation
 import load_profile_analysis
 import poi_validation
 import calc_statistics
-
-
-def population_statistics(path: Path, result_dir: Path):
-    # TODO: read json files and build dataframe from that instead
-    path = Path(
-        r"R:\repos\activityassure\data\city\postprocessed\scenario_city-julich_25\population_stats.csv"
-    )
-    validation_path = Path(
-        "examples/CitySimulation/validation_data/Jülich_population_2022.json"
-    )
-    stats = pd.read_csv(path)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    df_long = stats.melt(id_vars="measure", var_name="Dataset", value_name="Value")
-
-    sns.barplot(x="measure", ax=ax, y="Value", hue="Dataset", data=df_long)
-    fig.savefig(result_dir / "population_statistics_comparison.svg")
-    plt.show()
 
 
 def main():
