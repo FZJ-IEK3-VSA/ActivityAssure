@@ -8,10 +8,11 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
+import paths
 import activity_statistics_validation
-import calc_statistics
-import city_simulation_analysis
+import load_profile_analysis
 import poi_validation
+import calc_statistics
 from activityassure.profile_category import ProfileCategory
 from activityassure.ui import data_utils, datapaths, plots
 
@@ -84,9 +85,13 @@ def main():
     assert city_result_dir.is_dir(), f"Invalid input directory: {city_result_dir}"
 
     # path to a directory with preprocessed activitiy profiles in csv format
-    postproc_path = city_result_dir / "Postprocessed"
+    postproc_dir = city_result_dir / paths.POSTPROCESSED_DIR
+    plot_path = postproc_dir / "plots"
+    load_profile_analysis.main(postproc_dir, plot_path)
 
-    activity_statistics_validation.calc_citysim_statistics_and_validate(postproc_path)
+    profile_dir = postproc_dir / paths.ACTIVITY_PROFILES
+    statistics_path = postproc_dir / "activityassure_statistics"
+    activity_statistics_validation.calc_citysim_statistics_and_validate(profile_dir, statistics_path)
 
     # TODO: futher validation steps:
     # - include POI validation

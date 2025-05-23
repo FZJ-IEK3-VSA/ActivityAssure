@@ -11,7 +11,9 @@ from activityassure import validation
 from activityassure.input_data_processing import process_model_data
 
 
-def calc_citysim_statistics_and_validate(preprocessed_data_path: Path):
+def calc_citysim_statistics_and_validate(
+    preprocessed_data_path: Path, city_stats_path: Path
+):
     # define all input and output paths and other parameters
     profile_resolution = timedelta(minutes=1)
 
@@ -27,8 +29,6 @@ def calc_citysim_statistics_and_validate(preprocessed_data_path: Path):
     validation_stats_path_merged = Path(f"{validation_stats_path}_merged")
     # input statistics path
     # here the statistics of the input data and the validation results will be stored
-    city_stats_path = Path("data/city/validation") / preprocessed_data_path.name
-    city_stats_path_merged = Path(f"{city_stats_path}_merged")
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
@@ -48,6 +48,7 @@ def calc_citysim_statistics_and_validate(preprocessed_data_path: Path):
     input_statistics.save(city_stats_path)
 
     # apply the activity merging to the city simulation results as well
+    city_stats_path_merged = Path(f"{city_stats_path}_merged")
     process_model_data.merge_activities(
         city_stats_path, merging_file, city_stats_path_merged
     )
@@ -76,8 +77,12 @@ def main():
     )
 
     # path to a directory with preprocessed activitiy profiles in csv format
-    preprocessed_city_data = Path("data/city/preprocessed/scenario_city-julich_mini")
-    calc_citysim_statistics_and_validate(preprocessed_city_data)
+    
+    postproc_path = Path("C:/LPG/Results/scenario_julich-grosse-rurstr/Postprocessed")
+    profiles_dir = postproc_path / "activity_profiles"
+    statistics_path = postproc_path / "activityassure_statistics"
+
+    calc_citysim_statistics_and_validate(profiles_dir, statistics_path)
 
 
 if __name__ == "__main__":

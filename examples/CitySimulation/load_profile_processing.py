@@ -11,6 +11,8 @@ from typing import Iterable
 import psutil
 import pandas as pd
 
+from paths import LoadFiles
+
 #: defines the date format used in the csv files
 DATEFORMAT_DE = "%d.%m.%Y %H:%M"
 DATEFORMAT_EN = "%m/%d/%Y %I:%M %p"
@@ -23,16 +25,6 @@ class ProfileInfo:
 
     id: str
     path: Path
-
-
-class Files:
-    """File names for aggregated load profile data"""
-
-    TOTALS = "profile_sums.csv"
-    SUMPROFILE = "sum_profile.csv"
-    STATS = "stat_profiles.csv"
-    MEANDAY = "mean_day_profile.csv"
-    MEANDAY_STATS = "mean_day_stats.csv"
 
 
 def get_stats_df(data: pd.DataFrame) -> pd.DataFrame:
@@ -74,23 +66,23 @@ def aggregate_load_profiles(
     totals = data.sum()
     totals.name = "Load [kWh]"
     totals.index.name = object_type
-    totals.to_csv(result_dir / Files.TOTALS)
+    totals.to_csv(result_dir / LoadFiles.TOTALS)
     city_profile = data.sum(axis=1)
     city_profile.name = "Load [kWh]"
-    city_profile.to_csv(result_dir / Files.SUMPROFILE)
+    city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
 
     stats = get_stats_df(data)
-    stats.to_csv(result_dir / Files.STATS)
+    stats.to_csv(result_dir / LoadFiles.STATS)
 
     meanday = data.groupby(data.index.time).mean()  # type: ignore
-    meanday.to_csv(result_dir / Files.MEANDAY)
+    meanday.to_csv(result_dir / LoadFiles.MEANDAY)
 
     # time_and_weekday = data.index.day_name() + data.index.time
     meanday = data.groupby(data.index.time).mean()  # type: ignore
-    meanday.to_csv(result_dir / Files.MEANDAY)
+    meanday.to_csv(result_dir / LoadFiles.MEANDAY)
 
     meanday_stats = get_stats_df(meanday)
-    meanday_stats.to_csv(result_dir / Files.MEANDAY_STATS)
+    meanday_stats.to_csv(result_dir / LoadFiles.MEANDAY_STATS)
 
 
 def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: Path):

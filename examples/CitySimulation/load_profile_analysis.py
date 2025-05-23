@@ -6,11 +6,11 @@ import matplotlib.dates as mdates
 import seaborn as sns
 import pandas as pd
 
-from load_profile_processing import Files
+from paths import LoadFiles
 
 
 def stat_curves(path, result_dir):
-    statpath = path / Files.MEANDAY_STATS
+    statpath = path / LoadFiles.MEANDAY_STATS
     stats = pd.read_csv(statpath, parse_dates=[0], index_col=0)
     # stats = stats.iloc[:1440, :]
     fig = plt.figure()
@@ -32,7 +32,7 @@ def stat_curves(path, result_dir):
 
 
 def total_load_distribution(path: Path, result_dir: Path):
-    totals = pd.read_csv(path / Files.TOTALS)
+    totals = pd.read_csv(path / LoadFiles.TOTALS)
     totals.sort_values("Load [kWh]", inplace=True, ascending=False)
 
     fig = plt.figure()
@@ -46,7 +46,7 @@ def total_load_distribution(path: Path, result_dir: Path):
 
 
 def sum_duration_curve(path: Path, result_dir: Path):
-    totals = pd.read_csv(path / Files.SUMPROFILE)
+    totals = pd.read_csv(path / LoadFiles.SUMPROFILE)
     totals.sort_values("Load [kWh]", inplace=True, ascending=False)
 
     fig = plt.figure()

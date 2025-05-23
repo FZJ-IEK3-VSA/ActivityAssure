@@ -6,6 +6,7 @@ from pathlib import Path
 
 from activityassure.preprocessing.lpg import activity_profiles
 
+import paths
 import load_profile_processing
 
 
@@ -30,12 +31,11 @@ def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: P
 
 
 def postprocess_city_results(city_result_dir: Path):
-    output_dir = city_result_dir / "Postprocessed"
-    # output_dir = Path(f"data/city/postprocessed/{city_result_dir.name}")
-    load_profile_processing.main(city_result_dir, output_dir / "loads")
+    postproc_dir = city_result_dir / paths.POSTPROCESSED_DIR
+    load_profile_processing.main(city_result_dir, postproc_dir / "loads")
 
     mapping_file = Path("examples/LoadProfileGenerator/data/activity_mapping.json")
-    activity_profiles_dir = output_dir / "activity_profiles"
+    activity_profiles_dir = postproc_dir / paths.ACTIVITY_PROFILES
     convert_activity_profiles(city_result_dir, activity_profiles_dir, mapping_file)
 
 
