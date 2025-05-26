@@ -25,8 +25,10 @@ def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: P
         assert house_dir.is_dir(), f"Unexpected file found: {house_dir}"
         # import each household database file from the house
         for db_file in house_dir.glob("Results.HH*.sqlite"):
+            hh_name = db_file.stem.removeprefix("Results.")
+            hh_id = f"{house_dir.name}_{hh_name}"
             activity_profiles.convert_activity_profile_from_db_to_csv(
-                db_file, result_dir, mapping_path, house_dir.name
+                db_file, result_dir, mapping_path, hh_id
             )
 
 
@@ -58,7 +60,7 @@ def main():
     )
     args = parser.parse_args()
     city_result_dir = Path(args.input)
-    # city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+    city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
     assert city_result_dir.is_dir(), f"Invalid input directory: {city_result_dir}"
 
     postprocess_city_results(city_result_dir)
