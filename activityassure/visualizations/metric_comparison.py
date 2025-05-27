@@ -19,7 +19,7 @@ def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_pa
 
     output_path /= f"top_{top_x}_per_metric.png"
     os.makedirs(output_path.parent, exist_ok=True)
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16*CM_TO_INCH, 6*CM_TO_INCH+top_x*0.5*CM_TO_INCH))
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16*CM_TO_INCH, 6*CM_TO_INCH+top_x*0.75*CM_TO_INCH))
 
     df2 = metrics[["pearson_corr"]]
     df1 = metrics.drop(columns=["pearson_corr"])
@@ -61,6 +61,8 @@ def plot_bar_plot_metrics_aggregated(metrics: pd.DataFrame, output_path: Path, a
         level = 1
         metrics = metrics[metrics.index.get_level_values(level) == 'mean']
         metrics.index = metrics.index.droplevel(level=level).astype(str)
+    elif aggregation_category == "activity":
+        metrics = metrics.drop("mean")
 
     df2 = metrics[["pearson_corr"]]
     df1 = metrics.drop(columns=["pearson_corr"])

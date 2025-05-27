@@ -5,11 +5,12 @@ LABEL_DICT = {
     "male": "♂",
     "working day": "wd",
     "rest day": "rd",
+    "undetermined": "",
     "unemployed": "ue",
     "full time": "ft",
     "part time": "pt",
     "student": "s",
-    "retired": "r"
+    "retired": "r",
 }
 
 def replace_substrings(text, replacements):

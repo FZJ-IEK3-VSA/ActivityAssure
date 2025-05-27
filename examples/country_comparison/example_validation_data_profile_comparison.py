@@ -1,5 +1,7 @@
 #%%
+from datetime import datetime
 from pathlib import Path
+from activityassure.visualizations.utils import CM_TO_INCH
 from matplotlib import gridspec
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -9,12 +11,12 @@ from activityassure.profile_category import ProfileCategory
 from activityassure.validation_statistics import ValidationSet
 import os
 
-validation_data_path = Path("data/validation_data_sets/activity_validation_data_set")
+validation_data_path = Path("/storage_cluster/projects/2025_k-dabrock_ai4c_activity_profiles/ActivityAssure_dataset")
 
 country1 = 'AT'
 country2 = 'DE'
 mode = "frequencies"
-profile = ['female', 'student', 'working day']
+profile = ['male', 'student', 'rest day']
 activities = ["iron"]
 
 
@@ -35,15 +37,15 @@ if hetus_constants.get_resolution(country1) != hetus_constants.get_resolution(co
 
 #%% Plot
 activities = activities if len(activities) > 0 else list(set(validation_dataset_country1.activity_durations.columns) | set(validation_dataset_country2.activity_durations.columns))
-width = 8
+width = 16*CM_TO_INCH
 ncols = 2
 nrows = len(activities)
-fig = plt.figure(figsize=(width,1.5*nrows*2))
+fig = plt.figure(figsize=(width,2*CM_TO_INCH+6*CM_TO_INCH*nrows))
 gs = gridspec.GridSpec(nrows*2, 2, width_ratios=[2, 1])
 axs = []
 for i in range(len(activities)):
     axs.append([fig.add_subplot(gs[i*2, 0]), fig.add_subplot(gs[i*2, 1]), fig.add_subplot(gs[(i*2)+1,:])])
-plt.subplots_adjust(left=0.1, hspace=0.7, top=0.9, wspace=0.25) 
+plt.subplots_adjust(left=0.12, right=0.99, top=0.93, bottom=0.1, hspace=0.6, wspace=0.25) 
 
 for i, activity in enumerate(activities):
     ###### Read and merge 
@@ -88,13 +90,17 @@ for i, activity in enumerate(activities):
     ######### Plot 
     # Durations
     sns.barplot(x="id", y="Value", hue="Category", data=melted_df_durations, dodge=True, ax=axs[i][0], legend=False)
+    def hhmm_to_decimal(label):
+        t = datetime.strptime(label, "%H:%M")
+        return t.hour + t.minute / 60
     xticklabels = axs[i][0].get_xticklabels()
-    axs[i][0].set_xticklabels([v if i % 2 == 0 else "" for i, v in enumerate(xticklabels)] if len(xticklabels) > 20 else xticklabels, rotation=90, ha='right')
+    axs[i][0].set_xticklabels([hhmm_to_decimal(v.get_text()) if i % 2 == 0 else "" for i, v in enumerate(xticklabels)] if len(xticklabels) > 20 else [hhmm_to_decimal(v.get_text()) for v in xticklabels], rotation=45 if len(xticklabels) > 15 else 0, ha='center')
     axs[i][0].set_ylabel("probability")
-    axs[i][0].set_xlabel("duration")
+    axs[i][0].set_xlabel("duration [h]")
+    axs[i][0].xaxis.labelpad = 0
     
     # Frequencies
-    sns.barplot(x="id", y="Value", hue="Category", data=melted_df_frequencies, dodge=True, ax=axs[i][1], legend=True)
+    sns.barplot(x="id", y="Value", hue="Category", data=melted_df_frequencies, dodge=True, ax=axs[i][1], legend=True if i==0 else False)
     axs[i][1].set_ylabel("probability")
     axs[i][1].set_xlabel("frequencies")
 
@@ -102,14 +108,18 @@ for i, activity in enumerate(activities):
     sns.barplot(x="id", y="Value", hue="Category", data=melted_df_profile, dodge=True, ax=axs[i][2], legend=False)
     axs[i][2].set_ylabel("probability")
     axs[i][2].set_xlabel("Time")
-    axs[i][2].set_xticklabels(axs[i][2].get_xticklabels(), rotation=90, ha='right')
+    axs[i][2].set_xticks([4+x*2 for x in [6-4, 12-4, 18-4, 24-4]])
+    axs[i][2].set_xticklabels([6, 12, 18, 0], ha='right')
+    axs[i][2].xaxis.labelpad = -5
 
+fig.suptitle(str(profile).translate(str.maketrans("", "", "[]'")).replace(",", " - "))
+target_file=Path(f"/storage_cluster/projects/2025_k-dabrock_ai4c_activity_profiles/ActivityAssure/data/country_comparison/{country1}-{country2}/{"_".join(profile)}__{'_'.join(activities).replace("/", "-")}.png")
+os.makedirs(target_file.parent, exist_ok=True)
+
+for i, activity in enumerate(activities):
     pos = axs[i][0].get_position()
     y_pos = pos.y0  # Center text in row
-    fig.text(0, y_pos, activity, 
-                fontsize=12, fontweight='bold', va="center", ha="center", rotation=90)
+    fig.text(0.01, y_pos, activity, fontsize=12, fontweight='bold', va="center", ha="center", rotation=90)
 
-fig.suptitle(str(profile))
-target_file=Path(f"../../data/country_comparison/{country1}-{country2}/{"_".join(profile)}__{'_'.join(activities)}.png")
-os.makedirs(target_file.parent, exist_ok=True)
-fig.savefig(target_file)
+fig.savefig(target_file, dpi=600)
+fig.savefig(target_file.with_suffix('.svg'))
