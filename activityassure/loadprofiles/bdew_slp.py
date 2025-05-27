@@ -1,6 +1,6 @@
 """Loads BDEW standard load profiles and provides the adapted profile for specific days."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 import holidays
@@ -79,9 +79,6 @@ def load_bdew_profile(profile: BDEWProfile = BDEWProfile.HOUSEHOLD):
     df.columns = pd.MultiIndex.from_tuples(df.columns)
     # the first column index level actually contains dates; select only the month index
     df.columns = df.columns.set_levels(df.columns.levels[0].month, level=0)  # type: ignore
-
-    # Optional: reset column names to simpler format if needed
-    # df.columns = [f"{month}_{daytype}" for month, daytype in df.columns]
     return df
 
 
@@ -117,7 +114,7 @@ class BDEWProfileProvider:
 
         raw_profile = df[(day.month, str(day_type))]
 
-        # apply the dynamisation factor
+        # apply the dynamization factor
         day_of_year = day.timetuple().tm_yday
         factor = dynamization_factor(day_of_year)
         adapted_profile = raw_profile * factor
@@ -143,5 +140,5 @@ class BDEWProfileProvider:
         while current_date <= end:
             daily_profile = self.get_profile_for_day(current_date, country)
             profiles.append(daily_profile)
-            current_date += pd.Timedelta(days=1)
+            current_date += timedelta(days=1)
         return pd.concat(profiles)  # type: ignore
