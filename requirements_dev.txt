@@ -7,6 +7,10 @@ matplotlib
 seaborn
 tabulate
 psutil
+holidays
+
+# loading xlsx file with pandas
+openpyxl
 
 # LPG example
 utspclient
