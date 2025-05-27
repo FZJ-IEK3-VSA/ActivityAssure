@@ -11,7 +11,7 @@ from typing import Iterable
 import psutil
 import pandas as pd
 
-from paths import LoadFiles
+from paths import DFColumns, LoadFiles
 
 #: defines the date format used in the csv files
 DATEFORMAT_DE = "%d.%m.%Y %H:%M"
@@ -64,11 +64,11 @@ def aggregate_load_profiles(
     data.set_index("Time", inplace=True)
 
     totals = data.sum()
-    totals.name = "Load [kWh]"
+    totals.name = DFColumns.LOAD
     totals.index.name = object_type
     totals.to_csv(result_dir / LoadFiles.TOTALS)
     city_profile = data.sum(axis=1)
-    city_profile.name = "Load [kWh]"
+    city_profile.name = DFColumns.LOAD
     city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
 
     stats = get_stats_df(data)
