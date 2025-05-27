@@ -86,7 +86,11 @@ def load_bdew_profile(profile: BDEWProfile = BDEWProfile.HOUSEHOLD):
 
 
 class BDEWProfileProvider:
-    """Provides adapted BDEW standard load profiles for specific days."""
+    """
+    Provides adapted BDEW standard load profiles for specific days.
+    All provided profiles contain electricity demand in kWh at 15-minute intervals.
+    The time stamp for each value indicates the start time of the 15-minute interval.
+    """
 
     def __init__(self, profile_type: BDEWProfile = BDEWProfile.HOUSEHOLD) -> None:
         self.profile_type = profile_type
