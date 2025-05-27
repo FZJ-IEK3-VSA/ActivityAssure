@@ -16,7 +16,7 @@ from paths import DFColumns, LoadFiles
 #: defines the date format used in the csv files
 DATEFORMAT_DE = "%d.%m.%Y %H:%M"
 DATEFORMAT_EN = "%m/%d/%Y %I:%M %p"
-DATEFORMAT = DATEFORMAT_EN
+DATEFORMATS = [DATEFORMAT_EN, DATEFORMAT_DE]
 
 
 @dataclass
@@ -61,7 +61,7 @@ def aggregate_load_profiles(
 
     # data.drop(columns="Electricity.Timestep", inplace=True)
     # data.drop(columns="Unnamed: 0", inplace=True)
-    data.set_index("Time", inplace=True)
+    data.set_index(DFColumns.TIME, inplace=True)
 
     totals = data.sum()
     totals.name = DFColumns.LOAD
@@ -99,17 +99,30 @@ def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: 
     logging.info(f"Combining {profile_num} load profiles.")
 
     # parse first file completely, including time stamps
-    data = pd.read_csv(
-        profiles[0].path,
-        sep=";",
-        index_col=False,
-        parse_dates=["Time"],
-        date_format=DATEFORMAT,
-        dtype={0: int, data_col: float},
-    )
-    assert data["Time"].dtype == "datetime64[ns]", (
-        f"Time column not parsed correctly (first value: {data['Time'][0]}, specified dateformat: {DATEFORMAT})"
-    )
+    # try different date formats, as timestamps from the LPG depend on the locale
+    data = None
+    for dateformat in DATEFORMATS:
+        data = pd.read_csv(
+            profiles[0].path,
+            sep=";",
+            index_col=False,
+            parse_dates=[DFColumns.TIME],
+            date_format=dateformat,
+            dtype={0: int, data_col: float},
+        )
+        if data[DFColumns.TIME].dtype == "datetime64[ns]":
+            # data successfully parsed
+            break
+
+        # wrong date format, try again with the next format
+        logging.warning(
+            f"Time column not parsed correctly, trying again with dateformat {dateformat}."
+        )
+        dateformat = DATEFORMAT_DE
+        assert data[DFColumns.TIME].dtype != "datetime64[ns]", (
+            f"Time column not parsed correctly (first value: {data['Time'][0]}, specified dateformat: {dateformat})"
+        )
+    assert data is not None, f"Could not load the data file {profiles[0].path}."
 
     TIMESTEP_COL = "Electricity.Timestep"
     data.set_index(TIMESTEP_COL, inplace=True)
