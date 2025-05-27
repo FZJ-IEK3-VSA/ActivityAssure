@@ -11,8 +11,7 @@ from paths import LoadFiles
 
 def stat_curves(path, result_dir):
     statpath = path / LoadFiles.MEANDAY_STATS
-    stats = pd.read_csv(statpath, parse_dates=[0], index_col=0)
-    # stats = stats.iloc[:1440, :]
+    stats = pd.read_csv(statpath, index_col=0, parse_dates=[0], date_format="%H:%M:%S")
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     for stat in stats.columns:
@@ -21,9 +20,7 @@ def stat_curves(path, result_dir):
         ax.plot(stats[stat], label=stat)
 
     # add axis labels
-    hours = mdates.HourLocator(byhour=range(0, 24, 3))
     hours_fmt = mdates.DateFormatter("%#H")
-    ax.xaxis.set_major_locator(hours)
     ax.xaxis.set_major_formatter(hours_fmt)
     ax.xaxis.set_label_text("Uhrzeit [h]")
     ax.yaxis.set_label_text("Elektrische Last [kWh]")
