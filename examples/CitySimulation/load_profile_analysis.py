@@ -1,5 +1,6 @@
 """Plots for analyzing load profiles of a city simulation"""
 
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from matplotlib import pyplot as plt
@@ -33,10 +34,12 @@ def stat_curves(path, result_dir, h25: pd.Series):
     stats = pd.read_csv(statpath, index_col=0, parse_dates=[0], date_format="%H:%M:%S")
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
+    colormap = defaultdict(lambda: "grey", {"mean": "blue", "median": "green"})
     for stat in stats.columns:
         # if stat == "max":
         #     continue
-        ax.plot(stats[stat], label=stat)
+
+        ax.plot(stats[stat], label=stat, color=colormap[stat])
 
     # plot the H25 average day profile
     h25meanday = h25.groupby(h25.index.time).mean()  # type: ignore
@@ -47,7 +50,7 @@ def stat_curves(path, result_dir, h25: pd.Series):
     )
     # scale h25 to the mean profile
     h25meanday = scale_profile(h25meanday, stats["mean"])
-    ax.plot(h25meanday, label="H25 Standardprofil")
+    ax.plot(h25meanday, label="H25 Standardprofil", color="red")
 
     # add axis labels
     hours_fmt = mdates.DateFormatter("%#H")
