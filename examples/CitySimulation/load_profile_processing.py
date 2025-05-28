@@ -59,8 +59,6 @@ def aggregate_load_profiles(
     result_dir = result_dir / f"aggregated_{object_type.lower()}"
     result_dir.mkdir(parents=True, exist_ok=True)
 
-    # data.drop(columns="Electricity.Timestep", inplace=True)
-    # data.drop(columns="Unnamed: 0", inplace=True)
     data.set_index(DFColumns.TIME, inplace=True)
 
     totals = data.sum()
@@ -74,15 +72,17 @@ def aggregate_load_profiles(
     stats = get_stats_df(data)
     stats.to_csv(result_dir / LoadFiles.STATS)
 
+    # calc mean day profiles and statistics
     meanday = data.groupby(data.index.time).mean()  # type: ignore
     meanday.to_csv(result_dir / LoadFiles.MEANDAY)
-
-    # time_and_weekday = data.index.day_name() + data.index.time
-    meanday = data.groupby(data.index.time).mean()  # type: ignore
-    meanday.to_csv(result_dir / LoadFiles.MEANDAY)
-
     meanday_stats = get_stats_df(meanday)
     meanday_stats.to_csv(result_dir / LoadFiles.MEANDAY_STATS)
+
+    # calc mean day profiles for each day type
+    meandaytype = data.groupby([data.index.weekday, data.index.time]).mean()  # type: ignore
+    meandaytype.to_csv(result_dir / LoadFiles.MEANDAYTYPES)
+    meandaytype_stats = get_stats_df(meandaytype)
+    meandaytype_stats.to_csv(result_dir / LoadFiles.MEANDAYTYPE_STATS)
 
 
 def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: Path):

@@ -14,7 +14,9 @@ class LoadFiles:
     SUMPROFILE = "sum_profile.csv"
     STATS = "stat_profiles.csv"
     MEANDAY = "mean_day_profile.csv"
+    MEANDAYTYPES = "mean_daytype_profiles.csv"
     MEANDAY_STATS = "mean_day_stats.csv"
+    MEANDAYTYPE_STATS = "mean_daytype_stats.csv"
 
 
 class DFColumns:
