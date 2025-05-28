@@ -109,11 +109,31 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     return h25
 
 
+def simultaneity_curves(path: Path, result_dir: Path):
+    """
+    Calculate simultaneity curves that show the simultaneity factor for increasingly
+    many households of the dataset.
+
+    :param path: path to postprocessed load profile data
+    :param result_dir: directory to save the plot to
+    """
+    simultaneity = pd.read_csv(path / LoadFiles.SIMULTANEITY, index_col=0)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+
+    sns.lineplot(simultaneity, ax=ax)
+    ax.xaxis.set_label_text("Anzahl Haushalte")
+    ax.yaxis.set_label_text("Gleichzeitigkeitsfaktor")
+    fig.savefig(result_dir / "simultaneity.svg")
+
+
 def create_load_stat_plots(path: Path, result_dir: Path):
     result_dir.mkdir(parents=True, exist_ok=True)
     h25 = sum_duration_curve(path, result_dir)
     stat_curves(path, result_dir, h25)
     total_load_distribution(path, result_dir)
+    simultaneity_curves(path, result_dir)
 
 
 def main(postproc_path: Path, plot_path: Path):

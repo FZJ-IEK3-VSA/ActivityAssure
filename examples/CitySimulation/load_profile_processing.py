@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 from typing import Iterable
 
+import numpy as np
 import psutil
 import pandas as pd
 
@@ -43,6 +44,31 @@ def get_stats_df(data: pd.DataFrame) -> pd.DataFrame:
     stats["q1"] = data.quantile(axis=1, q=0.25)
     stats["q3"] = data.quantile(axis=1, q=0.75)
     return stats
+
+
+def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame:
+    """
+    Calculates the simultaneity of the given load profiles.
+
+    :param data: dataframe with all house load profiles of a city
+    :param permutations: number of different random column permutations to calculate
+                         simultaneity for to check how robust the simultaneity is
+    :return: dataframe with simultaneity values
+    """
+    simultaneity_list = []
+    for i in range(permutations):
+        simultaneity = pd.Series(
+            [
+                data.iloc[:, :n].sum(axis=1).max() / data.iloc[:, :n].max().sum()
+                for n in range(1, data.shape[1] + 1)
+            ]
+        )
+        simultaneity_list.append(simultaneity)
+        # shuffle the columns to get another simultaneity curve for more robust results
+        data = data[np.random.permutation(data.columns)]
+    simultaneity_curves = pd.concat(simultaneity_list, axis="columns")
+    logging.info(f"Simultaneity value: {simultaneity_curves.iloc[-1, 0]}")
+    return simultaneity_curves
 
 
 def aggregate_load_profiles(
@@ -83,6 +109,10 @@ def aggregate_load_profiles(
     meandaytype.to_csv(result_dir / LoadFiles.MEANDAYTYPES)
     meandaytype_stats = get_stats_df(meandaytype)
     meandaytype_stats.to_csv(result_dir / LoadFiles.MEANDAYTYPE_STATS)
+
+    # calc simultaneity
+    simultaneity = calc_simultaneity(data, 3)
+    simultaneity.to_csv(result_dir / LoadFiles.SIMULTANEITY)
 
 
 def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: Path):
