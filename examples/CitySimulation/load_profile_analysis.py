@@ -122,7 +122,7 @@ def simultaneity_curves(path: Path, result_dir: Path):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    sns.lineplot(simultaneity, ax=ax)
+    sns.lineplot(simultaneity, ax=ax, dashes=False)
     ax.xaxis.set_label_text("Anzahl Haushalte")
     ax.yaxis.set_label_text("Gleichzeitigkeitsfaktor")
     fig.savefig(result_dir / "simultaneity.svg")
