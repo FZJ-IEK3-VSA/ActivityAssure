@@ -1,6 +1,6 @@
 """Plots for analyzing load profiles of a city simulation"""
 
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
@@ -12,7 +12,23 @@ from activityassure.loadprofiles.bdew_slp import BDEWProfileProvider
 from paths import DFColumns, LoadFiles
 
 
-def stat_curves(path, result_dir):
+def scale_profile(profile_to_scale, reference_profile):
+    """
+    Scales a profile to match the total sum of a reference profile.
+    Also considers different resolutions of the profiles.
+
+    :param profile_to_scale: the profile that should be scaled
+    :param reference_profile: the profile to scale to
+    :return: the scaled profile
+    """
+    factor = reference_profile.sum() / profile_to_scale.sum()
+    # adjust to different resolutions so the curves can be compared
+    factor *= len(profile_to_scale) / len(reference_profile)
+    profile_to_scale *= factor
+    return profile_to_scale
+
+
+def stat_curves(path, result_dir, h25: pd.Series):
     statpath = path / LoadFiles.MEANDAY_STATS
     stats = pd.read_csv(statpath, index_col=0, parse_dates=[0], date_format="%H:%M:%S")
     fig = plt.figure()
@@ -21,6 +37,17 @@ def stat_curves(path, result_dir):
         # if stat == "max":
         #     continue
         ax.plot(stats[stat], label=stat)
+
+    # plot the H25 average day profile
+    h25meanday = h25.groupby(h25.index.time).mean()  # type: ignore
+    # adapt the index to match the stats index for plotting
+    day = stats.index[0].date()
+    h25meanday.index = pd.to_datetime(
+        [datetime.combine(day, time) for time in h25meanday.index]
+    )
+    # scale h25 to the mean profile
+    h25meanday = scale_profile(h25meanday, stats["mean"])
+    ax.plot(h25meanday, label="H25 Standardprofil")
 
     # add axis labels
     hours_fmt = mdates.DateFormatter("%#H")
@@ -45,7 +72,7 @@ def total_load_distribution(path: Path, result_dir: Path):
     fig.savefig(result_dir / "profile_sums.svg")
 
 
-def sum_duration_curve(path: Path, result_dir: Path):
+def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     sumcurve = pd.read_csv(path / LoadFiles.SUMPROFILE, parse_dates=[0])
     start_day = sumcurve[DFColumns.TIME].min().date()
     end_day = sumcurve[DFColumns.TIME].max().date()
@@ -56,34 +83,34 @@ def sum_duration_curve(path: Path, result_dir: Path):
     # create H25 standard profile load duration curve
     bdewprovider = BDEWProfileProvider()
     h25 = bdewprovider.get_profile_for_date_range(start_day, end_day)
-    h25.sort_values(inplace=True, ascending=False)
+    h25_sorted = h25.sort_values(ascending=False)
 
     # scale H25 to the same total demand
-    factor = sumcurve[DFColumns.LOAD].sum() / h25.sum()
-    # adjust to different resolutions so the curves can be compared
-    factor *= len(h25) / len(sumcurve)
-    h25 *= factor
+    h25_sorted = scale_profile(h25_sorted, sumcurve[DFColumns.LOAD])
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
     sns.lineplot(sumcurve, ax=ax, y=DFColumns.LOAD, x=range(len(sumcurve)))
     sns.lineplot(
-        y=h25,
+        y=h25_sorted,
         ax=ax,
         label="H25 Standardprofil",
-        x=np.linspace(0, len(sumcurve), len(h25)),
+        x=np.linspace(0, len(sumcurve), len(h25_sorted)),
     )
     ax.xaxis.set_label_text("Dauer [min]")  # TODO: not correct for 600s HH data
     ax.yaxis.set_label_text("Elektrische Last [kWh]")
     fig.savefig(result_dir / "sum_duration_curve.svg")
 
+    # return the H25 profile for further use
+    return h25
+
 
 def create_load_stat_plots(path: Path, result_dir: Path):
     result_dir.mkdir(parents=True, exist_ok=True)
-    stat_curves(path, result_dir)
+    h25 = sum_duration_curve(path, result_dir)
+    stat_curves(path, result_dir, h25)
     total_load_distribution(path, result_dir)
-    sum_duration_curve(path, result_dir)
 
 
 def main(postproc_path: Path, plot_path: Path):
