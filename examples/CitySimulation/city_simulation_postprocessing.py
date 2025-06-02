@@ -62,6 +62,7 @@ def main():
     city_result_dir = Path(args.input)
     # city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
     assert city_result_dir.is_dir(), f"Invalid input directory: {city_result_dir}"
+    logging.info(f"Postprocessing city simulation results in {city_result_dir}")
 
     postprocess_city_results(city_result_dir)
 

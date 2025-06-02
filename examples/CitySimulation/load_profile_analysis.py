@@ -61,7 +61,7 @@ def stat_curves(path, result_dir, h25: pd.Series):
     fig.savefig(result_dir / "mean_day_stats.svg")
 
 
-def total_load_distribution(path: Path, result_dir: Path):
+def total_load_distribution(path: Path, result_dir: Path, instance_name: str):
     totals = pd.read_csv(path / LoadFiles.TOTALS)
     totals.sort_values(DFColumns.LOAD, inplace=True, ascending=False)
 
@@ -70,7 +70,7 @@ def total_load_distribution(path: Path, result_dir: Path):
 
     sns.lineplot(totals, ax=ax, y=DFColumns.LOAD, x=range(len(totals)))
     ax.set_xticklabels([])
-    ax.xaxis.set_label_text("Häuser")
+    ax.xaxis.set_label_text(instance_name)
     ax.yaxis.set_label_text("Elektrische Last [kWh]")
     fig.savefig(result_dir / "profile_sums.svg")
 
@@ -109,7 +109,7 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     return h25
 
 
-def simultaneity_curves(path: Path, result_dir: Path):
+def simultaneity_curves(path: Path, result_dir: Path, instances: str):
     """
     Calculate simultaneity curves that show the diversity factor for increasingly
     many households of the dataset.
@@ -123,24 +123,24 @@ def simultaneity_curves(path: Path, result_dir: Path):
     ax = fig.add_subplot(1, 1, 1)
 
     sns.lineplot(simultaneity, ax=ax, dashes=False)
-    ax.xaxis.set_label_text("Anzahl Haushalte")
+    ax.xaxis.set_label_text(f"Anzahl {instances}")
     ax.yaxis.set_label_text("Gleichzeitigkeitsfaktor")
     fig.savefig(result_dir / "simultaneity.svg")
 
 
-def create_load_stat_plots(path: Path, result_dir: Path):
+def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
     result_dir.mkdir(parents=True, exist_ok=True)
     h25 = sum_duration_curve(path, result_dir)
     stat_curves(path, result_dir, h25)
-    total_load_distribution(path, result_dir)
-    simultaneity_curves(path, result_dir)
+    total_load_distribution(path, result_dir, instances)
+    simultaneity_curves(path, result_dir, instances)
 
 
 def main(postproc_path: Path, plot_path: Path):
     hh_data_path = postproc_path / "loads/aggregated_household"
-    create_load_stat_plots(hh_data_path, plot_path / "household")
+    create_load_stat_plots(hh_data_path, plot_path / "household", "Haushalte")
     house_data_path = postproc_path / "loads/aggregated_house"
-    create_load_stat_plots(house_data_path, plot_path / "house")
+    create_load_stat_plots(house_data_path, plot_path / "house", "Häuser")
 
 
 if __name__ == "__main__":
