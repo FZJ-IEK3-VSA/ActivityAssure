@@ -111,7 +111,7 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
 
 def simultaneity_curves(path: Path, result_dir: Path):
     """
-    Calculate simultaneity curves that show the simultaneity factor for increasingly
+    Calculate simultaneity curves that show the diversity factor for increasingly
     many households of the dataset.
 
     :param path: path to postprocessed load profile data
