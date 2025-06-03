@@ -12,14 +12,14 @@ from activityassure.validation_statistics import ValidationSet
 import os
 
 validation_data_path = Path(
-    "/storage_cluster/projects/2025_k-dabrock_ai4c_activity_profiles/ActivityAssure_dataset"
+    "data/validation_data_sets/activity_validation_data_set_merged_unemployed_national"
 )
 
 country1 = "AT"
 country2 = "DE"
 mode = "frequencies"
-profile = ["male", "student", "rest day"]
-activities = ["iron"]
+profile = [None, None, None]
+activities = ["work", "sleep", "eat"]
 
 
 validation_dataset_country1 = ValidationSet.load(validation_data_path, country=country1)
@@ -218,14 +218,20 @@ for i, activity in enumerate(activities):
     )
     axs[i][2].set_ylabel("probability")
     axs[i][2].set_xlabel("Time")
-    axs[i][2].set_xticks([4 + x * 2 for x in [6 - 4, 12 - 4, 18 - 4, 24 - 4]])
+    axs[i][2].set_xticks([5 + i * 12 for i in range(4)])
     axs[i][2].set_xticklabels([6, 12, 18, 0], ha="right")
     axs[i][2].xaxis.labelpad = -5
 
-fig.suptitle(str(profile).translate(str.maketrans("", "", "[]'")).replace(",", " - "))
-target_file = Path(
-    f"/storage_cluster/projects/2025_k-dabrock_ai4c_activity_profiles/ActivityAssure/data/country_comparison/{country1}-{country2}/{'_'.join(profile)}__{'_'.join(activities).replace('/', '-')}.png"
-)
+profile_attributes: list[str] = [p for p in profile if p]
+if profile_attributes:
+    title = (
+        str(profile_attributes)
+        .translate(str.maketrans("", "", "[]'"))
+        .replace(",", " -")
+    )
+    fig.suptitle(title)
+filename = f"{'_'.join(profile_attributes)}__{'_'.join(activities).replace('/', '-')}"
+target_file = Path(f"data/country_comparison/{country1}-{country2}/{filename}.png")
 os.makedirs(target_file.parent, exist_ok=True)
 
 for i, activity in enumerate(activities):
