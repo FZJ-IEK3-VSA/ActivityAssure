@@ -13,6 +13,14 @@ LABEL_DICT = {
     "retired": "r",
 }
 
+ERROR_METRIC_DICT = {
+    "mae": "MAE",
+    "bias": "Bias",
+    "rmse": "RMSE",
+    "wasserstein": "Wasserstein",
+    "pearson_corr": "PCC"
+}
+
 def replace_substrings(text, replacements):
     for old, new in replacements.items():
         text = text.replace(old, new)

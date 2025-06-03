@@ -1,10 +1,87 @@
 import os
 from pathlib import Path
 
-from activityassure.visualizations.utils import CM_TO_INCH, LABEL_DICT, replace_substrings
+from activityassure.visualizations.utils import CM_TO_INCH, ERROR_METRIC_DICT, LABEL_DICT, replace_substrings
 from matplotlib import pyplot as plt
+from matplotlib.ticker import MultipleLocator
+import numpy as np
 import pandas as pd
 import seaborn as sns
+
+def plot_error_metric_distribution(metrics: pd.DataFrame, output_path: Path):
+    output_path /= "histogram.png"
+    os.makedirs(output_path.parent, exist_ok=True)
+    df = metrics.copy()
+    df.index = df.index.map(lambda x: f"{x[0]} - {x[1]}")
+
+    fig, axs = plt.subplots(nrows=5, ncols=1, figsize=(16*CM_TO_INCH, 20*CM_TO_INCH))
+    for i, c in enumerate(df.columns, 0):
+        if c != "pearson_corr":
+            df[c] = df[c].abs()
+        sns.histplot(df, x=c, ax=axs[i])
+     
+        axs[i].set_xlabel(replace_substrings(c, ERROR_METRIC_DICT))
+        axs[i].set_ylabel("count")
+
+        # Compute cumulative distribution
+        ax2 = axs[i].twinx()
+        sorted_data = np.sort(df[c])
+        if c == "pearson_corr":
+            # For correlation, values close to 1 are best
+            axs[i].invert_xaxis()
+            sorted_data = sorted_data[::-1]
+        cum_dist = np.arange(1, len(sorted_data)+1) / len(sorted_data)
+        ax2.plot(sorted_data, cum_dist, color="darkred", label="Cumulative")
+        ax2.set_yticks([0, 0.5, 0.75, 0.9, 1])
+        ax2.grid(True)
+        ax2.set_ylim(0,1)
+        pd.DataFrame({"cumulative": cum_dist, c: sorted_data}).to_csv(output_path.parent / f"{c}_cumulative.csv")
+            
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=600)
+    fig.savefig(output_path.with_suffix(".svg"))
+
+
+def plot_elbow_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_path: Path, zoomed: bool = False):
+    """
+    Plots an elbow plot of all different profile types and activities and metrics.
+    Expects metrics from a per-category validation.
+    
+
+    :param metrics: metric dataframe
+    :param output_path: output path
+    """
+
+    output_path /= "elbow_plot_per_metric_zoomed.png" if zoomed else "elbow_plot_per_metric.png"
+    os.makedirs(output_path.parent, exist_ok=True)
+
+    display_count = 50 if zoomed else len(metrics.index)
+    df = metrics.copy()
+    df.index = df.index.map(lambda x: f"{x[0]} - {x[1]}")
+
+    fig, axs = plt.subplots(nrows=5, ncols=1, figsize=(16*CM_TO_INCH, 16*CM_TO_INCH))
+    for i, c in enumerate(df.columns, 0):
+        if c != "pearson_corr":
+            df[c] = df[c].abs()
+        df = df.sort_values(by=c, ascending=True if c == "pearson_corr" else False)
+        df["rank"] = range(1, len(df[c])+1)
+
+        sns.lineplot(df[[c, "rank"]].head(display_count), x='rank', y=c, ax=axs[i])
+        axs[i].set_ylabel(replace_substrings(c, ERROR_METRIC_DICT))
+        axs[i].set_xlabel("")
+        if zoomed:
+            tick_locs = list(range(0, display_count + 5, 5))
+            axs[i].set_xticks(tick_locs)
+            axs[i].set_xticklabels(str(loc) for loc in tick_locs)
+            axs[i].grid(True, which='major')
+            axs[i].xaxis.set_minor_locator(MultipleLocator(1))
+            axs[i].grid(True, which='minor')
+        axs[i].set_xlim(1, display_count)
+            
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=600)
+    fig.savefig(output_path.with_suffix(".svg"))
+
 
 def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_path: Path, top_x: int = 3):
     """
@@ -19,7 +96,7 @@ def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_pa
 
     output_path /= f"top_{top_x}_per_metric.png"
     os.makedirs(output_path.parent, exist_ok=True)
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16*CM_TO_INCH, 6*CM_TO_INCH+top_x*0.75*CM_TO_INCH))
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16*CM_TO_INCH, 6*CM_TO_INCH+top_x*1.5*CM_TO_INCH))
 
     df2 = metrics[["pearson_corr"]]
     df1 = metrics.drop(columns=["pearson_corr"])
