@@ -92,9 +92,6 @@ for i, activity in enumerate(activities):
         how="outer",
         suffixes=[f"_{country1}", f"_{country2}"],
     )
-    merged_df_durations["id"] = merged_df_durations.index.map(
-        lambda x: f"{x.components.hours:02}:{x.components.minutes:02}"
-    )
 
     # Frequencies
     merged_df_frequencies = pd.merge(
@@ -134,8 +131,8 @@ for i, activity in enumerate(activities):
         )
 
     melted_df_durations = merged_df_durations.melt(
-        id_vars="id", var_name="Category", value_name="Value"
-    )
+        var_name="Category", value_name="Value", ignore_index=False
+    ).reset_index(names="durations")
     melted_df_frequencies = merged_df_frequencies.melt(
         id_vars="id", var_name="Category", value_name="Value"
     )
@@ -165,7 +162,7 @@ for i, activity in enumerate(activities):
     ######### Plot
     # Durations
     sns.barplot(
-        x="id",
+        x="durations",
         y="Value",
         hue="Category",
         data=melted_df_durations,
@@ -174,21 +171,23 @@ for i, activity in enumerate(activities):
         legend=False,
     )
 
-    def hhmm_to_decimal(label):
-        t = datetime.strptime(label, "%H:%M")
-        return t.hour + t.minute / 60
+    def timedelta_to_hours(t: pd.Timedelta):
+        return t.components.hours + 24 * t.components.days
 
-    xticklabels = axs[i][0].get_xticklabels()
+    # adapt duration x-axis labels: minor ticks for every bar, major ticks with labels every 4th bar
+    axs[i][0].set_xticks(axs[i][0].get_xticks(), minor=True)
+
+    majorxticks = list(range(3, len(merged_df_durations), 4))
+    newxlabels = [
+        timedelta_to_hours(merged_df_durations.index[i]) if i % 4 == 3 else ""
+        for i in majorxticks
+    ]
+    axs[i][0].set_xticks(majorxticks)
     axs[i][0].set_xticklabels(
-        [
-            hhmm_to_decimal(v.get_text()) if i % 2 == 0 else ""
-            for i, v in enumerate(xticklabels)
-        ]
-        if len(xticklabels) > 20
-        else [hhmm_to_decimal(v.get_text()) for v in xticklabels],
-        rotation=45 if len(xticklabels) > 15 else 0,
+        newxlabels,
         ha="center",
     )
+
     axs[i][0].set_ylabel("probability")
     axs[i][0].set_xlabel("duration [h]")
     axs[i][0].xaxis.labelpad = 0
@@ -223,6 +222,8 @@ for i, activity in enumerate(activities):
     axs[i][2].xaxis.labelpad = -5
 
 profile_attributes: list[str] = [p for p in profile if p]
+if not profile_attributes:
+    profile_attributes = ["all profiles"]
 if profile_attributes:
     title = (
         str(profile_attributes)
