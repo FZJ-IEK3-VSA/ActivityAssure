@@ -172,16 +172,18 @@ for i, activity in enumerate(activities):
     )
 
     def timedelta_to_hours(t: pd.Timedelta):
-        return t.components.hours + 24 * t.components.days
+        hours = t.components.hours + 24 * t.components.days
+        if t.components.minutes == 0:
+            return hours
+        return hours + t.components.minutes / 60
 
     # adapt duration x-axis labels: minor ticks for every bar, major ticks with labels every 4th bar
     axs[i][0].set_xticks(axs[i][0].get_xticks(), minor=True)
-
-    majorxticks = list(range(3, len(merged_df_durations), 4))
-    newxlabels = [
-        timedelta_to_hours(merged_df_durations.index[i]) if i % 4 == 3 else ""
-        for i in majorxticks
-    ]
+    if len(merged_df_durations) > 16:
+        majorxticks = list(range(3, len(merged_df_durations), 4))
+    else:
+        majorxticks = list(range(1, len(merged_df_durations), 2))
+    newxlabels = [timedelta_to_hours(merged_df_durations.index[i]) for i in majorxticks]
     axs[i][0].set_xticks(majorxticks)
     axs[i][0].set_xticklabels(
         newxlabels,
