@@ -17,33 +17,32 @@ def category_to_plot_label(category: ProfileCategory) -> str:
 def plot_total_time_spent(
     statistics_country_1: dict[ProfileCategory, ValidationStatistics],
     statistics_country_2: dict[ProfileCategory, ValidationStatistics],
-    national_statistics: dict[ProfileCategory, ValidationStatistics],
     plot_path: Path,
 ):
     time_activity_distribution = {}
-    for _, v in (
-        statistics_country_1 | statistics_country_2 | national_statistics
-    ).items():
+    for _, v in (statistics_country_1 | statistics_country_2).items():
         time_activity_distribution[v.profile_type] = (
             v.probability_profiles.mean(axis=1) * 24
         )
 
-    # get the column name of the first country
-    nat1 = next(iter(national_statistics.keys()))
+    num_profiles = len(time_activity_distribution)
 
-    fig, ax = plt.subplots(figsize=(16 * CM_TO_INCH, 20 * CM_TO_INCH))
+    plot_height = (4 + 0.5 * num_profiles) * CM_TO_INCH
+    fig, ax = plt.subplots(figsize=(16 * CM_TO_INCH, plot_height))
     combined_df = pd.DataFrame(time_activity_distribution)
 
-    # sort by activity share in first country
-    sorted_df = combined_df.sort_values(nat1, ascending=False)  # type: ignore
+    # sort by total activity share
+    combined_df["total_shares"] = combined_df.mean(axis="columns")
+    sorted_df = combined_df.sort_values("total_shares", ascending=False)  # type: ignore
 
     # combine all activities with a low overall share and include the activity "other"
     min_share = 0.05 * 24
-    condition = (sorted_df[nat1] < min_share) | (sorted_df.index == "other")
+    condition = (sorted_df["total_shares"] < min_share) | (sorted_df.index == "other")
     summed = sorted_df[condition].sum()
     summed.name = "minor activities"
 
     sorted_df = pd.concat([sorted_df[~condition], summed.to_frame().T])
+    sorted_df.drop(columns="total_shares", inplace=True)
     sorted_cols = sorted(sorted_df.columns, key=category_to_plot_label)  # type: ignore
     df_to_plot = sorted_df[sorted_cols].T
     df_to_plot.plot(kind="barh", stacked=True, ax=ax, width=0.8)
@@ -59,4 +58,4 @@ def plot_total_time_spent(
     ax.legend(loc="lower right", bbox_to_anchor=(1, 1), ncol=3)
     ax.set_xlim(0, 24)
     fig.tight_layout()
-    fig.savefig(plot_path / "time_spent.png")
+    fig.savefig(plot_path / f"time_spent_{num_profiles}_profiles.png")
