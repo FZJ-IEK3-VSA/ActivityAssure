@@ -31,7 +31,7 @@ def plot_total_time_spent(
     # get the column name of the first country
     nat1 = next(iter(national_statistics.keys()))
 
-    fig, ax = plt.subplots(figsize=(16 * CM_TO_INCH, 16 * CM_TO_INCH))
+    fig, ax = plt.subplots(figsize=(16 * CM_TO_INCH, 20 * CM_TO_INCH))
     combined_df = pd.DataFrame(time_activity_distribution)
 
     # sort by activity share in first country
@@ -45,7 +45,16 @@ def plot_total_time_spent(
 
     sorted_df = pd.concat([sorted_df[~condition], summed.to_frame().T])
     sorted_cols = sorted(sorted_df.columns, key=category_to_plot_label)  # type: ignore
-    sorted_df[sorted_cols].T.plot(kind="barh", stacked=True, ax=ax)
+    df_to_plot = sorted_df[sorted_cols].T
+    df_to_plot.plot(kind="barh", stacked=True, ax=ax, width=0.8)
+
+    # add labels to the bars
+    for i, c in enumerate(ax.containers):
+        # if the segment is small, don't add a label
+        labels = [round(v, 1) if v > 2 else "" for v in df_to_plot.iloc[:, i]]
+
+        # remove the labels parameter if it's not needed for customized labels
+        ax.bar_label(c, labels=labels, label_type="center")
 
     ax.legend(loc="lower right", bbox_to_anchor=(1, 1), ncol=3)
     ax.set_xlim(0, 24)
