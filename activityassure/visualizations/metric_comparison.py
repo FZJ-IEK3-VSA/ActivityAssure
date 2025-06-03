@@ -1,5 +1,7 @@
+import json
 import os
 from pathlib import Path
+from typing import Dict
 
 from activityassure.visualizations.utils import CM_TO_INCH, ERROR_METRIC_DICT, LABEL_DICT, replace_substrings
 from matplotlib import pyplot as plt
@@ -83,7 +85,7 @@ def plot_elbow_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_
     fig.savefig(output_path.with_suffix(".svg"))
 
 
-def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_path: Path, top_x: int = 3):
+def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_path: Path, top_x: Dict[str, int] = {"mae": 3, "rmse": 3, "bias": 3, "wasserstein": 3, "pearson_corr": 3}):
     """
     Plots a barplot of all different profile types and activities and metrics.
     Expects metrics from a per-category validation.
@@ -94,37 +96,38 @@ def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_pa
     :param output_path: output path
     """
 
-    output_path /= f"top_{top_x}_per_metric.png"
-    os.makedirs(output_path.parent, exist_ok=True)
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16*CM_TO_INCH, 6*CM_TO_INCH+top_x*1.5*CM_TO_INCH))
+    output_path_plot = output_path / "top_x_per_metric.png"
+    output_path_json = output_path / "top_x.json"
+    os.makedirs(output_path, exist_ok=True)
+    with open(output_path_json, 'w') as f:
+        json.dump(top_x, f, indent=4)
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16*CM_TO_INCH, 6*CM_TO_INCH+max(top_x.values())*1.5*CM_TO_INCH))
 
     df2 = metrics[["pearson_corr"]]
     df1 = metrics.drop(columns=["pearson_corr"])
     df1 = df1.abs()
 
-
     for i, df in enumerate([df1, df2]):
         df.index = df.index.map(lambda x: f"{x[0]} - {x[1]}")
-        top5 = []
+        topx = []
 
         for c in df.columns:
             if i == 1:
-                top5 = top5 + df[c].nsmallest(top_x).index.tolist()
+                topx = topx + df[c].nsmallest(top_x[c]).index.tolist()
             else:
-                top5 = top5 + df[c].nlargest(top_x).index.tolist()
+                topx = topx + df[c].nlargest(top_x[c]).index.tolist()
 
-
-        top5 = list(set(top5))
-        top5 = df.loc[top5,:].sum(axis=1).sort_values(ascending=False).index.tolist()
+        topx = list(set(topx))
+        topx = df.loc[topx,:].sum(axis=1).sort_values(ascending=False).index.tolist()
 
         subdf = df.melt(ignore_index=False, var_name='metric')
-        sns.barplot(subdf.loc[top5,:].reset_index(), y='index', x='value', orient='h', hue='metric', ax=axs[i])
+        sns.barplot(subdf.loc[topx,:].reset_index(), y='index', x='value', orient='h', hue='metric', ax=axs[i])
         axs[i].set_ylabel("")
         axs[i].legend(loc='lower right', bbox_to_anchor=(1, 1.05), ncol=2)
         axs[i].set_yticklabels([replace_substrings(label.get_text(), LABEL_DICT).replace("_", " ").replace(" - ", "\n") for label in axs[i].get_yticklabels()])
-        fig.tight_layout()
-        fig.savefig(output_path, dpi=600)
-        fig.savefig(output_path.with_suffix(".svg"))
+    fig.tight_layout()
+    fig.savefig(output_path_plot, dpi=600)
+    fig.savefig(output_path_plot.with_suffix(".svg"))
 
 
 def plot_bar_plot_metrics_aggregated(metrics: pd.DataFrame, output_path: Path, aggregation_category: str):

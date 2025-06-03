@@ -90,7 +90,7 @@ def validate(
         metric_comparison.plot_elbow_plot_metrics_profile_type_activity(metrics_df, result_subdir / "distributions")
         metric_comparison.plot_elbow_plot_metrics_profile_type_activity(metrics_df, result_subdir / "distributions", zoomed=True)
         metric_comparison.plot_bar_plot_metrics_profile_type_activity(
-            metrics_df, result_subdir / "bars", top_x=10
+            metrics_df, result_subdir / "bars", top_x={"mae": 3, "rmse": 4, "bias": 10, "wasserstein": 10, "pearson_corr": 10}
         )
         metric_comparison.plot_bar_plot_metrics_aggregated(
             metrics_df, result_subdir / "bars", "person_profile"
