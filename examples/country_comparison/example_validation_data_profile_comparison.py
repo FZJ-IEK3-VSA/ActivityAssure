@@ -219,7 +219,7 @@ for i, activity in enumerate(activities):
     )
     axs[i][2].set_ylabel("probability")
     axs[i][2].set_xlabel("Time")
-    axs[i][2].set_xticks([5 + i * 12 for i in range(4)])
+    axs[i][2].set_xticks([4 + i * 12 for i in range(4)])
     axs[i][2].set_xticklabels([6, 12, 18, 0], ha="right")
     axs[i][2].xaxis.labelpad = -5
 
