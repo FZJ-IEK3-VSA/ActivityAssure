@@ -18,10 +18,11 @@ ERROR_METRIC_DICT = {
     "bias": "Bias",
     "rmse": "RMSE",
     "wasserstein": "Wasserstein",
-    "pearson_corr": "PCC"
+    "pearson_corr": "PCC",
 }
 
-def replace_substrings(text, replacements):
+
+def replace_substrings(text: str, replacements: dict) -> str:
     for old, new in replacements.items():
         text = text.replace(old, new)
     return text

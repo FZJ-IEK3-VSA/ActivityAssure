@@ -1,13 +1,17 @@
 from pathlib import Path
 from activityassure.profile_category import ProfileCategory
 from activityassure.validation_statistics import ValidationStatistics
-from activityassure.visualizations.utils import CM_TO_INCH
+from activityassure.visualizations.utils import (
+    CM_TO_INCH,
+    LABEL_DICT,
+    replace_substrings,
+)
 from matplotlib import pyplot as plt
 import pandas as pd
 
 
-def category_to_plot_label(category: ProfileCategory) -> str:
-    """Helper function to convert a profile category to a plot label"""
+def profile_sorting_key(category: ProfileCategory) -> str:
+    """Helper function to convert a profile category to a string for sorting"""
     category_parts = str(category).split("_", 1)
     if len(category_parts) == 1:
         return category_parts[0]
@@ -43,18 +47,27 @@ def plot_total_time_spent(
 
     sorted_df = pd.concat([sorted_df[~condition], summed.to_frame().T])
     sorted_df.drop(columns="total_shares", inplace=True)
-    sorted_cols = sorted(sorted_df.columns, key=category_to_plot_label)  # type: ignore
+    sorted_cols = sorted(sorted_df.columns, key=profile_sorting_key)  # type: ignore
     df_to_plot = sorted_df[sorted_cols].T
     df_to_plot.plot(kind="barh", stacked=True, ax=ax, width=0.8)
 
     # add labels to the bars
     for i, c in enumerate(ax.containers):
         # if the segment is small, don't add a label
-        labels = [round(v, 1) if v > 2 else "" for v in df_to_plot.iloc[:, i]]
+        labels = [round(v, 1) if v > 1 else "" for v in df_to_plot.iloc[:, i]]
 
         # remove the labels parameter if it's not needed for customized labels
         ax.bar_label(c, labels=labels, label_type="center")
 
+    # assign
+    ax.set_yticklabels(
+        [
+            replace_substrings(label.get_text(), LABEL_DICT).replace("_", " ")
+            for label in ax.get_yticklabels()
+        ]
+    )
+
+    ax.set_xlabel("time [h]")
     ax.legend(loc="lower right", bbox_to_anchor=(1, 1), ncol=3)
     ax.set_xlim(0, 24)
     fig.tight_layout()
