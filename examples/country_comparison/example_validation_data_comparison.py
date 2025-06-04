@@ -13,7 +13,11 @@ from activityassure.categorization_attributes import WorkStatus
 from activityassure.hetus_data_processing import hetus_constants
 from activityassure.input_data_processing import process_model_data
 from activityassure.profile_category import ProfileCategory
-from activityassure.visualizations import indicator_heatmaps, metric_comparison
+from activityassure.visualizations import (
+    indicator_heatmaps,
+    metric_comparison,
+    time_statistics,
+)
 from activityassure.validation_statistics import ValidationSet
 
 
@@ -86,8 +90,25 @@ def validate(
             metrics_df, plot_path_heatmaps
         )
         indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path_heatmaps)
+        metric_comparison.plot_error_metric_distribution(
+            metrics_df, result_subdir / "distributions"
+        )
+        metric_comparison.plot_elbow_plot_metrics_profile_type_activity(
+            metrics_df, result_subdir / "distributions"
+        )
+        metric_comparison.plot_elbow_plot_metrics_profile_type_activity(
+            metrics_df, result_subdir / "distributions", zoomed=True
+        )
         metric_comparison.plot_bar_plot_metrics_profile_type_activity(
-            metrics_df, result_subdir / "bars", top_x=5
+            metrics_df,
+            result_subdir / "bars",
+            top_x={
+                "mae": 3,
+                "rmse": 4,
+                "bias": 10,
+                "wasserstein": 10,
+                "pearson_corr": 10,
+            },
         )
         metric_comparison.plot_bar_plot_metrics_aggregated(
             metrics_df, result_subdir / "bars", "person_profile"
@@ -118,7 +139,8 @@ def merge_unemployed_categories(data_path: Path, result_path: Path):
     """Merge categories for work days and non-working days of unemployed people"""
     # load the statistics
     set = ValidationSet.load(data_path)
-    # combine all 'unemployed' categories which only differ in day type
+    # combine all 'unemployed' and 'retired' categories which only differ in day type
+    WORK_TYPES_TO_MERGE = [WorkStatus.unemployed, WorkStatus.retired]
     mapping = {
         p: ProfileCategory(
             p.country,
@@ -127,11 +149,32 @@ def merge_unemployed_categories(data_path: Path, result_path: Path):
             categorization_attributes.DayType.undetermined,
         )
         for p in set.statistics.keys()
-        if p.work_status == WorkStatus.unemployed
+        if p.work_status in WORK_TYPES_TO_MERGE
     }
     set.merge_profile_categories(mapping)
     # save the aggregated statistics
     set.save(result_path)
+
+
+def plot_total_time_bar_chart(
+    validation_data_path: Path,
+    countries: list[str],
+    output_path: Path,
+):
+    # load LPG statistics and validation statistics
+    datasets = [
+        ValidationSet.load(validation_data_path, country=country)
+        for country in countries
+    ]
+    validation_data1 = datasets[0]
+    validation_data2 = datasets[1]
+
+    # Plot total time spent
+    time_statistics.plot_total_time_spent(
+        validation_data1.statistics,
+        validation_data2.statistics,
+        output_path,
+    )
 
 
 if __name__ == "__main__":
@@ -148,7 +191,7 @@ if __name__ == "__main__":
     validation_stats_path = Path(
         "data/validation_data_sets/activity_validation_data_set"
     )
-    validation_path_merged = Path(f"{validation_stats_path}_merged_unemployed")
+    validation_path_merged = Path(f"{validation_stats_path}_merged_daytypes")
     output_path = Path(f"data/country_comparison/{country1}-{country2}")
 
     merge_unemployed_categories(validation_stats_path, validation_path_merged)
@@ -165,3 +208,6 @@ if __name__ == "__main__":
         validation_path_merged, national_stats_path
     )
     validate(national_stats_path, country1, country2, output_path_national)
+
+    plot_total_time_bar_chart(validation_path_merged, [country1, country2], output_path)
+    plot_total_time_bar_chart(national_stats_path, [country1, country2], output_path)

@@ -4,6 +4,9 @@ different profile categories.
 """
 
 import os
+from pathlib import Path
+from typing import Optional
+from activityassure.visualizations.utils import CM_TO_INCH, LABEL_DICT, replace_substrings
 import pandas as pd
 import seaborn as sns  # type: ignore
 import matplotlib.pyplot as plt
@@ -139,8 +142,24 @@ def plot_heatmap_person(name: str, dir: str):
     plt.savefig(os.path.join(dir, f"{name}.svg"), transparent=True)
     plt.show()
 
+def plot_data_availability_bars(name: str, dir: Path, countries: Optional[list[str]] = None):
+    data_path = os.path.join(dir, name + ".csv")
+    df = pd.read_csv(data_path)
+    countries = countries if countries is not None else df["country"].tolist()
+    df = df[df["country"].isin(countries)]
+    fig, ax = plt.subplots(figsize=(14*CM_TO_INCH, 8*CM_TO_INCH))
+    df = df.sort_values(by=["work status", "day type"])
+    df["label"] = df["sex"] + " " + df["work status"] + " " + df["day type"]
+    sns.barplot(data=df, x='label', y='Sizes', hue='country', ax=ax)
+    ax.set_xticklabels([replace_substrings(label.get_text(), LABEL_DICT).replace("_", " ").replace(" - ", "\n") for label in ax.get_xticklabels()], rotation=90)
+    ax.set_xlabel("")
+    fig.tight_layout()
+    fig.savefig(os.path.join(dir, f"{name}_bars__{"_".join(countries)}.svg"), transparent=True)
+    fig.savefig(os.path.join(dir, f"{name}_bars__{"_".join(countries)}.png"), dpi=600)
+
 
 if __name__ == "__main__":
     dir = ".\\data\\validation_data_sets\\full\\categories"
     name = "category_sizes_readable"
     plot_heatmaps_diary_filtered_and_unfiltered(name, dir)
+    plot_data_availability_bars("category_sizes", Path(dir), countries=["AT", "DE"])
