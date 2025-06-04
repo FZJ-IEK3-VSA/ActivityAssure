@@ -13,7 +13,11 @@ from activityassure.categorization_attributes import WorkStatus
 from activityassure.hetus_data_processing import hetus_constants
 from activityassure.input_data_processing import process_model_data
 from activityassure.profile_category import ProfileCategory
-from activityassure.visualizations import indicator_heatmaps, metric_comparison, time_statistics
+from activityassure.visualizations import (
+    indicator_heatmaps,
+    metric_comparison,
+    time_statistics,
+)
 from activityassure.validation_statistics import ValidationSet
 
 
@@ -86,11 +90,25 @@ def validate(
             metrics_df, plot_path_heatmaps
         )
         indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path_heatmaps)
-        metric_comparison.plot_error_metric_distribution(metrics_df, result_subdir / "distributions")
-        metric_comparison.plot_elbow_plot_metrics_profile_type_activity(metrics_df, result_subdir / "distributions")
-        metric_comparison.plot_elbow_plot_metrics_profile_type_activity(metrics_df, result_subdir / "distributions", zoomed=True)
+        metric_comparison.plot_error_metric_distribution(
+            metrics_df, result_subdir / "distributions"
+        )
+        metric_comparison.plot_elbow_plot_metrics_profile_type_activity(
+            metrics_df, result_subdir / "distributions"
+        )
+        metric_comparison.plot_elbow_plot_metrics_profile_type_activity(
+            metrics_df, result_subdir / "distributions", zoomed=True
+        )
         metric_comparison.plot_bar_plot_metrics_profile_type_activity(
-            metrics_df, result_subdir / "bars", top_x={"mae": 3, "rmse": 4, "bias": 10, "wasserstein": 10, "pearson_corr": 10}
+            metrics_df,
+            result_subdir / "bars",
+            top_x={
+                "mae": 3,
+                "rmse": 4,
+                "bias": 10,
+                "wasserstein": 10,
+                "pearson_corr": 10,
+            },
         )
         metric_comparison.plot_bar_plot_metrics_aggregated(
             metrics_df, result_subdir / "bars", "person_profile"
