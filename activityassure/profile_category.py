@@ -7,8 +7,59 @@ from pathlib import Path
 from typing import Any, Collection, Sequence
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
+import pandas as pd
 
 from activityassure import categorization_attributes
+
+
+def get_attribute_value(value, attribute_type: type) -> Any:
+    """
+    Turns a parsed value of one of the profile categorization attributes
+    into the corresponding enum value.
+
+    :param value: the value to parse
+    :param attribute_type: the expected categorization enum type
+    :return: the enum value (always of the specified type, or None)
+    """
+    if value is None or pd.isna(value):
+        return None
+    return attribute_type(value)
+
+
+@dataclass_json
+@dataclass(frozen=True)
+class BaseProfileCategory:
+    """As the ProfileCategory but it does not contain
+    country information.
+    """
+
+    sex: categorization_attributes.Sex | None = None
+    work_status: categorization_attributes.WorkStatus | None = None
+    day_type: categorization_attributes.DayType | None = None
+
+    def to_list(self) -> list[str]:
+        """
+        Returns a list representation of this profile type. Only returns
+        attributes that are not None or empty.
+
+        :return: a list containing the characteristics of this
+                 profile category
+        """
+        values = [
+            self.sex,
+            self.work_status,
+            self.day_type,
+        ]
+        return [str(v) for v in values if v]
+
+    def __str__(self) -> str:
+        """
+        Returns a string representation of this profile type
+
+        :return: a str containing the characteristics of this
+                 profile category
+        """
+        return "_".join(str(c) for c in self.to_list())
 
 
 @dataclass_json
@@ -94,6 +145,15 @@ class ProfileCategory:
             self.country, self.sex, self.work_status, self.day_type, person
         )
 
+    def to_base_category(self) -> "BaseProfileCategory":
+        """
+        Creates a BaseProfileCategory object without country information out of
+        this ProfileCategory object.
+
+        :return: the new category object including the person name
+        """
+        return BaseProfileCategory(self.sex, self.work_status, self.day_type)
+
     @staticmethod
     def from_filename(filepath: Path) -> "ProfileCategory":
         components = filepath.stem.split("_")
@@ -114,25 +174,27 @@ class ProfileCategory:
         :return: the corresponding ProfileType object
         """
         length = len(values)
-        assert 4 <= length <= 5, f"Invalid number of characteristics: {values}"
-        if length == 5:
-            person = values[-1] or ""
-            values = values[:4]
-        # extract characteristics
-        country, sex_str, work_status_str, day_type_str = values
+        assert 0 < length <= 5, f"Invalid number of characteristics: {values}"
+        # extract characteristics in the order of the class attributes
         try:
             # convert the strings to enum values and create the ProfileType
-            sex = categorization_attributes.Sex(sex_str) if sex_str else None
-            work_status = (
-                categorization_attributes.WorkStatus(work_status_str)
-                if work_status_str
-                else None
-            )
-            day_type = (
-                categorization_attributes.DayType(day_type_str)
-                if day_type_str
-                else None
-            )
+            country = values[0]
+            sex, work_status, day_type, person = None, None, None, None
+            if length >= 2:
+                sex_str = values[1]
+                sex = get_attribute_value(sex_str, categorization_attributes.Sex)
+            if length >= 3:
+                work_status_str = values[2]
+                work_status = get_attribute_value(
+                    work_status_str, categorization_attributes.WorkStatus
+                )
+            if length >= 4:
+                day_type_str = values[3]
+                day_type = get_attribute_value(
+                    day_type_str, categorization_attributes.DayType
+                )
+            if length >= 5:
+                person = values[4] or ""
         except KeyError as e:
             assert False, f"Invalid enum key: {e}"
         if length == 5 and person:

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Iterable
+from typing import Any, Callable, ClassVar, Optional, Iterable
 
 import numpy as np
 import pandas as pd
@@ -336,7 +336,7 @@ class ValidationSet:
     AVAILABLE_ACTIVITIES_KEY: ClassVar = "available activities"
 
     def get_matching_statistics(
-        self, category: ProfileCategory
+        self, category: ProfileCategory, ignore_country: bool = False
     ) -> ValidationStatistics | None:
         """
         Returns matching category statistics for comparison. If not
@@ -352,6 +352,14 @@ class ValidationSet:
         if isinstance(category, PersonProfileCategory):
             ppc = category.get_category_without_person()
             return self.statistics.get(ppc, None)
+        if ignore_country:
+            matchings = [
+                v
+                for k, v in self.statistics.items()
+                if k.to_base_category() == category.to_base_category()
+            ]
+            assert len(matchings) == 1
+            return matchings[0]
         return None
 
     def filter_categories(self, min_size: int):
@@ -464,7 +472,7 @@ class ValidationSet:
         assert len(data.columns) == 1, "DataFrame must have one column only"
         colname = data.columns[0]
         if data.index.nlevels == 1 or attribute_for_pivot not in data.index.names:
-            logging.warning(
+            logging.warn(
                 f"The DataFrame only has one index level or the attribute '{attribute_for_pivot}'"
                 "is not part of the categorization. Returning the unpivoted dataframe instead."
             )
@@ -562,7 +570,9 @@ class ValidationSet:
         )
 
     @staticmethod
-    def load_category_info_dataframe(path: Path) -> dict[ProfileCategory, int]:
+    def load_category_info_dataframe(
+        path: Path, country: Optional[str] = None
+    ) -> dict[ProfileCategory, int]:
         """
         Loads a DataFrame from csv which contains one value per profile category.
         The value can e.g. be a size or a weight. Returns a dict for easy access.
@@ -571,6 +581,9 @@ class ValidationSet:
         :return: a dict mapping each profile category to its value from the file
         """
         data = pd.read_csv(path)
+        if country is not None:
+            data = data[data["country"] == country]
+
         # the last column contains the values, the others the profile type attributes
         pt_names = data.columns[:-1]
         values = {
@@ -595,7 +608,7 @@ class ValidationSet:
 
     @staticmethod
     def load_validation_data_subdir(
-        path: Path, as_timedelta: bool = False
+        path: Path, prefix: str = "", as_timedelta: bool = False
     ) -> dict[ProfileCategory, pd.DataFrame]:
         """
         Loads all statistics from one subdirectory of the data set, e.g.
@@ -609,20 +622,26 @@ class ValidationSet:
         return {
             ProfileCategory.from_filename(p): load_df(p, as_timedelta)
             for p in path.iterdir()
-            if p.is_file()
+            if p.is_file() and p.name.startswith(prefix)
         }
 
     @utils.timing
     @staticmethod
-    def load(base_path: Path) -> "ValidationSet":
+    def load(base_path: Path, country: Optional[str] = None) -> "ValidationSet":
         assert base_path.is_dir(), f"Statistics directory not found: {base_path}"
         # load the statistics per profile category
         prob_path = base_path / ValidationStatistics.PROBABILITY_PROFILE_DIR
         freq_path = base_path / ValidationStatistics.FREQUENCY_DIR
         dur_path = base_path / ValidationStatistics.DURATION_DIR
-        prob_data = ValidationSet.load_validation_data_subdir(prob_path)
-        freq_data = ValidationSet.load_validation_data_subdir(freq_path)
-        dur_data = ValidationSet.load_validation_data_subdir(dur_path, True)
+        prob_data = ValidationSet.load_validation_data_subdir(
+            prob_path, f"prob_{country}" if country else ""
+        )
+        freq_data = ValidationSet.load_validation_data_subdir(
+            freq_path, f"freq_{country}" if country else ""
+        )
+        dur_data = ValidationSet.load_validation_data_subdir(
+            dur_path, f"dur_{country}" if country else "", True
+        )
 
         # load further info (size, weight) from single csv files
         sizes_path = (
@@ -633,8 +652,12 @@ class ValidationSet:
             / ValidationSet.CATEGORIES_DIR
             / ValidationSet.CATEGORY_WEIGHTS_FILE
         )
-        category_sizes = ValidationSet.load_category_info_dataframe(sizes_path)
-        category_weights = ValidationSet.load_category_info_dataframe(weights_path)
+        category_sizes = ValidationSet.load_category_info_dataframe(
+            sizes_path, country=country
+        )
+        category_weights = ValidationSet.load_category_info_dataframe(
+            weights_path, country=country
+        )
 
         assert (
             prob_data.keys()
