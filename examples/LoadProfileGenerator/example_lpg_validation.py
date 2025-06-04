@@ -12,7 +12,6 @@ from activityassure import validation
 
 
 if __name__ == "__main__":
-    country = "DE"
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
         level=logging.DEBUG,
@@ -26,7 +25,7 @@ if __name__ == "__main__":
     input_data_path = lpg_input_dir / "preprocessed"
     merging_file = lpg_input_dir / "activity_merging.json"
     mapping_file = lpg_input_dir / "activity_mapping.json"
-    person_trait_file = lpg_input_dir / f"person_characteristics_{country}.json"
+    person_trait_file = lpg_input_dir / "person_characteristics.json"
     # validation statistics paths
     validation_stats_path = Path(
         "data/validation_data_sets/activity_validation_data_set"
@@ -34,7 +33,7 @@ if __name__ == "__main__":
     validation_stats_path_merged = Path(f"{validation_stats_path}_merged")
     # input statistics path
     # here the statistics of the input data and the validation results will be stored
-    input_stats_path = Path(f"data/validation/lpg_example/{country}")
+    input_stats_path = Path("data/validation/lpg_example")
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
