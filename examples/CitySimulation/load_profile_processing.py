@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import itertools
 import logging
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, TypeVar
 
 import numpy as np
 import psutil
@@ -18,6 +18,48 @@ from paths import DFColumns, LoadFiles
 DATEFORMAT_DE = "%d.%m.%Y %H:%M"
 DATEFORMAT_EN = "%m/%d/%Y %I:%M %p"
 DATEFORMATS = [DATEFORMAT_EN, DATEFORMAT_DE]
+
+#: type annotation for a dataframe or series
+T_PD_DATA = TypeVar("T_PD_DATA", pd.Series, pd.DataFrame)
+
+
+def rename_suffix(data: T_PD_DATA, old_suffix: str, new_suffix: str) -> None:
+    # define a function to replace a suffix in a str if it is present
+    def replace_name(col):
+        return (
+            col.removesuffix(old_suffix) + new_suffix
+            if col.endswith(old_suffix)
+            else col
+        )
+
+    # apply the replacement function to the data
+    if isinstance(data, pd.DataFrame):
+        data.rename(
+            columns=replace_name,
+            inplace=True,
+        )
+    else:
+        data.name = replace_name(data.name)
+
+
+def timedelta_to_hours(td: timedelta) -> float:
+    return td.total_seconds() / 3600
+
+
+def get_resolution(data: pd.DataFrame | pd.Series) -> pd.Timedelta:
+    time_differences = data.index.diff().dropna()  # type: ignore
+    assert len(set(time_differences)) == 1, "Index of data is not equidistant"
+    return time_differences[0]
+
+
+def kwh_to_w(data: T_PD_DATA, rename: bool = True) -> T_PD_DATA:
+    resolution = get_resolution(data)
+    res_in_h = timedelta_to_hours(resolution)
+    factor = 1000 / res_in_h
+    converted = data * factor
+    if rename:
+        rename_suffix(converted, "[kWh]", "[W]")
+    return converted
 
 
 @dataclass
@@ -86,6 +128,7 @@ def aggregate_load_profiles(
     result_dir.mkdir(parents=True, exist_ok=True)
 
     data.set_index(DFColumns.TIME, inplace=True)
+    data = kwh_to_w(data)
 
     totals = data.sum()
     totals.name = DFColumns.LOAD
