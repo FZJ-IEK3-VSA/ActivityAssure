@@ -10,6 +10,7 @@ import seaborn as sns
 import pandas as pd
 
 from activityassure.loadprofiles.bdew_slp import BDEWProfileProvider
+from activityassure.loadprofiles import utils as loadutils
 from paths import DFColumns, LoadFiles
 
 
@@ -56,7 +57,7 @@ def stat_curves(path, result_dir, h25: pd.Series):
     hours_fmt = mdates.DateFormatter("%#H")
     ax.xaxis.set_major_formatter(hours_fmt)
     ax.xaxis.set_label_text("Uhrzeit [h]")
-    ax.yaxis.set_label_text("Elektrische Last [kWh]")
+    ax.yaxis.set_label_text("Elektrische Last [W]")
     ax.legend()
     fig.savefig(result_dir / "mean_day_stats.svg")
 
@@ -71,7 +72,7 @@ def total_load_distribution(path: Path, result_dir: Path, instance_name: str):
     sns.lineplot(totals, ax=ax, y=DFColumns.LOAD, x=range(len(totals)))
     ax.set_xticklabels([])
     ax.xaxis.set_label_text(instance_name)
-    ax.yaxis.set_label_text("Elektrische Last [kWh]")
+    ax.yaxis.set_label_text("Elektrische Last [W]")
     fig.savefig(result_dir / "profile_sums.svg")
 
 
@@ -86,6 +87,7 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     # create H25 standard profile load duration curve
     bdewprovider = BDEWProfileProvider()
     h25 = bdewprovider.get_profile_for_date_range(start_day, end_day)
+    h25 = loadutils.kwh_to_w(h25)
     h25_sorted = h25.sort_values(ascending=False)
 
     # scale H25 to the same total demand
@@ -102,7 +104,7 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
         x=np.linspace(0, len(sumcurve), len(h25_sorted)),
     )
     ax.xaxis.set_label_text("Dauer [min]")  # TODO: not correct for 600s HH data
-    ax.yaxis.set_label_text("Elektrische Last [kWh]")
+    ax.yaxis.set_label_text("Elektrische Last [W]")
     fig.savefig(result_dir / "sum_duration_curve.svg")
 
     # return the H25 profile for further use

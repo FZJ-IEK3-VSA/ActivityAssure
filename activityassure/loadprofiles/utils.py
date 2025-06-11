@@ -20,6 +20,8 @@ def rename_suffix(data: T_PD_DATA, old_suffix: str, new_suffix: str) -> None:
     """
     # define a function to replace the suffix in an str if it is present
     def replace_name(col):
+        if not col:
+            return col
         return (
             col.removesuffix(old_suffix) + new_suffix
             if col.endswith(old_suffix)
