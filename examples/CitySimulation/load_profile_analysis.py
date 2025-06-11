@@ -62,18 +62,21 @@ def stat_curves(path, result_dir, h25: pd.Series):
     fig.savefig(result_dir / "mean_day_stats.svg")
 
 
-def total_load_distribution(path: Path, result_dir: Path, instance_name: str):
-    averages = pd.read_csv(path / LoadFiles.AVERAGES)
-    averages.sort_values(DFColumns.LOAD, inplace=True, ascending=False)
+def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
+    total_demand = pd.read_csv(path / LoadFiles.TOTALS)
+    total_demand.sort_values(DFColumns.TOTAL_DEMAND, inplace=True, ascending=False)
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    sns.lineplot(averages, ax=ax, y=DFColumns.LOAD, x=range(len(averages)))
+    sns.lineplot(total_demand, ax=ax, y=DFColumns.TOTAL_DEMAND, x=range(len(total_demand)))
+    ax2 = ax.twinx()
+    sns.lineplot(total_demand, ax=ax2, y=DFColumns.AVERAGE_LOAD, x=range(len(total_demand)))
     ax.set_xticklabels([])
     ax.xaxis.set_label_text(instance_name)
-    ax.yaxis.set_label_text("Durchschnittliche elektrische Last [W]")
-    fig.savefig(result_dir / "profile_averages.svg")
+    ax.yaxis.set_label_text("Stromverbrauch [kWh]")
+    ax2.yaxis.set_label_text("Durchschnittliche Last [W]")
+    fig.savefig(result_dir / "total_demand_per_profile.svg")
 
 
 def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
@@ -143,7 +146,7 @@ def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
     result_dir.mkdir(parents=True, exist_ok=True)
     h25 = sum_duration_curve(path, result_dir)
     stat_curves(path, result_dir, h25)
-    total_load_distribution(path, result_dir, instances)
+    total_demand_distribution(path, result_dir, instances)
     simultaneity_curves(path, result_dir, instances)
 
 

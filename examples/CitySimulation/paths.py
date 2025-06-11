@@ -10,7 +10,7 @@ LOADS_DIR = "loads"
 class LoadFiles:
     """File names for aggregated load profile data"""
 
-    AVERAGES = "profile_averages.csv"
+    TOTALS = "total_demand_per_profile.csv"
     SUMPROFILE = "sum_profile.csv"
     STATS = "stat_profiles.csv"
     MEANDAY = "mean_day_profile.csv"
@@ -25,3 +25,5 @@ class DFColumns:
 
     TIME = "Time"
     LOAD = "Load [kWh]"
+    TOTAL_DEMAND = "Total demand [kWh]"
+    AVERAGE_LOAD = "Average load [W]"

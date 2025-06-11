@@ -74,47 +74,50 @@ def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame
 
 
 def aggregate_load_profiles(
-    data: pd.DataFrame, result_dir: Path, object_type: str = "Household"
+    data_kwh: pd.DataFrame, result_dir: Path, object_type: str = "Household"
 ):
     """
     Generate some aggregated profiles and statistics from a dataframe
     containing all house load profiles.
 
-    :param data: dataframe with all house load profiles of a city
+    :param data: dataframe with all house load profiles of a city in kWh
     :param result_dir: ouput directory for the aggregated data
     :param object_type: name of the object type, used as column header
     """
     result_dir = result_dir / f"aggregated_{object_type.lower()}"
     result_dir.mkdir(parents=True, exist_ok=True)
 
-    data.set_index(DFColumns.TIME, inplace=True)
-    data = loadutils.kwh_to_w(data)
+    data_kwh.set_index(DFColumns.TIME, inplace=True)
+    data_w = loadutils.kwh_to_w(data_kwh)
 
-    profile_averages = data.mean()
-    profile_averages.name = DFColumns.LOAD
-    profile_averages.index.name = object_type
-    profile_averages.to_csv(result_dir / LoadFiles.AVERAGES)
-    city_profile = data.sum(axis=1)
+    # store total demand (in kWh) and average load (the same in W) in one file
+    total_demands = data_kwh.sum()
+    average_loads = data_w.mean()
+    total = pd.concat({DFColumns.TOTAL_DEMAND: total_demands, DFColumns.AVERAGE_LOAD: average_loads}, axis=1)
+    total.index.name = object_type
+    total.to_csv(result_dir / LoadFiles.TOTALS)
+
+    city_profile = data_w.sum(axis=1)
     city_profile.name = DFColumns.LOAD
     city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
 
-    stats = get_stats_df(data)
+    stats = get_stats_df(data_w)
     stats.to_csv(result_dir / LoadFiles.STATS)
 
     # calc mean day profiles and statistics
-    meanday = data.groupby(data.index.time).mean()  # type: ignore
+    meanday = data_w.groupby(data_w.index.time).mean()  # type: ignore
     meanday.to_csv(result_dir / LoadFiles.MEANDAY)
     meanday_stats = get_stats_df(meanday)
     meanday_stats.to_csv(result_dir / LoadFiles.MEANDAY_STATS)
 
     # calc mean day profiles for each day type
-    meandaytype = data.groupby([data.index.weekday, data.index.time]).mean()  # type: ignore
+    meandaytype = data_w.groupby([data_w.index.weekday, data_w.index.time]).mean()  # type: ignore
     meandaytype.to_csv(result_dir / LoadFiles.MEANDAYTYPES)
     meandaytype_stats = get_stats_df(meandaytype)
     meandaytype_stats.to_csv(result_dir / LoadFiles.MEANDAYTYPE_STATS)
 
     # calc simultaneity
-    simultaneity = calc_simultaneity(data, 3)
+    simultaneity = calc_simultaneity(data_w, 3)
     simultaneity.to_csv(result_dir / LoadFiles.SIMULTANEITY)
 
 
