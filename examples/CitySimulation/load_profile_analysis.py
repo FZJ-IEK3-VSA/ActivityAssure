@@ -84,6 +84,15 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     # sort by load to get the load duration curve
     sumcurve.sort_values(DFColumns.LOAD, inplace=True, ascending=False)
 
+    # scale to a suitable unit
+    unit = "W"
+    if sumcurve[DFColumns.LOAD].min() > 1000:
+        sumcurve /= 1000 # convert W to kW
+        unit = "kW"
+    if sumcurve[DFColumns.LOAD].min() > 1000:
+        sumcurve /= 1000 # convert kW to MW
+        unit = "MW"
+
     # create H25 standard profile load duration curve
     bdewprovider = BDEWProfileProvider()
     h25 = bdewprovider.get_profile_for_date_range(start_day, end_day)
@@ -104,7 +113,7 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
         x=np.linspace(0, len(sumcurve), len(h25_sorted)),
     )
     ax.xaxis.set_label_text("Dauer [min]")  # TODO: not correct for 600s HH data
-    ax.yaxis.set_label_text("Elektrische Last [W]")
+    ax.yaxis.set_label_text(f"Elektrische Last [{unit}]")
     fig.savefig(result_dir / "sum_duration_curve.svg")
 
     # return the H25 profile for further use
