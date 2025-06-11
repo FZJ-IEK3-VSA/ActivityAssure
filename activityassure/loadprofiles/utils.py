@@ -18,6 +18,7 @@ def rename_suffix(data: T_PD_DATA, old_suffix: str, new_suffix: str) -> None:
     :param old_suffix: the suffix to replace
     :param new_suffix: the new suffix to use instead
     """
+
     # define a function to replace the suffix in an str if it is present
     def replace_name(col):
         if not col:
@@ -56,11 +57,12 @@ def get_resolution(data: pd.DataFrame | pd.Series) -> pd.Timedelta:
 
 
 def kwh_to_w(data: T_PD_DATA, rename: bool = True) -> T_PD_DATA:
-    """Convert
+    """Convert profiles from unit kWh to W. Requires a time index to determine
+    the profile resolution.
 
-    :param data: _description_
-    :param rename: _description_, defaults to True
-    :return: _description_
+    :param data: the data in kWh to convert
+    :param rename: if True, checks for units in column headers, and adapts them, defaults to True
+    :return: the converted profiles in W
     """
     resolution = get_resolution(data)
     res_in_h = timedelta_to_hours(resolution)
@@ -68,4 +70,21 @@ def kwh_to_w(data: T_PD_DATA, rename: bool = True) -> T_PD_DATA:
     converted = data * factor
     if rename:
         rename_suffix(converted, "[kWh]", "[W]")
+    return converted
+
+
+def w_to_kwh(data: T_PD_DATA, rename: bool = True) -> T_PD_DATA:
+    """Convert profiles from unit W to kWh. Requires a time index to determine
+    the profile resolution.
+
+    :param data: the data in W to convert
+    :param rename: if True, checks for units in column headers, and adapts them, defaults to True
+    :return: the converted profiles in kWh
+    """
+    resolution = get_resolution(data)
+    res_in_h = timedelta_to_hours(resolution)
+    factor = res_in_h / 100
+    converted = data * factor
+    if rename:
+        rename_suffix(converted, "[W]", "[kWh]")
     return converted
