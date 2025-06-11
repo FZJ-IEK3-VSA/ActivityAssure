@@ -63,17 +63,17 @@ def stat_curves(path, result_dir, h25: pd.Series):
 
 
 def total_load_distribution(path: Path, result_dir: Path, instance_name: str):
-    totals = pd.read_csv(path / LoadFiles.TOTALS)
-    totals.sort_values(DFColumns.LOAD, inplace=True, ascending=False)
+    averages = pd.read_csv(path / LoadFiles.AVERAGES)
+    averages.sort_values(DFColumns.LOAD, inplace=True, ascending=False)
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    sns.lineplot(totals, ax=ax, y=DFColumns.LOAD, x=range(len(totals)))
+    sns.lineplot(averages, ax=ax, y=DFColumns.LOAD, x=range(len(averages)))
     ax.set_xticklabels([])
     ax.xaxis.set_label_text(instance_name)
-    ax.yaxis.set_label_text("Elektrische Last [W]")
-    fig.savefig(result_dir / "profile_sums.svg")
+    ax.yaxis.set_label_text("Durchschnittliche elektrische Last [W]")
+    fig.savefig(result_dir / "profile_averages.svg")
 
 
 def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:

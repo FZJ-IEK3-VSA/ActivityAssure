@@ -90,10 +90,10 @@ def aggregate_load_profiles(
     data.set_index(DFColumns.TIME, inplace=True)
     data = loadutils.kwh_to_w(data)
 
-    totals = data.sum()
-    totals.name = DFColumns.LOAD
-    totals.index.name = object_type
-    totals.to_csv(result_dir / LoadFiles.TOTALS)
+    profile_averages = data.mean()
+    profile_averages.name = DFColumns.LOAD
+    profile_averages.index.name = object_type
+    profile_averages.to_csv(result_dir / LoadFiles.AVERAGES)
     city_profile = data.sum(axis=1)
     city_profile.name = DFColumns.LOAD
     city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
@@ -225,7 +225,7 @@ def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path)
     houses_subdir = city_result_dir / "Houses"
     files = [ProfileInfo(d.name, d / filename) for d in houses_subdir.iterdir()]
 
-    result_file_path = output_dir / "City.HouseSums.Electricity.csv"
+    result_file_path = output_dir / "City.Houses.Electricity.csv"
     data = combine_dataframes(files, data_col_name, result_file_path)
 
     # also calculate and save agggregated values from the merged dataframe
@@ -241,7 +241,6 @@ def combine_household_profiles_to_single_df(city_result_dir: Path, output_dir: P
     :param city_result_dir: result directory of the city simulation
     :param output_dir: output directory for the merged dataframe
     """
-
     # pattern of the LPG result files to aggregate
     file_prefix = "SumProfiles_600s."
     file_suffix = ".Electricity"
@@ -260,7 +259,7 @@ def combine_household_profiles_to_single_df(city_result_dir: Path, output_dir: P
         for d in house_dir.glob(filepattern)
     ]
 
-    result_file_path = output_dir / "City.HouseholdSums.Electricity.csv"
+    result_file_path = output_dir / "City.Households.Electricity.csv"
     data = combine_dataframes(files, data_col_name, result_file_path)
 
     # also calculate and save agggregated values from the merged dataframe

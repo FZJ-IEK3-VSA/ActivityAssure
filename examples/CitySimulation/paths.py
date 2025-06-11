@@ -10,7 +10,7 @@ LOADS_DIR = "loads"
 class LoadFiles:
     """File names for aggregated load profile data"""
 
-    TOTALS = "profile_sums.csv"
+    AVERAGES = "profile_averages.csv"
     SUMPROFILE = "sum_profile.csv"
     STATS = "stat_profiles.csv"
     MEANDAY = "mean_day_profile.csv"

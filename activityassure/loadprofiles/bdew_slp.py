@@ -75,8 +75,8 @@ def load_bdew_profile(profile: BDEWProfile = BDEWProfile.HOUSEHOLD):
     # Assign the extracted time as index
     df.index = pd.to_datetime(start_times, format="%H:%M").dt.time  # type: ignore
 
-    # rebuild the MultiIndex to make the sure dropped columns are not included
-    df.columns = pd.MultiIndex.from_tuples(df.columns)
+    # rebuild the MultiIndex to make sure the dropped columns are not included
+    df.columns = pd.MultiIndex.from_tuples(df.columns)  # type: ignore
     # the first column index level actually contains dates; select only the month index
     df.columns = df.columns.set_levels(df.columns.levels[0].month, level=0)  # type: ignore
     return df
