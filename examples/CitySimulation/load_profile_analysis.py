@@ -69,9 +69,13 @@ def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    sns.lineplot(total_demand, ax=ax, y=DFColumns.TOTAL_DEMAND, x=range(len(total_demand)))
+    sns.lineplot(
+        total_demand, ax=ax, y=DFColumns.TOTAL_DEMAND, x=range(len(total_demand))
+    )
     ax2 = ax.twinx()
-    sns.lineplot(total_demand, ax=ax2, y=DFColumns.AVERAGE_LOAD, x=range(len(total_demand)))
+    sns.lineplot(
+        total_demand, ax=ax2, y=DFColumns.AVERAGE_LOAD, x=range(len(total_demand))
+    )
     ax.set_xticklabels([])
     ax.xaxis.set_label_text(instance_name)
     ax.yaxis.set_label_text("Stromverbrauch [kWh]")
@@ -89,11 +93,11 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
 
     # scale to a suitable unit
     unit = "W"
-    if sumcurve[DFColumns.LOAD].min() > 1000:
-        sumcurve /= 1000 # convert W to kW
+    if sumcurve[DFColumns.LOAD].min() > 500:
+        sumcurve[DFColumns.LOAD] /= 1000  # convert W to kW
         unit = "kW"
-    if sumcurve[DFColumns.LOAD].min() > 1000:
-        sumcurve /= 1000 # convert kW to MW
+    if sumcurve[DFColumns.LOAD].min() > 500:
+        sumcurve[DFColumns.LOAD] /= 1000  # convert kW to MW
         unit = "MW"
 
     # create H25 standard profile load duration curve
