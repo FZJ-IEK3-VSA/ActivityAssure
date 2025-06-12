@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
 import numpy as np
 import seaborn as sns
 import pandas as pd
@@ -74,7 +75,10 @@ def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
     )
     ax2 = ax.twinx()
     sns.lineplot(
-        total_demand, ax=ax2, y=DFColumns.AVERAGE_LOAD, x=range(len(total_demand))
+        total_demand,
+        ax=ax2,  # type: ignore
+        y=DFColumns.AVERAGE_LOAD,
+        x=range(len(total_demand)),
     )
     ax.set_xticklabels([])
     ax.xaxis.set_label_text(instance_name)
@@ -143,6 +147,18 @@ def simultaneity_curves(path: Path, result_dir: Path, instances: str):
     sns.lineplot(simultaneity, ax=ax, dashes=False)
     ax.xaxis.set_label_text(f"Anzahl {instances}")
     ax.yaxis.set_label_text("Gleichzeitigkeitsfaktor")
+
+    # set a log scale and select appropriate axis limits
+    ax.set_yscale("log")
+    minval = min(10**-1, simultaneity.min().min())
+    ax.set_ylim(minval, 1.1)
+    # Define fixed ticks (avoid automatic exponent-style ticks)
+    ticks = np.arange(0.1, 1.1, 0.1)
+    ax.set_yticks(ticks)
+    # Plain decimal format on y-axis
+    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.1f"))
+
+    fig.tight_layout()
     fig.savefig(result_dir / "simultaneity.svg")
 
 
