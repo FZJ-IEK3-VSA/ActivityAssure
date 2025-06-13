@@ -175,13 +175,12 @@ def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: 
 
         # wrong date format, try again with the next format
         logging.warning(
-            f"Time column not parsed correctly, trying again with dateformat {dateformat}."
-        )
-        dateformat = DATEFORMAT_DE
-        assert data[DFColumns.TIME].dtype != "datetime64[ns]", (
-            f"Time column not parsed correctly (first value: {data['Time'][0]}, specified dateformat: {dateformat})"
+            f"Time column not parsed correctly with dateformat {dateformat}, trying again."
         )
     assert data is not None, f"Could not load the data file {profiles[0].path}."
+    assert data[DFColumns.TIME].dtype == "datetime64[ns]", (
+        f"Time column could not be parsed correctly (first value: {data['Time'][0]}"
+    )
 
     TIMESTEP_COL = "Electricity.Timestep"
     data.set_index(TIMESTEP_COL, inplace=True)
