@@ -40,10 +40,11 @@ def main():
 
     load_profile_analysis.main(postproc_dir, plot_path / "loads")
 
+    poi_validation.main(city_result_dir, plot_path / "pois")
+
     # calc_statistics.calc_activity_statistics(postproc_dir, statistics_path, plot_path)
 
     # TODO: futher validation steps:
-    # - include POI validation
     # - add travel validation
     # - activity statistics, if that adds anything to this
 

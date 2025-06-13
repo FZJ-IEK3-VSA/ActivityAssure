@@ -13,6 +13,8 @@ import pandas as pd
 
 from tqdm import tqdm
 
+from paths import PoiDFColumns
+
 
 @dataclass
 class PoiLog:
@@ -22,60 +24,32 @@ class PoiLog:
     """
 
     poi_id: str
-    dates: list[datetime]
-    presence: list[int]
+    data: pd.DataFrame
+    poi_type: str = ""
+
+    def get_presence(self) -> pd.Series:
+        return self.data[PoiDFColumns.PRESENCE]
+
+    @staticmethod
+    def load(poi_file: Path) -> "PoiLog":
+        """
+        Parse a POI log from file
+
+        :param poi_file: path of the log file to load
+        :return: the parsed POI log
+        """
+        df = pd.read_csv(poi_file, parse_dates=[1])
+        return PoiLog(poi_file.stem, df)
 
 
 @dataclass
 class PoiDailyProfiles:
     """
-    Stores a collection of daily presence profiles for one POI. The profiles are
+    Stores a collection of daily presence profiles for one POI.
     """
 
     poi_id: str
     profiles_by_date: dict[date, pd.DataFrame]
-
-
-def parse_date_de(index_str: str) -> datetime:
-    """Parse a datetime from the index part of a POI log entry, German format"""
-    index_parts = index_str.split(" ")
-    assert len(index_parts) == 3
-    date_str = f"{index_parts[1]} {index_parts[2]}"
-    parsed_datetime = datetime.strptime(date_str, "%d.%m.%Y %H:%M:%S")
-    return parsed_datetime
-
-
-def parse_date_en(index_str: str) -> datetime:
-    """Parse a datetime from the index part of a POI log entry, US format"""
-    index_parts = index_str.split(" ")
-    assert len(index_parts) >= 3
-    date_str = " ".join(index_parts[1:])
-    parsed_datetime = datetime.strptime(date_str, "%m/%d/%Y %I:%M:%S %p")
-    return parsed_datetime
-
-
-def parse_poi_logfile(poi_file: Path) -> PoiLog:
-    """
-    Parse a single POI presence log from file.
-
-    :param poi_file: path to the POI presence log file
-    :return: the loaded POI log
-    """
-    with open(poi_file, "r") as f:
-        lines = f.readlines()
-    dates = []
-    presences = []
-    for line in lines:
-        # line format: 003497 31.12.2019 10:17:00 - 1
-        line = line.strip()
-        parts = line.split(" - ")
-        assert len(parts) == 2
-        index = parts[0]
-        presences.append(int(parts[1]))
-
-        dt = parse_date_en(index)
-        dates.append(dt)
-    return PoiLog(poi_file.stem, dates, presences)
 
 
 def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
@@ -88,14 +62,21 @@ def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
     """
     poi_logs = {}
     files = list(poi_log_path.glob(f"*{filter}*.txt"))
-    logging.info(f"Found {len(files)} POI log files")
+    logging.info(f"Found {len(files)} POI log files of type {filter}")
+    skipped = 0
     for poi_file in tqdm(files):
         assert poi_file.is_file()
         if filter not in poi_file.stem:
             # skip this file
             continue
-        poi_log = parse_poi_logfile(poi_file)
+        poi_log = PoiLog.load(poi_file)
+        if len(poi_log.data) == 0:
+            # poi log is empty, skip it
+            skipped += 1
+            continue
         poi_logs[poi_log.poi_id] = poi_log
+    if skipped > 0:
+        logging.info(f"Skipped {skipped} empty POI log files of type {filter}")
     return poi_logs
 
 
@@ -107,8 +88,8 @@ def get_daily_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
     :return: a PoiDailyProfiles object containing the daily profiles
     """
     # create a dataframe with the dates as index and the presence as column
-    df = pd.DataFrame({"dates": poi_log.dates, "presence": poi_log.presence})
-    df.set_index("dates", inplace=True)
+    df = poi_log.data.set_index(PoiDFColumns.DATETIME)
+    df.drop(columns=[PoiDFColumns.TIMESTEP], inplace=True)
     # resample to daily frequency and sum the presence values
     daily_profile = df.resample("1min").ffill()
 
@@ -138,7 +119,7 @@ def plot_daily_profiles(
     for group_date, group in profiles.profiles_by_date.items():
         # times = matplotlib.dates.date2num(group["time"])
         times = [datetime.combine(date(2025, 1, 1), t) for t in group["time"]]
-        ax.plot(times, group["presence"], label=str(group_date))  # type: ignore
+        ax.plot(times, group[PoiDFColumns.PRESENCE], label=str(group_date))  # type: ignore
     ax.set_ylim(None, max_presence)
     ax.set_xlabel("Time of Day")
     ax.set_ylabel("Visitor Count")
@@ -161,7 +142,7 @@ def plot_daily_visitors_histogram(dir: Path, profiles: PoiDailyProfiles):
     fig, ax = plt.subplots()
     visitors_per_day = []
     for group_date, group in profiles.profiles_by_date.items():
-        diff = group["presence"].diff()
+        diff = group[PoiDFColumns.PRESENCE].diff()
         posdiff = diff[diff > 0]  # type: ignore
         total = posdiff.sum()
         visitors_per_day.append(total)
@@ -173,22 +154,27 @@ def plot_daily_visitors_histogram(dir: Path, profiles: PoiDailyProfiles):
     plt.close(fig)
 
 
-def main():
-    # city_result_dir = Path("D:/LPG/Results/scenario_city-julich-street-grosse-rurstr")
-    city_result_dir = Path("R:/city_simulation_results/scenario_city-julich_25")
-    poi_log_path = city_result_dir / "Logs/poi_presence"
+def process_poi_type(poi_log_path: Path, plot_dir: Path, poi_type: str):
+    poi_type_subdir = plot_dir / poi_type
 
-    poi_type = "Doctors Office"
     poi_logs = load_poi_logs(poi_log_path, poi_type)
+    if not poi_logs:
+        logging.warning(f"Found no POI logs of type {poi_type}")
+        return
 
-    plot_dir = Path("./POI_plots") / poi_type
-
-    max_presence = max(max(p.presence) for p in poi_logs.values())
-
+    max_presence = max(p.get_presence().max() for p in poi_logs.values())
     for poi in poi_logs.values():
         daily = get_daily_profiles(poi)
-        plot_daily_visitors_histogram(plot_dir, daily)
-        plot_daily_profiles(plot_dir, daily, max_presence)
+        plot_daily_visitors_histogram(poi_type_subdir, daily)
+        plot_daily_profiles(poi_type_subdir, daily, max_presence)
+
+
+def main(city_result_dir: Path, plot_dir: Path):
+    poi_log_path = city_result_dir / "Logs/poi_presence"
+
+    POI_TYPES = ["Supermarket", "Doctors Office"]
+    for poi_type in POI_TYPES:
+        process_poi_type(poi_log_path, plot_dir, poi_type)
 
 
 if __name__ == "__main__":
@@ -197,4 +183,6 @@ if __name__ == "__main__":
         level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    main()
+    city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+    plot_dir = city_result_dir / "Postprocessed/plots/pois"
+    main(city_result_dir, plot_dir)

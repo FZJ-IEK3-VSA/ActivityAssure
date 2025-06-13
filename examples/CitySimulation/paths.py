@@ -28,3 +28,12 @@ class DFColumns:
     LOAD = "Load [kWh]"
     TOTAL_DEMAND = "Total demand [kWh]"
     AVERAGE_LOAD = "Average load [W]"
+
+
+class PoiDFColumns:
+    """Column names for dataframes with POI data"""
+
+    TIMESTEP = "Timestep"
+    DATETIME = "Datetime"
+    PRESENCE = "People present"
+    TRAVELING = "People traveling"
