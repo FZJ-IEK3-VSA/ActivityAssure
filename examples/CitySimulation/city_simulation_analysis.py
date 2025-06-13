@@ -7,7 +7,7 @@ from pathlib import Path
 from paths import SubDirs
 import load_profile_analysis
 import poi_validation
-import calc_statistics
+import plausibility_statistics
 
 
 def main():
