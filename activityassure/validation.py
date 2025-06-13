@@ -230,7 +230,7 @@ def save_file_per_indicator_per_combination(
 
 
 @utils.timing
-def default_validation(model_path: Path, validation_path: Path):
+def default_validation(model_path: Path, validation_path: Path, heatmaps: bool = True):
     """
     Default validation routine. Loads model and validation statistics
     and compares matching categories individually by generating
@@ -238,6 +238,8 @@ def default_validation(model_path: Path, validation_path: Path):
 
     :param model_path: path of the model statistics dataset
     :param validation_path: path of the validation dataset
+    :param heatmaps: if True, generates heatmaps to compare indicator values across
+                     different dimensions
     """
     # load LPG statistics and validation statistics
     input_statistics = ValidationSet.load(model_path)
@@ -254,8 +256,9 @@ def default_validation(model_path: Path, validation_path: Path):
         result_subdir = validation_result_path / variant_name
         metrics_df = indicator_set.save(result_subdir / "indicators_per_category")
 
-        # plot heatmaps to compare indicator values
-        plot_path = result_subdir / "heatmaps"
-        indicator_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path)
-        indicator_heatmaps.plot_indicators_by_activity(metrics_df, plot_path)
-        indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path)
+        if heatmaps:
+            # plot heatmaps to compare indicator values
+            plot_path = result_subdir / "heatmaps"
+            indicator_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path)
+            indicator_heatmaps.plot_indicators_by_activity(metrics_df, plot_path)
+            indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path)
