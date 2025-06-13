@@ -55,16 +55,15 @@ def collect_profile_stats(
     statistics.save(result_filepath)
 
 
-def plot_profile_stats(statistics_file: Path):
+def plot_profile_stats(statistics_file: Path, plot_dir: Path):
     statistics = ActivityStatistics.load(statistics_file)
     activity = statistics.activity
-    output_dir = statistics_file.parent / "plots"
     statistics_plots.plot_distribution(
-        statistics.shares, output_dir / f"{activity}_shares.png"
+        statistics.shares, plot_dir / f"{activity}_shares.png"
     )
     statistics_plots.plot_distribution_td(
-        statistics.durations, output_dir / f"{activity}_durations.png"
+        statistics.durations, plot_dir / f"{activity}_durations.png"
     )
     statistics_plots.plot_distribution_td(
-        statistics.durations_without, output_dir / f"{activity}_durations_without.png"
+        statistics.durations_without, plot_dir / f"{activity}_durations_without.png"
     )

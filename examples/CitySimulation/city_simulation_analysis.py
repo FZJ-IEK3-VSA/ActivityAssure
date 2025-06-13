@@ -38,14 +38,22 @@ def main():
     plot_path = postproc_dir / SubDirs.PLOTS
 
     load_profile_analysis.main(postproc_dir, plot_path / SubDirs.LOADS_DIR)
-
     poi_validation.main(city_result_dir, plot_path / SubDirs.POIS)
 
-    # calc_statistics.calc_activity_statistics(postproc_dir, statistics_path, plot_path)
+    # activity validation with additional custom statistics
+    # lpg_example_dir = Path("examples/LoadProfileGenerator/data")
+    # mapping_file = lpg_example_dir / "activity_mapping.json"
+    # person_trait_file = lpg_example_dir / "person_characteristics.json"
+    # calc_statistics.calc_activity_statistics(
+    #     postproc_dir,
+    #     mapping_file,
+    #     person_trait_file,
+    #     postproc_dir / "custom_activity_stats",
+    #     plot_path / "custom_activity_stats",
+    # )
 
     # TODO: futher validation steps:
     # - add travel validation
-    # - activity statistics, if that adds anything to this
 
 
 if __name__ == "__main__":
