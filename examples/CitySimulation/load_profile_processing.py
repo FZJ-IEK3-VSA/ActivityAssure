@@ -93,7 +93,10 @@ def aggregate_load_profiles(
     # store total demand (in kWh) and average load (the same in W) in one file
     total_demands = data_kwh.sum()
     average_loads = data_w.mean()
-    total = pd.concat({DFColumns.TOTAL_DEMAND: total_demands, DFColumns.AVERAGE_LOAD: average_loads}, axis=1)
+    total = pd.concat(
+        {DFColumns.TOTAL_DEMAND: total_demands, DFColumns.AVERAGE_LOAD: average_loads},
+        axis=1,
+    )
     total.index.name = object_type
     total.to_csv(result_dir / LoadFiles.TOTALS)
 
@@ -103,6 +106,10 @@ def aggregate_load_profiles(
 
     stats = get_stats_df(data_w)
     stats.to_csv(result_dir / LoadFiles.STATS)
+
+    dayprofiles = split_cols_into_single_days(data_w)
+    daystats = get_stats_df(dayprofiles)
+    daystats.to_csv(result_dir / LoadFiles.DAYPROFILESTATS)
 
     # calc mean day profiles and statistics
     meanday = data_w.groupby(data_w.index.time).mean()  # type: ignore
@@ -119,6 +126,22 @@ def aggregate_load_profiles(
     # calc simultaneity
     simultaneity = calc_simultaneity(data_w, 3)
     simultaneity.to_csv(result_dir / LoadFiles.SIMULTANEITY)
+
+
+def split_cols_into_single_days(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    If a dataframe spans multiple days, this splits up each column into multiple
+    new columns, one for each day. The new index consist only of the time of day.
+
+    :param data: data to split up
+    :return: the split up profiles
+    """
+    data = data.copy()
+    assert isinstance(data.index, pd.DatetimeIndex), "Data must have a DatetimeIndex"
+    data["time"] = data.index.time
+    data["date"] = data.index.date
+    dayprofiles = data.pivot(index="time", columns="date")
+    return dayprofiles
 
 
 def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: Path):

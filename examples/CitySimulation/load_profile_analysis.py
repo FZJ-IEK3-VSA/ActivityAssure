@@ -31,15 +31,15 @@ def scale_profile(profile_to_scale, reference_profile):
     return profile_to_scale
 
 
-def stat_curves(path, result_dir, h25: pd.Series):
-    statpath = path / LoadFiles.MEANDAY_STATS
+def stat_curves(path, result_dir, h25: pd.Series, with_max: bool = True):
+    statpath = path / LoadFiles.DAYPROFILESTATS
     stats = pd.read_csv(statpath, index_col=0, parse_dates=[0], date_format="%H:%M:%S")
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     colormap = defaultdict(lambda: "grey", {"mean": "blue", "median": "green"})
     for stat in stats.columns:
-        # if stat == "max":
-        #     continue
+        if not with_max and stat == "max":
+            continue
 
         ax.plot(stats[stat], label=stat, color=colormap[stat])
 
@@ -54,13 +54,20 @@ def stat_curves(path, result_dir, h25: pd.Series):
     h25meanday = scale_profile(h25meanday, stats["mean"])
     ax.plot(h25meanday, label="H25 Standardprofil", color="red")
 
+    filename = "dayprofile_stats"
+    if with_max:
+        # when including the maximum, use a log scale
+        ax.set_yscale("log")
+    else:
+        filename += "_no_max"
+
     # add axis labels
     hours_fmt = mdates.DateFormatter("%#H")
     ax.xaxis.set_major_formatter(hours_fmt)
     ax.xaxis.set_label_text("Uhrzeit [h]")
     ax.yaxis.set_label_text("Elektrische Last [W]")
     ax.legend()
-    fig.savefig(result_dir / "mean_day_stats.svg")
+    fig.savefig(result_dir / f"{filename}.svg")
 
 
 def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
@@ -165,7 +172,8 @@ def simultaneity_curves(path: Path, result_dir: Path, instances: str):
 def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
     result_dir.mkdir(parents=True, exist_ok=True)
     h25 = sum_duration_curve(path, result_dir)
-    stat_curves(path, result_dir, h25)
+    stat_curves(path, result_dir, h25, True)
+    stat_curves(path, result_dir, h25, False)
     total_demand_distribution(path, result_dir, instances)
     simultaneity_curves(path, result_dir, instances)
 
