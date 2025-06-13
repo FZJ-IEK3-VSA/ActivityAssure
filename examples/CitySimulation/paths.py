@@ -1,7 +1,5 @@
 """Filepaths and directory names for city simulation postprocessing and analysis"""
 
-#: subdirectory for all postprocessing results within the simulation result directory
-
 
 class SubDirs:
     """Subdirectory names for postprocessed data and plots"""

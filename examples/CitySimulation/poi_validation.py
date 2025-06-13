@@ -39,6 +39,18 @@ class PoiLog:
         :return: the parsed POI log
         """
         df = pd.read_csv(poi_file, parse_dates=[1])
+
+        # check if the header is correct
+        expected_header = [
+            DFColumnsPoi.TIMESTEP,
+            DFColumnsPoi.DATETIME,
+            DFColumnsPoi.PRESENCE,
+        ]
+        if list(df.columns) != expected_header:
+            # Re-read with custom header
+            df = pd.read_csv(
+                poi_file, header=None, names=expected_header, parse_dates=[1]
+            )
         return PoiLog(poi_file.stem, df)
 
 
