@@ -76,8 +76,6 @@ def main():
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    # path to a directory with preprocessed activitiy profiles in csv format
-    
     postproc_path = Path("C:/LPG/Results/scenario_julich-grosse-rurstr/Postprocessed")
     profiles_dir = postproc_path / "activity_profiles"
     statistics_path = postproc_path / "activityassure_statistics"

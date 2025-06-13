@@ -8,6 +8,7 @@ from activityassure.preprocessing.lpg import activity_profiles
 
 import paths
 import load_profile_processing
+import activity_statistics_validation
 
 
 def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: Path):
@@ -33,12 +34,26 @@ def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: P
 
 
 def postprocess_city_results(city_result_dir: Path):
+    """
+    Postprocesses the results of a city simulation to generate statistics and
+    further data for the final validation
+
+    :param city_result_dir: result directory of the city simulation
+    """
+    # process and aggregate load profile data for validation
     postproc_dir = city_result_dir / paths.POSTPROCESSED_DIR
     load_profile_processing.main(city_result_dir, postproc_dir / "loads")
 
+    # convert activity profiles from databases to csv format
     mapping_file = Path("examples/LoadProfileGenerator/data/activity_mapping.json")
     activity_profiles_dir = postproc_dir / paths.ACTIVITY_PROFILES
     convert_activity_profiles(city_result_dir, activity_profiles_dir, mapping_file)
+
+    # validate activity profiles with ActivityAssure
+    statistics_path = postproc_dir / "activityassure_statistics"
+    activity_statistics_validation.calc_citysim_statistics_and_validate(
+        activity_profiles_dir, statistics_path
+    )
 
 
 def main():

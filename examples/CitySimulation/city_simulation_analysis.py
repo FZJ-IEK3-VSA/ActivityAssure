@@ -38,13 +38,9 @@ def main():
     postproc_dir = city_result_dir / paths.POSTPROCESSED_DIR
     plot_path = postproc_dir / "plots"
 
-    load_profile_analysis.main(postproc_dir, plot_path)
+    load_profile_analysis.main(postproc_dir, plot_path / "loads")
 
-    profile_dir = postproc_dir / paths.ACTIVITY_PROFILES
-    statistics_path = postproc_dir / "activityassure_statistics"
-    activity_statistics_validation.calc_citysim_statistics_and_validate(
-        profile_dir, statistics_path
-    )
+    # calc_statistics.calc_activity_statistics(postproc_dir, statistics_path, plot_path)
 
     # TODO: futher validation steps:
     # - include POI validation
