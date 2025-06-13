@@ -1,10 +1,17 @@
 """Filepaths and directory names for city simulation postprocessing and analysis"""
 
 #: subdirectory for all postprocessing results within the simulation result directory
-POSTPROCESSED_DIR = "Postprocessed"
 
-ACTIVITY_PROFILES = "activity_profiles"
-LOADS_DIR = "loads"
+
+class SubDirs:
+    """Subdirectory names for postprocessed data and plots"""
+
+    POSTPROCESSED_DIR = "Postprocessed"
+    PLOTS = "plots"
+    ACTIVITY_PROFILES = "activity_profiles"
+    LOADS_DIR = "loads"
+    POIS = "pois"
+    ACTIVITYASSURE = "activityassure_statistics"
 
 
 class LoadFiles:
@@ -21,7 +28,7 @@ class LoadFiles:
     SIMULTANEITY = "simultaneity.csv"
 
 
-class DFColumns:
+class DFColumnsLoad:
     """Column names for dataframes with load profiles"""
 
     TIME = "Time"
@@ -30,7 +37,7 @@ class DFColumns:
     AVERAGE_LOAD = "Average load [W]"
 
 
-class PoiDFColumns:
+class DFColumnsPoi:
     """Column names for dataframes with POI data"""
 
     TIMESTEP = "Timestep"

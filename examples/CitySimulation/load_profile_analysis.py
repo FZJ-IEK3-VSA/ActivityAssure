@@ -12,7 +12,7 @@ import pandas as pd
 
 from activityassure.loadprofiles.bdew_slp import BDEWProfileProvider
 from activityassure.loadprofiles import utils as loadutils
-from paths import DFColumns, LoadFiles
+from paths import DFColumnsLoad, LoadFiles
 
 
 def scale_profile(profile_to_scale, reference_profile):
@@ -72,19 +72,19 @@ def stat_curves(path, result_dir, h25: pd.Series, with_max: bool = True):
 
 def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
     total_demand = pd.read_csv(path / LoadFiles.TOTALS)
-    total_demand.sort_values(DFColumns.TOTAL_DEMAND, inplace=True, ascending=False)
+    total_demand.sort_values(DFColumnsLoad.TOTAL_DEMAND, inplace=True, ascending=False)
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
     sns.lineplot(
-        total_demand, ax=ax, y=DFColumns.TOTAL_DEMAND, x=range(len(total_demand))
+        total_demand, ax=ax, y=DFColumnsLoad.TOTAL_DEMAND, x=range(len(total_demand))
     )
     ax2 = ax.twinx()
     sns.lineplot(
         total_demand,
         ax=ax2,  # type: ignore
-        y=DFColumns.AVERAGE_LOAD,
+        y=DFColumnsLoad.AVERAGE_LOAD,
         x=range(len(total_demand)),
     )
     ax.set_xticklabels([])
@@ -96,19 +96,19 @@ def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
 
 def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     sumcurve = pd.read_csv(path / LoadFiles.SUMPROFILE, parse_dates=[0])
-    start_day = sumcurve[DFColumns.TIME].min().date()
-    end_day = sumcurve[DFColumns.TIME].max().date()
+    start_day = sumcurve[DFColumnsLoad.TIME].min().date()
+    end_day = sumcurve[DFColumnsLoad.TIME].max().date()
 
     # sort by load to get the load duration curve
-    sumcurve.sort_values(DFColumns.LOAD, inplace=True, ascending=False)
+    sumcurve.sort_values(DFColumnsLoad.LOAD, inplace=True, ascending=False)
 
     # scale to a suitable unit
     unit = "W"
-    if sumcurve[DFColumns.LOAD].min() > 500:
-        sumcurve[DFColumns.LOAD] /= 1000  # convert W to kW
+    if sumcurve[DFColumnsLoad.LOAD].min() > 500:
+        sumcurve[DFColumnsLoad.LOAD] /= 1000  # convert W to kW
         unit = "kW"
-    if sumcurve[DFColumns.LOAD].min() > 500:
-        sumcurve[DFColumns.LOAD] /= 1000  # convert kW to MW
+    if sumcurve[DFColumnsLoad.LOAD].min() > 500:
+        sumcurve[DFColumnsLoad.LOAD] /= 1000  # convert kW to MW
         unit = "MW"
 
     # create H25 standard profile load duration curve
@@ -118,12 +118,12 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     h25_sorted = h25.sort_values(ascending=False)
 
     # scale H25 to the same total demand
-    h25_sorted = scale_profile(h25_sorted, sumcurve[DFColumns.LOAD])
+    h25_sorted = scale_profile(h25_sorted, sumcurve[DFColumnsLoad.LOAD])
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    sns.lineplot(sumcurve, ax=ax, y=DFColumns.LOAD, x=range(len(sumcurve)))
+    sns.lineplot(sumcurve, ax=ax, y=DFColumnsLoad.LOAD, x=range(len(sumcurve)))
     sns.lineplot(
         y=h25_sorted,
         ax=ax,

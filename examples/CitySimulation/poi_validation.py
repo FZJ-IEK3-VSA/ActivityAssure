@@ -13,7 +13,7 @@ import pandas as pd
 
 from tqdm import tqdm
 
-from paths import PoiDFColumns
+from paths import DFColumnsPoi
 
 
 @dataclass
@@ -28,7 +28,7 @@ class PoiLog:
     poi_type: str = ""
 
     def get_presence(self) -> pd.Series:
-        return self.data[PoiDFColumns.PRESENCE]
+        return self.data[DFColumnsPoi.PRESENCE]
 
     @staticmethod
     def load(poi_file: Path) -> "PoiLog":
@@ -88,8 +88,8 @@ def get_daily_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
     :return: a PoiDailyProfiles object containing the daily profiles
     """
     # create a dataframe with the dates as index and the presence as column
-    df = poi_log.data.set_index(PoiDFColumns.DATETIME)
-    df.drop(columns=[PoiDFColumns.TIMESTEP], inplace=True)
+    df = poi_log.data.set_index(DFColumnsPoi.DATETIME)
+    df.drop(columns=[DFColumnsPoi.TIMESTEP], inplace=True)
     # resample to daily frequency and sum the presence values
     daily_profile = df.resample("1min").ffill()
 
@@ -119,7 +119,7 @@ def plot_daily_profiles(
     for group_date, group in profiles.profiles_by_date.items():
         # times = matplotlib.dates.date2num(group["time"])
         times = [datetime.combine(date(2025, 1, 1), t) for t in group["time"]]
-        ax.plot(times, group[PoiDFColumns.PRESENCE], label=str(group_date))  # type: ignore
+        ax.plot(times, group[DFColumnsPoi.PRESENCE], label=str(group_date))  # type: ignore
     ax.set_ylim(None, max_presence)
     ax.set_xlabel("Time of Day")
     ax.set_ylabel("Visitor Count")
@@ -142,7 +142,7 @@ def plot_daily_visitors_histogram(dir: Path, profiles: PoiDailyProfiles):
     fig, ax = plt.subplots()
     visitors_per_day = []
     for group_date, group in profiles.profiles_by_date.items():
-        diff = group[PoiDFColumns.PRESENCE].diff()
+        diff = group[DFColumnsPoi.PRESENCE].diff()
         posdiff = diff[diff > 0]  # type: ignore
         total = posdiff.sum()
         visitors_per_day.append(total)

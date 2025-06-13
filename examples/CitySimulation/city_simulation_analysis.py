@@ -4,8 +4,7 @@ import argparse
 import logging
 from pathlib import Path
 
-import paths
-import activity_statistics_validation
+from paths import SubDirs
 import load_profile_analysis
 import poi_validation
 import calc_statistics
@@ -35,12 +34,12 @@ def main():
     logging.info(f"Analysing city simulation results in {city_result_dir}")
 
     # path to a directory with preprocessed activitiy profiles in csv format
-    postproc_dir = city_result_dir / paths.POSTPROCESSED_DIR
-    plot_path = postproc_dir / "plots"
+    postproc_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR
+    plot_path = postproc_dir / SubDirs.PLOTS
 
-    load_profile_analysis.main(postproc_dir, plot_path / "loads")
+    load_profile_analysis.main(postproc_dir, plot_path / SubDirs.LOADS_DIR)
 
-    poi_validation.main(city_result_dir, plot_path / "pois")
+    poi_validation.main(city_result_dir, plot_path / SubDirs.POIS)
 
     # calc_statistics.calc_activity_statistics(postproc_dir, statistics_path, plot_path)
 

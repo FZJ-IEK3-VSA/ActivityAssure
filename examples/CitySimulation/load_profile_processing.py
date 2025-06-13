@@ -12,7 +12,7 @@ import numpy as np
 import psutil
 import pandas as pd
 
-from paths import DFColumns, LoadFiles
+from paths import DFColumnsLoad, LoadFiles
 
 from activityassure.loadprofiles import utils as loadutils
 
@@ -87,21 +87,24 @@ def aggregate_load_profiles(
     result_dir = result_dir / f"aggregated_{object_type.lower()}"
     result_dir.mkdir(parents=True, exist_ok=True)
 
-    data_kwh.set_index(DFColumns.TIME, inplace=True)
+    data_kwh.set_index(DFColumnsLoad.TIME, inplace=True)
     data_w = loadutils.kwh_to_w(data_kwh)
 
     # store total demand (in kWh) and average load (the same in W) in one file
     total_demands = data_kwh.sum()
     average_loads = data_w.mean()
     total = pd.concat(
-        {DFColumns.TOTAL_DEMAND: total_demands, DFColumns.AVERAGE_LOAD: average_loads},
+        {
+            DFColumnsLoad.TOTAL_DEMAND: total_demands,
+            DFColumnsLoad.AVERAGE_LOAD: average_loads,
+        },
         axis=1,
     )
     total.index.name = object_type
     total.to_csv(result_dir / LoadFiles.TOTALS)
 
     city_profile = data_w.sum(axis=1)
-    city_profile.name = DFColumns.LOAD
+    city_profile.name = DFColumnsLoad.LOAD
     city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
 
     stats = get_stats_df(data_w)
@@ -165,11 +168,11 @@ def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: 
             profiles[0].path,
             sep=";",
             index_col=False,
-            parse_dates=[DFColumns.TIME],
+            parse_dates=[DFColumnsLoad.TIME],
             date_format=dateformat,
             dtype={0: int, data_col: float},
         )
-        if data[DFColumns.TIME].dtype == "datetime64[ns]":
+        if data[DFColumnsLoad.TIME].dtype == "datetime64[ns]":
             # data successfully parsed
             break
 
@@ -178,7 +181,7 @@ def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: 
             f"Time column not parsed correctly with dateformat {dateformat}, trying again."
         )
     assert data is not None, f"Could not load the data file {profiles[0].path}."
-    assert data[DFColumns.TIME].dtype == "datetime64[ns]", (
+    assert data[DFColumnsLoad.TIME].dtype == "datetime64[ns]", (
         f"Time column could not be parsed correctly (first value: {data['Time'][0]}"
     )
 
