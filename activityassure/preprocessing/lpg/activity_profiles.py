@@ -51,6 +51,27 @@ AFFORDANCE_PREFIX_MAPPING = {
 }
 
 
+def get_performedactions_from_db(database_file: Path) -> list[dict]:
+    """
+    Loads the table PerformedActions from the specified database and
+    returns the parsed JSON as a list of dicts.
+
+    :param database_file: path of the database file to load
+    :return: parsed JSON content of all actions
+    """
+    assert database_file.is_file(), f"Database file not found: {database_file}"
+    # get all activities from LPG result database
+    con = sqlite3.connect(str(database_file))
+    with con:
+        cur = con.cursor()
+        query = "SELECT * FROM PerformedActions"
+        results = cur.execute(query)
+        activity_list: list[tuple[str, str]] = results.fetchall()
+    # parse the json info column for each activity
+    parsed_json_list = [json.loads(act) for name, act in activity_list]
+    return parsed_json_list
+
+
 def load_activity_profile_from_db(
     database_file: Path, mapping_path: Path
 ) -> dict[str, pd.DataFrame]:
@@ -61,7 +82,7 @@ def load_activity_profile_from_db(
     :param db_file: the database file to load
     :param mapping_path: path to the affordance mapping file
     """
-    assert database_file.is_file(), f"Database file not found: {database_file}"
+    parsed_json_list = get_performedactions_from_db(database_file)
 
     # load activity mapping
     if mapping_path.is_file():
@@ -71,15 +92,6 @@ def load_activity_profile_from_db(
         # initialize a new mapping
         mapping = {}
 
-    # get all activities from LPG result database
-    con = sqlite3.connect(str(database_file))
-    with con:
-        cur = con.cursor()
-        query = "SELECT * FROM PerformedActions"
-        results = cur.execute(query)
-        activity_list: list[tuple[str, str]] = results.fetchall()
-    # parse the json info column for each activity
-    parsed_json_list = [json.loads(act) for name, act in activity_list]
     # the list contains activities of all persons, so they need to be grouped
     rows_by_person: dict[str, list[tuple[int, datetime, str]]] = defaultdict(list)
     unmapped_affordances = {}
