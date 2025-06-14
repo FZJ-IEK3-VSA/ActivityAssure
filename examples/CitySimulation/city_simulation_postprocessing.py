@@ -11,16 +11,14 @@ import load_profile_processing
 import activity_statistics_validation
 
 
-def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: Path):
+def collect_household_dbs(result_dir: Path) -> dict[str, Path]:
     """
-    Converts all activity profiles generated in an LPG City Simulation to CSV files.
+    Collects all household result database files from a city simulation
 
-    :param input_dir: result directory of the city simulation
-    :param result_dir: result directory to save the activity profiles to
-    :param mapping_path: path to the activity mapping file to use
+    :param result_dir: dictionary with paths to all household database files
     """
-    houses_dir = input_dir / "Houses"
-    result_dir.mkdir(parents=True, exist_ok=True)
+    houses_dir = result_dir / "Houses"
+    house_dbs = {}
     # the Houses directory contains one subdirectory per house
     for house_dir in houses_dir.iterdir():
         assert house_dir.is_dir(), f"Unexpected file found: {house_dir}"
@@ -28,9 +26,27 @@ def convert_activity_profiles(input_dir: Path, result_dir: Path, mapping_path: P
         for db_file in house_dir.glob("Results.HH*.sqlite"):
             hh_name = db_file.stem.removeprefix("Results.")
             hh_id = f"{house_dir.name}_{hh_name}"
-            activity_profiles.convert_activity_profile_from_db_to_csv(
-                db_file, result_dir, mapping_path, hh_id
-            )
+            house_dbs[hh_id] = db_file
+    logging.info(f"Collected {len(house_dbs)} household database files")
+    return house_dbs
+
+
+def convert_activity_profiles(
+    hh_dbs: dict[str, Path], result_dir: Path, mapping_path: Path
+):
+    """
+    Converts all activity profiles generated in an LPG City Simulation to CSV files.
+
+    :param hh_dbs: dictionary with IDs and paths to all household database files
+    :param result_dir: result directory to save the activity profiles to
+    :param mapping_path: path to the activity mapping file to use
+    """
+    result_dir.mkdir(parents=True, exist_ok=True)
+    # the Houses directory contains one subdirectory per house
+    for hh_id, db_file in hh_dbs.items():
+        activity_profiles.convert_activity_profile_from_db_to_csv(
+            db_file, result_dir, mapping_path, hh_id
+        )
 
 
 def postprocess_city_results(city_result_dir: Path):
@@ -44,10 +60,13 @@ def postprocess_city_results(city_result_dir: Path):
     postproc_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR
     load_profile_processing.main(city_result_dir, postproc_dir / SubDirs.LOADS_DIR)
 
+    # collect all household result databases
+    hh_dbs = collect_household_dbs(city_result_dir)
+
     # convert activity profiles from databases to csv format
     mapping_file = Path("examples/LoadProfileGenerator/data/activity_mapping.json")
     activity_profiles_dir = postproc_dir / SubDirs.ACTIVITY_PROFILES
-    convert_activity_profiles(city_result_dir, activity_profiles_dir, mapping_file)
+    convert_activity_profiles(hh_dbs, activity_profiles_dir, mapping_file)
 
     # validate activity profiles with ActivityAssure
     statistics_path = postproc_dir / SubDirs.ACTIVITYASSURE
