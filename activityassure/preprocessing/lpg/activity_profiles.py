@@ -51,24 +51,24 @@ AFFORDANCE_PREFIX_MAPPING = {
 }
 
 
-def get_performedactions_from_db(database_file: Path) -> list[dict]:
+def load_lpg_result_table(database_file: Path, table: str) -> list[dict]:
     """
-    Loads the table PerformedActions from the specified database and
-    returns the parsed JSON as a list of dicts.
+    Loads the specified table from the database and returns the parsed JSON
+    as a list of dicts.
 
     :param database_file: path of the database file to load
-    :return: parsed JSON content of all actions
+    :return: parsed JSON content of all items
     """
     assert database_file.is_file(), f"Database file not found: {database_file}"
-    # get all activities from LPG result database
+    # get all items from an LPG result database
     con = sqlite3.connect(str(database_file))
     with con:
         cur = con.cursor()
-        query = "SELECT * FROM PerformedActions"
+        query = f"SELECT * FROM {table}"
         results = cur.execute(query)
         activity_list: list[tuple[str, str]] = results.fetchall()
-    # parse the json info column for each activity
-    parsed_json_list = [json.loads(act) for name, act in activity_list]
+    # parse the json info column for each row
+    parsed_json_list = [json.loads(content) for name, content in activity_list]
     return parsed_json_list
 
 
@@ -82,7 +82,7 @@ def load_activity_profile_from_db(
     :param db_file: the database file to load
     :param mapping_path: path to the affordance mapping file
     """
-    parsed_json_list = get_performedactions_from_db(database_file)
+    parsed_json_list = load_lpg_result_table(database_file, "PerformedActions")
 
     # load activity mapping
     if mapping_path.is_file():
