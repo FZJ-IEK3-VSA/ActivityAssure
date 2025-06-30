@@ -1,4 +1,8 @@
+from collections import Counter
 from pathlib import Path
+from matplotlib import pyplot as plt
+import pandas as pd
+
 from activityassure.profile_category import ProfileCategory
 from activityassure.validation_statistics import ValidationStatistics
 from activityassure.visualizations.utils import (
@@ -6,8 +10,6 @@ from activityassure.visualizations.utils import (
     LABEL_DICT,
     replace_substrings,
 )
-from matplotlib import pyplot as plt
-import pandas as pd
 
 
 def profile_sorting_key(category: ProfileCategory) -> str:
@@ -22,12 +24,24 @@ def plot_total_time_spent(
     statistics_country_1: dict[ProfileCategory, ValidationStatistics],
     statistics_country_2: dict[ProfileCategory, ValidationStatistics],
     plot_path: Path,
+    exclude_unmatched_types: bool = False,
 ):
     time_activity_distribution = {}
-    for _, v in (statistics_country_1 | statistics_country_2).items():
-        time_activity_distribution[v.profile_type] = (
-            v.probability_profiles.mean(axis=1) * 24
+    for k, v in (statistics_country_1 | statistics_country_2).items():
+        time_activity_distribution[k] = v.probability_profiles.mean(axis=1) * 24
+
+    if exclude_unmatched_types:
+        # remove all profile types that only occur in one of the data sets
+        counts = Counter(
+            tuple(k.to_list()[1:]) for k in time_activity_distribution.keys()
         )
+        to_delete = [
+            k
+            for k in time_activity_distribution.keys()
+            if counts[tuple(k.to_list()[1:])] == 1
+        ]
+        for k in to_delete:
+            del time_activity_distribution[k]
 
     num_profiles = len(time_activity_distribution)
 
