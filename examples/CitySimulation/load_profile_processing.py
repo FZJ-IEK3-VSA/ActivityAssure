@@ -50,6 +50,7 @@ def get_stats_df(data: pd.DataFrame) -> pd.DataFrame:
     return stats
 
 
+utils.timing
 def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame:
     """
     Calculates the simultaneity of the given load profiles.
@@ -75,6 +76,7 @@ def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame
     return simultaneity_curves
 
 
+utils.timing
 def aggregate_load_profiles(
     data_kwh: pd.DataFrame, result_dir: Path, object_type: str = "Household"
 ):
@@ -149,6 +151,7 @@ def split_cols_into_single_days(data: pd.DataFrame) -> pd.DataFrame:
     return dayprofiles
 
 
+utils.timing
 def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: Path):
     """
     Loads all specified load profiles from csv files and merges them into a single
@@ -237,6 +240,7 @@ def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: 
     return data
 
 
+utils.timing
 def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path):
     """
     Loads all house sum electricity profiles from a city simulation and merges them
@@ -262,6 +266,7 @@ def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path)
     aggregate_load_profiles(data, output_dir, "House")
 
 
+utils.timing
 def combine_household_profiles_to_single_df(city_result_dir: Path, output_dir: Path):
     """
     Loads all house sum electricity profiles from a city simulation and merges them
