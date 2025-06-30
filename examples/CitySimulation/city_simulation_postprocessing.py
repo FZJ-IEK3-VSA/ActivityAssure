@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 from activityassure.preprocessing.lpg import activity_profiles
+from activityassure import utils
 
 from paths import SubDirs
 import load_profile_processing
@@ -31,6 +32,7 @@ def collect_household_dbs(result_dir: Path) -> dict[str, Path]:
     return house_dbs
 
 
+@utils.timing
 def convert_activity_profiles(
     hh_dbs: dict[str, Path], result_dir: Path, mapping_path: Path
 ):
@@ -49,6 +51,7 @@ def convert_activity_profiles(
         )
 
 
+@utils.timing
 def postprocess_city_results(city_result_dir: Path):
     """
     Postprocesses the results of a city simulation to generate statistics and
