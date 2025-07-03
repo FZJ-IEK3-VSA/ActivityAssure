@@ -374,8 +374,8 @@ class ValidationSet:
                 for k, v in self.statistics.items()
                 if k.to_base_category() == base_category
             ]
-            assert len(matchings) == 1
-            return matchings[0]
+            assert len(matchings) <= 1
+            return matchings[0] if matchings else None
         return None
 
     def filter_categories(self, min_size: int):
