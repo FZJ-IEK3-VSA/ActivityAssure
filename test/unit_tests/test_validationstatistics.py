@@ -1,11 +1,11 @@
 from datetime import timedelta
-import numpy as np
 import pandas as pd
 import pytest
 
 from activityassure.categorization_attributes import DayType, Sex, WorkStatus
 from activityassure.profile_category import ProfileCategory
 from activityassure.validation_statistics import ValidationStatistics
+from activityassure import comparison_indicators
 
 
 @pytest.fixture
@@ -92,3 +92,27 @@ def test_validation_statistics_merge(
     assert merged.probability_profiles.loc["sleep"].tolist() == [  # type: ignore
         (x + y) / 2 for x, y in zip([0.4] * 24, [0.7] * 24)
     ]
+
+
+def test_indicator_range(stats1: ValidationStatistics, stats2: ValidationStatistics):
+    # test minimum possible difference with identical datasets
+    stats1.probability_profiles = stats2.probability_profiles.copy()
+    _, indicators, _, _ = comparison_indicators.calc_all_indicator_variants(
+        stats1, stats2, False
+    )
+    # check all indicators (except pearson, which is nan)
+    assert (indicators.mae == 0).all()
+    assert (indicators.bias == 0).all()
+    assert (indicators.rmse == 0).all()
+    assert (indicators.wasserstein == 0).all()
+
+    # test maximum possible difference
+    stats1.probability_profiles.loc[:] = 0
+    stats2.probability_profiles.loc[:] = 1
+    _, indicators, _, _ = comparison_indicators.calc_all_indicator_variants(
+        stats1, stats2, False
+    )
+    assert (indicators.mae == 1).all()
+    assert (indicators.bias == 1).all()
+    assert (indicators.rmse == 1).all()
+    assert (indicators.wasserstein == 1).all()
