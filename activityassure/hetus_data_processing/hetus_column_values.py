@@ -37,6 +37,26 @@ EUROSTAT_COUNTRY_CODES = {
     "PL": "Poland ",
 }
 
+#: all countries for which there is data from HETUS 2010
+HETUS2010_COUNTRIES = [
+    "AT",
+    "BE",
+    "DE",
+    "EE",
+    "EL",
+    "ES",
+    "FI",
+    "FR",
+    "HU",
+    "IT",
+    "LU",
+    "NL",
+    "NO",
+    "PL",
+    "RO",
+    "RS",
+    "UK",
+]
 
 class NoData(IntEnum):
     """
