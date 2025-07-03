@@ -68,10 +68,13 @@ if __name__ == "__main__":
 
     results_test = load_validation_results(path_test)
     results_full = load_validation_results(path_full)
+    diff = results_full - results_test
+    diff = diff.sort_values(by="mae")
 
-    means_test = filter_activities(results_test, [MEAN_IDX])
-    means_full = filter_activities(results_full, [MEAN_IDX])
-    mean_diff = (means_full - means_test).sum()
+    activity = MEAN_IDX
+    # activity = "not at home"
+    means_test = filter_activities(results_test, [activity])
+    means_full = filter_activities(results_full, [activity])
 
     combined = pd.concat(
         [means_test.sum().to_frame().T, means_full.sum().to_frame().T], axis="index", keys=["default", "MODE.Regional"], names=["Routes"]
