@@ -25,6 +25,8 @@ from activityassure.validation_statistics import (
 )
 from activityassure.visualizations import indicator_heatmaps
 
+from activityassure.comparison_indicators import ValidationIndicators
+
 
 def get_similar_categories(profile_type: ProfileCategory) -> list[ProfileCategory]:
     """
@@ -227,6 +229,37 @@ def save_file_per_indicator_per_combination(
                 kpi.name,
                 profile_type,
             )
+
+
+def get_similarity_index(
+    dataset: ValidationSet,
+    indicatorset: ValidationIndicatorSet,
+    ignore_country: bool = False,
+) -> float:
+    """Calculates a similarity index to assess overall similarity
+    of two datasets. The index ranges from 0 (maximum difference)
+    to 100% (identical data).
+
+    :param dataset: the dataset from which to choose the category weights
+    :param indicatorset: the set of validation indicators for calculating the index
+    :param ignore_country: if True, compares profile categories from different countries;
+                           defaults to False
+    :return: the similarity index for the compared datasets
+    """
+    combined = 0
+    for profile_type, indicator in indicatorset.indicators.items():
+        statistics1 = dataset.get_matching_statistics(profile_type, ignore_country)
+        assert statistics1, f"Found no matching validation statistics: {profile_type}"
+        weight1 = statistics1.get_weight()
+        mean = indicator.mae[ValidationIndicators.mean_column]
+        adapted = mean * weight1
+        # logging.debug(f"Adapted MAE for {profile_type}: {adapted}")
+        combined += adapted
+    # scale to the sum of all weights of the first dataset
+    combined /= dataset.get_weight_sum()
+    # turn the combined indiator into an index from 0 to 100 %
+    index = 100 - 100 * combined
+    return index
 
 
 @utils.timing

@@ -14,7 +14,11 @@ import pandas as pd
 
 from activityassure import utils
 from activityassure.categorization_attributes import Country, DayType
-from activityassure.profile_category import PersonProfileCategory, ProfileCategory
+from activityassure.profile_category import (
+    BaseProfileCategory,
+    PersonProfileCategory,
+    ProfileCategory,
+)
 from activityassure.pandas_utils import (
     save_df,
     load_df,
@@ -335,6 +339,13 @@ class ValidationSet:
     ACTIVITIES_FILE: ClassVar = "activities.json"
     AVAILABLE_ACTIVITIES_KEY: ClassVar = "available activities"
 
+    def get_weight_sum(self) -> float:
+        """Returns the sum of all category weights.
+
+        :return: sum of the weights of all profile types
+        """
+        return sum(stat.get_weight() for stat in self.statistics.values())
+
     def get_matching_statistics(
         self, category: ProfileCategory, ignore_country: bool = False
     ) -> ValidationStatistics | None:
@@ -353,10 +364,15 @@ class ValidationSet:
             ppc = category.get_category_without_person()
             return self.statistics.get(ppc, None)
         if ignore_country:
+            # find
+            if isinstance(category, BaseProfileCategory):
+                base_category = category
+            else:
+                base_category = category.to_base_category()
             matchings = [
                 v
                 for k, v in self.statistics.items()
-                if k.to_base_category() == category.to_base_category()
+                if k.to_base_category() == base_category
             ]
             assert len(matchings) == 1
             return matchings[0]

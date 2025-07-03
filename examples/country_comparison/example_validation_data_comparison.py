@@ -76,6 +76,13 @@ def validate(
         result_subdir = output_path / variant_name
         metrics_df = indicator_set.save(result_subdir / "indicators_per_category")
 
+        index = validation.get_similarity_index(
+            validation_dataset_country1,
+            indicator_set,
+            True,
+        )
+        logging.info(f"Similarity index ({variant_name}): {index}")
+
         activity_means = indicator_set.get_activity_indicators_averages()
         pandas_utils.save_df(
             activity_means,
