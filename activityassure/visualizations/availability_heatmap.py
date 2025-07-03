@@ -142,6 +142,17 @@ def plot_heatmap_person(name: str, dir: str):
     plt.savefig(os.path.join(dir, f"{name}.svg"), transparent=True)
     plt.show()
 
+
+def format_label(label) -> str:
+    """Helper function to format profile type labels"""
+    labeltext: str = label.get_text()
+    labeltext = labeltext.replace("_", " ").replace(" - ", "\n")
+    # add newlines before certain words
+    for sub in ["working", "rest"]:
+        labeltext = labeltext.replace(" " + sub, "\n" + sub)
+    return labeltext
+
+
 def plot_data_availability_bars(name: str, dir: Path, countries: Optional[list[str]] = None):
     data_path = os.path.join(dir, name + ".csv")
     df = pd.read_csv(data_path)
@@ -151,7 +162,9 @@ def plot_data_availability_bars(name: str, dir: Path, countries: Optional[list[s
     df = df.sort_values(by=["work status", "day type"])
     df["label"] = df["sex"] + " " + df["work status"] + " " + df["day type"]
     sns.barplot(data=df, x='label', y='Sizes', hue='country', ax=ax)
-    ax.set_xticklabels([replace_substrings(label.get_text(), LABEL_DICT).replace("_", " ").replace(" - ", "\n") for label in ax.get_xticklabels()], rotation=90)
+    labels = ax.get_xticklabels()
+    labels = [format_label(label) for label in labels]
+    ax.set_xticklabels(labels, rotation=90, fontdict={"fontsize": 6})
     ax.set_xlabel("")
     fig.tight_layout()
     fig.savefig(os.path.join(dir, f"{name}_bars__{"_".join(countries)}.svg"), transparent=True)
