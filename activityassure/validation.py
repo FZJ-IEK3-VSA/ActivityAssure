@@ -2,6 +2,7 @@
 Contains functions for comparing validation and model statistics.
 """
 
+from collections import defaultdict
 import dataclasses
 import itertools
 import logging
@@ -231,11 +232,24 @@ def save_file_per_indicator_per_combination(
             )
 
 
+def indicator_to_index(name: str, value: float) -> float:
+    """Transform the indicator value to a range of 0 - 100%,
+    with 100% indicating the best match.
+
+    :param name: indicator name
+    :param value: indicator value
+    :return: transformed indicator value
+    """
+    if name == "pearson_corr":
+        return 50 + 50 * value
+    return 100 - 100 * value
+
+
 def get_similarity_index(
     dataset: ValidationSet,
     indicatorset: ValidationIndicatorSet,
     ignore_country: bool = False,
-) -> float:
+) -> dict[str, float]:
     """Calculates a similarity index to assess overall similarity
     of two datasets. The index ranges from 0 (maximum difference)
     to 100% (identical data).
@@ -244,22 +258,26 @@ def get_similarity_index(
     :param indicatorset: the set of validation indicators for calculating the index
     :param ignore_country: if True, compares profile categories from different countries;
                            defaults to False
-    :return: the similarity index for the compared datasets
+    :return: the similarity indices for the compared datasets
     """
-    combined = 0
+    combined = defaultdict(int)
+    weightsum = 0
     for profile_type, indicator in indicatorset.indicators.items():
         statistics1 = dataset.get_matching_statistics(profile_type, ignore_country)
         assert statistics1, f"Found no matching validation statistics: {profile_type}"
-        weight1 = statistics1.get_weight()
-        mean = indicator.mae[ValidationIndicators.mean_column]
-        adapted = mean * weight1
-        # logging.debug(f"Adapted MAE for {profile_type}: {adapted}")
-        combined += adapted
+        category_weight = statistics1.get_weight()
+        # add used weights instead of the weightsum to exclude skipped categories
+        weightsum += category_weight
+        indicators = indicator.get_as_series_dict()
+        for name, val_series in indicators.items():
+            value = val_series[ValidationIndicators.mean_column]
+            adapted = value * category_weight
+            combined[name] += adapted
     # scale to the sum of all weights of the first dataset
-    combined /= dataset.get_weight_sum()
+    combined_scaled = {k: v / weightsum for k, v in combined.items()}
     # turn the combined indiator into an index from 0 to 100 %
-    index = 100 - 100 * combined
-    return index
+    indices = {k: indicator_to_index(k, v) for k, v in combined_scaled.items()}
+    return indices
 
 
 @utils.timing
