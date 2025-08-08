@@ -14,7 +14,9 @@ import activity_statistics_validation
 
 def collect_household_dbs(result_dir: Path) -> dict[str, Path]:
     """
-    Collects all household result database files from a city simulation
+    Collects all household result databases from a city simulation. The
+    databases are either sqlite files or directories of JSON files, depending
+    on which output format was used in the LPG.
 
     :param result_dir: dictionary with paths to all household database files
     """
@@ -24,8 +26,11 @@ def collect_household_dbs(result_dir: Path) -> dict[str, Path]:
     for house_dir in houses_dir.iterdir():
         assert house_dir.is_dir(), f"Unexpected file found: {house_dir}"
         # import each household database file from the house
-        for db_file in house_dir.glob("Results.HH*.sqlite"):
-            hh_name = db_file.stem.removeprefix("Results.")
+        for db_file in house_dir.glob("Results.HH*"):
+            assert db_file.is_dir() != (
+                db_file.suffix == ".sqlite"
+            ), "Invalid database format"
+            hh_name = db_file.name.removeprefix("Results.").removesuffix(".sqlite")
             hh_id = f"{house_dir.name}_{hh_name}"
             house_dbs[hh_id] = db_file
     logging.info(f"Collected {len(house_dbs)} household database files")

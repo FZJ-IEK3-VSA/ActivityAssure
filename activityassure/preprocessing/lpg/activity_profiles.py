@@ -51,12 +51,13 @@ AFFORDANCE_PREFIX_MAPPING = {
 }
 
 
-def load_lpg_result_table(database_file: Path, table: str) -> list[dict]:
+def load_lpg_result_table_sql(database_file: Path, table: str) -> list[dict]:
     """
-    Loads the specified table from the database and returns the parsed JSON
-    as a list of dicts.
+    Loads the specified table from the sqlite database and returns the parsed
+    JSON as a list of dicts.
 
     :param database_file: path of the database file to load
+    :param table: name of the table to load
     :return: parsed JSON content of all items
     """
     assert database_file.is_file(), f"Database file not found: {database_file}"
@@ -72,6 +73,23 @@ def load_lpg_result_table(database_file: Path, table: str) -> list[dict]:
     return parsed_json_list
 
 
+def load_lpg_result_table_json(database_dir: Path, table: str) -> list[dict]:
+    """Loads the specified table from the JSON directory database and returns
+    the parsed JSON of the 'Json' column as a list of dicts.
+
+    :param database_file: path of the database file to load
+    :param table: name of the table to load
+    :return: parsed JSON content of all items
+    """
+    assert database_dir.is_dir(), f"Database directory not found: {database_dir}"
+    table_file = database_dir / f"{table}.json"
+    assert table_file.is_file(), f"Database table file not found: {table_file}"
+    with open(table_file, "r", encoding="utf8") as f:
+        data = json.load(f)
+    parsed_json_list = [json.loads(d["Json"]) for d in data]
+    return parsed_json_list
+
+
 def load_activity_profile_from_db(
     database_file: Path, mapping_path: Path
 ) -> dict[str, pd.DataFrame]:
@@ -82,7 +100,14 @@ def load_activity_profile_from_db(
     :param db_file: the database file to load
     :param mapping_path: path to the affordance mapping file
     """
-    parsed_json_list = load_lpg_result_table(database_file, "PerformedActions")
+    # load activity data depending on the database format
+    activity_table = "PerformedActions"
+    if database_file.suffix == ".sqlite":
+        parsed_json_list = load_lpg_result_table_sql(database_file, activity_table)
+    elif database_file.is_dir():
+        parsed_json_list = load_lpg_result_table_json(database_file, activity_table)
+    else:
+        assert False, f"Unknown database format: {database_file}"
 
     # load activity mapping
     if mapping_path.is_file():
