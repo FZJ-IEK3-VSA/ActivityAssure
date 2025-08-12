@@ -1,6 +1,7 @@
 from collections import Counter
 from pathlib import Path
 from matplotlib import pyplot as plt
+import matplotlib.patheffects as path_effects
 import pandas as pd
 
 from activityassure.profile_category import ProfileCategory
@@ -71,7 +72,16 @@ def plot_total_time_spent(
         labels = [round(v, 1) if v > 1 else "" for v in df_to_plot.iloc[:, i]]
 
         # remove the labels parameter if it's not needed for customized labels
-        ax.bar_label(c, labels=labels, label_type="center")
+        texts = ax.bar_label(c, labels=labels, label_type="center")  # , color="white")
+
+        # add a white stroke to the text for better readability
+        for text in texts:
+            text.set_path_effects(
+                [
+                    path_effects.Stroke(linewidth=1, foreground="white"),
+                    path_effects.Normal(),
+                ]
+            )
 
     # assign
     ax.set_yticklabels(
@@ -85,4 +95,4 @@ def plot_total_time_spent(
     ax.legend(loc="lower right", bbox_to_anchor=(1, 1), ncol=3)
     ax.set_xlim(0, 24)
     fig.tight_layout()
-    fig.savefig(plot_path / f"time_spent_{num_profiles}_profiles.png")
+    fig.savefig(plot_path / f"time_spent_{num_profiles}_profiles.svg")
