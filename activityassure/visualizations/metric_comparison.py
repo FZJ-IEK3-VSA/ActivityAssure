@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+#: font dict to change font settings for all plots in this module
+FONTDICT = {}
+
 def plot_error_metric_distribution(metrics: pd.DataFrame, output_path: Path):
     output_path /= "histogram.png"
     os.makedirs(output_path.parent, exist_ok=True)
@@ -124,7 +127,15 @@ def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_pa
         sns.barplot(subdf.loc[topx,:].reset_index(), y='index', x='value', orient='h', hue='metric', ax=axs[i])
         axs[i].set_ylabel("")
         axs[i].legend(loc='lower right', bbox_to_anchor=(1, 1.05), ncol=2)
-        axs[i].set_yticklabels([replace_substrings(label.get_text(), LABEL_DICT).replace("_", " ").replace(" - ", "\n") for label in axs[i].get_yticklabels()])
+        axs[i].set_yticklabels(
+            [
+                replace_substrings(label.get_text(), LABEL_DICT)
+                .replace("_", " ")
+                .replace(" - ", "\n")
+                for label in axs[i].get_yticklabels()
+            ],
+            fontdict=FONTDICT,
+        )
     fig.tight_layout()
     fig.savefig(output_path_plot, dpi=600)
     fig.savefig(output_path_plot.with_suffix(".svg"))
@@ -154,7 +165,15 @@ def plot_bar_plot_metrics_aggregated(metrics: pd.DataFrame, output_path: Path, a
         axs[i].set_ylabel("")
         axs[i].set_xlabel("")
         axs[i].legend(loc='lower right', bbox_to_anchor=(1, 1.05), ncol=1)
-        axs[i].set_yticklabels([replace_substrings(label.get_text(), LABEL_DICT).replace("_", " ").replace(" - ", "\n") for label in axs[i].get_yticklabels()])
+        axs[i].set_yticklabels(
+            [
+                replace_substrings(label.get_text(), LABEL_DICT)
+                .replace("_", " ")
+                .replace(" - ", "\n")
+                for label in axs[i].get_yticklabels()
+            ],
+            fontdict=FONTDICT,
+        )
         fig1.tight_layout()
         fig1.savefig((output_path_combined).with_suffix(".png"), dpi=600)
         fig1.savefig((output_path_combined).with_suffix(".svg"))
@@ -162,7 +181,13 @@ def plot_bar_plot_metrics_aggregated(metrics: pd.DataFrame, output_path: Path, a
         # Single plots
         fig2, ax = plt.subplots(nrows=1, ncols=1, figsize=(5*CM_TO_INCH, 14*CM_TO_INCH))
         sns.barplot(subdf.sort_values(by="value", ascending=True if i == 1 else False).reset_index(), y='index', x='value', hue='metric', orient='h', ax=ax)
-        ax.set_yticklabels([replace_substrings(label.get_text(), LABEL_DICT).replace("_", " ") for label in ax.get_yticklabels()])
+        ax.set_yticklabels(
+            [
+                replace_substrings(label.get_text(), LABEL_DICT).replace("_", " ")
+                for label in ax.get_yticklabels()
+            ],
+            fontdict=FONTDICT,
+        )
         ax.set_xlabel("")
         ax.set_ylabel("")
         ax.legend(loc='lower right', bbox_to_anchor=(1, 1.05), ncol=1)
@@ -170,4 +195,3 @@ def plot_bar_plot_metrics_aggregated(metrics: pd.DataFrame, output_path: Path, a
         fig2.tight_layout()
         fig2.savefig(single_plot_output_path.with_suffix(".png"), dpi=600)
         fig2.savefig(single_plot_output_path.with_suffix(".svg"))
-
