@@ -1,3 +1,5 @@
+"""Functions for creating grouped bar plots of validation indicator values, with pearson correlation separately"""
+
 import json
 import os
 from pathlib import Path
@@ -112,14 +114,16 @@ def plot_bar_plot_metrics_profile_type_activity(metrics: pd.DataFrame, output_pa
 
     for i, df in enumerate([df1, df2]):
         df.index = df.index.map(lambda x: f"{x[0]} - {x[1]}")
-        topx = []
 
+        # determine the rows to include in the plot (only the largest/smallest indicator values)
+        topx = []
         for c in df.columns:
             if i == 1:
                 topx = topx + df[c].nsmallest(top_x[c]).index.tolist()
             else:
                 topx = topx + df[c].nlargest(top_x[c]).index.tolist()
 
+        # determine the row order for the plot
         topx = list(set(topx))
         topx = df.loc[topx,:].sum(axis=1).sort_values(ascending=False).index.tolist()
 
