@@ -148,7 +148,7 @@ def format_label(label) -> str:
     labeltext: str = label.get_text()
     labeltext = labeltext.replace("_", " ").replace(" - ", "\n")
     # add newlines before certain words
-    for sub in ["working", "rest"]:
+    for sub in ["working", "rest", "undetermined"]:
         labeltext = labeltext.replace(" " + sub, "\n" + sub)
     return labeltext
 
@@ -158,10 +158,14 @@ def plot_data_availability_bars(name: str, dir: Path, countries: Optional[list[s
     df = pd.read_csv(data_path)
     countries = countries if countries is not None else df["country"].tolist()
     df = df[df["country"].isin(countries)]
+
+    # normalize category sizes to shares
+    df["Share"] = df["Sizes"] / df.groupby("country")["Sizes"].transform("sum")
+
     fig, ax = plt.subplots(figsize=(14*CM_TO_INCH, 8*CM_TO_INCH))
     df = df.sort_values(by=["work status", "day type"])
     df["label"] = df["sex"] + " " + df["work status"] + " " + df["day type"]
-    sns.barplot(data=df, x='label', y='Sizes', hue='country', ax=ax)
+    sns.barplot(data=df, x="label", y="Share", hue="country", ax=ax)
     labels = ax.get_xticklabels()
     labels = [format_label(label) for label in labels]
     ax.set_xticklabels(labels, rotation=90, fontdict={"fontsize": 6})
