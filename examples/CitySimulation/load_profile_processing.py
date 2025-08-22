@@ -61,16 +61,21 @@ def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame
     :return: dataframe with simultaneity values
     """
     simultaneity_list = []
+    # determine the maximum load of each house/household
+    hh_maximums = data.max(axis=0)
     for i in range(permutations):
-        simultaneity = pd.Series(
-            [
-                data.iloc[:, :n].sum(axis=1).max() / data.iloc[:, :n].max().sum()
-                for n in range(1, data.shape[1] + 1)
-            ]
-        )
+        # determine a new random column order
+        col_order = np.random.permutation(data.columns)
+
+        # get cumulative house/household sums per timestep
+        cumsum_per_timestep = data[col_order].cumsum(axis=1)
+
+        max_of_hh_sums = cumsum_per_timestep.max(axis=0)
+        sum_of_maxs = hh_maximums[col_order].cumsum()
+
+        simultaneity = max_of_hh_sums / sum_of_maxs
         simultaneity_list.append(simultaneity)
-        # shuffle the columns to get another simultaneity curve for more robust results
-        data = data[np.random.permutation(data.columns)]
+
     simultaneity_curves = pd.concat(simultaneity_list, axis="columns")
     logging.info(f"Simultaneity value: {simultaneity_curves.iloc[-1, 0]}")
     return simultaneity_curves
@@ -286,7 +291,7 @@ def combine_household_profiles_to_single_df(city_result_dir: Path, output_dir: P
     houses_subdir = city_result_dir / "Houses"
     files = [
         ProfileInfo(
-            f"{file.parent.name}_"
+            f"{file.parent.parent.name}_"
             + str(file.stem).removeprefix(file_prefix).removesuffix(file_suffix),
             file,
         )
