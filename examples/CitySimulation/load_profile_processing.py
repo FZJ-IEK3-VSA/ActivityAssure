@@ -286,12 +286,11 @@ def combine_household_profiles_to_single_df(city_result_dir: Path, output_dir: P
     houses_subdir = city_result_dir / "Houses"
     files = [
         ProfileInfo(
-            f"{house_dir.name}_"
-            + str(d.stem).removeprefix(file_prefix).removesuffix(file_suffix),
-            d,
+            f"{file.parent.name}_"
+            + str(file.stem).removeprefix(file_prefix).removesuffix(file_suffix),
+            file,
         )
-        for house_dir in houses_subdir.iterdir()
-        for d in house_dir.glob(filepattern)
+        for file in houses_subdir.rglob(filepattern)
     ]
 
     result_file_path = output_dir / "City.Households.Electricity.csv"
