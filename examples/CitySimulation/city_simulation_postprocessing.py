@@ -7,6 +7,7 @@ from pathlib import Path
 from activityassure.preprocessing.lpg import activity_profiles
 from activityassure import utils
 
+from activityassure.raw_statistics import activity_statistics
 from paths import SubDirs
 import load_profile_processing
 import activity_statistics_validation
@@ -80,6 +81,11 @@ def postprocess_city_results(city_result_dir: Path):
     statistics_path = postproc_dir / SubDirs.ACTIVITYASSURE
     activity_statistics_validation.calc_citysim_statistics_and_validate(
         activity_profiles_dir, statistics_path
+    )
+
+    # calculate raw activity statistics without mapping or aggregation
+    activity_statistics.get_activity_statistics(
+        activity_profiles_dir, postproc_dir / SubDirs.RAW_ACTIVITY_STATS
     )
 
 

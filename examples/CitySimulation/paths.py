@@ -7,6 +7,7 @@ class SubDirs:
     POSTPROCESSED_DIR = "Postprocessed"
     PLOTS = "plots"
     ACTIVITY_PROFILES = "activity_profiles"
+    RAW_ACTIVITY_STATS = "raw_activity_statistics"
     LOADS_DIR = "loads"
     POIS = "pois"
     ACTIVITYASSURE = "activityassure_statistics"
