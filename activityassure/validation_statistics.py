@@ -292,12 +292,25 @@ class ValidationStatistics:
         for stat in statistics:
             stat.extend_for_missing_activities(list(activities))
 
-        total_weight = sum(stat.get_weight() for stat in statistics)
+        weights_set = [stat.has_weight() for stat in statistics]
+        assert all(weights_set) or not any(weights_set), "Inconsistent weights"
+
+        # determine the resulting total weight and weighting factor
+        if not any(weights_set):
+            # statistics have no weights, so the resulting statistics don't get one either
+            total_weight = None
+            # with no custom weights, weight all categories equally
+            weighing_sum = len(weights_set)
+        else:
+            # the resulting weight is the sum of the weights of all merged categories
+            total_weight = sum(stat.get_weight() for stat in statistics)
+            weighing_sum = total_weight
+
         durations = []
         frequencies = []
         probabilities = []
         for stat in statistics:
-            factor = stat.get_weight() / total_weight
+            factor = stat.get_weight() / weighing_sum
             dur = stat.activity_durations * factor
             durations.append(dur)
             freq = stat.activity_frequencies * factor
@@ -406,9 +419,9 @@ class ValidationSet:
 
         :param size_ranges: defines the size ranges to apply (e.g., [20, 50])
         """
-        assert size_ranges == sorted(size_ranges), (
-            "Unclear parameter: size_ranges must be sorted"
-        )
+        assert size_ranges == sorted(
+            size_ranges
+        ), "Unclear parameter: size_ranges must be sorted"
         hidden = 0
         for stat in self.statistics.values():
             old_size = stat.category_size
@@ -444,12 +457,12 @@ class ValidationSet:
         # group all current categories by their common new category
         category_groups = defaultdict(list)
         for old_category, new_category in mapping.items():
-            assert old_category in self.statistics, (
-                f"Invalid mapping: category {old_category} not found"
-            )
-            assert new_category not in self.statistics, (
-                f"Invalid mapping: statistics for the target category {new_category} already exist"
-            )
+            assert (
+                old_category in self.statistics
+            ), f"Invalid mapping: category {old_category} not found"
+            assert (
+                new_category not in self.statistics
+            ), f"Invalid mapping: statistics for the target category {new_category} already exist"
             category_groups[new_category].append(old_category)
 
         # check if weight are set consistently
@@ -497,9 +510,9 @@ class ValidationSet:
         # not be loaded anymore
         data_reset = data.reset_index()
         cols = list(data_reset.columns)
-        assert attribute_for_pivot in cols, (
-            f"Invalid attribute for pivot: {attribute_for_pivot}"
-        )
+        assert (
+            attribute_for_pivot in cols
+        ), f"Invalid attribute for pivot: {attribute_for_pivot}"
         cols.remove(attribute_for_pivot)
         cols.remove(colname)
         transformed = data_reset.pivot(
@@ -524,7 +537,7 @@ class ValidationSet:
         names = any_profile_type.get_attribute_names()
         # collect the profile type attributes for each category
         index = pd.MultiIndex.from_tuples(
-            [pt.to_list() for pt in self.statistics.keys()], names=names
+            [tuple(pt.to_list()) for pt in self.statistics.keys()], names=names
         )
         # collect the category sizes
         sizes = [func(stat) for stat in self.statistics.values()]
