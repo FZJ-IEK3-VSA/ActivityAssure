@@ -6,7 +6,6 @@ import pandas as pd
 
 from activityassure.profile_category import ProfileCategory
 from activityassure.validation_statistics import ValidationSet, ValidationStatistics
-from activityassure.visualizations import time_statistics
 from activityassure.visualizations.utils import (
     CM_TO_INCH,
     LABEL_DICT,
@@ -128,7 +127,7 @@ def plot_total_time_bar_chart_countries(
     validation_data2 = datasets[1]
 
     # Plot total time spent
-    time_statistics.plot_total_time_spent(
+    plot_total_time_spent(
         validation_data1.statistics,
         validation_data2.statistics,
         output_path,
@@ -155,6 +154,6 @@ def plot_total_time_bar_chart(
     ValidationSet.drop_unmatched_categories(data1, data2)
 
     # Plot total time spent
-    time_statistics.plot_total_time_spent(
+    plot_total_time_spent(
         data1.statistics, data2.statistics, output_path, data_set_names
     )
