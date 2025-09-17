@@ -409,6 +409,25 @@ class ValidationSet:
             del self.statistics[category]
         logging.info(f"Removed {len(to_delete)} out of {total} categories (too small).")
 
+    def filter_categories_by_pattern(self, pattern: ProfileCategory):
+        """Filters the contained categories, only keeping those that match the specified
+        pattern.
+
+        :param pattern: the category pattern to compare against
+        """
+        len_before = len(self.statistics)
+        self.statistics = {
+            cat: stat for cat, stat in self.statistics.items() if cat.matches(pattern)
+        }
+        new_len = len(self.statistics)
+        if new_len == len_before:
+            logging.info(
+                "Applied pattern filtering, but did not remove any categories."
+            )
+        else:
+            removed = len_before - new_len
+            logging.info(f"Applied pattern filtering and removed {removed} categories.")
+
     def hide_small_category_sizes(self, size_ranges: list[int]):
         """
         Hides the exact category size for smaller categories. The parameter
@@ -713,3 +732,15 @@ class ValidationSet:
         # load activity list
         activities = ValidationSet.load_activities(base_path)
         return ValidationSet(statistics, activities)
+
+    @staticmethod
+    def drop_unmatched_categories(val1: "ValidationSet", val2: "ValidationSet"):
+        """Drops all profile categories that are not contained in both passed
+        validation sets.
+
+        :param val1: first validation set
+        :param val2: second validation set
+        """
+        common_cats = val1.statistics.keys() & val2.statistics.keys()
+        val1.statistics = {k: v for k, v in val1.statistics.items() if k in common_cats}
+        val2.statistics = {k: v for k, v in val2.statistics.items() if k in common_cats}

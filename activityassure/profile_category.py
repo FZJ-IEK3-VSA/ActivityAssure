@@ -121,6 +121,23 @@ class ProfileCategory:
         ]
         return [str(v) for v in values if v]
 
+    def matches(self, pattern: "ProfileCategory") -> bool:
+        """Checks whether this category matches the specified pattern, i.e.,
+        whether the attributes are the same as those of the pattern category.
+        None in any attribute means it is skipped.
+
+        :param pattern: the pattern category to compare agains
+        :return: True if this category matches, otherwise False
+        """
+        attributes = self.to_list()
+        pattern_attr = pattern.to_list()
+        assert len(attributes) == len(pattern_attr), "Error in category matching"
+        # check for all attributes if they are either None or match the pattern
+        return all(
+            a is None or pattern_attr[i] is None or a == pattern_attr[i]
+            for i, a in enumerate(attributes)
+        )
+
     def __str__(self) -> str:
         """
         Returns a string representation of this profile type
