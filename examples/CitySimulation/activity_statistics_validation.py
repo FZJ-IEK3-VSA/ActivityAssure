@@ -9,6 +9,9 @@ from pathlib import Path
 
 from activityassure import validation
 from activityassure.input_data_processing import process_model_data, process_statistics
+from activityassure.visualizations import time_statistics
+
+from paths import SubDirs
 
 
 def merge_statistics(
@@ -38,14 +41,14 @@ def merge_statistics(
 
 
 def calc_citysim_statistics_and_validate(
-    preprocessed_data_path: Path, city_stats_path: Path
+    activity_profiles_dir: Path, city_stats_path: Path
 ):
     """Calculates ActivityAssure statistics out of activity profiles from
     a CitySimulation, merges HETUS validation statistics to match, and
     carries out the default indicator validation procedure.
 
-    :param preprocessed_data_path: path of the 'Postprocessed' subdirectory
-                                   in the CitySimulation results
+    :param activity_profiles_dir: directory with activity profiles from
+                                   the CitySimulation
     :param city_stats_path: output paht for the generated statistics
     """
     # define all input and output paths and other parameters
@@ -70,7 +73,7 @@ def calc_citysim_statistics_and_validate(
 
     # calculate statistics for the input model data
     input_statistics = process_model_data.process_model_data(
-        preprocessed_data_path,
+        activity_profiles_dir,
         mapping_file,
         person_trait_file,
         profile_resolution,
@@ -101,6 +104,18 @@ def calc_citysim_statistics_and_validate(
     )
 
     validation.default_validation(citysim_national, validation_national)
+
+    # create stacked bar charts for total time use
+    plot_dir = city_stats_path.parent / SubDirs.PLOTS / SubDirs.ACTIVITIES
+    names = ["TUS", "LPG"]
+    plotpath = plot_dir / "stacked_bar_time_spent.svg"
+    plotpath_nat = plot_dir / "stacked_bar_time_spent_national.svg"
+    time_statistics.plot_total_time_bar_chart(
+        validation_stats_path_merged, city_stats_path_merged, names, plotpath
+    )
+    time_statistics.plot_total_time_bar_chart(
+        validation_national, citysim_national, names, plotpath_nat
+    )
 
 
 def main():

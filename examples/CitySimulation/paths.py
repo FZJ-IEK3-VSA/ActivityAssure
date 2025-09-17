@@ -10,6 +10,7 @@ class SubDirs:
     RAW_ACTIVITY_STATS = "raw_activity_statistics"
     LOADS_DIR = "loads"
     POIS = "pois"
+    ACTIVITIES = "activities"
     ACTIVITYASSURE = "activityassure_statistics"
 
 
