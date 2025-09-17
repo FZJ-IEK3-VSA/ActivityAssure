@@ -8,13 +8,46 @@ import logging
 from pathlib import Path
 
 from activityassure import validation
-from activityassure.input_data_processing import process_model_data
-import activityassure.input_data_processing.process_statistics
+from activityassure.input_data_processing import process_model_data, process_statistics
+
+
+def merge_statistics(
+    activity_merging_file,
+    validation_path,
+    validation_path_merged,
+):
+    """Applies all relevant activity and category mergings to a set of statistics.
+
+    :param activity_merging_file: activity merging file
+    :param validation_path: input statistics path
+    :param validation_path_merged: output path for merged statistics
+    """
+    # intermediate merging path
+    validation_stats_path_merged_act = Path(f"{validation_path}_merged_act")
+
+    # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
+    # two activities must be merged in the validation statistics
+    process_statistics.merge_activities(
+        validation_path, activity_merging_file, validation_stats_path_merged_act
+    )
+
+    # merge work and non-work days for unemployed and retired categories
+    process_statistics.merge_unemployed_categories(
+        validation_stats_path_merged_act, validation_path_merged
+    )
 
 
 def calc_citysim_statistics_and_validate(
     preprocessed_data_path: Path, city_stats_path: Path
 ):
+    """Calculates ActivityAssure statistics out of activity profiles from
+    a CitySimulation, merges HETUS validation statistics to match, and
+    carries out the default indicator validation procedure.
+
+    :param preprocessed_data_path: path of the 'Postprocessed' subdirectory
+                                   in the CitySimulation results
+    :param city_stats_path: output paht for the generated statistics
+    """
     # define all input and output paths and other parameters
     profile_resolution = timedelta(minutes=1)
 
@@ -28,13 +61,11 @@ def calc_citysim_statistics_and_validate(
         "data/validation_data_sets/activity_validation_data_set"
     )
     validation_stats_path_merged = Path(f"{validation_stats_path}_merged")
-    # input statistics path
-    # here the statistics of the input data and the validation results will be stored
 
-    # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
-    # two activities must be merged in the validation statistics
-    activityassure.input_data_processing.process_statistics.merge_activities(
-        validation_stats_path, merging_file, validation_stats_path_merged
+    merge_statistics(
+        merging_file,
+        validation_stats_path,
+        validation_stats_path_merged,
     )
 
     # calculate statistics for the input model data
@@ -50,8 +81,10 @@ def calc_citysim_statistics_and_validate(
 
     # apply the activity merging to the city simulation results as well
     city_stats_path_merged = Path(f"{city_stats_path}_merged")
-    activityassure.input_data_processing.process_statistics.merge_activities(
-        city_stats_path, merging_file, city_stats_path_merged
+    merge_statistics(
+        merging_file,
+        city_stats_path,
+        city_stats_path_merged,
     )
 
     # validate the input data using the statistics
@@ -59,11 +92,11 @@ def calc_citysim_statistics_and_validate(
 
     # additionally, aggregate both statistics to national level and validate with that
     validation_national = Path(f"{validation_stats_path_merged}_national")
-    activityassure.input_data_processing.process_statistics.aggregate_to_national_level(
+    process_statistics.aggregate_to_national_level(
         validation_stats_path_merged, validation_national
     )
     citysim_national = Path(f"{city_stats_path_merged}_national")
-    activityassure.input_data_processing.process_statistics.aggregate_to_national_level(
+    process_statistics.aggregate_to_national_level(
         city_stats_path_merged, citysim_national
     )
 
