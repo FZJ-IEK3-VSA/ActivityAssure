@@ -139,27 +139,6 @@ def validate(
         )
 
 
-def plot_total_time_bar_chart(
-    validation_data_path: Path,
-    countries: list[str],
-    output_path: Path,
-):
-    # load LPG statistics and validation statistics
-    datasets = [
-        ValidationSet.load(validation_data_path, country=country)
-        for country in countries
-    ]
-    validation_data1 = datasets[0]
-    validation_data2 = datasets[1]
-
-    # Plot total time spent
-    time_statistics.plot_total_time_spent(
-        validation_data1.statistics,
-        validation_data2.statistics,
-        output_path,
-    )
-
-
 if __name__ == "__main__":
     country1 = "AT"
     country2 = "DE"
@@ -194,5 +173,13 @@ if __name__ == "__main__":
     )
     validate(national_stats_path, country1, country2, output_path_national)
 
-    plot_total_time_bar_chart(validation_path_merged, [country1, country2], output_path)
-    plot_total_time_bar_chart(national_stats_path, [country1, country2], output_path)
+    time_statistics.plot_total_time_bar_chart_countries(
+        validation_path_merged,
+        [country1, country2],
+        output_path / "stacked_bar_time_spent_per_category.svg",
+    )
+    time_statistics.plot_total_time_bar_chart_countries(
+        national_stats_path,
+        [country1, country2],
+        output_path / "stacked_bar_time_spent_national.svg",
+    )
