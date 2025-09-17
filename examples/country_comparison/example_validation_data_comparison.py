@@ -8,11 +8,8 @@ from pathlib import Path
 
 from activityassure import utils, pandas_utils, validation
 from activityassure import comparison_indicators
-from activityassure import categorization_attributes
-from activityassure.categorization_attributes import WorkStatus
 from activityassure.hetus_data_processing import hetus_constants
-from activityassure.input_data_processing import process_model_data
-from activityassure.profile_category import ProfileCategory
+from activityassure.input_data_processing import process_statistics
 from activityassure.visualizations import (
     indicator_heatmaps,
     metric_comparison,
@@ -142,27 +139,6 @@ def validate(
         )
 
 
-def merge_unemployed_categories(data_path: Path, result_path: Path):
-    """Merge categories for work days and non-working days of unemployed people"""
-    # load the statistics
-    set = ValidationSet.load(data_path)
-    # combine all 'unemployed' and 'retired' categories which only differ in day type
-    WORK_TYPES_TO_MERGE = [WorkStatus.unemployed, WorkStatus.retired]
-    mapping = {
-        p: ProfileCategory(
-            p.country,
-            p.sex,
-            p.work_status,
-            categorization_attributes.DayType.undetermined,
-        )
-        for p in set.statistics.keys()
-        if p.work_status in WORK_TYPES_TO_MERGE
-    }
-    set.merge_profile_categories(mapping)
-    # save the aggregated statistics
-    set.save(result_path)
-
-
 def plot_total_time_bar_chart(
     validation_data_path: Path,
     countries: list[str],
@@ -201,7 +177,9 @@ if __name__ == "__main__":
     validation_path_merged = Path(f"{validation_stats_path}_merged_daytypes")
     output_path = Path(f"data/country_comparison/{country1}-{country2}")
 
-    merge_unemployed_categories(validation_stats_path, validation_path_merged)
+    process_statistics.merge_unemployed_categories(
+        validation_stats_path, validation_path_merged
+    )
 
     # validate the input data using the statistics
     validate(validation_path_merged, country1, country2, output_path)
@@ -211,7 +189,7 @@ if __name__ == "__main__":
     output_path_national = Path(f"{output_path}_national")
 
     # validate the input data using the statistics on a national level
-    process_model_data.aggregate_to_national_level(
+    process_statistics.aggregate_to_national_level(
         validation_path_merged, national_stats_path
     )
     validate(national_stats_path, country1, country2, output_path_national)

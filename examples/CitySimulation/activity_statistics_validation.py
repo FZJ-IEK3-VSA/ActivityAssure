@@ -9,6 +9,7 @@ from pathlib import Path
 
 from activityassure import validation
 from activityassure.input_data_processing import process_model_data
+import activityassure.input_data_processing.process_statistics
 
 
 def calc_citysim_statistics_and_validate(
@@ -32,7 +33,7 @@ def calc_citysim_statistics_and_validate(
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    process_model_data.merge_activities(
+    activityassure.input_data_processing.process_statistics.merge_activities(
         validation_stats_path, merging_file, validation_stats_path_merged
     )
 
@@ -49,7 +50,7 @@ def calc_citysim_statistics_and_validate(
 
     # apply the activity merging to the city simulation results as well
     city_stats_path_merged = Path(f"{city_stats_path}_merged")
-    process_model_data.merge_activities(
+    activityassure.input_data_processing.process_statistics.merge_activities(
         city_stats_path, merging_file, city_stats_path_merged
     )
 
@@ -58,11 +59,11 @@ def calc_citysim_statistics_and_validate(
 
     # additionally, aggregate both statistics to national level and validate with that
     validation_national = Path(f"{validation_stats_path_merged}_national")
-    process_model_data.aggregate_to_national_level(
+    activityassure.input_data_processing.process_statistics.aggregate_to_national_level(
         validation_stats_path_merged, validation_national
     )
     citysim_national = Path(f"{city_stats_path_merged}_national")
-    process_model_data.aggregate_to_national_level(
+    activityassure.input_data_processing.process_statistics.aggregate_to_national_level(
         city_stats_path_merged, citysim_national
     )
 

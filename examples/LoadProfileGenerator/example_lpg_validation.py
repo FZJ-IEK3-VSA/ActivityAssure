@@ -7,7 +7,7 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 
-from activityassure.input_data_processing import process_model_data
+from activityassure.input_data_processing import process_model_data, process_statistics
 from activityassure import validation
 
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    process_model_data.merge_activities(
+    process_statistics.merge_activities(
         validation_stats_path, merging_file, validation_stats_path_merged
     )
 
