@@ -1,0 +1,291 @@
+{
+    "CHR01 Couple both at Work": [
+        "CHR01 Rubi",
+        "CHR01 Sami"
+    ],
+    "CHR02 Couple, 30 - 64 age, with work": [
+        "CHR02 Katee",
+        "CHR02 Tomi"
+    ],
+    "CHR03 Family, 1 child, both at work": [
+        "CHR03 Ava",
+        "CHR03 Fin",
+        "CHR03 Luka"
+    ],
+    "CHR04 Couple, 30 - 64 years, 1 at work, 1 at home": [
+        "CHR04 Jim",
+        "CHR04 Amy"
+    ],
+    "CHR05 Family, 3 children, both with work": [
+        "CHR05 Liz",
+        "CHR05 Nate",
+        "CHR05 Mark",
+        "CHR05 Will",
+        "CHR05 Zoe"
+    ],
+    "CHR06 Jak Jobless": [
+        "CHR06 Jak"
+    ],
+    "CHR07 Single with work": [
+        "CHR07 Christian"
+    ],
+    "CHR08 Single woman, 2 children, with work": [
+        "CHR08 Adrian",
+        "CHR08 Ben",
+        "CHR08 Erin"
+    ],
+    "CHR09 Single woman, 30 - 64 years, with work": [
+        "CHR09 Lilly"
+    ],
+    "CHR10 Single man, 30 - 64 age, shift worker": [
+        "CHR10 Alvin"
+    ],
+    "CHR11 Student, Female, Philosophy": [
+        "CHR11 Maddy"
+    ],
+    "CHR12 Student 2, Male, Philosophy": [
+        "CHR12 Chris"
+    ],
+    "CHR13 Student with Work": [
+        "CHR13 Iris"
+    ],
+    "CHR14 3 adults: Couple, 30- 64 years, both at work + Senior at home": [
+        "CHR14 Hanna",
+        "CHR14 Michael",
+        "CHR14 Wilma"
+    ],
+    "CHR15 Multigenerational Home: working couple, 2 children, 2 seniors": [
+        "CHR15 Abby",
+        "CHR15 Eddie",
+        "CHR15 Myra",
+        "CHR15 Nick",
+        "CHR15 Adam",
+        "CHR15 Rebekah"
+    ],
+    "CHR16 Couple over 65 years": [
+        "CHR16 Cordelia",
+        "CHR16 Edgar"
+    ],
+    "CHR17 Shiftworker Couple": [
+        "CHR17 Joachim",
+        "CHR17 Maya"
+    ],
+    "CHR18 Family, 2 children, parents without work": [
+        "CHR18 Dan",
+        "CHR18 Rachel",
+        "CHR18 Simon",
+        "CHR18 Sora"
+    ],
+    "CHR19 Couple, 30 - 64 years, both at work, with homehelp": [
+        "CHR19 Molly",
+        "CHR19 Richard",
+        "CHR19 Jenny"
+    ],
+    "CHR20 one at work, one work home, 3 children": [
+        "CHR20 Arthur",
+        "CHR20 Garreth",
+        "CHR20 George",
+        "CHR20 Gregor",
+        "CHR20 Cassie"
+    ],
+    "CHR21 Couple, 30 - 64 years, shift worker": [
+        "CHR21 John",
+        "CHR21 Emily"
+    ],
+    "CHR22 Single woman, 1 child, with work": [
+        "CHR22 Fiona",
+        "CHR22 Anja"
+    ],
+    "CHR23 Single man over 65 years": [
+        "CHR23 James"
+    ],
+    "CHR24 Single woman over 65 years": [
+        "CHR24 Martha"
+    ],
+    "CHR25 Single woman under 30 years with work": [
+        "CHR25 Marlene"
+    ],
+    "CHR26 Single woman under 30 years without work": [
+        "CHR26 Florence"
+    ],
+    "CHR27 Family both at work, 2 children": [
+        "CHR27 Emil",
+        "CHR27 Laura",
+        "CHR27 Tobias",
+        "CHR27 Melanie"
+    ],
+    "CHR28 Single man under 30 years without work": [
+        "CHR28 Patrick"
+    ],
+    "CHR29 Single man under 30 years with work": [
+        "CHR29 Benjamin"
+    ],
+    "CHR30 Single, Retired Man": [
+        "CHR30 Horsti"
+    ],
+    "CHR31 Single, Retired Woman": [
+        "CHR31 Monika"
+    ],
+    "CHR32 Couple under 30 years without work": [
+        "CHR32 Christin",
+        "CHR32 Jona"
+    ],
+    "CHR33 Couple under 30 years with work": [
+        "CHR33 Florian",
+        "CHR33 Vicky"
+    ],
+    "CHR34 Couple under 30 years, one at work, one at home": [
+        "CHR34 Romeo",
+        "CHR34 Julia"
+    ],
+    "CHR35 Single woman, 30 - 64 years, with work": [
+        "CHR35 Heike"
+    ],
+    "CHR36 Single woman, 30 - 64 years, without work": [
+        "CHR36 Anne"
+    ],
+    "CHR37 Single man, 30 - 64 years, with work": [
+        "CHR37 Johannes"
+    ],
+    "CHR38 Single man, 30 - 64 years, without work": [
+        "CHR38 David"
+    ],
+    "CHR39 Couple, 30 - 64 years, with work": [
+        "CHR39 Normen",
+        "CHR39 Tina"
+    ],
+    "CHR40 Couple, 30 - 64 years, without work": [
+        "CHR40 Antje",
+        "CHR40 Marcus"
+    ],
+    "CHR41 Family with 3 children, both at work": [
+        "CHR41 Maria",
+        "CHR41 Felix",
+        "CHR41 Justin",
+        "CHR41 Lucy",
+        "CHR41 Peter"
+    ],
+    "CHR42 Single man with 2 children, with work": [
+        "CHR42 Max",
+        "CHR42 Jessica",
+        "CHR42 Moritz"
+    ],
+    "CHR43 Single man with 1 child, with work": [
+        "CHR43 Lutz",
+        "CHR43 Maik"
+    ],
+    "CHR44 Family with 2 children, 1 at work, 1 at home": [
+        "CHR44 Barbara",
+        "CHR44 Christopher",
+        "CHR44 Rainer",
+        "CHR44 Sandy"
+    ],
+    "CHR45 Family with 1 child, 1 at work, 1 at home": [
+        "CHR45 Claudia",
+        "CHR45 Susann",
+        "CHR45 Alexander"
+    ],
+    "CHR46 Single woman, 1 child, without work": [
+        "CHR46 Marita",
+        "CHR46 Kevin"
+    ],
+    "CHR47 Single woman, 2 children, without work": [
+        "CHR47 Diana",
+        "CHR47 Katrin",
+        "CHR47 Sven"
+    ],
+    "CHR48 Family with 2 children, without work": [
+        "CHR48 Lisa",
+        "CHR48 Martin",
+        "CHR48 Maggie",
+        "CHR48 Stefan"
+    ],
+    "CHR49 Family with 1 child, without work": [
+        "CHR49 March",
+        "CHR49 Wilhelm",
+        "CHR49 Michelle"
+    ],
+    "CHR50 Single woman with 3 children, without work": [
+        "CHR50 Rita",
+        "CHR50 Hans",
+        "CHR50 Isabella",
+        "CHR50 Pascal"
+    ],
+    "CHR51 Couple over 65 years II": [
+        "CHR51 Gustav",
+        "CHR51 Maren"
+    ],
+    "CHR52 Student Flatsharing": [
+        "CHR52 Matthew",
+        "CHR52 Ashley",
+        "CHR52 Mia"
+    ],
+    "CHR53 2 Parents, 1 Working, 2 Children": [
+        "CHR53 Rosemarie",
+        "CHR53 Franz",
+        "CHR53 Linda",
+        "CHR53 Robert"
+    ],
+    "CHR54 Retired Couple, no work": [
+        "CHR54 Emma",
+        "CHR54 Nils"
+    ],
+    "CHR55 Couple with work around 40": [
+        "CHR55 Stephan",
+        "CHR55 Nicole"
+    ],
+    "CHR56 Couple with 2 children, husband at work": [
+        "CHR56 Anton",
+        "CHR56 Sandi",
+        "CHR56 Andreas",
+        "CHR56 Sabine"
+    ],
+    "CHR57 Family with 2 Children, Man at work": [
+        "CHR57 Reiner",
+        "CHR57 Babs",
+        "CHR57 Sarah",
+        "CHR57 Christoph"
+    ],
+    "CHR58 Retired Couple, no work, no cooking": [
+        "CHR58 Ema",
+        "CHR58 Nil"
+    ],
+    "CHR59 Family, 3 children, parents without work": [
+        "CHR59 Sorra",
+        "CHR59 Simo",
+        "CHR59 Rachela",
+        "CHR59 Sonea",
+        "CHR59 Dani"
+    ],
+    "CHR60 Family, 1 toddler, one at work, one at home": [
+        "CHR60 Oliver",
+        "CHR60 Amelia",
+        "CHR60 Lea"
+    ],
+    "CHR61 Family, 1 child, both at work, early living pattern": [
+        "CHR61 Fina",
+        "CHR61 Lukas",
+        "CHR61 Avva"
+    ],
+    "CHS01 Couple with 2 Children, Dad Employed": [
+        "CHS01 Egon",
+        "CHS01 Hella",
+        "CHS01 Justus",
+        "CHS01 Lucia"
+    ],
+    "CHS04 Retired Couple, no work": [
+        "CHS04 August",
+        "CHS04 Margot"
+    ],
+    "CHS12 Shiftworker Couple": [
+        "CHS12 Falk",
+        "CHS12 Regina"
+    ],
+    "OR01 Single Person Office": [
+        "OR01 Ellen"
+    ],
+    "CHR62 Couple both Working from Home": [
+        "CHR62 Sophie",
+        "CHR62 Lucas"
+    ]
+}
