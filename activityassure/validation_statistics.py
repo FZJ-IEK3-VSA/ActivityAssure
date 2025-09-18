@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
+import shutil
 from typing import Any, Callable, ClassVar, Optional, Iterable
 
 import numpy as np
@@ -564,13 +565,19 @@ class ValidationSet:
         return sizes_df
 
     @utils.timing
-    def save(self, base_path: Path):
+    def save(self, base_path: Path, clear_dir: bool = True):
         """
         Saves all statistics for different profile types as well as
         corresponding metadata in the specified path.
 
         :param base_path: base output path
+        :param clear_dir: if True, clears the result directory before saving the
+                          statistics there
         """
+        if clear_dir and base_path.is_dir():
+            logging.debug(f"Clearing directory before saving statistics: {base_path}")
+            shutil.rmtree(base_path)
+
         for stat in self.statistics.values():
             stat.save(base_path)
 
