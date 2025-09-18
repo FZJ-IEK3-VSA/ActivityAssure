@@ -376,5 +376,8 @@
     "Replacement Activity D": "other",
     "taking a vacation": "vacation",
     "travel": "travel",
-    "idle": "idle"
+    "idle": "idle",
+    "eat a cooked meal (interrupting) (cook and eat dish on induction plate)": "cook",
+    "do errands out of home": "not at home",
+    "go shopping for various items (1 h)": "not at home"
 }
