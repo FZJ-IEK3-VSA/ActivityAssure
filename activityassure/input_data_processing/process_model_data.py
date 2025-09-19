@@ -98,4 +98,7 @@ def process_model_data(
     input_data_dict = prepare_model_data.prepare_input_data(full_year_profiles, mapping)
     # calc and save input data statistics
     statistics_set = calc_statistics_per_category(input_data_dict, activities)
+
+    # use the activity profile counts as weights in case of subsequent category merging
+    statistics_set.set_counts_as_weights()
     return statistics_set
