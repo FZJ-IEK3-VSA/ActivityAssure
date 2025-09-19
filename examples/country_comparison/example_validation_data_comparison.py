@@ -156,7 +156,7 @@ if __name__ == "__main__":
     validation_path_merged = Path(f"{validation_stats_path}_merged_daytypes")
     output_path = Path(f"data/country_comparison/{country1}-{country2}")
 
-    process_statistics.merge_unemployed_categories(
+    process_statistics.merge_unemployed_categories_from_file(
         validation_stats_path, validation_path_merged
     )
 

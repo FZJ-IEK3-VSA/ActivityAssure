@@ -360,6 +360,13 @@ class ValidationSet:
         """
         return sum(stat.get_weight() for stat in self.statistics.values())
 
+    def get_weight_dict(self) -> dict[ProfileCategory, float | None]:
+        """Returns a dict with all category weights of this statistics set.
+
+        :return: a dict containing all category weights
+        """
+        return {cat: stat.category_weight for cat, stat in self.statistics.items()}
+
     def get_matching_statistics(
         self, category: ProfileCategory, ignore_country: bool = False
     ) -> ValidationStatistics | None:
@@ -429,7 +436,7 @@ class ValidationSet:
             removed = len_before - new_len
             logging.info(f"Applied pattern filtering and removed {removed} categories.")
 
-    def set_custom_weights(self, weights: dict[ProfileCategory, float]):
+    def set_custom_weights(self, weights: dict[ProfileCategory, float | None]):
         """Overwrites the category weights with the given ones.
 
         :param weights: the new weights to use
@@ -439,6 +446,13 @@ class ValidationSet:
                 category in self.statistics
             ), f"Category is not part of the validation set: {category}"
             self.statistics[category].category_weight = weight
+
+    def set_counts_as_weights(self):
+        """Sets the category counts as category weights. Useful when processing activity
+        profiles for a specific population.
+        """
+        for statistic in self.statistics.values():
+            statistic.category_weight = statistic.category_size
 
     def hide_small_category_sizes(self, size_ranges: list[int]):
         """

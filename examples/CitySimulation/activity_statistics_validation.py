@@ -9,35 +9,37 @@ from pathlib import Path
 
 from activityassure import validation
 from activityassure.input_data_processing import process_model_data, process_statistics
+from activityassure.profile_category import ProfileCategory
+from activityassure.validation_statistics import ValidationSet
 from activityassure.visualizations import time_statistics
 
 from paths import SubDirs
 
 
 def merge_statistics(
-    activity_merging_file,
-    validation_path,
-    validation_path_merged,
+    activity_merging_file: Path,
+    validation_path: Path,
+    validation_path_merged: Path,
+    custom_weights: dict[ProfileCategory, float | None] | None = None,
 ):
     """Applies all relevant activity and category mergings to a set of statistics.
 
     :param activity_merging_file: activity merging file
     :param validation_path: input statistics path
     :param validation_path_merged: output path for merged statistics
+    :param custom_weights: optional custom weights to use for merging
     """
-    # intermediate merging path
-    validation_stats_path_merged_act = Path(f"{validation_path}_merged_act")
+    statistics = ValidationSet.load(validation_path)
+    if custom_weights:
+        statistics.set_custom_weights(custom_weights)
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    process_statistics.merge_activities(
-        validation_path, activity_merging_file, validation_stats_path_merged_act
-    )
+    process_statistics.merge_activities(statistics, activity_merging_file)
 
     # merge work and non-work days for unemployed and retired categories
-    process_statistics.merge_unemployed_categories(
-        validation_stats_path_merged_act, validation_path_merged
-    )
+    process_statistics.merge_unemployed_categories(statistics)
+    statistics.save(validation_path_merged)
 
 
 def calc_citysim_statistics_and_validate(
@@ -50,6 +52,7 @@ def calc_citysim_statistics_and_validate(
     :param activity_profiles_dir: directory with activity profiles from
                                    the CitySimulation
     :param city_stats_path: output paht for the generated statistics
+    : param scenario_dir: path to the scenario directory of the simulation
     """
     # define all input and output paths and other parameters
     profile_resolution = timedelta(minutes=1)
@@ -59,17 +62,12 @@ def calc_citysim_statistics_and_validate(
     merging_file = lpg_example_data_dir / "activity_merging.json"
     mapping_file = lpg_example_data_dir / "activity_mapping.json"
     person_trait_file = lpg_example_data_dir / "person_characteristics.json"
+
     # validation statistics paths
     validation_stats_path = Path(
         "data/validation_data_sets/activity_validation_data_set"
     )
     validation_stats_path_merged = Path(f"{validation_stats_path}_merged")
-
-    merge_statistics(
-        merging_file,
-        validation_stats_path,
-        validation_stats_path_merged,
-    )
 
     # calculate statistics for the input model data
     input_statistics = process_model_data.process_model_data(
@@ -82,12 +80,24 @@ def calc_citysim_statistics_and_validate(
     # save the created statistics
     input_statistics.save(city_stats_path)
 
-    # apply the activity merging to the city simulation results as well
+    input_statistics = ValidationSet.load(city_stats_path)
+
+    # apply the statistics merging to the city simulation results
     city_stats_path_merged = Path(f"{city_stats_path}_merged")
     merge_statistics(
         merging_file,
         city_stats_path,
         city_stats_path_merged,
+    )
+    input_weights = input_statistics.get_weight_dict()
+
+    # apply the merging to the validation data as well, using the input weights
+    # to get a matching population
+    merge_statistics(
+        merging_file,
+        validation_stats_path,
+        validation_stats_path_merged,
+        input_weights,
     )
 
     # validate the input data using the statistics

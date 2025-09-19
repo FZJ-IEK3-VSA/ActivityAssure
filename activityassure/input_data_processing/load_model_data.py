@@ -16,7 +16,7 @@ import json
 FILENAME_PERSON_DELIMITER = "_"
 
 
-def load_person_characteristics(path: Path | str) -> dict:
+def load_person_characteristics(path: Path | str) -> dict[str, ProfileCategory]:
     with open(path, encoding="utf-8") as f:
         traits: dict[str, dict] = json.load(f)
     message = (

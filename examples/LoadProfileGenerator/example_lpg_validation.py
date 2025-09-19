@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
-    process_statistics.merge_activities(
+    process_statistics.merge_activities_from_file(
         validation_stats_path, merging_file, validation_stats_path_merged
     )
 

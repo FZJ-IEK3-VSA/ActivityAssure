@@ -5,6 +5,7 @@ class SubDirs:
     """Subdirectory names for postprocessed data and plots"""
 
     POSTPROCESSED_DIR = "Postprocessed"
+    SCENARIO = "scenario"
     PLOTS = "plots"
     ACTIVITY_PROFILES = "activity_profiles"
     RAW_ACTIVITY_STATS = "raw_activity_statistics"
