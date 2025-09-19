@@ -111,9 +111,6 @@ def get_daily_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
     grouped = daily_profile.groupby(daily_profile.index.date)  # type: ignore
 
     groups = dict(iter(grouped))
-
-    # Plot each day's data as a separate line
-    plt.figure(figsize=(12, 6))
     return PoiDailyProfiles(poi_log.poi_id, groups)  # type: ignore
 
 
