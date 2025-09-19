@@ -31,7 +31,7 @@ def merge_statistics(
     """
     statistics = ValidationSet.load(validation_path)
     if custom_weights:
-        statistics.set_custom_weights(custom_weights)
+        statistics.set_custom_weights(custom_weights, True)
 
     # the LoadProfileGenerator simulates cooking and eating as one activity, therefore these
     # two activities must be merged in the validation statistics
@@ -79,8 +79,6 @@ def calc_citysim_statistics_and_validate(
     )
     # save the created statistics
     input_statistics.save(city_stats_path)
-
-    input_statistics = ValidationSet.load(city_stats_path)
 
     # apply the statistics merging to the city simulation results
     city_stats_path_merged = Path(f"{city_stats_path}_merged")

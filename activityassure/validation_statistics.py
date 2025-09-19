@@ -436,16 +436,23 @@ class ValidationSet:
             removed = len_before - new_len
             logging.info(f"Applied pattern filtering and removed {removed} categories.")
 
-    def set_custom_weights(self, weights: dict[ProfileCategory, float | None]):
+    def set_custom_weights(
+        self, weights: dict[ProfileCategory, float | None], drop_rest: bool = False
+    ):
         """Overwrites the category weights with the given ones.
 
         :param weights: the new weights to use
+        :param drop_rest: if True, drops any categories that are not in the weights dict
         """
         for category, weight in weights.items():
             assert (
                 category in self.statistics
             ), f"Category is not part of the validation set: {category}"
             self.statistics[category].category_weight = weight
+
+        if drop_rest:
+            # only keep the categories that got a new weight
+            self.statistics = {k: v for k, v in self.statistics.items() if k in weights}
 
     def set_counts_as_weights(self):
         """Sets the category counts as category weights. Useful when processing activity
