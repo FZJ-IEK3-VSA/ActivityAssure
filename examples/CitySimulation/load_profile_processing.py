@@ -74,6 +74,9 @@ def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame
         sum_of_maxs = hh_maximums[col_order].cumsum()
 
         simultaneity = max_of_hh_sums / sum_of_maxs
+
+        # drop the index to avoid reordering during concatenation below
+        simultaneity.reset_index(drop=True, inplace=True)
         simultaneity_list.append(simultaneity)
 
     simultaneity_curves = pd.concat(simultaneity_list, axis="columns")
