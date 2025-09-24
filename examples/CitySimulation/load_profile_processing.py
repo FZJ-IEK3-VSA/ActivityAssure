@@ -116,7 +116,7 @@ def aggregate_load_profiles(
     total.to_csv(result_dir / LoadFiles.TOTALS)
 
     city_profile = data_w.sum(axis=1)
-    city_profile.name = DFColumnsLoad.LOAD
+    city_profile.name = DFColumnsLoad.TOTAL_LOAD
     city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
 
     stats = get_stats_df(data_w)

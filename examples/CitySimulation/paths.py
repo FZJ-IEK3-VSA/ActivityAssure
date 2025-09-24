@@ -34,6 +34,7 @@ class DFColumnsLoad:
 
     TIME = "Time"
     LOAD = "Load [kWh]"
+    TOTAL_LOAD = "Load [W]"
     TOTAL_DEMAND = "Total demand [kWh]"
     AVERAGE_LOAD = "Average load [W]"
 
