@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import itertools
 import logging
 from pathlib import Path
+import pickle
 from typing import Iterable
 
 import numpy as np
@@ -244,7 +245,13 @@ def combine_dataframes(profiles: list[ProfileInfo], data_col, result_file_path: 
         f"Finished merging profiles, storing the resulting dataframe in {result_file_path}"
     )
     result_file_path.parent.mkdir(parents=True, exist_ok=True)
-    data.to_csv(result_file_path)
+    # determine result format
+    match result_file_path.suffix:
+        case ".csv":
+            data.to_csv(result_file_path)
+        case _:
+            with open(result_file_path, "wb") as f:
+                pickle.dump(data, f)
     return data
 
 
@@ -267,7 +274,7 @@ def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path)
     houses_subdir = city_result_dir / "Houses"
     files = [ProfileInfo(d.name, d / filename) for d in houses_subdir.iterdir()]
 
-    result_file_path = output_dir / "City.Houses.Electricity.csv"
+    result_file_path = output_dir / "City.Houses.Electricity.pickle"
     data = combine_dataframes(files, data_col_name, result_file_path)
 
     # also calculate and save agggregated values from the merged dataframe
@@ -301,7 +308,7 @@ def combine_household_profiles_to_single_df(city_result_dir: Path, output_dir: P
         for file in houses_subdir.rglob(filepattern)
     ]
 
-    result_file_path = output_dir / "City.Households.Electricity.csv"
+    result_file_path = output_dir / "City.Households.Electricity.pickle"
     data = combine_dataframes(files, data_col_name, result_file_path)
 
     # also calculate and save agggregated values from the merged dataframe
