@@ -100,7 +100,7 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     end_day = sumcurve[DFColumnsLoad.TIME].max().date()
 
     # sort by load to get the load duration curve
-    sumcurve.sort_values(DFColumnsLoad.LOAD, inplace=True, ascending=False)
+    sumcurve.sort_values(DFColumnsLoad.TOTAL_LOAD, inplace=True, ascending=False)
 
     # scale to a suitable unit
     unit = "W"
@@ -180,6 +180,7 @@ def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
 
 def main(postproc_path: Path, plot_path: Path):
     hh_data_path = postproc_path / "loads/aggregated_household"
+    # TODO: Haushalte in 10min Auflösung --> Achsen z.B. für sum duration curve anpassen
     create_load_stat_plots(hh_data_path, plot_path / "household", "Haushalte")
     house_data_path = postproc_path / "loads/aggregated_house"
     create_load_stat_plots(house_data_path, plot_path / "house", "Häuser")
