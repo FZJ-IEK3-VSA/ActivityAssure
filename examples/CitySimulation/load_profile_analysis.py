@@ -104,11 +104,11 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
 
     # scale to a suitable unit
     unit = "W"
-    if sumcurve[DFColumnsLoad.LOAD].min() > 500:
-        sumcurve[DFColumnsLoad.LOAD] /= 1000  # convert W to kW
+    if sumcurve[DFColumnsLoad.TOTAL_LOAD].min() > 500:
+        sumcurve[DFColumnsLoad.TOTAL_LOAD] /= 1000  # convert W to kW
         unit = "kW"
-    if sumcurve[DFColumnsLoad.LOAD].min() > 500:
-        sumcurve[DFColumnsLoad.LOAD] /= 1000  # convert kW to MW
+    if sumcurve[DFColumnsLoad.TOTAL_LOAD].min() > 500:
+        sumcurve[DFColumnsLoad.TOTAL_LOAD] /= 1000  # convert kW to MW
         unit = "MW"
 
     # create H25 standard profile load duration curve
@@ -118,12 +118,12 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     h25_sorted = h25.sort_values(ascending=False)
 
     # scale H25 to the same total demand
-    h25_sorted = scale_profile(h25_sorted, sumcurve[DFColumnsLoad.LOAD])
+    h25_sorted = scale_profile(h25_sorted, sumcurve[DFColumnsLoad.TOTAL_LOAD])
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    sns.lineplot(sumcurve, ax=ax, y=DFColumnsLoad.LOAD, x=range(len(sumcurve)))
+    sns.lineplot(sumcurve, ax=ax, y=DFColumnsLoad.TOTAL_LOAD, x=range(len(sumcurve)))
     sns.lineplot(
         y=h25_sorted,
         ax=ax,
