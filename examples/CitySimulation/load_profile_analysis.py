@@ -31,6 +31,37 @@ def scale_profile(profile_to_scale, reference_profile):
     return profile_to_scale
 
 
+def datetime_to_hours(datetimes: pd.Series) -> pd.Series:
+    """Turns a datetime series into a series
+    of timedeltas from the start in hours
+
+    :param datetimes: series of datetimes
+    :return: series of time offsets in hours
+    """
+    time_axis = datetimes - datetimes.min()
+    hours = time_axis.dt.total_seconds() / 3600
+    return hours
+
+
+def adapt_scaling(sumcurve: pd.DataFrame, col: str, unit: str = "W") -> str:
+    """Scales a dataframe column inplace and returns the appropriate unit with
+    prefix (k or M).
+
+    :param sumcurve: the dataframe to adapt
+    :param col: the name of the column to scale
+    :param unit: the base unit, defaults to "W"
+    :return: the unit with prefix
+    """
+    assert unit in ["W", "Wh"]
+    if sumcurve[col].min() > 500:
+        sumcurve[col] /= 1000  # convert W to kW
+        unit = "kW"
+    if sumcurve[col].min() > 500:
+        sumcurve[col] /= 1000  # convert kW to MW
+        unit = "MW"
+    return unit
+
+
 def stat_curves(path, result_dir, h25: pd.Series, with_max: bool = True):
     statpath = path / LoadFiles.DAYPROFILESTATS
     stats = pd.read_csv(statpath, index_col=0, parse_dates=[0], date_format="%H:%M:%S")
@@ -98,18 +129,13 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     sumcurve = pd.read_csv(path / LoadFiles.SUMPROFILE, parse_dates=[0])
     start_day = sumcurve[DFColumnsLoad.TIME].min().date()
     end_day = sumcurve[DFColumnsLoad.TIME].max().date()
+    hours = datetime_to_hours(sumcurve[DFColumnsLoad.TIME])
 
     # sort by load to get the load duration curve
     sumcurve.sort_values(DFColumnsLoad.TOTAL_LOAD, inplace=True, ascending=False)
 
     # scale to a suitable unit
-    unit = "W"
-    if sumcurve[DFColumnsLoad.TOTAL_LOAD].min() > 500:
-        sumcurve[DFColumnsLoad.TOTAL_LOAD] /= 1000  # convert W to kW
-        unit = "kW"
-    if sumcurve[DFColumnsLoad.TOTAL_LOAD].min() > 500:
-        sumcurve[DFColumnsLoad.TOTAL_LOAD] /= 1000  # convert kW to MW
-        unit = "MW"
+    unit = adapt_scaling(sumcurve, DFColumnsLoad.TOTAL_LOAD, "W")
 
     # create H25 standard profile load duration curve
     bdewprovider = BDEWProfileProvider()
@@ -123,14 +149,20 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    sns.lineplot(sumcurve, ax=ax, y=DFColumnsLoad.TOTAL_LOAD, x=range(len(sumcurve)))
+    sns.lineplot(
+        sumcurve,
+        ax=ax,
+        y=DFColumnsLoad.TOTAL_LOAD,
+        x=hours.values,
+        label="Städtesimulation",
+    )
     sns.lineplot(
         y=h25_sorted,
         ax=ax,
         label="H25 Standardprofil",
-        x=np.linspace(0, len(sumcurve), len(h25_sorted)),
+        x=np.linspace(0, hours.max(), len(h25_sorted)),
     )
-    ax.xaxis.set_label_text("Dauer [min]")  # TODO: not correct for 600s HH data
+    ax.xaxis.set_label_text("Dauer [h]")
     ax.yaxis.set_label_text(f"Elektrische Last [{unit}]")
     fig.savefig(result_dir / "sum_duration_curve.svg")
 
@@ -180,7 +212,6 @@ def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
 
 def main(postproc_path: Path, plot_path: Path):
     hh_data_path = postproc_path / "loads/aggregated_household"
-    # TODO: Haushalte in 10min Auflösung --> Achsen z.B. für sum duration curve anpassen
     create_load_stat_plots(hh_data_path, plot_path / "household", "Haushalte")
     house_data_path = postproc_path / "loads/aggregated_house"
     create_load_stat_plots(house_data_path, plot_path / "house", "Häuser")
