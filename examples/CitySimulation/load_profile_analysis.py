@@ -118,7 +118,6 @@ def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
         y=DFColumnsLoad.AVERAGE_LOAD,
         x=range(len(total_demand)),
     )
-    ax.set_xticklabels([])
     ax.xaxis.set_label_text(instance_name)
     ax.yaxis.set_label_text("Stromverbrauch [kWh]")
     ax2.yaxis.set_label_text("Durchschnittliche Last [W]")
