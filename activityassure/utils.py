@@ -1,9 +1,11 @@
 import logging
 from functools import wraps
 from pathlib import Path
+import re
 import sys
 import time
 from typing import Any
+import unicodedata
 
 
 class ActValidatorException(Exception):
@@ -78,3 +80,48 @@ def init_logging_stdout_and_file(logfile: Path) -> logging.Logger:
     configure_log_handler(logfile_handler)
     logger.addHandler(logfile_handler)
     return logger
+
+
+def replace_umlauts(s: str) -> str:
+    """Replaces any German umlauts in the passed str
+    with their common replacements.
+
+    :param s: the str to adapt
+    :return: the adapted str without umlauts
+    """
+    umlaut_map = {
+        "ä": "ae",
+        "ö": "oe",
+        "ü": "ue",
+        "Ä": "Ae",
+        "Ö": "Oe",
+        "Ü": "Ue",
+        "ß": "ss",
+    }
+    for k, v in umlaut_map.items():
+        s = s.replace(k, v)
+    return s
+
+
+def slugify(value, allow_unicode=False):
+    """
+    Taken from https://github.com/django/django/blob/master/django/utils/text.py
+    Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
+    dashes to single dashes. Remove characters that aren't alphanumerics,
+    underscores, or hyphens. Convert to lowercase. Also strip leading and
+    trailing whitespace, dashes, and underscores.
+    """
+    value = str(value)
+    if allow_unicode:
+        value = unicodedata.normalize("NFKC", value)
+    else:
+        # custom addition for umlauts
+        value = replace_umlauts(value)
+
+        value = (
+            unicodedata.normalize("NFKD", value)
+            .encode("ascii", "ignore")
+            .decode("ascii")
+        )
+    value = re.sub(r"[^\w\s-]", "", value.lower())
+    return re.sub(r"[-\s]+", "-", value).strip("-_")
