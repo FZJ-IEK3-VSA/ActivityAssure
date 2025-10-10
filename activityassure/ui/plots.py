@@ -311,9 +311,6 @@ def prob_curve_per_activity(
         figure.update_xaxes(  # pyright: ignore[reportAttributeAccessIssue]
             tickformat="%H:%M"
         )
-        figure.update_yaxes(  # pyright: ignore[reportAttributeAccessIssue]
-            title_standoff=10, titleangle=-90
-        )
         # set title and axis labels
         figure.update_layout(
             title=f'Probability of "{activity}" Activities',
