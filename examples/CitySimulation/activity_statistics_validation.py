@@ -115,7 +115,7 @@ def calc_citysim_statistics_and_validate(
 
     # create stacked bar charts for total time use
     plot_dir = city_stats_path.parent / SubDirs.PLOTS / SubDirs.ACTIVITIES
-    names = ["TUS", "LPG"]
+    names = ["HETUS", "Städtesimulation"]
     plotpath = plot_dir / "stacked_bar_time_spent.svg"
     plotpath_nat = plot_dir / "stacked_bar_time_spent_national.svg"
     time_statistics.plot_total_time_bar_chart(
