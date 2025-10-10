@@ -21,8 +21,12 @@ class Config:
     input_path: str
     #: name of the model to validate
     model_name: str
+    #: name of the validation data set
+    validation_name: str = "Validation"
     #: if False, disables the repetitive and space-consuming legend for per-activity plots
     show_legend_per_activity: bool = True
+    #: language for the UI
+    language: str = "EN"
 
 
 # parse the content file

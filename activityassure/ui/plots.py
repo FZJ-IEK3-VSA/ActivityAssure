@@ -19,6 +19,8 @@ from activityassure import (
     comparison_indicators,
 )
 from activityassure.ui import data_utils, datapaths
+from activityassure.ui import translation
+from activityassure.ui.translation import UIText
 
 
 # workaround for an unresolved bug that randomly causes exceptions
@@ -67,7 +69,7 @@ ACTIVITY_ORDER = data_utils.get_final_activity_order(
 )
 
 
-def replacement_text(text: str = "No data available"):
+def replacement_text(text: str = translation.get(UIText.no_data_available)):
     """
     Function to generate a default replacement text for when
     the data to display is missing.
@@ -148,7 +150,7 @@ def join_to_pairs(
             # no input data for this activity type: create an empty column
             d_in = pd.Series([], dtype=dtype)
         # set new names for the curves
-        d_val.name = "Validation"
+        d_val.name = config.validation_name
         d_in.name = config.model_name
         joined = pd.concat([d_val, d_in], axis=1)
         data_sets[col] = joined
@@ -192,12 +194,12 @@ def stacked_prob_curves(filepath: Path | None) -> Figure | None:
     )
     fig.update_xaxes(tickformat="%H:%M")  # pyright: ignore[reportAttributeAccessIssue]
     fig.update_layout(
-        title="Stacked Probability Curves",
-        xaxis_title="Time",
-        yaxis_title="Probability",
+        title=translation.get(UIText.stacked_prob_curves),
+        xaxis_title=translation.get(UIText.time),
+        yaxis_title=translation.get(UIText.probability),
         height=STACKED_HEIGHT,
         font=GLOBAL_FONT,
-        legend_title_text="Activities",
+        legend_title_text=translation.get(UIText.activities),
     )
     return fig
 
@@ -212,8 +214,12 @@ def update_stacked_prob_curves(profile_type_str: str, directory: Path):
 
     data_utils.save_plot(
         figure,
-        "probability profiles",
-        name="validation" if "valid" in str(directory).lower() else config.model_name,
+        translation.get(UIText.prob_profiles),
+        name=(
+            config.validation_name
+            if "valid" in str(directory).lower()
+            else config.model_name
+        ),
         profile_type=profile_type,
     )
     return [dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)]
@@ -248,12 +254,14 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     )
     fig.update_xaxes(tickformat="%H:%M")  # pyright: ignore[reportAttributeAccessIssue]
     fig.update_layout(
-        title=f"Probability Curve Differences ({config.model_name} - Validation)",
-        xaxis_title="Time",
-        yaxis_title="Probability Difference",
+        title=translation.get(
+            UIText.prob_curve_diff, config.model_name, config.validation_name
+        ),
+        xaxis_title=translation.get(UIText.time),
+        yaxis_title=translation.get(UIText.prob_diff),
         height=STACKED_HEIGHT,
         font=GLOBAL_FONT,
-        legend_title_text="Activities",
+        legend_title_text=translation.get(UIText.activities),
     )
     return fig
 
@@ -303,7 +311,7 @@ def prob_curve_per_activity(
         figure = px.line(data)
         # fill the areas between the curves and the x-axis
         figure.update_traces(fill="tozeroy", selector={"name": config.model_name})
-        figure.update_traces(fill="tozeroy", selector={"name": "Validation"})
+        figure.update_traces(fill="tozeroy", selector={"name": config.validation_name})
         # use the same y-axis range for all plots
         figure.update_yaxes(  # pyright: ignore[reportAttributeAccessIssue]
             range=[-1, 1]
@@ -313,10 +321,10 @@ def prob_curve_per_activity(
         )
         # set title and axis labels
         figure.update_layout(
-            title=f'Probability of "{activity}" Activities',
-            xaxis_title="Time",
+            title=translation.get(UIText.activity_prob, activity),
+            xaxis_title=translation.get(UIText.time),
             yaxis=dict(
-                title="Probability",
+                title=translation.get(UIText.probability),
                 tickmode="array",
                 tickvals=tickvals,
                 ticktext=ticklabels,
@@ -361,11 +369,11 @@ def histogram_per_activity(
         # https://github.com/plotly/plotly.py/issues/799
         validation_data.index += datetime(2023, 1, 1)
         input_data.index += datetime(2023, 1, 1)
-        title = "Activity Durations"
-        xaxis_title = "Activity duration"
+        title = translation.get(UIText.activity_durations)
+        xaxis_title = translation.get(UIText.activity_duration)
     else:
-        title = "Activity Frequencies"
-        xaxis_title = "Activity repetitions per day"
+        title = translation.get(UIText.activity_freq)
+        xaxis_title = translation.get(UIText.activity_reps_per_day)
 
     data_per_activity = join_to_pairs(validation_data, input_data)
 
@@ -383,7 +391,7 @@ def histogram_per_activity(
         f.update_layout(
             title=f'"{a}" {title}',
             xaxis_title=xaxis_title,
-            yaxis_title="Probability",
+            yaxis_title=translation.get(UIText.probability),
             font=GLOBAL_FONT,
             legend_title_text="",
             showlegend=config.show_legend_per_activity,
@@ -412,7 +420,7 @@ def stacked_bar_activity_share(paths: dict[str, Path]) -> Figure:
     # calculate the average probabilities per profile type
     data = pd.DataFrame({title: data.mean(axis=1) for title, data in datasets.items()})
     # add the overall probabilities
-    data["Overall"] = data.mean(axis=1)
+    data[translation.get(UIText.overall)] = data.mean(axis=1)
     return px.bar(data.T)  # , x=data.columns, y=data.index)
 
 
@@ -440,7 +448,7 @@ def format_timedelta(td):
     formatted_str = f"{hours:02}:{minutes:02}:{seconds:02}"
 
     if days > 0:
-        formatted_str = f"{days} days, {formatted_str}"
+        formatted_str = translation.get(UIText.days, days, formatted_str)
     return formatted_str
 
 
@@ -526,25 +534,25 @@ def indicator_table_rows(
     basic_rows = [
         html.Tr(
             [
-                html.Td("MAE [time]"),
+                html.Td(translation.get(UIText.mae_time)),
                 html.Td(indicator_as_time_str(indicators.mae[activity])),
             ]
         ),
         html.Tr(
             [
-                html.Td("Bias [time]"),
+                html.Td(translation.get(UIText.bias_time)),
                 html.Td(indicator_as_time_str((indicators.bias[activity]))),
             ]
         ),
         html.Tr(
             [
-                html.Td("RMSE"),
+                html.Td(translation.get(UIText.rmse)),
                 html.Td(round_kpi(indicators.rmse[activity] ** 2, digits)),
             ]
         ),
         html.Tr(
             [
-                html.Td("Wasserstein distance"),
+                html.Td(translation.get(UIText.wasserstein_dist)),
                 html.Td(round_kpi(indicators.wasserstein[activity], digits)),
             ]
         ),
@@ -553,7 +561,7 @@ def indicator_table_rows(
         extended_rows = [
             html.Tr(
                 [
-                    html.Td("Pearson correlation"),
+                    html.Td(translation.get(UIText.pearson_corr)),
                     html.Td(round_kpi(indicators.pearson_corr[activity], digits)),
                 ]
             )
@@ -580,15 +588,17 @@ def create_indicator_table(
     :return: indicator table for one activity
     """
     return dbc.Table(
-        indicator_table_rows(indicators, activity, "Probability Curves Absolute")
+        indicator_table_rows(
+            indicators, activity, translation.get(UIText.prob_curves_abs)
+        )
         + indicator_table_rows(
             scaled_indicators,
             activity,
-            "Probability Curves Relative to duration in validation data",
+            translation.get(UIText.prob_curves_rel),
             False,
         )
         + indicator_table_rows(
-            normed_indicators, activity, "Probability Curves Normalized", False
+            normed_indicators, activity, translation.get(UIText.prob_curves_norm), False
         )
     )
 
