@@ -31,6 +31,6 @@ class Config:
 
 # parse the content file
 config_file = "activityassure/ui/config.json"
-with open(config_file) as f:
+with open(config_file, "r", encoding="utf8") as f:
     content = f.read()
 config: Config = Config.from_json(content)  # type: ignore
