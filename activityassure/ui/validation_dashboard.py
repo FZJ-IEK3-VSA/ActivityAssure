@@ -103,7 +103,12 @@ def country_overview_probs(country: str):
 
 @callback(Output(cross_country_div, "children"), Input(category_selector, "value"))
 def cross_country_overview(profile_type_str: str):
-    sex, work_status, day_type = profile_type_str.split(" - ")
+    profile_type_parts = profile_type_str.split(" - ")
+    if len(profile_type_parts) != 3:
+        return plots.replacement_text(
+            "Unsuitable profile category for cross-country analysis"
+        )
+    sex, work_status, day_type = profile_type_parts
     # filter all profile types with the selected characteristics
     filtered_paths = {
         p_type.country or "No Country": path
