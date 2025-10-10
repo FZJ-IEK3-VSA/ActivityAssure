@@ -27,6 +27,8 @@ class Config:
     show_legend_per_activity: bool = True
     #: language for the UI
     language: str = "EN"
+    #: if True, mirrors validation data probabiltiy curves on the x axis
+    mirrored_plots: bool = False
 
 
 # parse the content file

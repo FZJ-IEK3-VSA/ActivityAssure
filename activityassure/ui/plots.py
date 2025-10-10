@@ -298,12 +298,22 @@ def prob_curve_per_activity(
     # add rows full of zeros for missing activity types
     validation_data = validation_data.reindex(common_index, fill_value=0)
     input_data = input_data.reindex(common_index, fill_value=0)
-    validation_data = validation_data.T * -1
+    # check if the validation data should be mirrored on the x axis
+    val_factor = -1 if config.mirrored_plots else 1
+    validation_data = validation_data.T * val_factor
     input_data = input_data.T
     data_per_activity = join_to_pairs(validation_data, input_data)
     # define tick values and labels
-    tickvals = [-1, -0.5, 0, 0.5, 1]
-    ticklabels = [abs(x) for x in tickvals]
+    if config.mirrored_plots:
+        # mirrored plot: remove sign for negative tick labels
+        tickvals = [-1, -0.5, 0, 0.5, 1]
+        ticklabels = [abs(x) for x in tickvals]
+        min_yval = -1
+    else:
+        # let plotly set ticks automatically
+        tickvals = None
+        ticklabels = None
+        min_yval = 0
 
     # create the plots
     figures = {}
@@ -314,7 +324,7 @@ def prob_curve_per_activity(
         figure.update_traces(fill="tozeroy", selector={"name": config.validation_name})
         # use the same y-axis range for all plots
         figure.update_yaxes(  # pyright: ignore[reportAttributeAccessIssue]
-            range=[-1, 1]
+            range=[min_yval, 1]
         )
         figure.update_xaxes(  # pyright: ignore[reportAttributeAccessIssue]
             tickformat="%H:%M"
