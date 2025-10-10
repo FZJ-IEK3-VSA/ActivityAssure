@@ -19,7 +19,7 @@ app._favicon = "stacked.ico"
 prob_paths = data_utils.get_profile_type_paths(
     datapaths.validation_path / datapaths.prob_dir
 )
-countries = list({p.country for p in prob_paths.keys()})
+countries = list({str(p.country) for p in prob_paths.keys()})
 global_profile_types = {dataclasses.replace(p, country="") for p in prob_paths.keys()}
 global_type_str = [" - ".join(pt.to_list()[1:]) for pt in prob_paths.keys()]
 

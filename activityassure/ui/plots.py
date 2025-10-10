@@ -133,13 +133,14 @@ def join_to_pairs(
     columns = set(validation_data.columns) | set(input_data.columns)
     for col in columns:
         # get the respective columns, if they exist
-        d_val, d_in = None, None
+        d_val, d_in, dtype = None, None, None
         if col in validation_data:
             d_val = validation_data[col]
             dtype = d_val.dtype
         if col in input_data:
             d_in = input_data[col]
             dtype = d_in.dtype
+        assert dtype, "No dtype found, this should not happen"
         if d_val is None:
             # no validation data for this activity type: create an empty column
             d_val = pd.Series([], dtype=dtype)
@@ -189,7 +190,7 @@ def stacked_prob_curves(filepath: Path | None) -> Figure | None:
         y=data.columns,
         color_discrete_sequence=STACKED_PROB_CURVE_COLOR,
     )
-    fig.update_xaxes(tickformat="%H:%M")
+    fig.update_xaxes(tickformat="%H:%M")  # pyright: ignore[reportAttributeAccessIssue]
     fig.update_layout(
         title="Stacked Probability Curves",
         xaxis_title="Time",
@@ -245,7 +246,7 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
         y=diff.columns,
         color_discrete_sequence=STACKED_PROB_CURVE_COLOR,
     )
-    fig.update_xaxes(tickformat="%H:%M")
+    fig.update_xaxes(tickformat="%H:%M")  # pyright: ignore[reportAttributeAccessIssue]
     fig.update_layout(
         title=f"Probability Curve Differences ({config.model_name} - Validation)",
         xaxis_title="Time",
@@ -304,8 +305,15 @@ def prob_curve_per_activity(
         figure.update_traces(fill="tozeroy", selector={"name": config.model_name})
         figure.update_traces(fill="tozeroy", selector={"name": "Validation"})
         # use the same y-axis range for all plots
-        figure.update_yaxes(range=[-1, 1])
-        figure.update_xaxes(tickformat="%H:%M")
+        figure.update_yaxes(  # pyright: ignore[reportAttributeAccessIssue]
+            range=[-1, 1]
+        )
+        figure.update_xaxes(  # pyright: ignore[reportAttributeAccessIssue]
+            tickformat="%H:%M"
+        )
+        figure.update_yaxes(  # pyright: ignore[reportAttributeAccessIssue]
+            title_standoff=10, titleangle=-90
+        )
         # set title and axis labels
         figure.update_layout(
             title=f'Probability of "{activity}" Activities',
@@ -383,7 +391,9 @@ def histogram_per_activity(
         )
         if duration_data:
             # set the correct format so only the time is shown, and not the date
-            f.update_xaxes(tickformat="%H:%M")
+            f.update_xaxes(  # pyright: ignore[reportAttributeAccessIssue]
+                tickformat="%H:%M"
+            )
     graphs = {
         a: dcc.Graph(figure=f, config=GLOBAL_GRAPH_CONFIG) for a, f in figures.items()
     }
