@@ -323,6 +323,7 @@ def prob_curve_per_activity(
             ),
             font=GLOBAL_FONT,
             legend_title_text="",
+            showlegend=config.show_legend_per_activity,
         )
         figures[activity] = dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)
     return figures
@@ -385,6 +386,7 @@ def histogram_per_activity(
             yaxis_title="Probability",
             font=GLOBAL_FONT,
             legend_title_text="",
+            showlegend=config.show_legend_per_activity,
         )
         if duration_data:
             # set the correct format so only the time is shown, and not the date

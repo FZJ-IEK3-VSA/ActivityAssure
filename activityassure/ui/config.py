@@ -21,10 +21,12 @@ class Config:
     input_path: str
     #: name of the model to validate
     model_name: str
+    #: if False, disables the repetitive and space-consuming legend for per-activity plots
+    show_legend_per_activity: bool = True
 
 
 # parse the content file
 config_file = "activityassure/ui/config.json"
 with open(config_file) as f:
     content = f.read()
-config: Config = Config.from_json(content)
+config: Config = Config.from_json(content)  # type: ignore
