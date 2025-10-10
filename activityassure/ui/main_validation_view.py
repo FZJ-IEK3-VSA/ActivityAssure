@@ -352,19 +352,9 @@ class MainValidationView(html.Div):
         filepath_in = data_utils.get_file_path(
             datapaths.input_data_path / datapaths.prob_dir, profile_type_in
         )
-        figure = plots.stacked_diff_curve(filepath_val, filepath_in)
-        if not figure:
-            return plots.replacement_text()
-        return [
-            dcc.Graph(
-                figure=data_utils.save_plot(
-                    figure,
-                    "probability profiles",
-                    "difference",
-                    profile_type=profile_type_in,
-                )
-            )
-        ]
+        return plots.update_probability_diff_curve(
+            filepath_val, filepath_in, profile_type_in
+        )
 
     @callback(
         Output(ids.kpi_view(MATCH), "children"),

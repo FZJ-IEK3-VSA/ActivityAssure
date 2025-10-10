@@ -21,5 +21,6 @@
     "rmse": "RMSE",
     "time": "Time",
     "mae_time": "MAE [time]",
-    "no_data_available": "No data available"
+    "no_data_available": "No data available",
+    "difference": "Difference"
 }

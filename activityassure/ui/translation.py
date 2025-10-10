@@ -19,6 +19,7 @@ class UIText(StrEnum):
     activities = "activities"
     prob_diff = "prob_diff"
     prob_curve_diff = "prob_curve_diff"
+    difference = "difference"
     prob_curves_norm = "prob_curves_norm"
     prob_curves_rel = "prob_curves_rel"
     prob_curves_abs = "prob_curves_abs"

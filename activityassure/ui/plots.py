@@ -266,6 +266,27 @@ def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
     return fig
 
 
+def update_probability_diff_curve(
+    filepath_val: Path | None,
+    filepath_in: Path | None,
+    profile_type_in: profile_category.ProfileCategory,
+):
+    figure = stacked_diff_curve(filepath_val, filepath_in)
+    if not figure:
+        return replacement_text()
+    return [
+        dcc.Graph(
+            figure=data_utils.save_plot(
+                figure,
+                translation.get(UIText.probability),
+                translation.get(UIText.difference),
+                profile_type=profile_type_in,
+            ),
+            config=GLOBAL_GRAPH_CONFIG,
+        )
+    ]
+
+
 def prob_curve_per_activity(
     profile_type_val: profile_category.ProfileCategory,
     profile_type_in: profile_category.ProfileCategory,
