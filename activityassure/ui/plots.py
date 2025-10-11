@@ -15,6 +15,7 @@ from activityassure.hetus_data_processing import (
 from activityassure import (
     pandas_utils,
     profile_category,
+    utils,
     validation_statistics,
     comparison_indicators,
 )
@@ -27,14 +28,6 @@ from activityassure.ui.translation import UIText
 # on initial app launch: https://github.com/plotly/plotly.py/issues/3441
 go.Figure(layout=dict(template="plotly"))
 
-
-# general config for all plots
-GLOBAL_GRAPH_CONFIG: dcc.Graph.Config = {
-    "toImageButtonOptions": {
-        "format": "svg",  # one of png, svg, jpeg, webp
-        # "filename": "custom_image",
-    }
-}
 # font settings for all plots
 GLOBAL_FONT = {
     "size": 16,
@@ -67,6 +60,20 @@ _DEFAULT_ACTIVITY_ORDER = [
 ACTIVITY_ORDER = data_utils.get_final_activity_order(
     datapaths.validation_path, datapaths.input_data_path, _DEFAULT_ACTIVITY_ORDER
 )
+
+
+def get_graph_config(plot_name: str = "activityassure_plot") -> dcc.Graph.Config:
+    """Returns the default Graph config which is used in all plots.
+
+    :param plot_name: name for the downloaded plot file, defaults to "activityassure_plot"
+    :return: the Graph config object
+    """
+    return {
+        "toImageButtonOptions": {
+            "format": "svg",  # one of png, svg, jpeg, webp
+            "filename": utils.slugify(plot_name),
+        }
+    }
 
 
 def replacement_text(text: str = translation.get(UIText.no_data_available)):
@@ -104,7 +111,7 @@ def single_plot_card(figure: Figure, title: str = "") -> dbc.Card:
     :param title: title of the plot
     :return: the Card object containing the plot
     """
-    return titled_card(dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG), title)
+    return titled_card(dcc.Graph(figure=figure, config=get_graph_config(title)), title)
 
 
 def get_date_range(num_values: int):
@@ -212,17 +219,24 @@ def update_stacked_prob_curves(profile_type_str: str, directory: Path):
     if not figure:
         return replacement_text()
 
+    # determine if the plot is for validation or input data
+    data_name = (
+        config.validation_name
+        if "valid" in str(directory).lower()
+        else config.model_name
+    )
+
     data_utils.save_plot(
         figure,
         translation.get(UIText.prob_profiles),
-        name=(
-            config.validation_name
-            if "valid" in str(directory).lower()
-            else config.model_name
-        ),
+        name=data_name,
         profile_type=profile_type,
     )
-    return [dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)]
+    return [
+        dcc.Graph(
+            figure=figure, config=get_graph_config(f"stacked_prob_curve_{data_name}")
+        )
+    ]
 
 
 def stacked_diff_curve(path_valid: Path | None, path_in: Path | None):
@@ -282,7 +296,7 @@ def update_probability_diff_curve(
                 translation.get(UIText.difference),
                 profile_type=profile_type_in,
             ),
-            config=GLOBAL_GRAPH_CONFIG,
+            config=get_graph_config("prob_diff_curve"),
         )
     ]
 
@@ -364,7 +378,9 @@ def prob_curve_per_activity(
             legend_title_text="",
             showlegend=config.show_legend_per_activity,
         )
-        figures[activity] = dcc.Graph(figure=figure, config=GLOBAL_GRAPH_CONFIG)
+        figures[activity] = dcc.Graph(
+            figure=figure, config=get_graph_config(f"prob_curve_{activity}")
+        )
     return figures
 
 
@@ -433,7 +449,8 @@ def histogram_per_activity(
                 tickformat="%H:%M"
             )
     graphs = {
-        a: dcc.Graph(figure=f, config=GLOBAL_GRAPH_CONFIG) for a, f in figures.items()
+        a: dcc.Graph(figure=f, config=get_graph_config("{subdir}_{a}"))
+        for a, f in figures.items()
     }
     return graphs
 
