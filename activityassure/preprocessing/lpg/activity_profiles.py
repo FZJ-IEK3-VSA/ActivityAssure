@@ -50,6 +50,58 @@ AFFORDANCE_PREFIX_MAPPING = {
     "Idleness for ": "idle",
 }
 
+# special targets; travel related to these targets is categorized with the same category
+SPECIAL_TARGETS = {"work", "education"}
+
+
+def get_travel_activity_type(
+    act_type_before: str, act_type_after: str, to_home: bool
+) -> str:
+    """Checks whether the travel is related to a special affordance, and
+    depending on that returns the activity type that should be used in the
+    validation.
+
+    :param act_type_before: activity type before the travel
+    :param act_type_after:  activity type after the travel
+    :param to_home: whether the travel leads towards Home
+    :return: the activity type to use
+    """
+    # return True if the travel leads to a special target, or comes from a special target
+    # towards home
+    if act_type_after in SPECIAL_TARGETS:
+        return act_type_after
+    if act_type_before in SPECIAL_TARGETS and to_home:
+        return act_type_before
+    return "travel"
+
+
+def adapt_travel_affordance(
+    before: str, after: str, to_home: bool, mapping: dict[str, str]
+) -> str:
+    """Special handling for travels: checks whether the travel is
+    related to some specific purposes, and if so, sets a new specific
+    affordance name. If necessary, updates the affordance mapping.
+
+    Remark: this is necessary for consistent validation because the HETUS mapping
+    assigns the work/education activity category to travels related to that
+    purpose (see activityassure/activities/mapping_hetus.json).
+
+    :param before: name of the affordance before the travel
+    :param after: name of the affordance after the travel
+    :param to_home: whether the travel leads towards Home
+    :param mapping: the affordance mapping
+    :return: the travel affordance name to use
+    """
+    # get the respective affordance types
+    activity_type = mapping.get(before, "")
+    activity_type = mapping.get(after, "")
+    travel_cat = get_travel_activity_type(activity_type, activity_type, to_home)
+    affordance = "travel" if travel_cat == "travel" else f"travel for {travel_cat}"
+    # add the special affordance to the mapping, if necessary
+    if affordance not in mapping:
+        mapping[affordance] = travel_cat
+    return affordance
+
 
 def load_lpg_result_table_sql(database_file: Path, table: str) -> list[dict]:
     """
@@ -118,38 +170,56 @@ def load_activity_profile_from_db(
         mapping = {}
 
     # the list contains activities of all persons, so they need to be grouped
+    entries_by_persons: dict[str, list[dict]] = defaultdict(list)
+    for entry in parsed_json_list:
+        person = entry["PersonName"]
+        entries_by_persons[person].append(entry)
+
     rows_by_person: dict[str, list[tuple[int, datetime, str]]] = defaultdict(list)
     unmapped_affordances = {}
-    for entry in parsed_json_list:
-        start_date = datetime.fromisoformat(entry["DateTime"])
-        affordance: str = entry["AffordanceName"]
-        category = entry["Category"]
-        # check if the action was traveling
-        for prefix, mapped_category in AFFORDANCE_PREFIX_MAPPING.items():
-            if affordance.startswith(prefix):
-                # The affordance matches the pattern, use the specified category.
-                # Also overwrite the affordance name, as the auto-generated travel/idleness
-                # affordance names are not useful.
-                affordance = mapped_category
-                category = mapped_category
-                break
-        # check for unmapped affordances
-        if affordance not in mapping and affordance not in unmapped_affordances:
-            unmapped_affordances[affordance] = CATEGORY_MAPPING.get(
-                category, UNMAPPED_CATEGORY
-            )
-        # store the relevant information for each activity
-        person = entry["PersonName"]
-        start_step = entry["TimeStep"]["ExternalStep"]
-        activity_entry = (start_step, start_date, affordance)
-        rows_by_person[person].append(activity_entry)
+    unmapped_affordances = 0
+    for person, entries in entries_by_persons.items():
+        for i, entry in enumerate(entries):
+            start_date = datetime.fromisoformat(entry["DateTime"])
+            affordance: str = entry["AffordanceName"]
+            category = entry["Category"]
+            # check if the action name needs to be generalized, e.g., for traveling
+            for prefix, mapped_category in AFFORDANCE_PREFIX_MAPPING.items():
+                if affordance.startswith(prefix):
+                    # The affordance matches the pattern, use the specified category.
+                    # Also overwrite the affordance name, as the auto-generated travel/idleness
+                    # affordance names are not useful.
+                    affordance = mapped_category
+                    category = mapped_category
+                    break
 
-    if unmapped_affordances:
-        print(f"Found {len(unmapped_affordances)} unmapped affordances")
-        merged = mapping | unmapped_affordances
+            # special case for work- or education-related travel
+            if affordance == "travel":
+                # get previous and next affordance names
+                before = entries[i + 1]["AffordanceName"] if i > 0 else ""
+                after = entries[i + 1]["AffordanceName"] if i < len(entries) - 1 else ""
+                to_home = "to Home" in entry["AffordanceName"]
+                # check whether to use the generic "travel" affordance or a more specific one
+                new_aff = adapt_travel_affordance(before, after, to_home, mapping)
+                if new_aff != affordance:
+                    affordance = new_aff
+                    unmapped_affordances += 1
+
+            # check for unmapped affordances
+            if affordance not in mapping:
+                mapping[affordance] = CATEGORY_MAPPING.get(category, UNMAPPED_CATEGORY)
+                unmapped_affordances += 1
+
+            # store the relevant information for each activity
+            start_step = entry["TimeStep"]["ExternalStep"]
+            activity_entry = (start_step, start_date, affordance)
+            rows_by_person[person].append(activity_entry)
+
+    if unmapped_affordances > 0:
+        print(f"Found {unmapped_affordances} unmapped affordances")
         with open(mapping_path, "w", encoding="utf8") as f:
             # add unmapped affordances to mapping file
-            json.dump(merged, f, indent=4)
+            json.dump(mapping, f, indent=4)
 
     # store the activities in one DataFrame per person
     profiles = {
