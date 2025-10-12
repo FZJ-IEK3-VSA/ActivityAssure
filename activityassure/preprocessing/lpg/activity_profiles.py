@@ -196,7 +196,7 @@ def load_activity_profile_from_db(
             # special case for work- or education-related travel
             if affordance == "travel":
                 # get previous and next affordance names
-                before = entries[i + 1]["AffordanceName"] if i > 0 else ""
+                before = entries[i - 1]["AffordanceName"] if i > 0 else ""
                 after = entries[i + 1]["AffordanceName"] if i < len(entries) - 1 else ""
                 to_home = "to Home" in entry["AffordanceName"]
                 # check whether to use the generic "travel" affordance or a more specific one
