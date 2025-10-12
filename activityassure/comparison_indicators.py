@@ -369,6 +369,7 @@ def calc_all_indicator_variants(
         # add metric means only after obtaining the scaled metrics
         indicators.add_metric_means()
         scaled.add_metric_means()
+
     _, normalized = calc_comparison_indicators(
         validation_data, input_data, True, add_kpi_means=add_means
     )

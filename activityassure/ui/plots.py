@@ -449,7 +449,7 @@ def histogram_per_activity(
                 tickformat="%H:%M"
             )
     graphs = {
-        a: dcc.Graph(figure=f, config=get_graph_config("{subdir}_{a}"))
+        a: dcc.Graph(figure=f, config=get_graph_config(f"{subdir}_{a}"))
         for a, f in figures.items()
     }
     return graphs
