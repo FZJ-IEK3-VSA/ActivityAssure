@@ -122,8 +122,8 @@ class SparseActivityProfile:
         date_col = "Date"
         activity_col = "Activity"
         data = pd.read_csv(path)
-        entries = data.apply(  # type: ignore
-            lambda row: ActivityProfileEntry(row[activity_col], row[timestep_col]),
+        entries = data.apply(
+            lambda row: ActivityProfileEntry(row[activity_col], row[timestep_col]),  # type: ignore
             axis=1,
         ).to_list()
         if date_col in data.columns:
