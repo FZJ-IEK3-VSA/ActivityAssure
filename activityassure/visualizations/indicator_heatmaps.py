@@ -166,12 +166,16 @@ def plot_indicator_heatmap(
         # zmax=1,
     )
     # fig.show()
+
+    # position colorbar depending on how wide the heatmap is
+    colorbar_x = 1.05 if len(data.columns) > 5 else 0.7
     # decrease font size for image file to include all axis labels
-    fig.update_layout(font_size=9, title_font_size=18, coloraxis_colorbar_x=0.80)
+    fig.update_layout(font_size=9, title_font_size=18, coloraxis_colorbar_x=colorbar_x)
 
     # add explanatory labels to the colorbar
-    fig.add_annotation(
-        x=0.95,
+    cbar_label_x = 1.23 if len(data.columns) > 5 else 0.85
+    fig.add_annotation(  # pyright: ignore[reportAttributeAccessIssue]
+        x=cbar_label_x,
         y=1.05,
         text="High deviation",
         showarrow=False,
@@ -179,8 +183,8 @@ def plot_indicator_heatmap(
         yref="paper",
         font={"size": 12},
     )
-    fig.add_annotation(
-        x=0.95,
+    fig.add_annotation(  # pyright: ignore[reportAttributeAccessIssue]
+        x=cbar_label_x,
         y=-0.05,
         text="Low deviation",
         showarrow=False,
