@@ -13,8 +13,14 @@ from activityassure.visualizations.utils import (
 )
 
 
-def profile_sorting_key(key: tuple[str, ProfileCategory]) -> str:
+def profile_sorting_key(key: str | tuple[str, ProfileCategory]) -> str:
     """Helper function to convert a profile category to a string for sorting"""
+    if isinstance(key, str):
+        # only a single key, probably the data set name, use that for sorting
+        return key
+
+    # ignore data set name and sort by profile category, so that the same categories
+    # are below each other
     name, category = key
     category_parts = str(category).split("_", 1)
     if len(category_parts) == 1:
@@ -22,7 +28,10 @@ def profile_sorting_key(key: tuple[str, ProfileCategory]) -> str:
     return category_parts[1] + "_" + category_parts[0]
 
 
-def convert_key_to_label(key: tuple[str, ProfileCategory]) -> str:
+def convert_key_to_label(key: str | tuple[str, ProfileCategory]) -> str:
+    if isinstance(key, str):
+        return key
+
     name, category = key
     category_str = replace_substrings(str(category), LABEL_DICT).replace("_", " ")
     name_prefix = (f"{name} ") if name else ""
@@ -59,6 +68,11 @@ def plot_total_time_spent(
     fig, ax = plt.subplots(figsize=(16 * CM_TO_INCH, plot_height))
     combined_df = pd.DataFrame(time_activity_distribution)
 
+    # if there is only one category per dataset, drop the category information
+    if len(combined_df.columns) == 2:
+        assert combined_df.columns.nlevels == 2, "Unexpected format"
+        combined_df.columns = combined_df.columns.droplevel(1)
+
     # sort by total activity share
     combined_df["total_shares"] = combined_df.mean(axis="columns")
     sorted_df = combined_df.sort_values("total_shares", ascending=False)  # type: ignore
@@ -77,7 +91,7 @@ def plot_total_time_spent(
 
     # set suitable label texts
     label_texts = [convert_key_to_label(k) for k in df_to_plot.index]
-    df_to_plot.index = label_texts
+    df_to_plot.index = label_texts  # type: ignore
     df_to_plot.plot(kind="barh", stacked=True, ax=ax, width=0.8)
 
     # add labels to the bars
@@ -98,7 +112,7 @@ def plot_total_time_spent(
                 ]
             )
 
-    ax.set_xlabel("time [h]")
+    ax.set_xlabel("Zeit [h]")
     ax.legend(loc="lower right", bbox_to_anchor=(1, 1), ncol=3)
     ax.set_xlim(0, 24)
     fig.tight_layout()
