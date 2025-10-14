@@ -62,12 +62,26 @@ ACTIVITY_ORDER = data_utils.get_final_activity_order(
 )
 
 
-def get_graph_config(plot_name: str = "activityassure_plot") -> dcc.Graph.Config:
+def get_graph_config(
+    plot_name: str = "activityassure_plot",
+    profile_type: profile_category.ProfileCategory | None = None,
+) -> dcc.Graph.Config:
     """Returns the default Graph config which is used in all plots.
 
     :param plot_name: name for the downloaded plot file, defaults to "activityassure_plot"
+    :profile_type: the profile type displayed in the plot
     :return: the Graph config object
     """
+    # if the profile type is set and not just contains the country, add it to the name
+    ptype_name = ""
+    if profile_type is not None:
+        if (
+            profile_type.day_type is not None
+            or profile_type.sex is not None
+            or profile_type.work_status is not None
+        ):
+            ptype_name = f"_{profile_type}"
+    plot_name += ptype_name
     return {
         "toImageButtonOptions": {
             "format": "svg",  # one of png, svg, jpeg, webp
@@ -234,7 +248,8 @@ def update_stacked_prob_curves(profile_type_str: str, directory: Path):
     )
     return [
         dcc.Graph(
-            figure=figure, config=get_graph_config(f"stacked_prob_curve_{data_name}")
+            figure=figure,
+            config=get_graph_config(f"stacked_prob_curve_{data_name}", profile_type),
         )
     ]
 
@@ -296,7 +311,7 @@ def update_probability_diff_curve(
                 translation.get(UIText.difference),
                 profile_type=profile_type_in,
             ),
-            config=get_graph_config("prob_diff_curve"),
+            config=get_graph_config("prob_diff_curve", profile_type_in),
         )
     ]
 
@@ -378,8 +393,10 @@ def prob_curve_per_activity(
             legend_title_text="",
             showlegend=config.show_legend_per_activity,
         )
+        profile_type = profile_type_in if profile_type_in == profile_type_val else None
         figures[activity] = dcc.Graph(
-            figure=figure, config=get_graph_config(f"prob_curve_{activity}")
+            figure=figure,
+            config=get_graph_config(f"prob_curve_{activity}", profile_type),
         )
     return figures
 
@@ -448,8 +465,9 @@ def histogram_per_activity(
             f.update_xaxes(  # pyright: ignore[reportAttributeAccessIssue]
                 tickformat="%H:%M"
             )
+    profile_type = ptype_in if ptype_in == ptype_val else None
     graphs = {
-        a: dcc.Graph(figure=f, config=get_graph_config(f"{subdir}_{a}"))
+        a: dcc.Graph(figure=f, config=get_graph_config(f"{subdir}_{a}", profile_type))
         for a, f in figures.items()
     }
     return graphs
