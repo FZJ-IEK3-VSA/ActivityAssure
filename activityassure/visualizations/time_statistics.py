@@ -62,10 +62,6 @@ def plot_total_time_spent(
                 v.probability_profiles.mean(axis=1) * 24
             )
 
-    num_profiles = len(time_activity_distribution)
-
-    plot_height = (4 + 0.5 * num_profiles) * CM_TO_INCH
-    fig, ax = plt.subplots(figsize=(16 * CM_TO_INCH, plot_height))
     combined_df = pd.DataFrame(time_activity_distribution)
 
     # if there is only one category per dataset, drop the category information
@@ -92,6 +88,12 @@ def plot_total_time_spent(
     # set suitable label texts
     label_texts = [convert_key_to_label(k) for k in df_to_plot.index]
     df_to_plot.index = label_texts  # type: ignore
+
+    # create the plot
+    num_profiles = len(time_activity_distribution)
+    plot_height = (4 + 0.5 * num_profiles) * CM_TO_INCH
+    fig, ax = plt.subplots(figsize=(16 * CM_TO_INCH, plot_height))
+
     df_to_plot.plot(kind="barh", stacked=True, ax=ax, width=0.8)
 
     # add labels to the bars
