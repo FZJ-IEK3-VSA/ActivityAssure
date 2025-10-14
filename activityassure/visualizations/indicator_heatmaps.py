@@ -141,17 +141,39 @@ def plot_indicator_heatmap(
     output_path: Path,
     xlabel: Optional[str] = None,
     ylabel: Optional[str] = None,
+    symmetric: bool = False,
 ):
-    """
-    Plots a single metric heatmap
+    """Plots a single indicator heatmap along two of the three
+    possible dimensions (profile type, indicator type, activity).
 
-    :param data: the dataframe containing the metric values;
-                 index and column names are the profile types
+    :param data: the dataframe containing the indicator values
     :param output_path: base output directory
+    :param xlabel: label for the x axis, defaults to None
+    :param ylabel: label for the y axis, defaults to None
+    :param symmetric: changes color scale and min/max to better fit a
+                      symmetric value distribution around 0; useful for
+                      the bias; defaults to False
     """
     # turn index to str
     data.index = pd.Index([str(x).replace("_", " ") for x in data.index])
     data.columns = pd.Index([str(x).replace("_", " ") for x in data.columns])
+
+    # set different parameters when plotting a symmetric value distribution (e.g., the bias)
+    if symmetric:
+        colors = "Viridis"
+        zmin = data.min(axis=None)
+        zmax = data.max(axis=None)
+        # make the value range symmetric around 0
+        zmin = min(zmin, -abs(zmax))
+        zmax = max(zmax, abs(zmin))
+        large_val_label = "Too much"
+        small_val_label = "Too little"
+    else:
+        colors = "RdYlGn_r"
+        zmin, zmax = None, None
+        large_val_label = "High deviation"
+        small_val_label = "Low deviation"
+
     fig = px.imshow(
         data,
         # title=data.Name,
@@ -160,10 +182,9 @@ def plot_indicator_heatmap(
             "y": ylabel or "Validation Data Category",
         },
         # labels={"x": "Subset 1", "y": "Subset 2"},
-        color_continuous_scale="RdYlGn_r",
-        # color_continuous_scale=[[0, "green"], [1, "red"]],
-        # zmin=-1,
-        # zmax=1,
+        color_continuous_scale=colors,
+        zmin=zmin,
+        zmax=zmax,
     )
     # fig.show()
 
@@ -177,7 +198,7 @@ def plot_indicator_heatmap(
     fig.add_annotation(  # pyright: ignore[reportAttributeAccessIssue]
         x=cbar_label_x,
         y=1.05,
-        text="High deviation",
+        text=large_val_label,
         showarrow=False,
         xref="paper",
         yref="paper",
@@ -186,7 +207,7 @@ def plot_indicator_heatmap(
     fig.add_annotation(  # pyright: ignore[reportAttributeAccessIssue]
         x=cbar_label_x,
         y=-0.05,
-        text="Low deviation",
+        text=small_val_label,
         showarrow=False,
         xref="paper",
         yref="paper",
@@ -354,4 +375,5 @@ def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
             columns += [mean_idx]
             df = df[columns]
         df.Name = metric_name
-        plot_indicator_heatmap(df, output_path, xlabel="activity", ylabel="profile")
+        is_bias = metric_name.lower() == "bias"
+        plot_indicator_heatmap(df, output_path, "activity", "profile", is_bias)
