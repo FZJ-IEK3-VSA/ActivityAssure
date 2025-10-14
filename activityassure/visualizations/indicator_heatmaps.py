@@ -142,6 +142,7 @@ def plot_indicator_heatmap(
     xlabel: Optional[str] = None,
     ylabel: Optional[str] = None,
     symmetric: bool = False,
+    variant: str = "",
 ):
     """Plots a single indicator heatmap along two of the three
     possible dimensions (profile type, indicator type, activity).
@@ -153,6 +154,7 @@ def plot_indicator_heatmap(
     :param symmetric: changes color scale and min/max to better fit a
                       symmetric value distribution around 0; useful for
                       the bias; defaults to False
+    :param variant: name of the indicator variant (e.g., scaled)
     """
     # turn index to str
     data.index = pd.Index([str(x).replace("_", " ") for x in data.index])
@@ -191,7 +193,9 @@ def plot_indicator_heatmap(
     # position colorbar depending on how wide the heatmap is
     colorbar_x = 1.05 if len(data.columns) > 5 else 0.7
     # decrease font size for image file to include all axis labels
-    fig.update_layout(font_size=9, title_font_size=18, coloraxis_colorbar_x=colorbar_x)
+    fig.update_layout(
+        xaxis={"tickangle": -45}, title_font_size=18, coloraxis_colorbar_x=colorbar_x
+    )
 
     # add explanatory labels to the colorbar
     cbar_label_x = 1.23 if len(data.columns) > 5 else 0.85
@@ -215,7 +219,8 @@ def plot_indicator_heatmap(
     )
 
     output_path.mkdir(parents=True, exist_ok=True)
-    file = output_path / f"heatmap_{data.Name}.svg"
+    var_info = f"_{variant}" if variant else ""
+    file = output_path / f"heatmap_{data.Name}{var_info}.svg"
     try:
         fig.write_image(file, engine="kaleido")
     except Exception as e:
@@ -317,13 +322,16 @@ def plot_category_comparison_per_activity(metrics_dict, output_path: Path):
             plot_indicator_heatmap(df, path, xlabel="error measure", ylabel="activity")
 
 
-def plot_indicators_by_profile_type(metrics: pd.DataFrame, output_path: Path):
+def plot_indicators_by_profile_type(
+    metrics: pd.DataFrame, output_path: Path, variant: str = ""
+):
     """
     Plots a heatmap of all different metrics and profile types.
     Expects metrics from a per-category validation.
 
     :param metrics: metric dataframe
     :param output_path: output path
+    :param variant: name of the indicator variant (e.g., scaled)
     """
     output_path /= "metrics x profile_type"
     level = 1
@@ -333,16 +341,21 @@ def plot_indicators_by_profile_type(metrics: pd.DataFrame, output_path: Path):
         df = order_profile_type_index(df)
         df = make_metrics_comparable(df)
         df.Name = clean_activity_name(activity)  # type: ignore
-        plot_indicator_heatmap(df, output_path, xlabel="error metric", ylabel="profile")
+        plot_indicator_heatmap(
+            df, output_path, xlabel="error metric", ylabel="profile", variant=variant
+        )
 
 
-def plot_indicators_by_activity(metrics: pd.DataFrame, output_path: Path):
+def plot_indicators_by_activity(
+    metrics: pd.DataFrame, output_path: Path, variant: str = ""
+):
     """
     Plots a heatmap of all different metrics and profile types.
     Expects metrics from a per-category validation.
 
     :param metrics: metric dataframe
     :param output_path: output path
+    :param variant: name of the indicator variant (e.g., scaled)
     """
     output_path /= "metrics x activity"
     level = 0
@@ -352,17 +365,20 @@ def plot_indicators_by_activity(metrics: pd.DataFrame, output_path: Path):
         df = make_metrics_comparable(df)
         df.Name = str(profile_type)
         plot_indicator_heatmap(
-            df, output_path, xlabel="error metric", ylabel="activity"
+            df, output_path, xlabel="error metric", ylabel="activity", variant=variant
         )
 
 
-def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
+def plot_profile_type_by_activity(
+    metrics: pd.DataFrame, output_path: Path, variant: str = ""
+):
     """
     Plots a heatmap of all different profile types and activities.
     Expects metrics from a per-category validation.
 
     :param metrics: metric dataframe
     :param output_path: output path
+    :param variant: name of the indicator variant (e.g., scaled)
     """
     output_path /= "profile_type x activity"
     mean_idx = comparison_indicators.ValidationIndicators.mean_column
@@ -376,4 +392,6 @@ def plot_profile_type_by_activity(metrics: pd.DataFrame, output_path: Path):
             df = df[columns]
         df.Name = metric_name
         is_bias = metric_name.lower() == "bias"
-        plot_indicator_heatmap(df, output_path, "activity", "profile", is_bias)
+        plot_indicator_heatmap(
+            df, output_path, "activity", "profile", is_bias, variant=variant
+        )

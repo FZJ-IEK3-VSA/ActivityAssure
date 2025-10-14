@@ -310,6 +310,12 @@ def default_validation(model_path: Path, validation_path: Path, heatmaps: bool =
         if heatmaps:
             # plot heatmaps to compare indicator values
             plot_path = result_subdir / "heatmaps"
-            indicator_heatmaps.plot_indicators_by_profile_type(metrics_df, plot_path)
-            indicator_heatmaps.plot_indicators_by_activity(metrics_df, plot_path)
-            indicator_heatmaps.plot_profile_type_by_activity(metrics_df, plot_path)
+            indicator_heatmaps.plot_indicators_by_profile_type(
+                metrics_df, plot_path, variant_name
+            )
+            indicator_heatmaps.plot_indicators_by_activity(
+                metrics_df, plot_path, variant_name
+            )
+            indicator_heatmaps.plot_profile_type_by_activity(
+                metrics_df, plot_path, variant_name
+            )
