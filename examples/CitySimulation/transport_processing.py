@@ -45,6 +45,7 @@ def get_car_state_counts(city_result_dir: Path, output_dir: Path):
 
     # store the result as a csv file
     df = pd.DataFrame(state_counts)
+    df.fillna(0, inplace=True)
     df.index.name = "Timestep"
     output_dir.mkdir(parents=True, exist_ok=True)
     result_file = output_dir / "car_state_counts.csv"
