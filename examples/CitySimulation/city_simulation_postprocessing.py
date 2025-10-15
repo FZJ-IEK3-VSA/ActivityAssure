@@ -9,6 +9,7 @@ from activityassure import utils
 
 from activityassure.raw_statistics import activity_statistics
 from paths import SubDirs
+import transport_processing
 import load_profile_processing
 import activity_statistics_validation
 
@@ -65,8 +66,11 @@ def postprocess_city_results(city_result_dir: Path):
 
     :param city_result_dir: result directory of the city simulation
     """
-    # process and aggregate load profile data for validation
+    # process travel-related data for validation
     postproc_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR
+    transport_processing.main(city_result_dir, postproc_dir / SubDirs.TRANSPORT)
+
+    # process and aggregate load profile data for validation
     load_profile_processing.main(city_result_dir, postproc_dir / SubDirs.LOADS_DIR)
 
     # collect all household result databases
