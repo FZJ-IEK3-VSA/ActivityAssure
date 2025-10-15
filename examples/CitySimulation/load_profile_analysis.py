@@ -43,7 +43,7 @@ def datetime_to_hours(datetimes: pd.Series) -> pd.Series:
     return hours
 
 
-def adapt_scaling(sumcurve: pd.DataFrame, col: str, unit: str = "W") -> str:
+def adapt_scaling(sumcurve: pd.DataFrame, col: str, unit: str = "W") -> tuple[str, int]:
     """Scales a dataframe column inplace and returns the appropriate unit with
     prefix (k or M).
 
@@ -53,13 +53,16 @@ def adapt_scaling(sumcurve: pd.DataFrame, col: str, unit: str = "W") -> str:
     :return: the unit with prefix
     """
     assert unit in ["W", "Wh"]
+    factor = 1
     if sumcurve[col].min() > 500:
         sumcurve[col] /= 1000  # convert W to kW
+        factor *= 1000
         unit = "kW"
     if sumcurve[col].min() > 500:
         sumcurve[col] /= 1000  # convert kW to MW
+        factor *= 1000
         unit = "MW"
-    return unit
+    return unit, factor
 
 
 def stat_curves(path, result_dir, h25: pd.Series, with_max: bool = True):
@@ -134,7 +137,7 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     sumcurve.sort_values(DFColumnsLoad.TOTAL_LOAD, inplace=True, ascending=False)
 
     # scale to a suitable unit
-    unit = adapt_scaling(sumcurve, DFColumnsLoad.TOTAL_LOAD, "W")
+    unit, _ = adapt_scaling(sumcurve, DFColumnsLoad.TOTAL_LOAD, "W")
 
     # create H25 standard profile load duration curve
     bdewprovider = BDEWProfileProvider()

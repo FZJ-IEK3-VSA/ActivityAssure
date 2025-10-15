@@ -14,16 +14,18 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from load_profile_analysis import datetime_to_hours, adapt_scaling
 from paths import DFColumnsLoad, LoadFiles, SubDirs
 
+scenario_name_3kW = "scenario_julich_02_3kW"
+scenario_name_11kW = "scenario_julich_02"
 
 def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
     subdir = f"{SubDirs.POSTPROCESSED_DIR}/loads/aggregated_household"
-    path3kW = base_results / "scenario_julich_100_3kW" / subdir
-    path11kW = base_results / "scenario_julich_100_11kW" / subdir
+    path3kW = base_results / scenario_name_3kW / subdir
+    path11kW = base_results / scenario_name_11kW / subdir
     data3kW = pd.read_csv(path3kW / LoadFiles.SUMPROFILE, parse_dates=[0])
     data11kW = pd.read_csv(path11kW / LoadFiles.SUMPROFILE, parse_dates=[0])
 
-    unit3 = adapt_scaling(data3kW, DFColumnsLoad.TOTAL_LOAD)
-    unit11 = adapt_scaling(data11kW, DFColumnsLoad.TOTAL_LOAD)
+    unit3, factor = adapt_scaling(data3kW, DFColumnsLoad.TOTAL_LOAD)
+    unit11, _ = adapt_scaling(data11kW, DFColumnsLoad.TOTAL_LOAD)
     assert unit3 == unit11, "Different value ranges"
 
     assert (data3kW["Time"] == data11kW["Time"]).all(), "Incompatible time axes"
@@ -37,26 +39,45 @@ def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     txt = "kW Ladestationen"
-    sns.lineplot(data3kW, y=DFColumnsLoad.TOTAL_LOAD, x=hours, ax=ax, label=f"3 {txt}")
     sns.lineplot(
         data11kW, y=DFColumnsLoad.TOTAL_LOAD, x=hours, ax=ax, label=f"11 {txt}"
     )
+    sns.lineplot(data3kW, y=DFColumnsLoad.TOTAL_LOAD, x=hours, ax=ax, label=f"3 {txt}")
     ax.xaxis.set_label_text("Dauer [h]")
     ax.yaxis.set_label_text(f"Elektrische Last [{unit3}]")
     fig.savefig(output / "sum_duration.svg")
 
+    # define charging powers in the scenarios
+    CHARGE3 = 3000 / factor
+    CHARGE11 = 11000 / factor
+
+    logging.info(
+        "Comparing minimum and maximum of both sum curves. In theory, the 11kW sum "
+        "curve should have a higher maximum when many people charge at the same time. "
+        "Conversely, for sufficiently large scenarios it should have a lower minimum "
+        "when almost no charging is happening, as there will always be some charging "
+        "with 3kW"
+    )
+    min3 = float(data3kW[DFColumnsLoad.TOTAL_LOAD].max())
+    min11 = float(data11kW[DFColumnsLoad.TOTAL_LOAD].max())
+    logging.info(
+        f"Sum curve minimums:\n3 kW: {min3:.2f} {unit3}\n11 kW: "
+        f"{min11:.2f} {unit3}\nDifference: {min3 - min11:.2f} {unit3}"
+        f"That's {(min3 - min11) / CHARGE3:.1f} 3kW charging stations"
+    )
     max3 = float(data3kW[DFColumnsLoad.TOTAL_LOAD].max())
     max11 = float(data11kW[DFColumnsLoad.TOTAL_LOAD].max())
     logging.info(
-        f"Sum curve maximums:\n3 kW: {max3} {unit3}\n11 kW: "
-        f"{max11} {unit3}\nDifference: {max11 - max3} {unit3}"
+        f"Sum curve maximums:\n3 kW: {max3:.2f} {unit3}\n11 kW: "
+        f"{max11:.2f} {unit3}\nDifference: {max11 - max3:.2f} {unit3}"
+        f"That's {(max11-max3) / CHARGE11:.1f} 11kW charging stations"
     )
 
 
 def charging_power_comparison_maxloads(base_results: Path, output: Path):
     subdir = f"{SubDirs.POSTPROCESSED_DIR}/loads/aggregated_household"
-    path3kW = base_results / "scenario_julich_100_3kW" / subdir
-    path11kW = base_results / "scenario_julich_100_11kW" / subdir
+    path3kW = base_results / scenario_name_3kW / subdir
+    path11kW = base_results / scenario_name_11kW / subdir
     data3kW = pd.read_csv(path3kW / LoadFiles.STATS, parse_dates=[0])
     data11kW = pd.read_csv(path11kW / LoadFiles.STATS, parse_dates=[0])
 
@@ -80,8 +101,8 @@ def charging_power_comparison_maxloads(base_results: Path, output: Path):
 
 def charging_power_comparison_total_demand(base_results: Path, output: Path):
     subdir = f"{SubDirs.POSTPROCESSED_DIR}/loads/aggregated_household"
-    path3kW = base_results / "scenario_julich_100_3kW" / subdir
-    path11kW = base_results / "scenario_julich_100_11kW" / subdir
+    path3kW = base_results / scenario_name_3kW / subdir
+    path11kW = base_results / scenario_name_11kW / subdir
     data3kW = pd.read_csv(path3kW / LoadFiles.TOTALS)
     data11kW = pd.read_csv(path11kW / LoadFiles.TOTALS)
 
@@ -131,7 +152,7 @@ def main():
     base_results = Path("R:/phd_dir/results")
     output = base_results / "comparisons"
     output.mkdir(parents=True, exist_ok=True)
-    sns.set_theme()  # default theme
+    # sns.set_theme()  # default theme
     charging_power_comparison(base_results, output)
 
 
