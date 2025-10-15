@@ -2,13 +2,16 @@
 
 import logging
 from pathlib import Path
+import sys
 
 from matplotlib import pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from load_profile_analysis import datetime_to_hours
-from load_profile_analysis import adapt_scaling
+# add path to CitySimulation example directory
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from load_profile_analysis import datetime_to_hours, adapt_scaling
 from paths import DFColumnsLoad, LoadFiles, SubDirs
 
 
@@ -110,6 +113,7 @@ def charging_power_comparison_total_demand(base_results: Path, output: Path):
     ax.xaxis.set_label_text("Haushalte")
     ax.yaxis.set_label_text("Stromverbrauch [kWh]")
     ax2.yaxis.set_label_text("Durchschnittliche Last [W]")
+    fig.tight_layout()
     fig.savefig(output / "total_demands.svg")
 
 
