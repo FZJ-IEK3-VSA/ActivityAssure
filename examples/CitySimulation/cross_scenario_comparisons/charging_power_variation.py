@@ -61,15 +61,15 @@ def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
     min3 = float(data3kW[DFColumnsLoad.TOTAL_LOAD].max())
     min11 = float(data11kW[DFColumnsLoad.TOTAL_LOAD].max())
     logging.info(
-        f"Sum curve minimums:\n3 kW: {min3:.2f} {unit3}\n11 kW: "
-        f"{min11:.2f} {unit3}\nDifference: {min3 - min11:.2f} {unit3}"
+        f"Sum curve minimums:\n3 kW: {min3:.3f} {unit3}\n11 kW: "
+        f"{min11:.3f} {unit3}\nDifference: {min3 - min11:.3f} {unit3}"
         f"That's {(min3 - min11) / CHARGE3:.1f} 3kW charging stations"
     )
     max3 = float(data3kW[DFColumnsLoad.TOTAL_LOAD].max())
     max11 = float(data11kW[DFColumnsLoad.TOTAL_LOAD].max())
     logging.info(
-        f"Sum curve maximums:\n3 kW: {max3:.2f} {unit3}\n11 kW: "
-        f"{max11:.2f} {unit3}\nDifference: {max11 - max3:.2f} {unit3}"
+        f"Sum curve maximums:\n3 kW: {max3:.3f} {unit3}\n11 kW: "
+        f"{max11:.3f} {unit3}\nDifference: {max11 - max3:.3f} {unit3}"
         f"That's {(max11-max3) / CHARGE11:.1f} 11kW charging stations"
     )
 
