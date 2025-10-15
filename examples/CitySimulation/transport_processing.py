@@ -19,7 +19,7 @@ def get_car_state_counts(city_result_dir: Path, output_dir: Path):
     :param output_dir: output directory for the postpocessed data
     """
     # pattern of the LPG result files to aggregate
-    file_prefix = "CarState.Car"
+    file_prefix = "Carstate.Car"
     filepattern = f"Results/{file_prefix}*.json"
 
     # collect state files for all cars from all households
@@ -67,8 +67,7 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    city_result_dir = Path("R:/phd_dir/results/scenario_julich_02")
-    city_result_dir = Path(r"C:\LPG\Results\scenario_julich")
+    city_result_dir = Path("/projects4/2022-d-neuroth-phd/results/scenario_julich_02_transport")
     output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.TRANSPORT
 
     main(city_result_dir, output_dir)
