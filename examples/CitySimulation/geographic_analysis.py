@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 from matplotlib.colors import LogNorm
+import numpy as np
 import pandas as pd
 
 from paths import SubDirs
@@ -44,6 +45,12 @@ def get_house_geodf(scenario_dir: Path) -> gpd.GeoDataFrame:
     return df
 
 
+def save_plot(filepath, fig):
+    fig.tight_layout()
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(filepath)
+
+
 def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path):
     # compute aspect ratio of the map area
     x_range = df.geometry.x.max() - df.geometry.x.min()
@@ -70,9 +77,34 @@ def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path):
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)  # type: ignore
 
     # save the plot
-    fig.tight_layout()
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(filepath)
+    save_plot(filepath, fig)
+
+
+def plot_hex_bins(df: gpd.GeoDataFrame, col: str, filepath: Path):
+    x = df.geometry.x
+    y = df.geometry.y
+    values = df[col]
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    hb = ax.hexbin(
+        x,
+        y,
+        C=values,
+        gridsize=100,
+        cmap="jet",
+        norm=LogNorm(),
+        reduce_C_function=np.sum,
+        mincnt=1,  # ignore empty bins
+    )
+    # Add basemap
+    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)  # type: ignore
+
+    cb = fig.colorbar(hb, ax=ax)
+    cb.set_label(col)
+
+    plt.show()
+    save_plot(filepath, fig)
 
 
 def add_house_geodata(scenario_dir, persons_df) -> gpd.GeoDataFrame:
@@ -96,6 +128,7 @@ def persons_per_house(scenario_dir: Path, city_result_dir: Path, output_dir: Pat
     df = add_house_geodata(scenario_dir, persons_df)
 
     plot_map_data(df, PERSON_COUNT_COL, output_dir / "persons_per_house.svg")
+    # plot_hex_bins(df, PERSON_COUNT_COL, output_dir / "persons_per_house.svg")
 
 
 def total_house_demand(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
@@ -119,7 +152,7 @@ def total_house_demand(scenario_dir: Path, city_result_dir: Path, output_dir: Pa
     df = pd.concat([df, persons_df], axis="columns")
     demand_pp = "Load per person [kWh]"
     df[demand_pp] = df[demand_col] / df[PERSON_COUNT_COL]
-    plot_map_data(df, demand_pp, output_dir / "demand_per_person.svg")
+    plot_map_data(df, demand_pp, output_dir / "demand_per_person.svg")  # type: ignore
 
 
 def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
