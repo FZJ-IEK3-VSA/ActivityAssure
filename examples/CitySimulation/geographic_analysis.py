@@ -15,6 +15,9 @@ import contextily as ctx  # type: ignore
 import geopandas as gpd  # type: ignore
 from shapely.geometry import Point  # type: ignore
 
+#: DataFrame column for number of persons
+PERSON_COUNT_COL = "Number of persons"
+
 
 def read_house_coordinates(scenario_dir: Path) -> dict[str, dict[str, float]]:
     with open(scenario_dir / "house_coordinates.json", "r", encoding="utf8") as f:
@@ -35,12 +38,67 @@ def get_house_geodf(scenario_dir: Path) -> gpd.GeoDataFrame:
     ]
     df: gpd.GeoDataFrame = gpd.GeoDataFrame(geometry=coordinates, index=house_ids)
 
-    # set the coordinate reference system to WGS 84 (EPSG:4326)
+    # set the coordinate reference system to WGS 84 (EPSG:4326) and convert to Web Mercator
     df.set_crs("EPSG:4326", inplace=True)
+    df.to_crs("EPSG:3857", inplace=True)  # type: ignore
     return df
 
 
-def basic_map_plot(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
+def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path):
+    # compute aspect ratio of the map area
+    x_range = df.geometry.x.max() - df.geometry.x.min()
+    y_range = df.geometry.y.max() - df.geometry.y.min()
+    aspect_ratio = y_range / x_range
+
+    # set figure size accordingly
+    fig_width = 12
+    fig_height = fig_width * aspect_ratio  # make height proportional
+    buff_for_cbar = 2
+    fig, ax = plt.subplots(figsize=(fig_width + buff_for_cbar, fig_height), dpi=200)
+
+    # create the map plot
+    df.plot(
+        ax=ax,
+        column=col,
+        markersize=1,
+        cmap="jet",
+        norm=LogNorm(),
+        legend=True,
+        legend_kwds={"shrink": 0.7},  # shrink colorbar
+    )
+    # Add basemap
+    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)  # type: ignore
+
+    # save the plot
+    fig.tight_layout()
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(filepath)
+
+
+def add_house_geodata(scenario_dir, persons_df) -> gpd.GeoDataFrame:
+    geodf = get_house_geodf(scenario_dir)
+    df = pd.concat([geodf, persons_df], axis="columns")
+    return df  # pyright: ignore[reportReturnType]
+
+
+def get_person_count(scenario_dir):
+    filepath = scenario_dir / "statistics/persons_per_house.json"
+    with open(filepath, "r", encoding="utf8") as f:
+        persons_per_house = json.load(f)
+    persons_df = pd.DataFrame.from_dict(
+        persons_per_house, "index", columns=[PERSON_COUNT_COL]
+    )
+    return persons_df
+
+
+def persons_per_house(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
+    persons_df = get_person_count(scenario_dir)
+    df = add_house_geodata(scenario_dir, persons_df)
+
+    plot_map_data(df, PERSON_COUNT_COL, output_dir / "persons_per_house.svg")
+
+
+def total_house_demand(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     filename = "total_demand_per_profile.csv"
     filepath = (
         city_result_dir
@@ -52,45 +110,16 @@ def basic_map_plot(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     df_loads = pd.read_csv(filepath)
     df_loads.set_index("House", inplace=True)
 
-    geodf = get_house_geodf(scenario_dir)
+    df = add_house_geodata(scenario_dir, df_loads)
+    demand_col = "Total demand [kWh]"
+    plot_map_data(df, demand_col, output_dir / "house_demand.svg")
 
-    df = pd.concat([geodf, df_loads], axis="columns")
-
-    # df = df.iloc[:100,]
-
-    # convert to Web Mercator
-    df.to_crs("EPSG:3857", inplace=True)  # type: ignore
-
-    # Plot
-    fig, ax = plt.subplots(figsize=(16, 9))
-    df.plot(
-        ax=ax,
-        column="Total demand [kWh]",
-        legend=True,
-        markersize=2,
-        cmap="jet",
-        norm=LogNorm(
-            vmin=df["Total demand [kWh]"].min(),
-            vmax=df["Total demand [kWh]"].max(),
-        ),
-    )
-
-    # Add basemap
-    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)  # type: ignore
-
-    # make the plot a bit smaller to make room for the legend
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0, box.width * 0.7, box.height])  # type: ignore
-
-    # move the legend to the right, outside of the plot
-    legend = ax.get_legend()
-    # legend.set_bbox_to_anchor((1.1, 1))
-
-    # save and show the plot
-    result_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.MAPS
-    result_dir.mkdir(parents=True, exist_ok=True)
-    plt.show()
-    # fig.savefig(result_dir / "demand.png")
+    # now also plot average load per person
+    persons_df = get_person_count(scenario_dir)
+    df = pd.concat([df, persons_df], axis="columns")
+    demand_pp = "Load per person [kWh]"
+    df[demand_pp] = df[demand_col] / df[PERSON_COUNT_COL]
+    plot_map_data(df, demand_pp, output_dir / "demand_per_person.svg")
 
 
 def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
@@ -99,7 +128,8 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     :param city_result_dir: result directory of the city simulation
     :param output_dir: output directory for the postpocessed data
     """
-    basic_map_plot(scenario_dir, city_result_dir, output_dir)
+    persons_per_house(scenario_dir, city_result_dir, output_dir)
+    total_house_demand(scenario_dir, city_result_dir, output_dir)
 
 
 if __name__ == "__main__":
@@ -112,6 +142,6 @@ if __name__ == "__main__":
     scenario_dir = Path("R:/phd_dir/city_scenarios/scenario_julich_02")
     city_result_dir = Path("R:/phd_dir/results/scenario_julich_02")
     # city_result_dir = Path(r"C:\LPG\Results\scenario_julich")
-    output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.TRANSPORT
+    output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.MAPS
 
     main(scenario_dir, city_result_dir, output_dir)
