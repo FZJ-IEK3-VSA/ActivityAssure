@@ -20,9 +20,37 @@ from shapely.geometry import Point  # type: ignore
 PERSON_COUNT_COL = "Number of persons"
 
 
-def read_house_coordinates(scenario_dir: Path) -> dict[str, dict[str, float]]:
-    with open(scenario_dir / "house_coordinates.json", "r", encoding="utf8") as f:
-        return json.load(f)
+def get_poi_geodf(scenario_dir: Path, remove_outliers: bool = True) -> gpd.GeoDataFrame:
+    """Reads the POI coordinates and returns a GeoDataFrame with the
+    appropriate geometry.
+
+    :scenario_dir: the scenario directory
+    :remove_outliers: if True, removes far away outlier POIs
+    :return: a GeoDataFrame for all houses in the scenario
+    """
+    with open(scenario_dir / "city.json", "r", encoding="utf8") as f:
+        city = json.load(f)
+    pois = city["PointsOfInterest"]
+    house_ids = list(pois.keys())
+    coordinates = [
+        Point(poi["Coordinates"]["Longitude"], poi["Coordinates"]["Latitude"])
+        for poi in pois.values()
+    ]
+    df: gpd.GeoDataFrame = gpd.GeoDataFrame(geometry=coordinates, index=house_ids)
+
+    # set the coordinate reference system to WGS 84 (EPSG:4326) and convert to Web Mercator
+    df.set_crs("EPSG:4326", inplace=True)
+    df.to_crs("EPSG:3857", inplace=True)  # type: ignore
+
+    if remove_outliers:
+        center = df.geometry.union_all().centroid
+        distance_col = "distance_from_center"
+        df[distance_col] = df.geometry.distance(center)
+        original = len(df)
+        df = df[df[distance_col] < 10000]
+        df.drop(columns=[distance_col], inplace=True)
+        logging.info(f"Removed {original - len(df)} outlier POIs.")
+    return df
 
 
 def get_house_geodf(scenario_dir: Path) -> gpd.GeoDataFrame:
@@ -32,7 +60,8 @@ def get_house_geodf(scenario_dir: Path) -> gpd.GeoDataFrame:
     :scenario_dir: the scenario directory
     :return: a GeoDataFrame for all houses in the scenario
     """
-    house_coordinates = read_house_coordinates(scenario_dir)
+    with open(scenario_dir / "house_coordinates.json", "r", encoding="utf8") as f:
+        house_coordinates = json.load(f)
     house_ids = list(house_coordinates.keys())
     coordinates = [
         Point(c["Longitude"], c["Latitude"]) for c in house_coordinates.values()
@@ -51,7 +80,7 @@ def save_plot(filepath, fig):
     fig.savefig(filepath)
 
 
-def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path):
+def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path, markersize: int = 1):
     # compute aspect ratio of the map area
     x_range = df.geometry.x.max() - df.geometry.x.min()
     y_range = df.geometry.y.max() - df.geometry.y.min()
@@ -67,7 +96,7 @@ def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path):
     df.plot(
         ax=ax,
         column=col,
-        markersize=1,
+        markersize=markersize,
         cmap="jet",
         norm=LogNorm(),
         legend=True,
@@ -107,9 +136,17 @@ def plot_hex_bins(df: gpd.GeoDataFrame, col: str, filepath: Path):
     save_plot(filepath, fig)
 
 
-def add_house_geodata(scenario_dir, persons_df) -> gpd.GeoDataFrame:
+def add_house_geodata(scenario_dir: Path, data: pd.DataFrame) -> gpd.GeoDataFrame:
     geodf = get_house_geodf(scenario_dir)
-    df = pd.concat([geodf, persons_df], axis="columns")
+    df = pd.concat([geodf, data], axis="columns")
+    return df  # pyright: ignore[reportReturnType]
+
+
+def add_poi_geodata(
+    scenario_dir: Path, data: pd.DataFrame, remove_outliers: bool = True
+) -> gpd.GeoDataFrame:
+    geodf = get_poi_geodf(scenario_dir, remove_outliers)
+    df = pd.concat([geodf, data], axis="columns")
     return df  # pyright: ignore[reportReturnType]
 
 
@@ -121,6 +158,17 @@ def get_person_count(scenario_dir):
         persons_per_house, "index", columns=[PERSON_COUNT_COL]
     )
     return persons_df
+
+
+def visits_per_poi(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
+    filename = "total_visitor_counts.json"
+    filepath = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS / filename
+    with open(filepath, "r", encoding="utf8") as f:
+        visitor_counts = json.load(f)
+    col = "Number of visitor"
+    visitors_df = pd.DataFrame.from_dict(visitor_counts, "index", columns=[col])
+    df = add_poi_geodata(scenario_dir, visitors_df)
+    plot_map_data(df, col, output_dir / "poi_visitors.svg", markersize=2)
 
 
 def persons_per_house(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
@@ -161,6 +209,9 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     :param city_result_dir: result directory of the city simulation
     :param output_dir: output directory for the postpocessed data
     """
+    assert scenario_dir.is_dir() and city_result_dir.is_dir(), "Invalid input paths"
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    visits_per_poi(scenario_dir, city_result_dir, output_dir)
     persons_per_house(scenario_dir, city_result_dir, output_dir)
     total_house_demand(scenario_dir, city_result_dir, output_dir)
 
