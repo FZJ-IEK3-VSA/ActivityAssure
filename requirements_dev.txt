@@ -15,6 +15,10 @@ openpyxl
 # LPG example
 utspclient
 
+# City simulation example
+geopandas
+contextily
+
 pytest
 sphinx
 sphinx-autodoc-typehints

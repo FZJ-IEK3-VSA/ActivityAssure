@@ -10,6 +10,7 @@ class SubDirs:
     ACTIVITY_PROFILES = "activity_profiles"
     RAW_ACTIVITY_STATS = "raw_activity_statistics"
     LOADS_DIR = "loads"
+    MAPS = "maps"
     POIS = "pois"
     TRANSPORT = "transport"
     ACTIVITIES = "activities"
