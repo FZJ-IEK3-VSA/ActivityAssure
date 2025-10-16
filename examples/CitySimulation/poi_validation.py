@@ -87,7 +87,8 @@ def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
     :return: a dict of POI presence logs, using POI IDs as keys
     """
     poi_logs = {}
-    files = list(poi_log_path.glob(f"*{filter}*.txt"))
+    pattern = f"*{filter}*.txt" if filter else "*.txt"
+    files = list(poi_log_path.glob(pattern))
     logging.info(f"Found {len(files)} POI log files of type {filter}")
     skipped = 0
     for poi_file in tqdm(files):
