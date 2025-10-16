@@ -2,8 +2,11 @@
 Analyze POI presence logs and create daily profiles.
 """
 
+from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
+import json
 import logging
 from pathlib import Path
 
@@ -13,7 +16,10 @@ import pandas as pd
 
 from tqdm import tqdm
 
-from paths import DFColumnsPoi
+from paths import DFColumnsPoi, SubDirs
+
+#: relevant POIs for validation and analysis
+RELEVANT_POI_TYPES = ["Supermarket", "Doctors Office"]
 
 
 @dataclass
@@ -29,6 +35,13 @@ class PoiLog:
 
     def get_presence(self) -> pd.Series:
         return self.data[DFColumnsPoi.PRESENCE]
+
+    @staticmethod
+    def poi_type_from_filename(filename: str) -> str:
+        # assume the building ID does not contain a space, so everything behind the
+        # last space is the ID, the rest is the POI type
+        parts = filename.split(" ")
+        return " ".join(parts[:-1])
 
     @staticmethod
     def load(poi_file: Path) -> "PoiLog":
@@ -51,7 +64,8 @@ class PoiLog:
             df = pd.read_csv(
                 poi_file, header=None, names=expected_header, parse_dates=[1]
             )
-        return PoiLog(poi_file.stem, df)
+        poi_type = PoiLog.poi_type_from_filename(poi_file.stem)
+        return PoiLog(poi_file.stem, df, poi_type)
 
 
 @dataclass
@@ -163,7 +177,13 @@ def plot_daily_visitors_histogram(dir: Path, profiles: PoiDailyProfiles):
     plt.close(fig)
 
 
-def process_poi_type(poi_log_path: Path, plot_dir: Path, poi_type: str):
+def create_poi_plots(poi_type_subdir, max_presence, poi):
+    daily = get_daily_profiles(poi)
+    plot_daily_visitors_histogram(poi_type_subdir, daily)
+    plot_daily_profiles(poi_type_subdir, daily, max_presence)
+
+
+def process_one_poi_type(poi_log_path: Path, plot_dir: Path, poi_type: str):
     poi_type_subdir = plot_dir / poi_type
 
     poi_logs = load_poi_logs(poi_log_path, poi_type)
@@ -173,25 +193,71 @@ def process_poi_type(poi_log_path: Path, plot_dir: Path, poi_type: str):
 
     max_presence = max(p.get_presence().max() for p in poi_logs.values())
     for poi in poi_logs.values():
-        daily = get_daily_profiles(poi)
-        plot_daily_visitors_histogram(poi_type_subdir, daily)
-        plot_daily_profiles(poi_type_subdir, daily, max_presence)
+        create_poi_plots(poi_type_subdir, max_presence, poi)
 
 
-def main(city_result_dir: Path, plot_dir: Path):
+def process_relevant_poi_types(city_result_dir: Path, plot_dir: Path):
     poi_log_path = city_result_dir / "Logs/poi_presence"
 
-    POI_TYPES = ["Supermarket", "Doctors Office"]
-    for poi_type in POI_TYPES:
-        process_poi_type(poi_log_path, plot_dir, poi_type)
+    for poi_type in RELEVANT_POI_TYPES:
+        process_one_poi_type(poi_log_path, plot_dir, poi_type)
+
+
+def count_total_visitors(poi_log: PoiLog) -> int:
+    presence: pd.Series[int] = poi_log.get_presence()
+    # sum increases in visitor numbers
+    diff = presence.diff()
+    positive = diff[diff >= 0]
+    total = positive.sum()
+
+    # if the visitor number stays the same, at least one person left and another
+    # came; as an estimate, count one visitor for each such case
+    zero_diffs = len(diff[diff == 0])
+    total += zero_diffs
+    if zero_diffs > 0:
+        logging.debug(f"0 Diffs for {poi_log.poi_id}: {zero_diffs}")
+    return int(total)
+
+
+def get_total_visitor_count(poi_logs: Iterable[PoiLog]) -> dict[str, int]:
+    return {poi_log.poi_id: count_total_visitors(poi_log) for poi_log in poi_logs}
+
+
+def process_all_poi_types(city_result_dir: Path, plot_dir: Path):
+    poi_log_path = city_result_dir / "Logs/poi_presence"
+    poi_logs = load_poi_logs(poi_log_path)
+    if not poi_logs:
+        logging.warning(f"Found no POI logs in {poi_log_path}")
+        return
+
+    # group all POIs by type
+    pois_by_type = defaultdict(list)
+    for poi in poi_logs.values():
+        pois_by_type[poi.poi_type].append(poi)
+
+    output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    visitor_counts = get_total_visitor_count(poi_logs.values())
+    with open(output_dir / "total_visitor_counts.json", "w", encoding="utf8") as f:
+        json.dump(visitor_counts, f, indent=4)
+
+    # create plots for all relevant POI types
+    for poi_type in RELEVANT_POI_TYPES:
+        assert poi_type in pois_by_type, f"No POI of type {poi_type} found"
+        pois_of_type = pois_by_type[poi_type]
+        max_presence = max(p.get_presence().max() for p in pois_of_type)
+        poi_type_subdir = plot_dir / poi_type
+        for poi in pois_of_type:
+            create_poi_plots(poi_type_subdir, max_presence, poi)
 
 
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.INFO,
+        level=logging.DEBUG,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+    city_result_dir = Path("R:/phd_dir/results/scenario_julich_100_11kW")
     plot_dir = city_result_dir / "Postprocessed/plots/pois"
-    main(city_result_dir, plot_dir)
+    process_all_poi_types(city_result_dir, plot_dir)
