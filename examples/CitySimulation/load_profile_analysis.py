@@ -101,6 +101,7 @@ def stat_curves(path, result_dir, h25: pd.Series, with_max: bool = True):
     ax.xaxis.set_label_text("Uhrzeit [h]")
     ax.yaxis.set_label_text("Elektrische Last [W]")
     ax.legend()
+    fig.tight_layout()
     fig.savefig(result_dir / f"{filename}.svg")
 
 
@@ -124,6 +125,7 @@ def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
     ax.xaxis.set_label_text(instance_name)
     ax.yaxis.set_label_text("Stromverbrauch [kWh]")
     ax2.yaxis.set_label_text("Durchschnittliche Last [W]")
+    fig.tight_layout()
     fig.savefig(result_dir / "total_demand_per_profile.svg")
 
 
@@ -166,6 +168,7 @@ def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     )
     ax.xaxis.set_label_text("Dauer [h]")
     ax.yaxis.set_label_text(f"Elektrische Last [{unit}]")
+    fig.tight_layout()
     fig.savefig(result_dir / "sum_duration_curve.svg")
 
     # return the H25 profile for further use
@@ -220,6 +223,6 @@ def main(postproc_path: Path, plot_path: Path):
 
 
 if __name__ == "__main__":
-    postproc_path = Path("D:/LPG/Results/scenario_julich-grosse-rurstr/Postprocessed")
-    plot_path = postproc_path / "plots"
+    postproc_path = Path("R:/phd_dir/results/scenario_julich_02/Postprocessed")
+    plot_path = postproc_path / "plots/loads"
     main(postproc_path, plot_path)
