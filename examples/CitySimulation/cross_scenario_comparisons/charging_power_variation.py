@@ -1,10 +1,12 @@
 """Comparisons and assessments across multiple result data sets"""
 
+from datetime import datetime, timedelta
 import logging
 from pathlib import Path
 import sys
 
 from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
 import pandas as pd
 import seaborn as sns
 
@@ -165,6 +167,15 @@ def car_state_comparison(base_results: Path, output: Path):
     power_in_kw = "Power [kW]"
     data3kW[power_in_kw] = 3
     data11kW[power_in_kw] = 11
+
+    # add a time column
+    start_date = datetime(2020, 3, 30)
+    resolution = timedelta(minutes=1)
+    time_col = "Time"
+    data3kW[time_col] = data11kW[time_col] = [
+        start_date + i * resolution for i in range(len(data3kW))
+    ]
+
     joined = pd.concat([data3kW, data11kW], ignore_index=True)
     total_power_col = "Total Charging Power"
     joined[total_power_col] = joined[charging_col] * joined[power_in_kw]
@@ -176,12 +187,16 @@ def car_state_comparison(base_results: Path, output: Path):
 
     # plot number of charging cars
     fig, ax = plt.subplots(1, 1)
-    sns.lineplot(data=joined, x="Timestep", y=charging_col, hue=label, ax=ax)
+    sns.lineplot(data=joined, x=time_col, y=charging_col, hue=label, ax=ax)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax.set_ylabel("Number of cars charging")
     fig.tight_layout()
     fig.savefig(output / "charging_car_number.svg")
+
     # plot total charging power
     fig, ax = plt.subplots(1, 1)
-    sns.lineplot(data=joined, x="Timestep", y=total_power_col, hue=label, ax=ax)
+    sns.lineplot(data=joined, x=time_col, y=total_power_col, hue=label, ax=ax)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     fig.tight_layout()
     fig.savefig(output / "total_charging_power.svg")
 
