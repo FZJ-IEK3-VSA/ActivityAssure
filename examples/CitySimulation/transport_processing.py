@@ -78,6 +78,7 @@ def main(city_result_dir: Path, output_dir: Path, hh_dbs: dict[str, Path]):
     :param city_result_dir: result directory of the city simulation
     :param output_dir: output directory for the postpocessed data
     """
+    output_dir.mkdir(parents=True, exist_ok=True)
     get_car_state_counts(city_result_dir, output_dir)
     travel_statistics(hh_dbs, output_dir)
 
