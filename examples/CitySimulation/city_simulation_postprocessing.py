@@ -22,15 +22,15 @@ def postprocess_city_results(city_result_dir: Path):
 
     :param city_result_dir: result directory of the city simulation
     """
+    # collect all household result databases
+    hh_dbs = lpgprofiles.collect_household_dbs(city_result_dir)
+
     # process travel-related data for validation
     postproc_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR
-    transport_processing.main(city_result_dir, postproc_dir / SubDirs.TRANSPORT)
+    transport_processing.main(city_result_dir, postproc_dir / SubDirs.TRANSPORT, hh_dbs)
 
     # process and aggregate load profile data for validation
     load_profile_processing.main(city_result_dir, postproc_dir / SubDirs.LOADS_DIR)
-
-    # collect all household result databases
-    hh_dbs = lpgprofiles.collect_household_dbs(city_result_dir)
 
     # convert activity profiles from databases to csv format
     mapping_file = Path("examples/LoadProfileGenerator/data/activity_mapping.json")

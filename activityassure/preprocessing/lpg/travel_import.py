@@ -25,7 +25,7 @@ def load_travels_from_db(database_path: Path) -> list[Travel]:
     routes = {r["Name"]: r for r in route_dicts}
 
     travel_indices = [i for i, d in enumerate(action_dicts) if d["IsTravel"]]
-    if travel_indices[-1] == len(action_dicts):
+    if travel_indices[-1] == len(action_dicts) - 1:
         # drop the last travel if it was the last action, as its duration is unknown
         travel_indices.pop()
 
@@ -36,16 +36,15 @@ def load_travels_from_db(database_path: Path) -> list[Travel]:
         next_aff = action_dicts[i + 1]
         start = travel["TimeStep"]["ExternalStep"]
         duration = next_aff["TimeStep"]["ExternalStep"] - start
-        route_name = travel["Affordancename"].removeprefix("travel on ")
+        route_name = travel["AffordanceName"].removeprefix("travel on ")
 
         # get the relevant route object for additional data
         route = routes[route_name]
         start_site = route["SiteAName"]
         dest_site = route["SiteBName"]
-        assert len(routes["Steps"]) == 1, "Not implemented for multiple steps yet"
-        distance = routes["Steps"]["DistanceInM"]
-        device = routes["Steps"]["TransportationDeviceCategory"]["Name"].removesuffix(
-            " Category"
-        )
+        assert len(route["Steps"]) == 1, "Not implemented for multiple steps yet"
+        step = route["Steps"][0]
+        distance = step["DistanceInM"]
+        device = step["TransportationDeviceCategory"]["Name"].removesuffix(" Category")
         travels.append(Travel(start, duration, start_site, dest_site, distance, device))
     return travels
