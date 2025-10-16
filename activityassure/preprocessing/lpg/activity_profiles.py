@@ -141,8 +141,24 @@ def load_lpg_result_table_json(database_dir: Path, table: str) -> list[dict]:
     return parsed_json_list
 
 
+def load_lpg_result_table(database_path: Path, table: str) -> list[dict]:
+    """Automatically loads an LPG result table in the given format (sql or JSON).
+
+    :param database_path: path of the database (file or directory) to load
+    :param table: name of the table to load
+    :return: parsed JSON content of all items
+    """
+    if database_path.suffix == ".sqlite":
+        parsed_json_list = load_lpg_result_table_sql(database_path, table)
+    elif database_path.is_dir():
+        parsed_json_list = load_lpg_result_table_json(database_path, table)
+    else:
+        assert False, f"Unknown database format: {database_path}"
+    return parsed_json_list
+
+
 def load_activity_profile_from_db(
-    database_file: Path, mapping_path: Path
+    database_path: Path, mapping_path: Path
 ) -> dict[str, pd.DataFrame]:
     """
     Converts LPG activity profiles to the target csv format.
@@ -153,12 +169,7 @@ def load_activity_profile_from_db(
     """
     # load activity data depending on the database format
     activity_table = "PerformedActions"
-    if database_file.suffix == ".sqlite":
-        parsed_json_list = load_lpg_result_table_sql(database_file, activity_table)
-    elif database_file.is_dir():
-        parsed_json_list = load_lpg_result_table_json(database_file, activity_table)
-    else:
-        assert False, f"Unknown database format: {database_file}"
+    parsed_json_list = load_lpg_result_table(database_path, activity_table)
 
     # load activity mapping
     if mapping_path.is_file():
