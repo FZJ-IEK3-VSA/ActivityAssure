@@ -4,10 +4,13 @@ import json
 from pathlib import Path
 from collections import defaultdict
 import logging
+from dataclasses import asdict
+import pickle
 
 import pandas as pd
 from tqdm import tqdm
 
+from activityassure.preprocessing.lpg import travel_import, activity_profiles
 from paths import SubDirs
 
 
@@ -30,6 +33,7 @@ def get_car_state_counts(city_result_dir: Path, output_dir: Path):
         return
 
     # count how many cars are in which state, for each timestep
+    logging.info("Collecting car state files")
     state_counts = []
     for file in tqdm(car_files):
         with open(file, "r", encoding="utf8") as f:
@@ -52,13 +56,30 @@ def get_car_state_counts(city_result_dir: Path, output_dir: Path):
     df.to_csv(result_file)
 
 
-def main(city_result_dir: Path, output_dir: Path):
+def travel_statistics(hh_dbs: dict[str, Path], output_dir: Path):
+    # collect all travels
+    all_travels = []
+    logging.info("Collecting travels")
+    for id, hh_db in tqdm(hh_dbs.items()):
+        travels = travel_import.load_travels_from_db(hh_db)
+        all_travels.extend(travels)
+    # store travel data
+    filepath = output_dir / "travels.pkl"
+    with open(filepath, "wb") as f:
+        pickle.dump(all_travels, f)
+    logging.debug(f"Created travels file: {filepath}")
+    df = pd.DataFrame([asdict(d) for d in all_travels])
+    print(df.describe())
+
+
+def main(city_result_dir: Path, output_dir: Path, hh_dbs: dict[str, Path]):
     """Contains all travel postprocessing of the city simulation.
 
     :param city_result_dir: result directory of the city simulation
     :param output_dir: output directory for the postpocessed data
     """
     get_car_state_counts(city_result_dir, output_dir)
+    travel_statistics(hh_dbs, output_dir)
 
 
 if __name__ == "__main__":
@@ -68,7 +89,11 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    city_result_dir = Path("/projects4/2022-d-neuroth-phd/results/scenario_julich_02_transport")
+    city_result_dir = Path(
+        "/projects4/2022-d-neuroth-phd/results/scenario_julich_02_transport"
+    )
     output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.TRANSPORT
 
-    main(city_result_dir, output_dir)
+    hh_dbs = activity_profiles.collect_household_dbs(city_result_dir)
+
+    main(city_result_dir, output_dir, hh_dbs)
