@@ -25,6 +25,10 @@ def load_travels_from_db(database_path: Path) -> list[Travel]:
     routes = {r["Name"]: r for r in route_dicts}
 
     travel_indices = [i for i, d in enumerate(action_dicts) if d["IsTravel"]]
+    if len(travel_indices) == 0:
+        # no travels in this household
+        return []
+
     if travel_indices[-1] == len(action_dicts) - 1:
         # drop the last travel if it was the last action, as its duration is unknown
         travel_indices.pop()
