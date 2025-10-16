@@ -8,18 +8,17 @@ and completed manually afterwards.
 If a mapping file already exists, it is loaded and expanded if necessary.
 """
 
+import json
+import logging
+import sqlite3
 from collections import defaultdict
 from datetime import datetime
-import json
 from pathlib import Path
-import sqlite3
 
 import pandas as pd
 
-from activityassure import activity_mapping
-
+from activityassure import activity_mapping, utils
 from activityassure.preprocessing.lpg import person_characteristics
-
 
 #: used as a placeholder for ambiguous categories
 UNMAPPED_CATEGORY = "TODO"
@@ -237,12 +236,9 @@ def convert_activity_profile_from_db_to_csv(
     profiles to csv files. Writes any new, still uncategorized affordances into the
     mapping file.
 
-    :param raw_data_dir: LPG result directory containing the database file
-    :param result_dir: output folder for the created csv files
-    :param hh_key: household key of the file to load, defaults to "HH1"
-
     :param db_file: the database file to load
     :param result_dir: the result directory to store the csv files
+    :param mapping_path: the activity mapping file to use
     :param id: ID of the calculation to distinguish results for the same template
     :param template: the household template name
     """
@@ -261,3 +257,47 @@ def convert_activity_profile_from_db_to_csv(
             person_id = person_name
         result_path = result_dir / f"{person_id}_{id}.csv"
         data.to_csv(result_path)
+
+
+@utils.timing
+def convert_activity_profiles(
+    hh_dbs: dict[str, Path], result_dir: Path, mapping_path: Path
+):
+    """
+    Converts all activity profiles generated in an LPG City Simulation to CSV files.
+
+    :param hh_dbs: dictionary with IDs and paths to all household database files
+    :param result_dir: result directory to save the activity profiles to
+    :param mapping_path: path to the activity mapping file to use
+    """
+    result_dir.mkdir(parents=True, exist_ok=True)
+    # the Houses directory contains one subdirectory per house
+    for hh_id, db_file in hh_dbs.items():
+        convert_activity_profile_from_db_to_csv(
+            db_file, result_dir, mapping_path, hh_id
+        )
+
+
+def collect_household_dbs(result_dir: Path) -> dict[str, Path]:
+    """
+    Collects all household result databases from a city simulation. The
+    databases are either sqlite files or directories of JSON files, depending
+    on which output format was used in the LPG.
+
+    :param result_dir: dictionary with paths to all household database files
+    """
+    houses_dir = result_dir / "Houses"
+    house_dbs = {}
+    # the Houses directory contains one subdirectory per house
+    for house_dir in houses_dir.iterdir():
+        assert house_dir.is_dir(), f"Unexpected file found: {house_dir}"
+        # import each household database file from the house
+        for db_file in house_dir.glob("Results.HH*"):
+            assert db_file.is_dir() != (
+                db_file.suffix == ".sqlite"
+            ), "Invalid database format"
+            hh_name = db_file.name.removeprefix("Results.").removesuffix(".sqlite")
+            hh_id = f"{house_dir.name}_{hh_name}"
+            house_dbs[hh_id] = db_file
+    logging.info(f"Collected {len(house_dbs)} household database files")
+    return house_dbs
