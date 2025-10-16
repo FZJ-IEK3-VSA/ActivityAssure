@@ -38,7 +38,7 @@ def main():
     plot_path = postproc_dir / SubDirs.PLOTS
 
     load_profile_analysis.main(postproc_dir, plot_path / SubDirs.LOADS_DIR)
-    poi_validation.main(city_result_dir, plot_path / SubDirs.POIS)
+    poi_validation.process_all_poi_types(city_result_dir, plot_path / SubDirs.POIS)
 
     # activity validation with additional custom statistics
     # lpg_example_dir = Path("examples/LoadProfileGenerator/data")
