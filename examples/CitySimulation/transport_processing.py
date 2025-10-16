@@ -51,6 +51,8 @@ def get_car_state_counts(city_result_dir: Path, output_dir: Path):
     df = pd.DataFrame(state_counts)
     df.fillna(0, inplace=True)
     df.index.name = "Timestep"
+    # order columns alphabetically to get the same order everytime
+    df = df[sorted(df.columns)]
     output_dir.mkdir(parents=True, exist_ok=True)
     result_file = output_dir / "car_state_counts.csv"
     df.to_csv(result_file)
