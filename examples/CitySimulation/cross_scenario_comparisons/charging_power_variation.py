@@ -17,6 +17,7 @@ from paths import DFColumnsLoad, LoadFiles, SubDirs
 scenario_name_3kW = "scenario_julich_02_3kW"
 scenario_name_11kW = "scenario_julich_02"
 
+
 def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
     subdir = f"{SubDirs.POSTPROCESSED_DIR}/loads/aggregated_household"
     path3kW = base_results / scenario_name_3kW / subdir
@@ -138,6 +139,53 @@ def charging_power_comparison_total_demand(base_results: Path, output: Path):
     fig.savefig(output / "total_demands.svg")
 
 
+def car_state_comparison(base_results: Path, output: Path):
+    """Plot the different number of charging cars and the resulting
+    total charging load for the whole city as simple line plots.
+
+    :param base_results: base directory for city simulation results
+    :param output: output directory for plots
+    """
+    # use the special simulations with additional transport output files
+    scenario_name_3kW = "scenario_julich_02_3kW_transport"
+    scenario_name_11kW = "scenario_julich_02_transport"
+    # read the car state files
+    rel_filepath = f"{SubDirs.POSTPROCESSED_DIR}/transport/car_state_counts.csv"
+    path3kW = base_results / scenario_name_3kW / rel_filepath
+    path11kW = base_results / scenario_name_11kW / rel_filepath
+    data3kW = pd.read_csv(path3kW).fillna(0)
+    data11kW = pd.read_csv(path11kW).fillna(0)
+
+    charging_col = "ParkingAndCharging"
+
+    # add columns for the plot label and for the actual load values
+    label = "Charging Power"
+    data3kW[label] = "3 kW"
+    data11kW[label] = "11 kW"
+    power_in_kw = "Power [kW]"
+    data3kW[power_in_kw] = 3
+    data11kW[power_in_kw] = 11
+    joined = pd.concat([data3kW, data11kW], ignore_index=True)
+    total_power_col = "Total Charging Power"
+    joined[total_power_col] = joined[charging_col] * joined[power_in_kw]
+
+    # log info about total load
+    logging.info("Total charging powers:")
+    logging.info(f"3 kW: {joined[joined[label] == "3 kW"][total_power_col].mean()}")
+    logging.info(f"11 kW: {joined[joined[label] == "11 kW"][total_power_col].mean()}")
+
+    # plot number of charging cars
+    fig, ax = plt.subplots(1, 1)
+    sns.lineplot(data=joined, x="Timestep", y=charging_col, hue=label, ax=ax)
+    fig.tight_layout()
+    fig.savefig(output / "charging_car_number.svg")
+    # plot total charging power
+    fig, ax = plt.subplots(1, 1)
+    sns.lineplot(data=joined, x="Timestep", y=total_power_col, hue=label, ax=ax)
+    fig.tight_layout()
+    fig.savefig(output / "total_charging_power.svg")
+
+
 def charging_power_comparison(base_results: Path, output: Path):
     logging.info("--- charging power scenarios (3 kW vs. 11 kW) ---")
     charge_output = output / "charging_power_3kW_vs_11kW"
@@ -145,6 +193,7 @@ def charging_power_comparison(base_results: Path, output: Path):
     charging_power_comparison_sumprofiles(base_results, charge_output)
     charging_power_comparison_maxloads(base_results, charge_output)
     charging_power_comparison_total_demand(base_results, charge_output)
+    car_state_comparison(base_results, charge_output)
 
 
 def main():
