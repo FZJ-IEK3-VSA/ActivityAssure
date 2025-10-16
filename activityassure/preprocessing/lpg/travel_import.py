@@ -14,9 +14,17 @@ class Travel:
     dest_site: str
     distance_in_m: float
     device: str
+    person: str
+    hhid: str = ""
 
 
-def load_travels_from_db(database_path: Path) -> list[Travel]:
+def load_travels_from_db(database_path: Path, hhid: str) -> list[Travel]:
+    """Loads all travels from the LPG activity results.
+
+    :param database_path: path of the database to load
+    :param hhid: household ID
+    :return: all travel objects of the household
+    """
     # load all activities and TravelRoutes from DB
     action_dicts = activity_profiles.load_lpg_result_table(
         database_path, "PerformedActions"
@@ -41,6 +49,7 @@ def load_travels_from_db(database_path: Path) -> list[Travel]:
         start = travel["TimeStep"]["ExternalStep"]
         duration = next_aff["TimeStep"]["ExternalStep"] - start
         route_name = travel["AffordanceName"].removeprefix("travel on ")
+        person = travel["PersonName"]
 
         # get the relevant route object for additional data
         route = routes[route_name]
@@ -50,5 +59,9 @@ def load_travels_from_db(database_path: Path) -> list[Travel]:
         step = route["Steps"][0]
         distance = step["DistanceInM"]
         device = step["TransportationDeviceCategory"]["Name"].removesuffix(" Category")
-        travels.append(Travel(start, duration, start_site, dest_site, distance, device))
+        travels.append(
+            Travel(
+                start, duration, start_site, dest_site, distance, device, person, hhid
+            )
+        )
     return travels

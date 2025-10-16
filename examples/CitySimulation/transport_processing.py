@@ -62,8 +62,8 @@ def travel_statistics(hh_dbs: dict[str, Path], output_dir: Path):
     # collect all travels
     all_travels = []
     logging.info("Collecting travels")
-    for id, hh_db in tqdm(hh_dbs.items()):
-        travels = travel_import.load_travels_from_db(hh_db)
+    for hhid, hh_db in tqdm(hh_dbs.items()):
+        travels = travel_import.load_travels_from_db(hh_db, hhid)
         all_travels.extend(travels)
     # store travel data
     filepath = output_dir / "travels.pkl"
