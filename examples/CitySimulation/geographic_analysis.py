@@ -8,7 +8,7 @@ from matplotlib.colors import LogNorm
 import numpy as np
 import pandas as pd
 
-from paths import SubDirs
+from paths import LoadFiles, SubDirs
 
 import matplotlib.pyplot as plt
 import contextily as ctx  # type: ignore
@@ -100,8 +100,9 @@ def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path, markersize: in
         cmap="jet",
         norm=LogNorm(),
         legend=True,
-        legend_kwds={"shrink": 0.7},  # shrink colorbar
+        legend_kwds={"shrink": 0.7, "label": col},  # modify colorbar
     )
+
     # Add basemap
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)  # type: ignore
 
@@ -203,9 +204,37 @@ def total_house_demand(scenario_dir: Path, city_result_dir: Path, output_dir: Pa
     plot_map_data(df, demand_pp, output_dir / "demand_per_person.svg")  # type: ignore
 
 
+def load_profile_stats(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
+    """Creates map plots for the load profile statistics (mean, max, ...) of the house
+    load profiles.
+
+    :param scenario_dir: directory with the city scenario
+    :param city_result_dir: result directory of the city simulation
+    :param output_dir: output directory for the map plots
+    """
+    filepath = (
+        city_result_dir
+        / SubDirs.POSTPROCESSED_DIR
+        / SubDirs.LOADS_DIR
+        / "aggregated_house"
+        / LoadFiles.PROFILE_STATS
+    )
+    df_stats = pd.read_csv(filepath, index_col=0).T
+    # add unit to column name
+    df_stats = df_stats.add_prefix("Load profile ").add_suffix(" [W]")
+    df = add_house_geodata(scenario_dir, df_stats)
+
+    output_dir /= "load_stats"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    # create one map plot for every statistic
+    for column in df_stats.columns:
+        plot_map_data(df, column, output_dir / f"house_load_{column}.svg")
+
+
 def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     """Contains all geographic postprocessing of the city simulation.
 
+    :param scenario_dir: directory with the city scenario
     :param city_result_dir: result directory of the city simulation
     :param output_dir: output directory for the postpocessed data
     """
@@ -214,6 +243,7 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     visits_per_poi(scenario_dir, city_result_dir, output_dir)
     persons_per_house(scenario_dir, city_result_dir, output_dir)
     total_house_demand(scenario_dir, city_result_dir, output_dir)
+    load_profile_stats(scenario_dir, city_result_dir, output_dir)
 
 
 if __name__ == "__main__":
@@ -225,7 +255,5 @@ if __name__ == "__main__":
 
     scenario_dir = Path("R:/phd_dir/city_scenarios/scenario_julich_02")
     city_result_dir = Path("R:/phd_dir/results/scenario_julich_02")
-    # city_result_dir = Path(r"C:\LPG\Results\scenario_julich")
     output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.MAPS
-
     main(scenario_dir, city_result_dir, output_dir)
