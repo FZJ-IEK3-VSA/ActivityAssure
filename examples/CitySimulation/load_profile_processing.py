@@ -35,7 +35,9 @@ class ProfileInfo:
 
 def get_stats_df(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Calculates statistics profiles for the given dataframe.
+    Calculates statistics profiles for the given dataframe. The statistics
+    are calculates per timestep, so the max column, e.g., contains the
+    maximum load out of all houses in each timestep.
 
     :param data: dataframe with all house load profiles of a city
     :return: statistics dataframe
@@ -120,8 +122,13 @@ def aggregate_load_profiles(
     city_profile.name = DFColumnsLoad.TOTAL_LOAD
     city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
 
+    # calc statistics per profile
+    profile_stats = data_w.describe()
+    profile_stats.to_csv(result_dir / LoadFiles.PROFILE_STATS)
+
+    # calc statistics per timestep, across profiles
     stats = get_stats_df(data_w)
-    stats.to_csv(result_dir / LoadFiles.STATS)
+    stats.to_csv(result_dir / LoadFiles.STAT_PROFILES)
 
     dayprofiles = split_cols_into_single_days(data_w)
     daystats = get_stats_df(dayprofiles)
@@ -341,7 +348,7 @@ if __name__ == "__main__":
     city_result_dir = Path(
         "/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25"
     )
-    # city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+    # city_result_dir = Path("C:/LPG/Results/scenario_julich")
     output_dir = city_result_dir / "Postprocessed/loads"
 
     main(city_result_dir, output_dir)
