@@ -16,14 +16,14 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from load_profile_analysis import datetime_to_hours, adapt_scaling
 from paths import DFColumnsLoad, LoadFiles, SubDirs
 
-scenario_name_3kW = "scenario_julich_02_3kW"
-scenario_name_11kW = "scenario_julich_02"
+SCENARIO_NAME_3KW = "scenario_julich_3"
+SCENARIO_NAME_11KW = "scenario_julich_11"
 
 
 def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
     subdir = f"{SubDirs.POSTPROCESSED_DIR}/loads/aggregated_household"
-    path3kW = base_results / scenario_name_3kW / subdir
-    path11kW = base_results / scenario_name_11kW / subdir
+    path3kW = base_results / SCENARIO_NAME_3KW / subdir
+    path11kW = base_results / SCENARIO_NAME_11KW / subdir
     data3kW = pd.read_csv(path3kW / LoadFiles.SUMPROFILE, parse_dates=[0])
     data11kW = pd.read_csv(path11kW / LoadFiles.SUMPROFILE, parse_dates=[0])
 
@@ -79,8 +79,8 @@ def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
 
 def charging_power_comparison_maxloads(base_results: Path, output: Path):
     subdir = f"{SubDirs.POSTPROCESSED_DIR}/loads/aggregated_household"
-    path3kW = base_results / scenario_name_3kW / subdir
-    path11kW = base_results / scenario_name_11kW / subdir
+    path3kW = base_results / SCENARIO_NAME_3KW / subdir
+    path11kW = base_results / SCENARIO_NAME_11KW / subdir
     data3kW = pd.read_csv(path3kW / LoadFiles.STATS, parse_dates=[0])
     data11kW = pd.read_csv(path11kW / LoadFiles.STATS, parse_dates=[0])
 
@@ -104,8 +104,8 @@ def charging_power_comparison_maxloads(base_results: Path, output: Path):
 
 def charging_power_comparison_total_demand(base_results: Path, output: Path):
     subdir = f"{SubDirs.POSTPROCESSED_DIR}/loads/aggregated_household"
-    path3kW = base_results / scenario_name_3kW / subdir
-    path11kW = base_results / scenario_name_11kW / subdir
+    path3kW = base_results / SCENARIO_NAME_3KW / subdir
+    path11kW = base_results / SCENARIO_NAME_11KW / subdir
     data3kW = pd.read_csv(path3kW / LoadFiles.TOTALS)
     data11kW = pd.read_csv(path11kW / LoadFiles.TOTALS)
 
@@ -149,12 +149,12 @@ def car_state_comparison(base_results: Path, output: Path):
     :param output: output directory for plots
     """
     # use the special simulations with additional transport output files
-    scenario_name_3kW = "scenario_julich_02_3kW_transport"
-    scenario_name_11kW = "scenario_julich_02_transport"
+    scenario_3kW = "scenario_julich_02_3kW_transport"
+    scenario_11kW = "scenario_julich_02_transport"
     # read the car state files
     rel_filepath = f"{SubDirs.POSTPROCESSED_DIR}/transport/car_state_counts.csv"
-    path3kW = base_results / scenario_name_3kW / rel_filepath
-    path11kW = base_results / scenario_name_11kW / rel_filepath
+    path3kW = base_results / scenario_3kW / rel_filepath
+    path11kW = base_results / scenario_11kW / rel_filepath
     data3kW = pd.read_csv(path3kW).fillna(0)
     data11kW = pd.read_csv(path11kW).fillna(0)
 
@@ -162,10 +162,10 @@ def car_state_comparison(base_results: Path, output: Path):
 
     # add columns for the plot label and for the actual load values
     label = "Charging Power"
-    data3kW[label] = "3 kW"
+    data3kW[label] = "3.7 kW"
     data11kW[label] = "11 kW"
     power_in_kw = "Power [kW]"
-    data3kW[power_in_kw] = 3
+    data3kW[power_in_kw] = 3.7
     data11kW[power_in_kw] = 11
 
     # add a time column
@@ -177,13 +177,13 @@ def car_state_comparison(base_results: Path, output: Path):
     ]
 
     joined = pd.concat([data3kW, data11kW], ignore_index=True)
-    total_power_col = "Total Charging Power"
-    joined[total_power_col] = joined[charging_col] * joined[power_in_kw]
+    total_col = "Total Charging Power"
+    joined[total_col] = joined[charging_col] * joined[power_in_kw]
 
     # log info about total load
-    logging.info("Total charging powers:")
-    logging.info(f"3 kW: {joined[joined[label] == "3 kW"][total_power_col].mean()}")
-    logging.info(f"11 kW: {joined[joined[label] == "11 kW"][total_power_col].mean()}")
+    logging.info("Mean charging powers:")
+    logging.info(f"3 kW: {joined[joined[label] == "3.7 kW"][total_col].mean()} kW")
+    logging.info(f"11 kW: {joined[joined[label] == "11 kW"][total_col].mean()} kW")
 
     # plot number of charging cars
     fig, ax = plt.subplots(1, 1)
@@ -195,7 +195,7 @@ def car_state_comparison(base_results: Path, output: Path):
 
     # plot total charging power
     fig, ax = plt.subplots(1, 1)
-    sns.lineplot(data=joined, x=time_col, y=total_power_col, hue=label, ax=ax)
+    sns.lineplot(data=joined, x=time_col, y=total_col, hue=label, ax=ax)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     fig.tight_layout()
     fig.savefig(output / "total_charging_power.svg")
