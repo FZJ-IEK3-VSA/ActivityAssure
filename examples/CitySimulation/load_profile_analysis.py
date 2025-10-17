@@ -206,6 +206,68 @@ def simultaneity_curves(path: Path, result_dir: Path, instances: str):
     fig.savefig(result_dir / "simultaneity.svg")
 
 
+def raster_plot(path: Path, result_dir: Path):
+    # load the city sum profile
+    df = pd.read_csv(path / LoadFiles.SUMPROFILE, parse_dates=[0], index_col=0)
+    # df = pd.read_csv(
+    #     r"C:\Users\d.neuroth\Downloads\juelich_solar.csv",
+    #     parse_dates=[0],
+    #     date_format="%d.%m.%Y %H:%M:%S",
+    #     delimiter=";",
+    #     index_col=0,
+    # )
+    unit, _ = adapt_scaling(df, DFColumnsLoad.TOTAL_LOAD, "W")
+
+    # Reshape data to hours × days
+    assert isinstance(df.index, pd.DatetimeIndex), "Datetimes not parsed correctly"
+    df["day"] = df.index.dayofyear
+    df["time"] = df.index.time  # or use hour/minute if finer
+    df["hour"] = df.index.hour + df.index.minute / 60
+
+    # Pivot: rows = time, columns = day, values = load
+    heatmap_data = df.pivot_table(
+        index="hour", columns="day", values=DFColumnsLoad.TOTAL_LOAD
+    )
+
+    fig, ax = plt.subplots(figsize=(15, 6), dpi=200)
+    im = ax.imshow(heatmap_data, aspect="auto", origin="upper", cmap="viridis")
+
+    # Add colorbar
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.set_label(f"Elektrische Last [{unit}]")
+    # cbar.set_label("Globalstrahlung [W/m²]")
+
+    # draw major ticks, but label minor ticks to put each label between two major ticks
+    date_formatter = mdates.DateFormatter("%b")
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    ax.xaxis.set_major_formatter(ticker.NullFormatter())
+    ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=16))
+    ax.xaxis.set_minor_formatter(date_formatter)
+    # remove the minor ticks
+    for tick in ax.xaxis.get_minor_ticks():
+        tick.tick1line.set_markersize(0)
+        tick.tick2line.set_markersize(0)
+        tick.label1.set_horizontalalignment("center")
+
+    vals_per_day = len(heatmap_data.index)
+
+    # define y-ticks (time)
+    def hour_formatter(x, pos):
+        x = x * 24 / vals_per_day
+        h = int(x)
+        m = int((x - h) * 60)
+        return f"{h % 24:02d}:{m:02d}"
+
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(hour_formatter))
+    ax.set_yticks(np.linspace(0, vals_per_day, num=7))
+
+    # Labels and title
+    ax.set_xlabel(f"{df.index[0].year}")
+    ax.set_ylabel("Uhrzeit")
+    fig.tight_layout()
+    fig.savefig(result_dir / "raster_city_load.png", transparent=True, dpi="figure")
+
+
 def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
     result_dir.mkdir(parents=True, exist_ok=True)
     h25 = sum_duration_curve(path, result_dir)
@@ -220,6 +282,7 @@ def main(postproc_path: Path, plot_path: Path):
     create_load_stat_plots(hh_data_path, plot_path / "household", "Haushalte")
     house_data_path = postproc_path / "loads/aggregated_house"
     create_load_stat_plots(house_data_path, plot_path / "house", "Häuser")
+    raster_plot(house_data_path, plot_path)
 
 
 if __name__ == "__main__":
