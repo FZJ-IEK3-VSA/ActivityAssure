@@ -81,8 +81,8 @@ def charging_power_comparison_maxloads(base_results: Path, output: Path):
     subdir = f"{SubDirs.POSTPROCESSED_DIR}/loads/aggregated_household"
     path3kW = base_results / SCENARIO_NAME_3KW / subdir
     path11kW = base_results / SCENARIO_NAME_11KW / subdir
-    data3kW = pd.read_csv(path3kW / LoadFiles.STATS, parse_dates=[0])
-    data11kW = pd.read_csv(path11kW / LoadFiles.STATS, parse_dates=[0])
+    data3kW = pd.read_csv(path3kW / LoadFiles.STAT_PROFILES, parse_dates=[0])
+    data11kW = pd.read_csv(path11kW / LoadFiles.STAT_PROFILES, parse_dates=[0])
 
     assert (data3kW["Time"] == data11kW["Time"]).all(), "Incompatible time axes"
     hours = datetime_to_hours(data3kW["Time"])
