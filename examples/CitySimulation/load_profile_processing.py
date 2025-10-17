@@ -338,7 +338,7 @@ def process_profiles(city_result_dir: Path, output_dir: Path, object_type: Objec
     :param object_type: type of profile to process
     """
     # merge all profile files, or load an existing merged dataframe
-    merged_df_path = output_dir / f"City.{object_type}.Electricity.pickle"
+    merged_df_path = output_dir / f"City.{object_type}s.Electricity.pickle"
     if merged_df_path.is_file():
         logging.warning(
             f"Reusing existing merged {object_type} dataframe file: {merged_df_path}"
