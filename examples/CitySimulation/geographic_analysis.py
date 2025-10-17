@@ -221,14 +221,16 @@ def load_profile_stats(scenario_dir: Path, city_result_dir: Path, output_dir: Pa
     )
     df_stats = pd.read_csv(filepath, index_col=0).T
     # add unit to column name
-    df_stats = df_stats.add_prefix("Load profile ").add_suffix(" [W]")
     df = add_house_geodata(scenario_dir, df_stats)
 
     output_dir /= "load_stats"
     output_dir.mkdir(parents=True, exist_ok=True)
     # create one map plot for every statistic
     for column in df_stats.columns:
-        plot_map_data(df, column, output_dir / f"house_load_{column}.svg")
+        # rename column to get a better plot label
+        new_name = f"Load profile {column} [W]"
+        df = df.rename(columns={column: new_name})
+        plot_map_data(df, new_name, output_dir / f"house_load_{column}.svg")
 
 
 def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
