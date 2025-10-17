@@ -22,7 +22,7 @@ class LoadFiles:
 
     TOTALS = "total_demand_per_profile.csv"
     SUMPROFILE = "sum_profile.csv"
-    PROFILE_STATS = "profiles_stats.csv"
+    PROFILE_STATS = "profile_stats.csv"
     STAT_PROFILES = "stat_profiles.csv"
     DAYPROFILESTATS = "day_profile_stats.csv"
     MEANDAY = "mean_day_profile.csv"
