@@ -3,6 +3,7 @@ sum profiles for the whole city"""
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from enum import StrEnum
 import itertools
 import logging
 from pathlib import Path
@@ -23,6 +24,13 @@ from paths import DFColumnsLoad, LoadFiles
 DATEFORMAT_DE = "%d.%m.%Y %H:%M"
 DATEFORMAT_EN = "%m/%d/%Y %I:%M %p"
 DATEFORMATS = [DATEFORMAT_EN, DATEFORMAT_DE]
+
+
+class ObjectType(StrEnum):
+    """object type for which there are load profiles"""
+
+    HOUSE = "House"
+    HOUSEHOLD = "Household"
 
 
 @dataclass
@@ -88,9 +96,7 @@ def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame
 
 
 @utils.timing
-def aggregate_load_profiles(
-    data_kwh: pd.DataFrame, result_dir: Path, object_type: str = "Household"
-):
+def aggregate_load_profiles(data_kwh: pd.DataFrame, result_dir: Path, object_type: str):
     """
     Generate some aggregated profiles and statistics from a dataframe
     containing all house load profiles.
@@ -267,7 +273,9 @@ def combine_dataframes(
 
 
 @utils.timing
-def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path):
+def combine_house_profiles_to_single_df(
+    city_result_dir: Path, result_file_path: Path
+) -> pd.DataFrame:
     """
     Loads all house sum electricity profiles from a city simulation and merges them
     into a single dataframe. The resulting dataframe is saved to the output directory,
@@ -285,22 +293,21 @@ def combine_house_profiles_to_single_df(city_result_dir: Path, output_dir: Path)
     houses_subdir = city_result_dir / "Houses"
     files = [ProfileInfo(d.name, d / filename) for d in houses_subdir.iterdir()]
 
-    result_file_path = output_dir / "City.Houses.Electricity.pickle"
     data = combine_dataframes(files, data_col_name, result_file_path)
-
-    # also calculate and save agggregated values from the merged dataframe
-    aggregate_load_profiles(data, output_dir, "House")
+    return data
 
 
 @utils.timing
-def combine_household_profiles_to_single_df(city_result_dir: Path, output_dir: Path):
+def combine_household_profiles_to_single_df(
+    city_result_dir: Path, result_file_path: Path
+) -> pd.DataFrame:
     """
     Loads all house sum electricity profiles from a city simulation and merges them
     into a single dataframe. The resulting dataframe is saved to the output directory,
     along with some aggregated data.
 
     :param city_result_dir: result directory of the city simulation
-    :param output_dir: output directory for the merged dataframe
+    :param result_file_path: result file path for the merged dataframe
     """
     # pattern of the LPG result files to aggregate
     file_prefix = "SumProfiles_600s."
@@ -319,11 +326,41 @@ def combine_household_profiles_to_single_df(city_result_dir: Path, output_dir: P
         for file in houses_subdir.rglob(filepattern)
     ]
 
-    result_file_path = output_dir / "City.Households.Electricity.pickle"
     data = combine_dataframes(files, data_col_name, result_file_path)
+    return data
 
-    # also calculate and save agggregated values from the merged dataframe
-    aggregate_load_profiles(data, output_dir, "Household")
+
+def process_profiles(city_result_dir: Path, output_dir: Path, object_type: ObjectType):
+    """Processes all house or household profiles, merging and aggregating them.
+
+    :param city_result_dir: result directory of the city simulation
+    :param output_dir: output directory for the postpocessed data
+    :param object_type: type of profile to process
+    """
+    # merge all profile files, or load an existing merged dataframe
+    merged_df_path = output_dir / f"City.{object_type}.Electricity.pickle"
+    if merged_df_path.is_file():
+        logging.warning(
+            f"Reusing existing merged {object_type} dataframe file: {merged_df_path}"
+        )
+        with open(merged_df_path, "rb") as f:
+            data = pickle.load(f)
+    else:
+        # collect and merge the profiles depending on the object type
+        match object_type:
+            case ObjectType.HOUSE:
+                data = combine_house_profiles_to_single_df(
+                    city_result_dir, merged_df_path
+                )
+            case ObjectType.HOUSEHOLD:
+                data = combine_household_profiles_to_single_df(
+                    city_result_dir, merged_df_path
+                )
+            case _:
+                raise Exception(f"Unknown object type: {object_type}")
+
+    # calculate and save agggregated values from the merged dataframe
+    aggregate_load_profiles(data, output_dir, object_type)
 
 
 @utils.timing
@@ -334,14 +371,14 @@ def main(city_result_dir: Path, output_dir: Path):
     :param city_result_dir: result directory of the city simulation
     :param output_dir: output directory for the postpocessed data
     """
-    combine_household_profiles_to_single_df(city_result_dir, output_dir)
-    combine_house_profiles_to_single_df(city_result_dir, output_dir)
+    process_profiles(city_result_dir, output_dir, ObjectType.HOUSEHOLD)
+    process_profiles(city_result_dir, output_dir, ObjectType.HOUSE)
 
 
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.DEBUG,
+        level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
