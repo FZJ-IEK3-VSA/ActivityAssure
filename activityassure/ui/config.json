@@ -1,5 +1,9 @@
 {
     "validation_path": "data/validation_data_sets/activity_validation_data_set_merged",
     "input_path": "data/validation/lpg",
-    "model_name": "LoadProfileGenerator"
+    "model_name": "LoadProfileGenerator",
+    "validation_name": "HETUS Validierungsdaten",
+    "show_legend_per_activity": false,
+    "language": "DE",
+    "mirrored_plots": false
 }
