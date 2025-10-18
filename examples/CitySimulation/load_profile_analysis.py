@@ -229,7 +229,7 @@ def raster_plot(path: Path, result_dir: Path):
         index="hour", columns="day", values=DFColumnsLoad.TOTAL_LOAD
     )
 
-    fig, ax = plt.subplots(figsize=(15, 6), dpi=200)
+    fig, ax = plt.subplots(figsize=(15, 6), dpi=400)
     im = ax.imshow(heatmap_data, aspect="auto", origin="upper", cmap="viridis")
 
     # Add colorbar
@@ -265,7 +265,7 @@ def raster_plot(path: Path, result_dir: Path):
     ax.set_xlabel(f"{df.index[0].year}")
     ax.set_ylabel("Uhrzeit")
     fig.tight_layout()
-    fig.savefig(result_dir / "raster_city_load.png", transparent=True, dpi="figure")
+    fig.savefig(result_dir / "raster_city_load.svg", transparent=True, dpi="figure")
 
 
 def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
