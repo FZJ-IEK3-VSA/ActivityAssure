@@ -123,45 +123,45 @@ def aggregate_load_profiles(data_kwh: pd.DataFrame, result_dir: Path, object_typ
     data_w = loadutils.kwh_to_w(data_kwh)
 
     # store total demand (in kWh) and average load (the same in W) in one file
-    # total_demands = data_kwh.sum()
-    # average_loads = data_w.mean()
-    # total = pd.concat(
-    #     {
-    #         DFColumnsLoad.TOTAL_DEMAND: total_demands,
-    #         DFColumnsLoad.AVERAGE_LOAD: average_loads,
-    #     },
-    #     axis=1,
-    # )
-    # total.index.name = object_type
-    # total.to_csv(result_dir / LoadFiles.TOTALS)
+    total_demands = data_kwh.sum()
+    average_loads = data_w.mean()
+    total = pd.concat(
+        {
+            DFColumnsLoad.TOTAL_DEMAND: total_demands,
+            DFColumnsLoad.AVERAGE_LOAD: average_loads,
+        },
+        axis=1,
+    )
+    total.index.name = object_type
+    total.to_csv(result_dir / LoadFiles.TOTALS)
 
-    # city_profile = data_w.sum(axis=1)
-    # city_profile.name = DFColumnsLoad.TOTAL_LOAD
-    # city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
+    city_profile = data_w.sum(axis=1)
+    city_profile.name = DFColumnsLoad.TOTAL_LOAD
+    city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
 
-    # # calc statistics per profile
-    # profile_stats = data_w.describe()
-    # profile_stats.to_csv(result_dir / LoadFiles.PROFILE_STATS)
+    # calc statistics per profile
+    profile_stats = data_w.describe()
+    profile_stats.to_csv(result_dir / LoadFiles.PROFILE_STATS)
 
-    # # calc statistics per timestep, across profiles
-    # stats = get_stats_df(data_w)
-    # stats.to_csv(result_dir / LoadFiles.STAT_PROFILES)
+    # calc statistics per timestep, across profiles
+    stats = get_stats_df(data_w)
+    stats.to_csv(result_dir / LoadFiles.STAT_PROFILES)
 
-    # dayprofiles = split_cols_into_single_days(data_w)
-    # daystats = get_stats_df(dayprofiles)
-    # daystats.to_csv(result_dir / LoadFiles.DAYPROFILESTATS)
+    dayprofiles = split_cols_into_single_days(data_w)
+    daystats = get_stats_df(dayprofiles)
+    daystats.to_csv(result_dir / LoadFiles.DAYPROFILESTATS)
 
-    # # calc mean day profiles and statistics
-    # meanday = data_w.groupby(data_w.index.time).mean()  # type: ignore
-    # meanday.to_csv(result_dir / LoadFiles.MEANDAY)
-    # meanday_stats = get_stats_df(meanday)
-    # meanday_stats.to_csv(result_dir / LoadFiles.MEANDAY_STATS)
+    # calc mean day profiles and statistics
+    meanday = data_w.groupby(data_w.index.time).mean()  # type: ignore
+    meanday.to_csv(result_dir / LoadFiles.MEANDAY)
+    meanday_stats = get_stats_df(meanday)
+    meanday_stats.to_csv(result_dir / LoadFiles.MEANDAY_STATS)
 
-    # # calc mean day profiles for each day type
-    # meandaytype = data_w.groupby([data_w.index.weekday, data_w.index.time]).mean()  # type: ignore
-    # meandaytype.to_csv(result_dir / LoadFiles.MEANDAYTYPES)
-    # meandaytype_stats = get_stats_df(meandaytype)
-    # meandaytype_stats.to_csv(result_dir / LoadFiles.MEANDAYTYPE_STATS)
+    # calc mean day profiles for each day type
+    meandaytype = data_w.groupby([data_w.index.weekday, data_w.index.time]).mean()  # type: ignore
+    meandaytype.to_csv(result_dir / LoadFiles.MEANDAYTYPES)
+    meandaytype_stats = get_stats_df(meandaytype)
+    meandaytype_stats.to_csv(result_dir / LoadFiles.MEANDAYTYPE_STATS)
 
     # calc simultaneity
     simultaneity, sum_maxs_curves = calc_simultaneity(data_w, 3)
