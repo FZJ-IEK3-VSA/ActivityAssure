@@ -30,6 +30,7 @@ class LoadFiles:
     MEANDAY_STATS = "mean_day_stats.csv"
     MEANDAYTYPE_STATS = "mean_daytype_stats.csv"
     SIMULTANEITY = "simultaneity.csv"
+    CUMSUMMAXS = "maxs_of_cum_sum.csv"
 
 
 class DFColumnsLoad:

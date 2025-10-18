@@ -44,7 +44,7 @@ class ProfileInfo:
 def get_stats_df(data: pd.DataFrame) -> pd.DataFrame:
     """
     Calculates statistics profiles for the given dataframe. The statistics
-    are calculates per timestep, so the max column, e.g., contains the
+    are calculated per timestep, so the max column, e.g., contains the
     maximum load out of all houses in each timestep.
 
     :param data: dataframe with all house load profiles of a city
@@ -62,16 +62,23 @@ def get_stats_df(data: pd.DataFrame) -> pd.DataFrame:
 
 
 @utils.timing
-def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame:
+def calc_simultaneity(
+    data: pd.DataFrame, permutations: int = 1
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Calculates the simultaneity of the given load profiles.
+    Formula for a single simultaneity value: max of sumprofile / sum of profile maxs
+
+    Also returns the maximums of cumulative sumprofiles, which is an intermediate step
+    and the curve used by DIN 18015-1 Anhang A as basis for assessment of main lines.
 
     :param data: dataframe with all house load profiles of a city
     :param permutations: number of different random column permutations to calculate
                          simultaneity for to check how robust the simultaneity is
-    :return: dataframe with simultaneity values
+    :return: tuple containing dataframe with simultaneity values and dataframe with
+             the max of cumulative sums
     """
-    simultaneity_list = []
+    simultaneity_list, max_of_sumprofiles_list = [], []
     # determine the maximum load of each house/household
     hh_maximums = data.max(axis=0)
     for i in range(permutations):
@@ -80,19 +87,23 @@ def calc_simultaneity(data: pd.DataFrame, permutations: int = 1) -> pd.DataFrame
 
         # get cumulative house/household sums per timestep
         cumsum_per_timestep = data[col_order].cumsum(axis=1)
+        # get the maximum of each of the cumulative sum profiles
+        maxs_of_sumprofiles = cumsum_per_timestep.max(axis=0)
+        # get the cumulative sum of house/household maximums
+        sums_of_maxs = hh_maximums[col_order].cumsum()
 
-        max_of_hh_sums = cumsum_per_timestep.max(axis=0)
-        sum_of_maxs = hh_maximums[col_order].cumsum()
-
-        simultaneity = max_of_hh_sums / sum_of_maxs
+        simultaneity = maxs_of_sumprofiles / sums_of_maxs
 
         # drop the index to avoid reordering during concatenation below
+        maxs_of_sumprofiles.reset_index(drop=True, inplace=True)
+        max_of_sumprofiles_list.append(maxs_of_sumprofiles)
         simultaneity.reset_index(drop=True, inplace=True)
         simultaneity_list.append(simultaneity)
 
+    max_of_sumprofiles_df = pd.concat(max_of_sumprofiles_list, axis="columns")
     simultaneity_curves = pd.concat(simultaneity_list, axis="columns")
     logging.info(f"Simultaneity value: {simultaneity_curves.iloc[-1, 0]}")
-    return simultaneity_curves
+    return simultaneity_curves, max_of_sumprofiles_df
 
 
 @utils.timing
@@ -112,48 +123,49 @@ def aggregate_load_profiles(data_kwh: pd.DataFrame, result_dir: Path, object_typ
     data_w = loadutils.kwh_to_w(data_kwh)
 
     # store total demand (in kWh) and average load (the same in W) in one file
-    total_demands = data_kwh.sum()
-    average_loads = data_w.mean()
-    total = pd.concat(
-        {
-            DFColumnsLoad.TOTAL_DEMAND: total_demands,
-            DFColumnsLoad.AVERAGE_LOAD: average_loads,
-        },
-        axis=1,
-    )
-    total.index.name = object_type
-    total.to_csv(result_dir / LoadFiles.TOTALS)
+    # total_demands = data_kwh.sum()
+    # average_loads = data_w.mean()
+    # total = pd.concat(
+    #     {
+    #         DFColumnsLoad.TOTAL_DEMAND: total_demands,
+    #         DFColumnsLoad.AVERAGE_LOAD: average_loads,
+    #     },
+    #     axis=1,
+    # )
+    # total.index.name = object_type
+    # total.to_csv(result_dir / LoadFiles.TOTALS)
 
-    city_profile = data_w.sum(axis=1)
-    city_profile.name = DFColumnsLoad.TOTAL_LOAD
-    city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
+    # city_profile = data_w.sum(axis=1)
+    # city_profile.name = DFColumnsLoad.TOTAL_LOAD
+    # city_profile.to_csv(result_dir / LoadFiles.SUMPROFILE)
 
-    # calc statistics per profile
-    profile_stats = data_w.describe()
-    profile_stats.to_csv(result_dir / LoadFiles.PROFILE_STATS)
+    # # calc statistics per profile
+    # profile_stats = data_w.describe()
+    # profile_stats.to_csv(result_dir / LoadFiles.PROFILE_STATS)
 
-    # calc statistics per timestep, across profiles
-    stats = get_stats_df(data_w)
-    stats.to_csv(result_dir / LoadFiles.STAT_PROFILES)
+    # # calc statistics per timestep, across profiles
+    # stats = get_stats_df(data_w)
+    # stats.to_csv(result_dir / LoadFiles.STAT_PROFILES)
 
-    dayprofiles = split_cols_into_single_days(data_w)
-    daystats = get_stats_df(dayprofiles)
-    daystats.to_csv(result_dir / LoadFiles.DAYPROFILESTATS)
+    # dayprofiles = split_cols_into_single_days(data_w)
+    # daystats = get_stats_df(dayprofiles)
+    # daystats.to_csv(result_dir / LoadFiles.DAYPROFILESTATS)
 
-    # calc mean day profiles and statistics
-    meanday = data_w.groupby(data_w.index.time).mean()  # type: ignore
-    meanday.to_csv(result_dir / LoadFiles.MEANDAY)
-    meanday_stats = get_stats_df(meanday)
-    meanday_stats.to_csv(result_dir / LoadFiles.MEANDAY_STATS)
+    # # calc mean day profiles and statistics
+    # meanday = data_w.groupby(data_w.index.time).mean()  # type: ignore
+    # meanday.to_csv(result_dir / LoadFiles.MEANDAY)
+    # meanday_stats = get_stats_df(meanday)
+    # meanday_stats.to_csv(result_dir / LoadFiles.MEANDAY_STATS)
 
-    # calc mean day profiles for each day type
-    meandaytype = data_w.groupby([data_w.index.weekday, data_w.index.time]).mean()  # type: ignore
-    meandaytype.to_csv(result_dir / LoadFiles.MEANDAYTYPES)
-    meandaytype_stats = get_stats_df(meandaytype)
-    meandaytype_stats.to_csv(result_dir / LoadFiles.MEANDAYTYPE_STATS)
+    # # calc mean day profiles for each day type
+    # meandaytype = data_w.groupby([data_w.index.weekday, data_w.index.time]).mean()  # type: ignore
+    # meandaytype.to_csv(result_dir / LoadFiles.MEANDAYTYPES)
+    # meandaytype_stats = get_stats_df(meandaytype)
+    # meandaytype_stats.to_csv(result_dir / LoadFiles.MEANDAYTYPE_STATS)
 
     # calc simultaneity
-    simultaneity = calc_simultaneity(data_w, 3)
+    simultaneity, sum_maxs_curves = calc_simultaneity(data_w, 3)
+    sum_maxs_curves.to_csv(result_dir / LoadFiles.CUMSUMMAXS)
     simultaneity.to_csv(result_dir / LoadFiles.SIMULTANEITY)
 
 
@@ -385,7 +397,7 @@ if __name__ == "__main__":
     city_result_dir = Path(
         "/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25"
     )
-    # city_result_dir = Path("C:/LPG/Results/scenario_julich")
+    city_result_dir = Path("R:/phd_dir/results/scenario_julich_100_3kW")
     output_dir = city_result_dir / "Postprocessed/loads"
 
     main(city_result_dir, output_dir)
