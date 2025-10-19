@@ -96,10 +96,10 @@ def get_house_geodf(scenario_dir: Path) -> gpd.GeoDataFrame:
     return df
 
 
-def save_plot(filepath, fig):
+def save_plot(filepath: Path, fig):
     fig.tight_layout()
     filepath.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(filepath)
+    fig.savefig(filepath, bbox_inches="tight")
 
 
 def plot_map_data(
