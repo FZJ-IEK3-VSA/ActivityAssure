@@ -328,11 +328,7 @@ def sim_timesteps(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
 
         name = filepath.stem
         plot_map_data(
-            df,
-            col,
-            output_dir / f"timestep_{name}.svg",
-            is_load=True,
-            title=step_datetime,
+            df, col, output_dir / f"{name}.svg", is_load=True, title=step_datetime
         )
 
 
