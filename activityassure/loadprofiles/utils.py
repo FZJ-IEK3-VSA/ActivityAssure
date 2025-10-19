@@ -56,15 +56,19 @@ def get_resolution(data: pd.DataFrame | pd.Series) -> pd.Timedelta:
     return time_differences[0]
 
 
-def kwh_to_w(data: T_PD_DATA, rename: bool = True) -> T_PD_DATA:
+def kwh_to_w(
+    data: T_PD_DATA, rename: bool = True, resolution: timedelta | None = None
+) -> T_PD_DATA:
     """Convert profiles from unit kWh to W. Requires a time index to determine
     the profile resolution.
 
     :param data: the data in kWh to convert
     :param rename: if True, checks for units in column headers, and adapts them, defaults to True
+    :param resolution: if given, uses it for conversion; if None, tries to determine
+                       the resolution automatically from the index
     :return: the converted profiles in W
     """
-    resolution = get_resolution(data)
+    resolution = resolution or get_resolution(data)
     res_in_h = timedelta_to_hours(resolution)
     factor = 1000 / res_in_h
     converted = data * factor

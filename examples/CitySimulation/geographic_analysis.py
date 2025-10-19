@@ -2,19 +2,19 @@
 
 import json
 import logging
+from datetime import timedelta
 from pathlib import Path
 
-from matplotlib.colors import LogNorm
+import contextily as ctx  # type: ignore
+import geopandas as gpd  # type: ignore
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-from paths import LoadFiles, SubDirs
-
-import matplotlib.pyplot as plt
-import contextily as ctx  # type: ignore
-
-import geopandas as gpd  # type: ignore
+from matplotlib.colors import LogNorm
 from shapely.geometry import Point  # type: ignore
+
+from activityassure.loadprofiles import utils
+from paths import LoadFiles, SubDirs
 
 #: DataFrame column for number of persons
 PERSON_COUNT_COL = "Number of persons"
@@ -138,6 +138,13 @@ def plot_hex_bins(df: gpd.GeoDataFrame, col: str, filepath: Path):
 
 
 def add_house_geodata(scenario_dir: Path, data: pd.DataFrame) -> gpd.GeoDataFrame:
+    """Adds geodata for every house in the DataFrame, turning the data
+    into a GeoDataFrame.
+
+    :param scenario_dir: scenario directory; required to get the house coordinates
+    :param data: the data to add the geometry to; must have house IDs as index
+    :return: the data as a GeoDataFrame with house coordinates
+    """
     geodf = get_house_geodf(scenario_dir)
     df = pd.concat([geodf, data], axis="columns")
     return df  # pyright: ignore[reportReturnType]
@@ -146,12 +153,25 @@ def add_house_geodata(scenario_dir: Path, data: pd.DataFrame) -> gpd.GeoDataFram
 def add_poi_geodata(
     scenario_dir: Path, data: pd.DataFrame, remove_outliers: bool = True
 ) -> gpd.GeoDataFrame:
+    """Adds geodata for every POI in the DataFrame, turning the data
+    into a GeoDataFrame.
+
+    :param scenario_dir:  scenario directory; required to get the POI coordinates
+    :param data: the data to add the geometry to; must have POI IDs as index
+    :param remove_outliers: if True, removes far away outlier POIs, defaults to True
+    :return: the data as a GeoDataFrame with POI coordinates
+    """
     geodf = get_poi_geodf(scenario_dir, remove_outliers)
     df = pd.concat([geodf, data], axis="columns")
     return df  # pyright: ignore[reportReturnType]
 
 
-def get_person_count(scenario_dir):
+def get_person_count(scenario_dir: Path) -> pd.DataFrame:
+    """Returns the number of persons per house as a DataFrame.
+
+    :param scenario_dir: scenario directory to load house data
+    :return: number of persons per house; index contains house IDs
+    """
     filepath = scenario_dir / "statistics/persons_per_house.json"
     with open(filepath, "r", encoding="utf8") as f:
         persons_per_house = json.load(f)
@@ -233,6 +253,43 @@ def load_profile_stats(scenario_dir: Path, city_result_dir: Path, output_dir: Pa
         plot_map_data(df, new_name, output_dir / f"house_load_{column}.svg")
 
 
+def sim_timesteps(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
+    """Creates map plots for every captured time point in the simulation.
+
+    :param scenario_dir: directory with the city scenario
+    :param city_result_dir: result directory of the city simulation
+    :param output_dir: output directory for the map plots
+    """
+    timepoint_dir = (
+        city_result_dir
+        / SubDirs.POSTPROCESSED_DIR
+        / SubDirs.LOADS_DIR
+        / "sim_timesteps"
+    )
+    if not timepoint_dir.is_dir():
+        logging.warning(f"No timestep directory found: {timepoint_dir}")
+        return
+
+    output_dir /= "sim_timesteps"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    HOUSE_RES = timedelta(minutes=1)
+
+    # plot a map for each captured time point
+    for filepath in timepoint_dir.iterdir():
+        df_step = pd.read_csv(filepath, index_col=0)
+        # data has the datetime as column name
+        col = "Load [W]"
+        df_step.columns = [col]
+
+        df_step = utils.kwh_to_w(df_step, True, HOUSE_RES)
+        # add unit to column name
+        df = add_house_geodata(scenario_dir, df_step)
+
+        name = filepath.stem
+        plot_map_data(df, col, output_dir / f"timestep_{name}.svg")
+
+
 def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     """Contains all geographic postprocessing of the city simulation.
 
@@ -246,6 +303,7 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     persons_per_house(scenario_dir, city_result_dir, output_dir)
     total_house_demand(scenario_dir, city_result_dir, output_dir)
     load_profile_stats(scenario_dir, city_result_dir, output_dir)
+    sim_timesteps(scenario_dir, city_result_dir, output_dir)
 
 
 if __name__ == "__main__":
