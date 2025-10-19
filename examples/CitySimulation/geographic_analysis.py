@@ -19,6 +19,28 @@ from paths import LoadFiles, SubDirs
 #: DataFrame column for number of persons
 PERSON_COUNT_COL = "Number of persons"
 
+#: global min and max limits for load plots
+LOAD_MIN, LOAD_MAX = None, None
+
+
+def get_load_limits(city_result_dir: Path) -> tuple[float, float]:
+    """Gets minimum and maximum of all occuring house loads.
+
+    :param city_result_dir: city simulation result directory
+    :return: minimum and maximum house load
+    """
+    filepath = (
+        city_result_dir
+        / SubDirs.POSTPROCESSED_DIR
+        / SubDirs.LOADS_DIR
+        / "aggregated_house"
+        / LoadFiles.DAYPROFILESTATS
+    )
+    df_stats = pd.read_csv(filepath, index_col=0)
+    vmin = df_stats.min(axis=None)
+    vmax = df_stats.max(axis=None)
+    return vmin, vmax  # pyright: ignore[reportReturnType]
+
 
 def get_poi_geodf(scenario_dir: Path, remove_outliers: bool = True) -> gpd.GeoDataFrame:
     """Reads the POI coordinates and returns a GeoDataFrame with the
@@ -80,7 +102,13 @@ def save_plot(filepath, fig):
     fig.savefig(filepath)
 
 
-def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path, markersize: int = 1):
+def plot_map_data(
+    df: gpd.GeoDataFrame,
+    col: str,
+    filepath: Path,
+    is_load: bool = False,
+    markersize: int = 1,
+):
     # compute aspect ratio of the map area
     x_range = df.geometry.x.max() - df.geometry.x.min()
     y_range = df.geometry.y.max() - df.geometry.y.min()
@@ -92,13 +120,18 @@ def plot_map_data(df: gpd.GeoDataFrame, col: str, filepath: Path, markersize: in
     buff_for_cbar = 2
     fig, ax = plt.subplots(figsize=(fig_width + buff_for_cbar, fig_height), dpi=200)
 
+    # determine limits for a consistent color scale
+    vmin, vmax = None, None
+    if is_load:
+        vmin, vmax = LOAD_MIN, LOAD_MAX
+
     # create the map plot
     df.plot(
         ax=ax,
         column=col,
         markersize=markersize,
         cmap="jet",
-        norm=LogNorm(),
+        norm=LogNorm(vmin=vmin, vmax=vmax),
         legend=True,
         legend_kwds={"shrink": 0.7, "label": col},  # modify colorbar
     )
@@ -214,14 +247,14 @@ def total_house_demand(scenario_dir: Path, city_result_dir: Path, output_dir: Pa
 
     df = add_house_geodata(scenario_dir, df_loads)
     demand_col = "Total demand [kWh]"
-    plot_map_data(df, demand_col, output_dir / "house_demand.svg")
+    plot_map_data(df, demand_col, output_dir / "house_demand.svg", is_load=False)
 
     # now also plot average load per person
     persons_df = get_person_count(scenario_dir)
     df = pd.concat([df, persons_df], axis="columns")
     demand_pp = "Load per person [kWh]"
     df[demand_pp] = df[demand_col] / df[PERSON_COUNT_COL]
-    plot_map_data(df, demand_pp, output_dir / "demand_per_person.svg")  # type: ignore
+    plot_map_data(df, demand_pp, output_dir / "demand_per_person.svg", is_load=False)  # type: ignore
 
 
 def load_profile_stats(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
@@ -250,7 +283,9 @@ def load_profile_stats(scenario_dir: Path, city_result_dir: Path, output_dir: Pa
         # rename column to get a better plot label
         new_name = f"Load profile {column} [W]"
         df = df.rename(columns={column: new_name})
-        plot_map_data(df, new_name, output_dir / f"house_load_{column}.svg")
+        plot_map_data(
+            df, new_name, output_dir / f"house_load_{column}.svg", is_load=True
+        )
 
 
 def sim_timesteps(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
@@ -287,7 +322,7 @@ def sim_timesteps(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
         df = add_house_geodata(scenario_dir, df_step)
 
         name = filepath.stem
-        plot_map_data(df, col, output_dir / f"timestep_{name}.svg")
+        plot_map_data(df, col, output_dir / f"timestep_{name}.svg", is_load=True)
 
 
 def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
@@ -299,6 +334,11 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     """
     assert scenario_dir.is_dir() and city_result_dir.is_dir(), "Invalid input paths"
     output_dir.parent.mkdir(parents=True, exist_ok=True)
+
+    # determine min and max house loads to get a consistent scale across map plots
+    global LOAD_MIN, LOAD_MAX
+    LOAD_MIN, LOAD_MAX = get_load_limits(city_result_dir)
+
     visits_per_poi(scenario_dir, city_result_dir, output_dir)
     persons_per_house(scenario_dir, city_result_dir, output_dir)
     total_house_demand(scenario_dir, city_result_dir, output_dir)
