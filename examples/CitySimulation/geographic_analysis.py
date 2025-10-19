@@ -108,6 +108,7 @@ def plot_map_data(
     filepath: Path,
     is_load: bool = False,
     markersize: int = 1,
+    title: str = "",
 ):
     # compute aspect ratio of the map area
     x_range = df.geometry.x.max() - df.geometry.x.min()
@@ -135,6 +136,9 @@ def plot_map_data(
         legend=True,
         legend_kwds={"shrink": 0.7, "label": col},  # modify colorbar
     )
+
+    if title:
+        ax.set_title(title)
 
     # Add basemap
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)  # type: ignore
@@ -315,6 +319,7 @@ def sim_timesteps(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
         df_step = pd.read_csv(filepath, index_col=0)
         # data has the datetime as column name
         col = "Load [W]"
+        step_datetime = df_step.columns[0]
         df_step.columns = [col]
 
         df_step = utils.kwh_to_w(df_step, True, HOUSE_RES)
@@ -322,7 +327,13 @@ def sim_timesteps(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
         df = add_house_geodata(scenario_dir, df_step)
 
         name = filepath.stem
-        plot_map_data(df, col, output_dir / f"timestep_{name}.svg", is_load=True)
+        plot_map_data(
+            df,
+            col,
+            output_dir / f"timestep_{name}.svg",
+            is_load=True,
+            title=step_datetime,
+        )
 
 
 def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
