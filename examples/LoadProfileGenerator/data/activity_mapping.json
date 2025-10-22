@@ -381,5 +381,6 @@
     "do errands out of home": "not at home",
     "go shopping for various items (1 h)": "not at home",
     "travel for education": "education",
-    "travel for work": "work"
+    "travel for work": "work",
+    "visit pharmacy": "not at home"
 }
