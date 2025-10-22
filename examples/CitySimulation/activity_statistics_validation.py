@@ -102,7 +102,9 @@ def calc_citysim_statistics_and_validate(
     validation.default_validation(city_stats_path_merged, validation_stats_path_merged)
 
     # additionally, aggregate both statistics to national level and validate with that
-    validation_national = Path(f"{validation_stats_path_merged}_national")
+    validation_national = (
+        city_stats_path_merged.parent / "activityassure_validation_merged_national"
+    )
     process_statistics.aggregate_to_national_level(
         validation_stats_path_merged, validation_national
     )
