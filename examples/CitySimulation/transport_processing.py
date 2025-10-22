@@ -71,7 +71,7 @@ def travel_statistics(hh_dbs: dict[str, Path], output_dir: Path):
         pickle.dump(all_travels, f)
     logging.debug(f"Created travels file: {filepath}")
     df = pd.DataFrame([asdict(d) for d in all_travels])
-    df.to_csv("travels.csv")
+    df.to_csv(output_dir / "travels.csv")
     print(df.describe())
 
 
