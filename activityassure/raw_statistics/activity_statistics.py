@@ -2,6 +2,7 @@
 mappings or aggregations."""
 
 # load and preprocess all input data
+import logging
 import sys
 from collections import Counter, defaultdict
 from datetime import timedelta
@@ -89,13 +90,13 @@ def get_activity_statistics(
 
     # save all statistics in json files
     output_dir.mkdir(parents=True, exist_ok=True)
-    print(f"Calculated general activity statistics from {len(files)} profiles")
     save_dict(output_dir / "general_info.json", stats)
     save_dict(output_dir / "total_occurrences.json", dict(occurrences.most_common()))
     save_dict(output_dir / "user_shares.json", sort_by_val(user_shares))
     save_dict(output_dir / "total_durations.json", total_dur_strs)
     save_dict(output_dir / "duration_per_user.json", dur_per_user_strs)
     save_dict(output_dir / "occurrences_per_user.json", occ_per_user)
+    logging.info(f"Calculated general activity statistics from {len(files)} profiles")
 
 
 if __name__ == "__main__":
