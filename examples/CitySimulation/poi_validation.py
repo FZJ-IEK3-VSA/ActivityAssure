@@ -19,7 +19,10 @@ from tqdm import tqdm
 from paths import DFColumnsPoi, SubDirs
 
 #: relevant POIs for validation and analysis
-RELEVANT_POI_TYPES = ["Supermarket", "Doctors Office"]
+RELEVANT_POI_TYPES = ["Pharmacy", "Supermarket", "Doctors Office"]
+
+#: file extentsion of the POI logs
+PRESENCE_LOG_FILE_EXT = ".csv"
 
 
 @dataclass
@@ -52,18 +55,6 @@ class PoiLog:
         :return: the parsed POI log
         """
         df = pd.read_csv(poi_file, parse_dates=[1])
-
-        # check if the header is correct
-        expected_header = [
-            DFColumnsPoi.TIMESTEP,
-            DFColumnsPoi.DATETIME,
-            DFColumnsPoi.PRESENCE,
-        ]
-        if list(df.columns) != expected_header:
-            # Re-read with custom header
-            df = pd.read_csv(
-                poi_file, header=None, names=expected_header, parse_dates=[1]
-            )
         poi_type = PoiLog.poi_type_from_filename(poi_file.stem)
         return PoiLog(poi_file.stem, df, poi_type)
 
@@ -87,7 +78,8 @@ def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
     :return: a dict of POI presence logs, using POI IDs as keys
     """
     poi_logs = {}
-    pattern = f"*{filter}*.txt" if filter else "*.txt"
+    pattern = f"*{filter}*" if filter else "*"
+    pattern += PRESENCE_LOG_FILE_EXT
     files = list(poi_log_path.glob(pattern))
     logging.info(f"Found {len(files)} POI log files of type {filter}")
     skipped = 0
@@ -245,7 +237,8 @@ def process_all_poi_types(city_result_dir: Path, plot_dir: Path):
 
     # create plots for all relevant POI types
     for poi_type in RELEVANT_POI_TYPES:
-        assert poi_type in pois_by_type, f"No POI of type {poi_type} found"
+        if poi_type not in pois_by_type:
+            logging.warning(f"No POI of type {poi_type} found")
         pois_of_type = pois_by_type[poi_type]
         max_presence = max(p.get_presence().max() for p in pois_of_type)
         poi_type_subdir = plot_dir / poi_type
@@ -256,7 +249,7 @@ def process_all_poi_types(city_result_dir: Path, plot_dir: Path):
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.DEBUG,
+        level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     city_result_dir = Path("R:/phd_dir/results/scenario_julich_100_11kW")
