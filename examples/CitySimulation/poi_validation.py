@@ -82,18 +82,21 @@ class PoiDailyProfiles:
 
 def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
     """
-    Loads POI presence logs from CitySimulation result files.
+    Loads POI logs from CitySimulation result files. These can be presence or
+    queue logs.
 
-    :param poi_log_path: path to the presence log directory
+    :param poi_log_path: path to the log directory
     :param filter: a filter to only load matching POI logs, defaults to ""
-    :return: a dict of POI presence logs, using POI IDs as keys
+    :return: a dict of POI logs, using POI IDs as keys
     """
     poi_logs = {}
     pattern = f"*{filter}*" if filter else "*"
     filter_txt = f" of type {filter}" if filter else ""
     pattern += PRESENCE_LOG_FILE_EXT
     files = list(poi_log_path.glob(pattern))
-    logging.info(f"Found {len(files)} POI log files{filter_txt}")
+    logging.info(
+        f"Found {len(files)} POI log files{filter_txt} from {poi_log_path.name}"
+    )
     skipped = 0
     for poi_file in tqdm(files):
         assert poi_file.is_file()
@@ -101,11 +104,6 @@ def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
             # skip this file
             continue
         poi_log = PoiLog.load(poi_file)
-
-        # check if the presence data has the expected format
-        assert set(poi_log.data.columns).issubset(
-            POI_PRESENCE_COLS
-        ), f"Unexpected POI presence columns for {poi_log.poi_id}: {poi_log.data.columns}"
 
         if len(poi_log.data) == 0:
             # poi log is empty, skip it
@@ -228,21 +226,31 @@ def get_col_sum_per_poi(
     }
 
 
-def process_poi_presence(city_result_dir: Path, plot_dir: Path):
+def check_poi_presence_data(poi_logs: Iterable[PoiLog]) -> None:
+    """Checks if the POI logs have the expected format.
+
+    :param poi_logs: the POI logs to check
+    """
+    for poi_log in poi_logs:
+        # check if the presence data has the expected format
+        assert set(poi_log.data.columns).issubset(
+            POI_PRESENCE_COLS
+        ), f"Unexpected POI presence columns for {poi_log.poi_id}: {poi_log.data.columns}"
+
+
+def process_poi_presence(city_result_dir: Path, output_dir: Path, plot_dir: Path):
     # collect all POI logs
     poi_log_path = city_result_dir / SubDirs.LOGS / SubDirs.POI_PRESENCE
     poi_logs = load_poi_logs(poi_log_path)
     if not poi_logs:
         logging.warning(f"Found no POI logs in {poi_log_path}")
         return
+    check_poi_presence_data(poi_logs.values())
 
     # group all POIs by type
     pois_by_type: defaultdict[str, list[PoiLog]] = defaultdict(list)
     for poi in poi_logs.values():
         pois_by_type[poi.poi_type].append(poi)
-
-    output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     # calculate some aggregated statistics
     visitor_counts = get_col_sum_per_poi(poi_logs.values(), DFColumnsPoi.ARRIVE)
@@ -264,7 +272,7 @@ def process_poi_presence(city_result_dir: Path, plot_dir: Path):
             create_poi_presence_plots(poi_type_subdir, max_presence, poi)
 
 
-def process_poi_queues(city_result_dir: Path, plot_dir: Path):
+def process_poi_queues(city_result_dir: Path, output_dir: Path, plot_dir: Path):
     # collect all POI logs
     poi_log_path = city_result_dir / SubDirs.LOGS / SubDirs.POI_QUEUE
     poi_logs = load_poi_logs(poi_log_path)
@@ -272,10 +280,20 @@ def process_poi_queues(city_result_dir: Path, plot_dir: Path):
         logging.warning(f"Found no POI logs in {poi_log_path}")
         return
 
+    # calculate some aggregated statistics
+    avg_wait_time = {
+        poi_log.poi_id: int(poi_log.data[DFColumnsPoi.WAITING].mean())
+        for poi_log in poi_logs.values()
+    }
+    with open(output_dir / "average_waiting_times.json", "w", encoding="utf8") as f:
+        json.dump(avg_wait_time, f, indent=4)
+
 
 def main(city_result_dir: Path, plot_dir: Path):
-    process_poi_presence(city_result_dir, plot_dir)
-    # process_poi_queues(city_result_dir, plot_dir)
+    output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS
+    output_dir.mkdir(parents=True, exist_ok=True)
+    process_poi_presence(city_result_dir, output_dir, plot_dir)
+    process_poi_queues(city_result_dir, output_dir, plot_dir)
 
 
 if __name__ == "__main__":
@@ -284,6 +302,7 @@ if __name__ == "__main__":
         level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    city_result_dir = Path("R:/phd_dir/results/scenario_julich_100_11kW")
+    # city_result_dir = Path("R:/phd_dir/results/scenario_juelich_03_1month")
+    city_result_dir = Path("R:/phd_dir/results/archive/scenario_juelich_100_pharmacy")
     plot_dir = city_result_dir / "Postprocessed/plots/pois"
     main(city_result_dir, plot_dir)
