@@ -211,10 +211,20 @@ def count_total_visitors_old(poi_log: PoiLog) -> int:
     return int(total)
 
 
-def get_total_visitor_count(poi_logs: Iterable[PoiLog]) -> dict[str, int]:
+def get_col_sum_per_poi(
+    poi_logs: Iterable[PoiLog], col: str = DFColumnsPoi.ARRIVE
+) -> dict[str, int]:
+    """Gets the sum of the specified column for every POI. For example,
+    the sum of arrivals yields total visit numbers.
+
+    :param poi_logs: the POI logs to process
+    :param col: the column to sum
+    :return: a dict containing the resulting value for every POI
+    """
     return {
-        poi_log.poi_id: int(poi_log.data[DFColumnsPoi.ARRIVE].sum())
+        poi_log.poi_id: int(poi_log.data[col].sum())
         for poi_log in poi_logs
+        if col in poi_log.data
     }
 
 
@@ -234,9 +244,13 @@ def process_poi_presence(city_result_dir: Path, plot_dir: Path):
     output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    visitor_counts = get_total_visitor_count(poi_logs.values())
+    # calculate some aggregated statistics
+    visitor_counts = get_col_sum_per_poi(poi_logs.values(), DFColumnsPoi.ARRIVE)
     with open(output_dir / "total_visitor_counts.json", "w", encoding="utf8") as f:
         json.dump(visitor_counts, f, indent=4)
+    cancel_counts = get_col_sum_per_poi(poi_logs.values(), DFColumnsPoi.CANCEL)
+    with open(output_dir / "total_cancel_counts.json", "w", encoding="utf8") as f:
+        json.dump(cancel_counts, f, indent=4)
 
     # create plots for all relevant POI types
     for poi_type in RELEVANT_POI_TYPES:
