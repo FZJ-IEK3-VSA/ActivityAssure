@@ -193,26 +193,6 @@ def create_poi_presence_plots(poi_type_subdir, max_presence, poi):
     plot_daily_profiles(poi_type_subdir, daily, max_presence)
 
 
-def process_one_poi_type(poi_log_path: Path, plot_dir: Path, poi_type: str):
-    poi_type_subdir = plot_dir / poi_type
-
-    poi_logs = load_poi_logs(poi_log_path, poi_type)
-    if not poi_logs:
-        logging.warning(f"Found no POI logs of type {poi_type}")
-        return
-
-    max_presence = max(p.get_presence().max() for p in poi_logs.values())
-    for poi in poi_logs.values():
-        create_poi_presence_plots(poi_type_subdir, max_presence, poi)
-
-
-def process_relevant_poi_types(city_result_dir: Path, plot_dir: Path):
-    poi_log_path = city_result_dir / "Logs/poi_presence"
-
-    for poi_type in RELEVANT_POI_TYPES:
-        process_one_poi_type(poi_log_path, plot_dir, poi_type)
-
-
 def count_total_visitors_old(poi_log: PoiLog) -> int:
     """Old function for estimating visitor count, for when
     the "People arriving" column is still missing"""
