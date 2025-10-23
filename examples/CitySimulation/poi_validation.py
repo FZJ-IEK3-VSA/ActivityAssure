@@ -24,6 +24,8 @@ RELEVANT_POI_TYPES = ["Pharmacy", "Supermarket", "Doctors Office"]
 #: file extentsion of the POI logs
 PRESENCE_LOG_FILE_EXT = ".csv"
 
+TIME_COL = "Time"
+
 #: possible columns for a POI presence log (not all mandatory)
 POI_PRESENCE_COLS = {
     DFColumnsPoi.TIMESTEP,
@@ -94,9 +96,7 @@ def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
     filter_txt = f" of type {filter}" if filter else ""
     pattern += PRESENCE_LOG_FILE_EXT
     files = list(poi_log_path.glob(pattern))
-    logging.info(
-        f"Found {len(files)} POI log files{filter_txt} from {poi_log_path.name}"
-    )
+    logging.info(f"Found {len(files)} POI log files{filter_txt} in {poi_log_path.name}")
     skipped = 0
     for poi_file in tqdm(files):
         assert poi_file.is_file()
@@ -128,7 +128,7 @@ def get_daily_presence_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
     daily_profile = df.resample("1min").ffill()
 
     # Create a "time of day" column
-    daily_profile["Time"] = daily_profile.index.time  # type: ignore
+    daily_profile[TIME_COL] = daily_profile.index.time  # type: ignore
     # Group by date
     grouped = daily_profile.groupby(daily_profile.index.date)  # type: ignore
 
@@ -148,8 +148,8 @@ def plot_daily_profiles(
     """
     fig, ax = plt.subplots(figsize=(12, 6))
     for group_date, group in profiles.profiles_by_date.items():
-        # times = matplotlib.dates.date2num(group["time"])
-        times = [datetime.combine(date(2025, 1, 1), t) for t in group["time"]]
+        # times = matplotlib.dates.date2num(group[TIME_COL])
+        times = [datetime.combine(date(2025, 1, 1), t) for t in group[TIME_COL]]
         ax.plot(times, group[DFColumnsPoi.PRESENCE], label=str(group_date))  # type: ignore
     ax.set_ylim(None, max_presence)
     ax.set_xlabel("Time of Day")
@@ -185,8 +185,10 @@ def plot_daily_visitors_histogram(dir: Path, profiles: PoiDailyProfiles):
     plt.close(fig)
 
 
-def create_poi_presence_plots(poi_type_subdir, max_presence, poi):
-    daily = get_daily_presence_profiles(poi)
+def create_poi_presence_plots(
+    poi_type_subdir: Path, poi_log: PoiLog, max_presence: int | None
+):
+    daily = get_daily_presence_profiles(poi_log)
     plot_daily_visitors_histogram(poi_type_subdir, daily)
     plot_daily_profiles(poi_type_subdir, daily, max_presence)
 
@@ -269,7 +271,7 @@ def process_poi_presence(city_result_dir: Path, output_dir: Path, plot_dir: Path
         max_presence = max(p.get_presence().max() for p in pois_of_type)
         poi_type_subdir = plot_dir / poi_type
         for poi in pois_of_type:
-            create_poi_presence_plots(poi_type_subdir, max_presence, poi)
+            create_poi_presence_plots(poi_type_subdir, poi, max_presence)
 
 
 def process_poi_queues(city_result_dir: Path, output_dir: Path, plot_dir: Path):
