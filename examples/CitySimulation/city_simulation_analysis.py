@@ -7,7 +7,7 @@ from pathlib import Path
 from paths import SubDirs
 import load_profile_analysis
 import poi_validation
-import plausibility_statistics
+import geographic_analysis
 
 
 def main():
@@ -24,14 +24,20 @@ def main():
         "--input",
         type=str,
         help="Root directory of the city simulation result data",
-        default="/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25",
+        default="/fast/home/d-neuroth/city_simulation_results/scenario_juelich",
         required=False,
     )
     args = parser.parse_args()
     city_result_dir = Path(args.input)
-    # city_result_dir = Path("D:/LPG/Results/scenario_julich-grosse-rurstr")
+    # city_result_dir = Path("R:/phd_dir/results/scenario_juelich_100_pharmacy")
     assert city_result_dir.is_dir(), f"Invalid input directory: {city_result_dir}"
     logging.info(f"Analysing city simulation results in {city_result_dir}")
+
+    # get the path to the scenario directory
+    scenario_dir = city_result_dir / "scenario"
+    assert (
+        scenario_dir.is_dir()
+    ), f"Scenario directory not found or symlink missing: {scenario_dir}"
 
     # path to a directory with preprocessed activitiy profiles in csv format
     postproc_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR
@@ -39,21 +45,7 @@ def main():
 
     load_profile_analysis.main(postproc_dir, plot_path / SubDirs.LOADS_DIR)
     poi_validation.process_all_poi_types(city_result_dir, plot_path / SubDirs.POIS)
-
-    # activity validation with additional custom statistics
-    # lpg_example_dir = Path("examples/LoadProfileGenerator/data")
-    # mapping_file = lpg_example_dir / "activity_mapping.json"
-    # person_trait_file = lpg_example_dir / "person_characteristics.json"
-    # calc_statistics.calc_activity_statistics(
-    #     postproc_dir,
-    #     mapping_file,
-    #     person_trait_file,
-    #     postproc_dir / "custom_activity_stats",
-    #     plot_path / "custom_activity_stats",
-    # )
-
-    # TODO: futher validation steps:
-    # - add travel validation
+    geographic_analysis.main(scenario_dir, city_result_dir, plot_path / SubDirs.MAPS)
 
 
 if __name__ == "__main__":
