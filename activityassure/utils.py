@@ -1,3 +1,4 @@
+import json
 import logging
 from functools import wraps
 from pathlib import Path
@@ -10,6 +11,18 @@ import unicodedata
 
 class ActValidatorException(Exception):
     """Generic error in ActivityAssure"""
+
+
+def create_json_file(filepath: Path, data: Any) -> None:
+    """Saves data, e.g. a dict, to a json file.
+
+    :param filepath: path for the json file
+    :param data: the data to save
+    """
+    if not filepath.suffix == ".json":
+        filepath = Path(f"{filepath}.json")
+    with open(filepath, "w", encoding="utf8") as f:
+        json.dump(data, f, indent=4)
 
 
 def merge_dicts(dict1: dict[Any, list], dict2: dict[Any, list]) -> dict[Any, list]:
