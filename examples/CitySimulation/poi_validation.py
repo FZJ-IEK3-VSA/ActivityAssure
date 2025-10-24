@@ -44,6 +44,8 @@ POI_PRESENCE_COLS = {
     DFColumnsPoi.CANCEL,
 }
 
+sns.set_theme()
+
 
 @dataclass
 class PoiLog:
@@ -153,6 +155,9 @@ def get_daily_presence_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
 def raster_plot(
     plot_dir: Path, daily_presence: PoiDailyProfiles, max_presence: int | None = None
 ):
+    # don't use seaborn style here, looks bad for raster plots
+    plt.style.use("classic")
+
     df = daily_presence.day_profiles
     fig, ax = plt.subplots()  # (figsize=(15, 6), dpi=400)
     im = ax.imshow(df, aspect="auto", origin="upper", cmap="viridis")
@@ -196,21 +201,22 @@ def raster_plot(
     )
 
 
-def plot_daily_mean_histogram(
+def plot_daily_sum_histogram(
     dir: Path,
     poi_log: PoiLog,
     col: str = DFColumnsPoi.ARRIVE,
     stat_name: str = "Anzahl Besucher pro Tag",
 ):
     """
-    Histogram showing the distribution of the number of visitors per day.
+    Histogram showing the distribution of the number of visitors per day, or of
+    another sum per day.
 
     :param dir: directory to save the plots
     :param poi_log: the PoiLog to plot
     """
     df = poi_log.data.set_index(DFColumnsPoi.DATETIME)
     assert isinstance(df.index, pd.DatetimeIndex), f"Unexpected data format: {df}"
-    vals_per_day = df.groupby(df.index.date).mean()[col]
+    vals_per_day = df.groupby(df.index.date).sum()[col]
 
     fig, ax = plt.subplots()
     pd.Series(vals_per_day).plot.hist(ax=ax)
@@ -235,13 +241,40 @@ def violin_plot_per_hour(
     daily_presence: PoiDailyProfiles,
     max_wait_time: int | None,
 ):
+    sns.set_theme()
     df = poi_log.data
     hour = "Stunde"
 
-    # make sure hours 0-23 are plotted, even if not in the data
+    # calculate average number of visitors per time
+    mean_pres = daily_presence.day_profiles.mean(axis="columns")
+
+    # get the hours during which attendance is >0
+    relevant_times = mean_pres[mean_pres > 0].index
+    start_hour = relevant_times.min().hour
+    end_hour = relevant_times.max().hour
+    hour_range_mean = list(range(start_hour, end_hour + 1))
+
+    # get the hour range for the waiting time data (violins)
     df[hour] = df[DFColumnsPoi.DATETIME].dt.hour
-    hour_range = list(range(24))
-    df[hour] = pd.Categorical(df[hour], categories=hour_range, ordered=True)
+    hour_range_wait = sorted(df[hour].unique())
+
+    df[hour] += 0.5
+
+    # combine both into a joint hour range to show all relevant data
+    hour_range = sorted(set(hour_range_mean + hour_range_wait))
+
+    # uncomment these two lines to include all 24h in the plot
+    # hour_range = list(range(24))
+    # df[hour] = pd.Categorical(df[hour], categories=hour_range, ordered=True)
+
+    # limit the mean presence data to the selected hours
+    mean_pres = mean_pres[[x.hour in hour_range for x in mean_pres.index]]
+
+    # define colors
+    # Ideas: use Color cycle colors from here https://seaborn.pydata.org/tutorial/properties.html#color-properties
+    violin_fill = "#F4A1A1"  # soft pastel red
+    violin_edge = (0.55, 0.15, 0.15, 0.6)  # darker red edge with alpha
+    line_color = "#1B3B6D"
 
     fig, ax = plt.subplots()
     sns.violinplot(
@@ -250,32 +283,48 @@ def violin_plot_per_hour(
         y=DFColumnsPoi.WAITING,
         inner="quartile",  # shows median + quartiles
         cut=0,  # avoid extending violins beyond data range
-        # scale="width",  # all violins same width for clarity
-        palette="coolwarm",
+        density_norm="width",
+        # palette="coolwarm",
+        color=violin_fill,
+        linewidth=1.8,
+        edgecolor=violin_edge,
         ax=ax,
     )
     ax.set_ylim(bottom=0, top=max_wait_time)
     ax.set_xlabel("Uhrzeit")
     ax.set_ylabel("Wartedauer [min]")
-    ax.set_xticks(hour_range)
-    ax.grid(axis="y", linestyle="--", alpha=0.4)
+    # ax.set_xlim(min(hour_range), max(hour_range))
+    # ax.set_xticks(range(len(hour_range)), hour_range)  # type: ignore
+
+    # add a label for the hour at the end of the time span
+    ext_hours = hour_range + [max(hour_range) + 1]
+    ax.set_xticks(np.arange(-0.5, stop=len(hour_range) + 0.5), ext_hours)  # type: ignore
 
     # --- Line plot (secondary y-axis) ---
-    mean_day_curve = daily_presence.day_profiles.mean(axis="columns")
-    mean_hours = np.array([t.hour + t.minute / 60 for t in mean_day_curve.index])
-    ax2 = ax.twinx()
-    color = "tab:red"
-    ax2.plot(
-        mean_hours,
-        mean_day_curve.values,  # type: ignore
-        color=color,
-        # linewidth=2,
-        label="Durchschnittliche Anzahl Kunden",
-    )
-    ax2.set_ylabel("Durchschnittliche Anzahl Kunden", color=color)
-    ax2.tick_params(axis="y", labelcolor=color)
-    ax2.legend()
-    # ax2.legend(loc='upper right')
+    start_hour = min(hour_range)
+
+    # the violins are always at x=0, 1, 2 etc.
+    # calculate matching x values for the mean curve
+    xstart = min(hour_range_mean) - min(hour_range_mean) - 0.5
+    length = len(hour_range_wait) + 1
+    # mean_x = np.array([t.hour + t.minute / 60 - start_hour for t in mean_pres.index])
+    mean_x = np.linspace(xstart, xstart + length, len(mean_pres))
+
+    # use another style to avoid white grid line above the violins
+    with sns.axes_style("ticks"):
+        ax2 = ax.twinx()
+        ax2.plot(
+            mean_x,
+            mean_pres.values,  # type: ignore
+            color=line_color,
+            alpha=0.6,
+            linewidth=1.8,
+        )
+        ax2.set_ylabel("Durchschnittliche Anzahl Kunden", color=line_color)
+        ax2.tick_params(axis="y", labelcolor=line_color)
+        ax2.set_ylim(bottom=0)  # TODO: align mean curve axes across POIs as well?
+        # ax2.legend()
+        # ax2.set_xlim(min(hour_range), max(hour_range))
 
     fig.tight_layout()
     # fig.show()
@@ -361,12 +410,14 @@ class PoiPlotter:
         daily = get_daily_presence_profiles(poi_log)
         self.presence_daily[poi_log.poi_id] = daily
         # plot_daily_profiles(plot_subdir, daily, max_presence)
+
+        # use another style for raster plots
         raster_plot(plot_subdir, daily, max_presence)
 
         # plot histograms of daily means
-        plot_daily_mean_histogram(plot_subdir, poi_log)
+        plot_daily_sum_histogram(plot_subdir, poi_log)
         if DFColumnsPoi.CANCEL in poi_log.data:
-            plot_daily_mean_histogram(
+            plot_daily_sum_histogram(
                 plot_subdir,
                 poi_log,
                 DFColumnsPoi.CANCEL,
@@ -439,7 +490,10 @@ class PoiPlotter:
 
         # create plots for all POI types
         pois_by_type = group_pois_by_type(self.poi_queues.values())
-        for poi_type, pois_of_type in pois_by_type.items():
+        for poi_type in RELEVANT_POI_TYPES:
+            if poi_type not in pois_by_type:
+                continue
+            pois_of_type = pois_by_type[poi_type]
             # get the maximum waiting time to have a common axis for all POIs of the same type
             max_wait_time = max(
                 p.data[DFColumnsPoi.WAITING].max() for p in pois_of_type
@@ -463,6 +517,5 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     city_result_dir2 = Path("R:/phd_dir/results/scenario_juelich_03_1month")
-    # city_result_dir2 = Path("R:/phd_dir/results/archive/scenario_juelich_100_pharmacy")
     plot_dir2 = city_result_dir2 / "Postprocessed/plots/pois"
     main(city_result_dir2, plot_dir2)
