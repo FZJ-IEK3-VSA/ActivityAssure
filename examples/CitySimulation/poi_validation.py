@@ -505,7 +505,7 @@ class PoiPlotter:
 
 def main(city_result_dir: Path, plot_dir: Path):
     poiplotter = PoiPlotter(city_result_dir, plot_dir)
-    poi_type = "Pharmacy"
+    poi_type = ""  # "Pharmacy"
     poiplotter.process_poi_presence(poi_type)
     poiplotter.process_poi_queues(poi_type)
 
