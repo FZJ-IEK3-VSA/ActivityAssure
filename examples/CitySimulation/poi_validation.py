@@ -5,13 +5,15 @@ Analyze POI presence logs and create daily profiles.
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import timedelta
 import json
 import logging
 from pathlib import Path
 
 from matplotlib import pyplot as plt
 from matplotlib import dates as mdates
+import matplotlib.ticker as ticker
+import numpy as np
 import seaborn as sns
 import pandas as pd
 
@@ -84,7 +86,7 @@ class PoiDailyProfiles:
     """
 
     poi_id: str
-    profiles_by_date: dict[date, pd.DataFrame]
+    day_profiles: pd.DataFrame
 
 
 def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
@@ -130,61 +132,92 @@ def get_daily_presence_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
     # create a presence dataframe with datetime index
     df = poi_log.data.set_index(DFColumnsPoi.DATETIME)[[DFColumnsPoi.PRESENCE]]
     # resample to daily frequency and sum the presence values
-    daily_profile = df.resample("1min").ffill()
+    df_res = df.resample("1min").ffill()
+    assert isinstance(df_res.index, pd.DatetimeIndex), f"Unexpected data format: {df}"
 
-    # Create a "time of day" column
-    daily_profile[TIME_COL] = daily_profile.index.time  # type: ignore
-    # Group by date
-    grouped = daily_profile.groupby(daily_profile.index.date)  # type: ignore
+    def dt_to_time_index(ts: pd.Series):
+        ts.index = ts.index.time  # type: ignore
 
-    groups: dict[date, pd.DataFrame] = dict(iter(grouped))
-    return PoiDailyProfiles(poi_log.poi_id, groups)  # type: ignore
+    # Group by date to get one column per day and one row per time
+    df_res["date"] = df_res.index.date  # extract day
+    df_res[TIME_COL] = df_res.index.time
+    reshaped = df_res.pivot(
+        index=TIME_COL, columns="date", values=DFColumnsPoi.PRESENCE
+    )
+
+    # fill missing values (before first and after last POI presence log entry)
+    reshaped.fillna(0, inplace=True)
+    return PoiDailyProfiles(poi_log.poi_id, reshaped)  # type: ignore
 
 
-def plot_daily_profiles(
-    plot_dir: Path, profiles: PoiDailyProfiles, max_presence: int | None = None
+def raster_plot(
+    plot_dir: Path, daily_presence: PoiDailyProfiles, max_presence: int | None = None
 ):
-    """
-    Plots the daily profiles as line plots in a single chart.
+    df = daily_presence.day_profiles
+    fig, ax = plt.subplots()  # (figsize=(15, 6), dpi=400)
+    im = ax.imshow(df, aspect="auto", origin="upper", cmap="viridis")
 
-    :param plot_dir: directory to save the plots
-    :param profiles: the profiles to plot
-    :param max_presence: maximum presence value to get uniform y-axes, defaults to None
-    """
-    fig, ax = plt.subplots(figsize=(12, 6))
-    for group_date, group in profiles.profiles_by_date.items():
-        # times = matplotlib.dates.date2num(group[TIME_COL])
-        times = [datetime.combine(date(2025, 1, 1), t) for t in group[TIME_COL]]
-        ax.plot(times, group[DFColumnsPoi.PRESENCE], label=str(group_date))  # type: ignore
-    ax.set_ylim(None, max_presence)
-    ax.set_xlabel("Time of Day")
-    ax.set_ylabel("Visitor Count")
-    ax.set_title("Daily 24h Curves")
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax.legend()
-    subdir = plot_dir / "daily_visit_profiles"
+    # Add colorbar
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.set_label("Anzahl anwesender Kunden")
+
+    # draw major ticks, but label minor ticks to put each label between two major ticks
+    date_formatter = mdates.DateFormatter("%b")
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    ax.xaxis.set_major_formatter(ticker.NullFormatter())
+    ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=16))
+    ax.xaxis.set_minor_formatter(date_formatter)
+    # remove the minor ticks
+    for tick in ax.xaxis.get_minor_ticks():
+        tick.tick1line.set_markersize(0)
+        tick.tick2line.set_markersize(0)
+        tick.label1.set_horizontalalignment("center")
+
+    vals_per_day = len(df.index)
+
+    # define y-ticks (time)
+    def hour_formatter(x, pos):
+        x = x * 24 / vals_per_day
+        h = int(x)
+        m = int((x - h) * 60)
+        return f"{h % 24:02d}:{m:02d}"
+
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(hour_formatter))
+    ax.set_yticks(np.linspace(0, vals_per_day, num=7))
+
+    # Labels and title
+    # ax.set_xlabel(f"{daily_presence.index[0].year}")
+    ax.set_ylabel("Uhrzeit")
+    fig.tight_layout()
+    subdir = plot_dir / "visitors_raster"
     subdir.mkdir(exist_ok=True, parents=True)
-    fig.savefig(subdir / f"{profiles.poi_id}.svg")
-    plt.close(fig)
+    fig.savefig(
+        subdir / f"{daily_presence.poi_id}_raster.svg", transparent=True, dpi="figure"
+    )
 
 
-def plot_daily_visitors_histogram(dir: Path, profiles: PoiDailyProfiles):
+def plot_daily_mean_histogram(
+    dir: Path,
+    poi_log: PoiLog,
+    col: str = DFColumnsPoi.ARRIVE,
+    stat_name: str = "Anzahl Besucher pro Tag",
+):
     """
     Histogram showing the distribution of the number of visitors per day.
 
     :param dir: directory to save the plots
-    :param profiles: the profiles to plot
+    :param poi_log: the PoiLog to plot
     """
+    df = poi_log.data.set_index(DFColumnsPoi.DATETIME)
+    assert isinstance(df.index, pd.DatetimeIndex), f"Unexpected data format: {df}"
+    vals_per_day = df.groupby(df.index.date).mean()[col]
+
     fig, ax = plt.subplots()
-    visitors_per_day = []
-    for group_date, group in profiles.profiles_by_date.items():
-        visitors_per_day.append(group[DFColumnsPoi.ARRIVE].sum())
-    hist_ax = pd.Series(visitors_per_day).plot.hist()
-    hist_ax.set_xlabel("Number of Visitors per Day")
-    subdir = dir / "daily_visitors_hist"
+    pd.Series(vals_per_day).plot.hist(ax=ax)
+    ax.set_xlabel(stat_name)
+    subdir = dir / f"hist_{col}"
     subdir.mkdir(exist_ok=True, parents=True)
-    fig.savefig(subdir / f"{profiles.poi_id}_visitors_per_day.svg")
-    plt.close(fig)
+    fig.savefig(subdir / f"{poi_log.poi_id}_{col}.svg")
 
 
 def waiting_times_histogram(plot_subdir, poi_log):
@@ -196,7 +229,12 @@ def waiting_times_histogram(plot_subdir, poi_log):
     fig.savefig(subdir / f"{poi_log.poi_id}_waiting_hist.svg")
 
 
-def violin_plot_per_hour(plot_subdir: Path, poi_log: PoiLog):
+def violin_plot_per_hour(
+    plot_subdir: Path,
+    poi_log: PoiLog,
+    daily_presence: PoiDailyProfiles,
+    max_wait_time: int | None,
+):
     df = poi_log.data
     hour = "Stunde"
 
@@ -213,35 +251,37 @@ def violin_plot_per_hour(plot_subdir: Path, poi_log: PoiLog):
         inner="quartile",  # shows median + quartiles
         cut=0,  # avoid extending violins beyond data range
         # scale="width",  # all violins same width for clarity
-        palette="coolwarm",  # optional color palette
+        palette="coolwarm",
         ax=ax,
     )
-
+    ax.set_ylim(bottom=0, top=max_wait_time)
     ax.set_xlabel("Uhrzeit")
     ax.set_ylabel("Wartedauer [min]")
     ax.set_xticks(hour_range)
     ax.grid(axis="y", linestyle="--", alpha=0.4)
+
+    # --- Line plot (secondary y-axis) ---
+    mean_day_curve = daily_presence.day_profiles.mean(axis="columns")
+    mean_hours = np.array([t.hour + t.minute / 60 for t in mean_day_curve.index])
+    ax2 = ax.twinx()
+    color = "tab:red"
+    ax2.plot(
+        mean_hours,
+        mean_day_curve.values,  # type: ignore
+        color=color,
+        # linewidth=2,
+        label="Durchschnittliche Anzahl Kunden",
+    )
+    ax2.set_ylabel("Durchschnittliche Anzahl Kunden", color=color)
+    ax2.tick_params(axis="y", labelcolor=color)
+    ax2.legend()
+    # ax2.legend(loc='upper right')
+
     fig.tight_layout()
     # fig.show()
     subdir = plot_subdir / "waiting_violins"
     subdir.mkdir(parents=True, exist_ok=True)
     fig.savefig(subdir / f"{poi_log.poi_id}_waiting_violins.svg")
-
-
-def create_poi_presence_plots(
-    plot_subdir: Path, poi_log: PoiLog, max_presence: int | None
-):
-    daily = get_daily_presence_profiles(poi_log)
-    plot_daily_visitors_histogram(plot_subdir, daily)
-    plot_daily_profiles(plot_subdir, daily, max_presence)
-
-
-def create_poi_queue_plots(
-    plot_subdir: Path, poi_log: PoiLog, max_presence: int | None
-):
-    plot_subdir.mkdir(parents=True, exist_ok=True)
-    # waiting_times_histogram(plot_subdir, poi_log)
-    violin_plot_per_hour(plot_subdir, poi_log)
 
 
 def count_total_visitors_old(poi_log: PoiLog) -> int:
@@ -303,67 +343,117 @@ def group_pois_by_type(poi_logs: Iterable[PoiLog]) -> dict[str, list[PoiLog]]:
     return pois_by_type
 
 
-def process_poi_presence(city_result_dir: Path, output_dir: Path, plot_dir: Path):
-    # collect all POI logs
-    poi_log_path = city_result_dir / SubDirs.LOGS / SubDirs.POI_PRESENCE
-    poi_logs = load_poi_logs(poi_log_path)
-    if not poi_logs:
-        logging.warning(f"Found no POI logs in {poi_log_path}")
-        return
-    check_poi_presence_data(poi_logs.values())
+class PoiPlotter:
+    """Helper class for creating POI plots"""
 
-    # calculate some aggregated statistics
-    visitor_counts = get_col_sum_per_poi(poi_logs.values(), DFColumnsPoi.ARRIVE)
-    with open(output_dir / "total_visitor_counts.json", "w", encoding="utf8") as f:
-        json.dump(visitor_counts, f, indent=4)
-    cancel_counts = get_col_sum_per_poi(poi_logs.values(), DFColumnsPoi.CANCEL)
-    with open(output_dir / "total_cancel_counts.json", "w", encoding="utf8") as f:
-        json.dump(cancel_counts, f, indent=4)
+    def __init__(self, city_result_dir, plot_dir) -> None:
+        self.city_result_dir = city_result_dir
+        self.plot_dir = plot_dir
+        self.output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    # create plots for all relevant POI types
-    pois_by_type = group_pois_by_type(poi_logs.values())
-    for poi_type in RELEVANT_POI_TYPES:
-        if poi_type not in pois_by_type:
-            logging.warning(f"No POI of type {poi_type} found")
-        pois_of_type = pois_by_type[poi_type]
-        # get the maximum presence to have a common axis for all POIs of the same type
-        max_presence = max(p.get_presence().max() for p in pois_of_type)
-        poi_type_subdir = plot_dir / poi_type
-        for poi in pois_of_type:
-            create_poi_presence_plots(poi_type_subdir, poi, max_presence)
+        self.presence_daily: dict[str, PoiDailyProfiles] = {}
 
+    def create_poi_presence_plots(
+        self, plot_subdir: Path, poi_log: PoiLog, max_presence: int | None
+    ):
+        # create daily presence profiles and store them
+        daily = get_daily_presence_profiles(poi_log)
+        self.presence_daily[poi_log.poi_id] = daily
+        # plot_daily_profiles(plot_subdir, daily, max_presence)
+        raster_plot(plot_subdir, daily, max_presence)
 
-def process_poi_queues(city_result_dir: Path, output_dir: Path, plot_dir: Path):
-    # collect all POI queue logs
-    poi_log_path = city_result_dir / SubDirs.LOGS / SubDirs.POI_QUEUE
-    poi_logs = load_poi_logs(poi_log_path)
-    if not poi_logs:
-        logging.warning(f"Found no POI queue logs in {poi_log_path}")
-        return
+        # plot histograms of daily means
+        plot_daily_mean_histogram(plot_subdir, poi_log)
+        if DFColumnsPoi.CANCEL in poi_log.data:
+            plot_daily_mean_histogram(
+                plot_subdir,
+                poi_log,
+                DFColumnsPoi.CANCEL,
+                "Anzahl abgewiesener Kunden pro Tag",
+            )
 
-    # calculate some aggregated statistics
-    avg_wait_time = {
-        poi_log.poi_id: int(poi_log.data[DFColumnsPoi.WAITING].mean())
-        for poi_log in poi_logs.values()
-    }
-    with open(output_dir / "average_waiting_times.json", "w", encoding="utf8") as f:
-        json.dump(avg_wait_time, f, indent=4)
+    def create_poi_queue_plots(
+        self, plot_subdir: Path, poi_log: PoiLog, max_wait_time: int | None
+    ):
+        plot_subdir.mkdir(parents=True, exist_ok=True)
+        waiting_times_histogram(plot_subdir, poi_log)
+        daily_presence = self.presence_daily[poi_log.poi_id]
+        violin_plot_per_hour(plot_subdir, poi_log, daily_presence, max_wait_time)
 
-    # create plots for all POI types
-    pois_by_type = group_pois_by_type(poi_logs.values())
-    for poi_type, pois_of_type in pois_by_type.items():
-        # get the maximum waiting time to have a common axis for all POIs of the same type
-        max_wait_time = max(p.data[DFColumnsPoi.WAITING].max() for p in pois_of_type)
-        poi_type_subdir = plot_dir / poi_type
-        for poi in pois_of_type:
-            create_poi_queue_plots(poi_type_subdir, poi, max_wait_time)
+    def process_poi_presence(self, poi_type: str = ""):
+        # collect all POI logs
+        poi_log_path = self.city_result_dir / SubDirs.LOGS / SubDirs.POI_PRESENCE
+        self.poi_presence = load_poi_logs(poi_log_path, poi_type)
+        if not self.poi_presence:
+            logging.warning(f"Found no POI logs in {poi_log_path}")
+            return
+        check_poi_presence_data(self.poi_presence.values())
+
+        # calculate some aggregated statistics
+        visitor_counts = get_col_sum_per_poi(
+            self.poi_presence.values(), DFColumnsPoi.ARRIVE
+        )
+        with open(
+            self.output_dir / "total_visitor_counts.json", "w", encoding="utf8"
+        ) as f:
+            json.dump(visitor_counts, f, indent=4)
+        cancel_counts = get_col_sum_per_poi(
+            self.poi_presence.values(), DFColumnsPoi.CANCEL
+        )
+        with open(
+            self.output_dir / "total_cancel_counts.json", "w", encoding="utf8"
+        ) as f:
+            json.dump(cancel_counts, f, indent=4)
+
+        # create plots for all relevant POI types
+        pois_by_type = group_pois_by_type(self.poi_presence.values())
+        for poi_type in RELEVANT_POI_TYPES:
+            if poi_type not in pois_by_type:
+                logging.warning(f"No POI of type {poi_type} found")
+                continue
+            pois_of_type = pois_by_type[poi_type]
+            # get the maximum presence to have a common axis for all POIs of the same type
+            max_presence = max(p.get_presence().max() for p in pois_of_type)
+            poi_type_subdir = self.plot_dir / poi_type
+            for poi in pois_of_type:
+                self.create_poi_presence_plots(poi_type_subdir, poi, max_presence)
+
+    def process_poi_queues(self, poi_type: str = ""):
+        # collect all POI queue logs
+        poi_log_path = self.city_result_dir / SubDirs.LOGS / SubDirs.POI_QUEUE
+        self.poi_queues = load_poi_logs(poi_log_path, poi_type)
+        if not self.poi_queues:
+            logging.warning(f"Found no POI queue logs in {poi_log_path}")
+            return
+
+        # calculate some aggregated statistics
+        avg_wait_time = {
+            poi_log.poi_id: int(poi_log.data[DFColumnsPoi.WAITING].mean())
+            for poi_log in self.poi_queues.values()
+        }
+        with open(
+            self.output_dir / "average_waiting_times.json", "w", encoding="utf8"
+        ) as f:
+            json.dump(avg_wait_time, f, indent=4)
+
+        # create plots for all POI types
+        pois_by_type = group_pois_by_type(self.poi_queues.values())
+        for poi_type, pois_of_type in pois_by_type.items():
+            # get the maximum waiting time to have a common axis for all POIs of the same type
+            max_wait_time = max(
+                p.data[DFColumnsPoi.WAITING].max() for p in pois_of_type
+            )
+            poi_type_subdir = self.plot_dir / poi_type
+            for poi in pois_of_type:
+                self.create_poi_queue_plots(poi_type_subdir, poi, max_wait_time)
 
 
 def main(city_result_dir: Path, plot_dir: Path):
-    output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS
-    output_dir.mkdir(parents=True, exist_ok=True)
-    process_poi_presence(city_result_dir, output_dir, plot_dir)
-    process_poi_queues(city_result_dir, output_dir, plot_dir)
+    poiplotter = PoiPlotter(city_result_dir, plot_dir)
+    poi_type = "Pharmacy"
+    poiplotter.process_poi_presence(poi_type)
+    poiplotter.process_poi_queues(poi_type)
 
 
 if __name__ == "__main__":
@@ -372,6 +462,7 @@ if __name__ == "__main__":
         level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    city_result_dir = Path("R:/phd_dir/results/scenario_juelich_03_1month")
-    plot_dir = city_result_dir / "Postprocessed/plots/pois"
-    main(city_result_dir, plot_dir)
+    city_result_dir2 = Path("R:/phd_dir/results/scenario_juelich_03_1month")
+    # city_result_dir2 = Path("R:/phd_dir/results/archive/scenario_juelich_100_pharmacy")
+    plot_dir2 = city_result_dir2 / "Postprocessed/plots/pois"
+    main(city_result_dir2, plot_dir2)
