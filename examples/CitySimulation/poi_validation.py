@@ -199,6 +199,7 @@ def raster_plot(
     fig.savefig(
         subdir / f"{daily_presence.poi_id}_raster.svg", transparent=True, dpi="figure"
     )
+    plt.close(fig)
 
 
 def plot_daily_sum_histogram(

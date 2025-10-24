@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import LogNorm
 from shapely.geometry import Point  # type: ignore
+import seaborn as sns
 
 from activityassure.loadprofiles import utils
 from paths import LoadFiles, SubDirs
@@ -21,6 +22,11 @@ PERSON_COUNT_COL = "Number of persons"
 
 #: global min and max limits for load plots
 LOAD_MIN, LOAD_MAX = None, None
+
+
+# core city coordinate range for Jülich (including Koslar)
+XLIM = 702500, 712500
+YLIM = 6605000, 6610000
 
 
 def get_load_limits(city_result_dir: Path) -> tuple[float, float]:
@@ -109,6 +115,8 @@ def plot_map_data(
     is_load: bool = False,
     markersize: int = 1,
     title: str = "",
+    xlim=None,
+    ylim=None,
 ):
     # compute aspect ratio of the map area
     x_range = df.geometry.x.max() - df.geometry.x.min()
@@ -126,16 +134,38 @@ def plot_map_data(
     if is_load:
         vmin, vmax = LOAD_MIN, LOAD_MAX
 
+    # visual improvements for small data sets
+    norm = LogNorm(vmin=vmin, vmax=vmax)
+    edgecolor = None
+    linewidth = 0
+    if len(df) < 30:
+        # only very few points - highlight them, and no log scale
+        norm = None
+        markersize = 30
+        edgecolor = "black"
+        linewidth = 1
+
+        # hard coded for Pharmacy map
+        xlim = XLIM
+        ylim = YLIM
+
     # create the map plot
     df.plot(
         ax=ax,
         column=col,
         markersize=markersize,
+        edgecolor=edgecolor,
+        linewidth=linewidth,
         cmap="jet",
-        norm=LogNorm(vmin=vmin, vmax=vmax),
+        norm=norm,
         legend=True,
         legend_kwds={"shrink": 0.7, "label": col},  # modify colorbar
     )
+
+    if xlim or ylim:
+        # apply the given spatial extent to get the same map part
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
 
     if title:
         ax.set_title(title)
@@ -200,6 +230,7 @@ def add_poi_geodata(
     """
     geodf = get_poi_geodf(scenario_dir, remove_outliers)
     df = pd.concat([geodf, data], axis="columns")
+    df.dropna(inplace=True)
     return df  # pyright: ignore[reportReturnType]
 
 
@@ -218,15 +249,40 @@ def get_person_count(scenario_dir: Path) -> pd.DataFrame:
     return persons_df
 
 
-def visits_per_poi(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
+def visits_per_poi(
+    scenario_dir: Path, city_result_dir: Path, output_dir: Path, filter: str = ""
+):
     filename = "total_visitor_counts.json"
     filepath = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS / filename
     with open(filepath, "r", encoding="utf8") as f:
         visitor_counts = json.load(f)
+    # filter pois by type
+    visitor_counts_filt = {k: v for k, v in visitor_counts.items() if filter in k}
+    filter_txt = f"_{filter}" if filter else ""
+    if not visitor_counts_filt:
+        logging.warning(f"Found no {filter} POIs in {filepath}")
     col = "Number of visitor"
-    visitors_df = pd.DataFrame.from_dict(visitor_counts, "index", columns=[col])
+    visitors_df = pd.DataFrame.from_dict(visitor_counts_filt, "index", columns=[col])
     df = add_poi_geodata(scenario_dir, visitors_df)
-    plot_map_data(df, col, output_dir / "poi_visitors.svg", markersize=2)
+
+    xlim, ylim = None, None
+    # if filter:
+    #     # uncomment this to use coordinate range of the full POI set
+    #     # create another GeoDF with all POIs, unfiltered
+    #     all_pois_df = pd.DataFrame.from_dict(visitor_counts, "index", columns=[col])
+    #     all_pois_df = add_poi_geodata(scenario_dir, all_pois_df)
+    #     # determine the full coordinate range to show the same map part
+    #     xlim = (all_pois_df.geometry.x.min(), all_pois_df.geometry.x.max())
+    #     ylim = (all_pois_df.geometry.y.min(), all_pois_df.geometry.y.max())
+
+    plot_map_data(
+        df,
+        col,
+        output_dir / f"poi_visitors{filter_txt}.svg",
+        markersize=2,
+        xlim=xlim,
+        ylim=ylim,
+    )
 
 
 def persons_per_house(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
@@ -346,11 +402,15 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     global LOAD_MIN, LOAD_MAX
     LOAD_MIN, LOAD_MAX = get_load_limits(city_result_dir)
 
+    # don't use seaborn style here, does not work well for map plots
+    sns.reset_orig()
+
     visits_per_poi(scenario_dir, city_result_dir, output_dir)
-    persons_per_house(scenario_dir, city_result_dir, output_dir)
-    total_house_demand(scenario_dir, city_result_dir, output_dir)
-    load_profile_stats(scenario_dir, city_result_dir, output_dir)
-    sim_timesteps(scenario_dir, city_result_dir, output_dir)
+    visits_per_poi(scenario_dir, city_result_dir, output_dir, "Pharmacy")
+    # persons_per_house(scenario_dir, city_result_dir, output_dir)
+    # total_house_demand(scenario_dir, city_result_dir, output_dir)
+    # load_profile_stats(scenario_dir, city_result_dir, output_dir)
+    # sim_timesteps(scenario_dir, city_result_dir, output_dir)
 
 
 if __name__ == "__main__":
@@ -360,7 +420,10 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    scenario_dir = Path("R:/phd_dir/city_scenarios/scenario_julich_02")
-    city_result_dir = Path("R:/phd_dir/results/scenario_julich_02")
-    output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.MAPS
+    city_result_dir = Path("R:/phd_dir/results/scenario_juelich_03_1month")
+    scenario_dir = city_result_dir / "scenario"
+    assert scenario_dir.is_dir(), f"Missing scenario symlink: {scenario_dir}"
+    output_dir = (
+        city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.PLOTS / SubDirs.MAPS
+    )
     main(scenario_dir, city_result_dir, output_dir)
