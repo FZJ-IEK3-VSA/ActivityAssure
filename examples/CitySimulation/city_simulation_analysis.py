@@ -45,6 +45,7 @@ def main():
 
     load_profile_analysis.main(postproc_dir, plot_path / SubDirs.LOADS_DIR)
     poi_validation.main(city_result_dir, plot_path / SubDirs.POIS)
+    # geo analysis requires House and POI data from the other analyses, so do this last
     geographic_analysis.main(scenario_dir, city_result_dir, plot_path / SubDirs.MAPS)
 
 
