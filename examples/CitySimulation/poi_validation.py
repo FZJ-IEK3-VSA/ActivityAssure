@@ -19,6 +19,7 @@ import pandas as pd
 
 from tqdm import tqdm
 
+from activityassure import utils
 from paths import DFColumnsPoi, SubDirs
 
 #: relevant POIs for validation and analysis
@@ -124,6 +125,32 @@ def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
     return poi_logs
 
 
+def add_mean_median_to_hist(data_col: pd.Series, ax):
+    """Adds a mean and median line to a plot.
+
+    :param data_col: the data series to calculate statistics for
+    :param ax: the plot ax object to add the lines to
+    """
+    mean_val = data_col.mean()
+    ax.axvline(
+        mean_val,
+        color="tab:red",
+        linestyle="-",
+        linewidth=3,
+        label=f"Mittelwert = {mean_val:.1f}",
+    )
+
+    # show median as well
+    median_val = data_col.median()
+    ax.axvline(
+        median_val,
+        color="tab:orange",
+        linestyle="--",
+        linewidth=3,
+        label=f"Median = {median_val:.1f}",
+    )
+
+
 def get_daily_presence_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
     """
     Resample a POI presence log to fixed 1-minute resolution and split it into
@@ -136,9 +163,6 @@ def get_daily_presence_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
     # resample to daily frequency and sum the presence values
     df_res = df.resample("1min").ffill()
     assert isinstance(df_res.index, pd.DatetimeIndex), f"Unexpected data format: {df}"
-
-    def dt_to_time_index(ts: pd.Series):
-        ts.index = ts.index.time  # type: ignore
 
     # Group by date to get one column per day and one row per time
     df_res["date"] = df_res.index.date  # extract day
@@ -160,7 +184,7 @@ def raster_plot(
 
     df = daily_presence.day_profiles
     fig, ax = plt.subplots()  # (figsize=(15, 6), dpi=400)
-    im = ax.imshow(df, aspect="auto", origin="upper", cmap="viridis")
+    im = ax.imshow(df, aspect="auto", origin="upper", cmap="viridis", vmax=max_presence)
 
     # Add colorbar
     cbar = fig.colorbar(im, ax=ax)
@@ -222,18 +246,27 @@ def plot_daily_sum_histogram(
     fig, ax = plt.subplots()
     pd.Series(vals_per_day).plot.hist(ax=ax)
     ax.set_xlabel(stat_name)
+
+    # add stats as lines
+    add_mean_median_to_hist(vals_per_day, ax)
+    ax.legend()
+
     subdir = dir / f"hist_{col}"
     subdir.mkdir(exist_ok=True, parents=True)
     fig.savefig(subdir / f"{poi_log.poi_id}_{col}.svg")
+    plt.close(fig)
 
 
 def waiting_times_histogram(plot_subdir, poi_log):
     fig, ax = plt.subplots()
     poi_log.data[DFColumnsPoi.WAITING].plot.hist(ax=ax)
     ax.set_xlabel("Verteilung der Wartedauer [min]")
+    add_mean_median_to_hist(poi_log.data[DFColumnsPoi.WAITING], ax)
+    ax.legend()
     subdir = plot_subdir / "waiting_hist"
     subdir.mkdir(parents=True, exist_ok=True)
     fig.savefig(subdir / f"{poi_log.poi_id}_waiting_hist.svg")
+    plt.close(fig)
 
 
 def violin_plot_per_hour(
@@ -414,6 +447,7 @@ class PoiPlotter:
 
         # use another style for raster plots
         raster_plot(plot_subdir, daily, max_presence)
+        sns.set_theme()  # reenable seaborn theme
 
         # plot histograms of daily means
         plot_daily_sum_histogram(plot_subdir, poi_log)
@@ -446,17 +480,19 @@ class PoiPlotter:
         visitor_counts = get_col_sum_per_poi(
             self.poi_presence.values(), DFColumnsPoi.ARRIVE
         )
-        with open(
-            self.output_dir / "total_visitor_counts.json", "w", encoding="utf8"
-        ) as f:
-            json.dump(visitor_counts, f, indent=4)
+        utils.create_json_file(
+            self.output_dir / "total_visitor_counts.json", visitor_counts
+        )
         cancel_counts = get_col_sum_per_poi(
             self.poi_presence.values(), DFColumnsPoi.CANCEL
         )
-        with open(
-            self.output_dir / "total_cancel_counts.json", "w", encoding="utf8"
-        ) as f:
-            json.dump(cancel_counts, f, indent=4)
+        utils.create_json_file(
+            self.output_dir / "total_cancel_counts.json", cancel_counts
+        )
+        cancels_per_vis = {k: c / visitor_counts[k] for k, c in cancel_counts.items()}
+        utils.create_json_file(
+            self.output_dir / "cancels_per_visit.json", cancels_per_vis
+        )
 
         # create plots for all relevant POI types
         pois_by_type = group_pois_by_type(self.poi_presence.values())
