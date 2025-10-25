@@ -6,11 +6,11 @@ import logging
 import sys
 from collections import Counter, defaultdict
 from datetime import timedelta
-import json
 from pathlib import Path
 
 from tqdm import tqdm
 from activityassure.activity_profile import SparseActivityProfile
+from activityassure import utils
 
 
 def sort_by_val(d: dict) -> dict:
@@ -22,16 +22,6 @@ def sort_by_val(d: dict) -> dict:
     return dict(sorted(d.items(), key=lambda x: x[1], reverse=True))
 
 
-def save_dict(filepath: Path, data: dict) -> None:
-    """Saves a dict to a json file
-
-    :param filepath: target file path
-    :param data: the dict to save
-    """
-    with open(filepath, "w", encoding="utf8") as f:
-        json.dump(data, f, indent=4)
-
-
 def dur_dict_to_strs(d: dict[str, int], resolution: timedelta) -> dict[str, str]:
     """Converts a duration dict with int values to a dict containing
     timedelta strings.
@@ -41,6 +31,10 @@ def dur_dict_to_strs(d: dict[str, int], resolution: timedelta) -> dict[str, str]
     :return: the resulting dict with timedelta strings
     """
     return {k: str(v * resolution) for k, v in d.items()}
+
+
+def act_filename_to_person_id(filename: str) -> str:
+    return filename
 
 
 def get_activity_statistics(
@@ -90,16 +84,53 @@ def get_activity_statistics(
 
     # save all statistics in json files
     output_dir.mkdir(parents=True, exist_ok=True)
-    save_dict(output_dir / "general_info.json", stats)
-    save_dict(output_dir / "total_occurrences.json", dict(occurrences.most_common()))
-    save_dict(output_dir / "user_shares.json", sort_by_val(user_shares))
-    save_dict(output_dir / "total_durations.json", total_dur_strs)
-    save_dict(output_dir / "duration_per_user.json", dur_per_user_strs)
-    save_dict(output_dir / "occurrences_per_user.json", occ_per_user)
+    utils.create_json_file(output_dir / "general_info.json", stats)
+    utils.create_json_file(
+        output_dir / "total_occurrences.json", dict(occurrences.most_common())
+    )
+    utils.create_json_file(output_dir / "user_shares.json", sort_by_val(user_shares))
+    utils.create_json_file(output_dir / "total_durations.json", total_dur_strs)
+    utils.create_json_file(output_dir / "duration_per_user.json", dur_per_user_strs)
+    utils.create_json_file(output_dir / "occurrences_per_user.json", occ_per_user)
     logging.info(f"Calculated general activity statistics from {len(files)} profiles")
+
+
+def per_person_statistics_for_activity(
+    profile_dir: Path, activity: str, output_dir: Path, resolution=timedelta(minutes=1)
+):
+    """Calculate additional unmapped activity statistics per person for the selected
+    activity.
+
+    :param profile_dir: directory with activity profiles (csv)
+    :param activity: the activity to evaluate
+    :param output_dir: base output directory
+    :param resolution: activity profile resolution, defaults to timedelta(minutes=1)
+    """
+    frequencies = defaultdict(int)
+    durations = defaultdict(int)
+    files = list(profile_dir.iterdir())
+    for csv_file in tqdm(files):
+        assert csv_file.is_file(), f"Unexpected directory: {csv_file}"
+        # load the activity profile from csv
+        activity_profile = SparseActivityProfile.load_from_csv(
+            csv_file, None, resolution  # type: ignore
+        )
+        person_id = act_filename_to_person_id(csv_file.stem)
+
+        # filter matching activities
+        fitting_acts = [a for a in activity_profile.activities if a.name == activity]
+        frequencies[person_id] += len(fitting_acts)
+        durations[person_id] += sum(a.duration for a in fitting_acts if a.duration >= 0)
+
+    output_dir /= utils.slugify(activity)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    utils.create_json_file(output_dir / "frequency_by_person.json", frequencies)
+    utils.create_json_file(output_dir / "duration_by_person.json", durations)
 
 
 if __name__ == "__main__":
     path = Path(sys.argv[1])
     assert path.is_dir(), f"Invalid input path: {sys.argv[1]}"
-    get_activity_statistics(path, Path("affordance_statistics"))
+    outdir = Path("affordance_statistics")
+    get_activity_statistics(path, outdir)
+    per_person_statistics_for_activity(path, "visit pharmacy", outdir)
