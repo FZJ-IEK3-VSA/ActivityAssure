@@ -138,16 +138,27 @@ def plot_map_data(
     norm = LogNorm(vmin=vmin, vmax=vmax)
     edgecolor = None
     linewidth = 0
-    if len(df) < 30:
+    if len(df) < 1000:
         # only very few points - highlight them, and no log scale
         norm = None
         markersize = 30
         edgecolor = "black"
         linewidth = 1
 
-        # hard coded for Pharmacy map
-        xlim = XLIM
-        ylim = YLIM
+    if not xlim and not ylim:
+        # no specific boundaries set, so calculate the extent of the data
+        xlim_data = (df.geometry.x.min(), df.geometry.x.max())
+        ylim_data = (df.geometry.y.min(), df.geometry.y.max())
+
+        # get the maximum extent of the data and the defined city area of XLIM/YLIM
+        xlim_merged = (min(xlim_data[0], XLIM[0]), max(xlim_data[1], XLIM[1]))
+        ylim_merged = (min(ylim_data[0], YLIM[0]), max(ylim_data[1], YLIM[1]))
+
+        # use the merged range, unless the data extent is larger anyways, then leave it at None
+        if xlim_data != xlim_merged:
+            xlim = xlim_merged
+        if ylim_data != ylim_merged:
+            ylim = ylim_merged
 
     # create the map plot
     df.plot(
@@ -285,11 +296,24 @@ def visits_per_poi(
     )
 
 
-def persons_per_house(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
+def persons_per_house(
+    scenario_dir: Path,
+    city_result_dir: Path,
+    output_dir: Path,
+    house_list_file: Path | None = None,
+):
     persons_df = get_person_count(scenario_dir)
     df = add_house_geodata(scenario_dir, persons_df)
 
-    plot_map_data(df, PERSON_COUNT_COL, output_dir / "persons_per_house.svg")
+    filename = "persons_per_house"
+    if house_list_file:
+        # only show houses contained in the house list file
+        with open(house_list_file, "r", encoding="utf8") as f:
+            houses = set(json.load(f))
+            df = df[df.index.isin(houses)]
+            filename += f"_only_{house_list_file.stem}"
+
+    plot_map_data(df, PERSON_COUNT_COL, output_dir / f"{filename}.svg")
     # plot_hex_bins(df, PERSON_COUNT_COL, output_dir / "persons_per_house.svg")
 
 
@@ -411,6 +435,11 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     total_house_demand(scenario_dir, city_result_dir, output_dir)
     load_profile_stats(scenario_dir, city_result_dir, output_dir)
     sim_timesteps(scenario_dir, city_result_dir, output_dir)
+
+    # maps for random sites
+    # filedir = scenario_dir / "custom_export"
+    # for filepath in filedir.glob("random_residential_sites*"):
+    #     persons_per_house(scenario_dir, city_result_dir, output_dir, filepath)
 
 
 if __name__ == "__main__":
