@@ -157,7 +157,7 @@ def load_lpg_result_table(database_path: Path, table: str) -> list[dict]:
     return parsed_json_list
 
 
-def load_activity_profile_from_db(
+def load_activity_profiles_from_db(
     database_path: Path, mapping_path: Path
 ) -> dict[str, pd.DataFrame]:
     """
@@ -166,6 +166,7 @@ def load_activity_profile_from_db(
 
     :param db_file: the database file to load
     :param mapping_path: path to the affordance mapping file
+    :returns: a dict containing one activity profile per person
     """
     # load activity data depending on the database format
     activity_table = "PerformedActions"
@@ -254,7 +255,7 @@ def convert_activity_profile_from_db_to_csv(
     :param template: the household template name
     """
     # get the profiles as dataframes
-    profile_per_person = load_activity_profile_from_db(db_file, mapping_path)
+    profile_per_person = load_activity_profiles_from_db(db_file, mapping_path)
 
     # store each dataframe as a csv file
     result_dir.mkdir(parents=True, exist_ok=True)
