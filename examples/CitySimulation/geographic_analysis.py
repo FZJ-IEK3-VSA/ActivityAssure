@@ -186,6 +186,7 @@ def plot_map_data(
 
     # save the plot
     save_plot(filepath, fig)
+    plt.close(fig)
 
 
 def plot_hex_bins(df: gpd.GeoDataFrame, col: str, filepath: Path):
