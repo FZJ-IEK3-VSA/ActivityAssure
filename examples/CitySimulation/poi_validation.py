@@ -90,6 +90,7 @@ class PoiDailyProfiles:
 
     poi_id: str
     day_profiles: pd.DataFrame
+    column: str
 
 
 def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
@@ -151,7 +152,9 @@ def add_mean_median_to_hist(data_col: pd.Series, ax):
     )
 
 
-def get_daily_presence_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
+def get_daily_profiles(
+    poi_log: PoiLog, col: str, ffill: bool = False
+) -> PoiDailyProfiles:
     """
     Resample a POI presence log to fixed 1-minute resolution and split it into
     daily profiles.
@@ -159,30 +162,33 @@ def get_daily_presence_profiles(poi_log: PoiLog) -> PoiDailyProfiles:
     :return: a PoiDailyProfiles object containing the daily profiles
     """
     # create a presence dataframe with datetime index
-    df = poi_log.data.set_index(DFColumnsPoi.DATETIME)[[DFColumnsPoi.PRESENCE]]
+    df = poi_log.data.set_index(DFColumnsPoi.DATETIME)[[col]]
     # resample to daily frequency and sum the presence values
-    df_res = df.resample("1min").ffill()
+    df_res = df.resample("1min")
+    if ffill:
+        df_res = df_res.ffill()
+    else:
+        df_res = df_res.asfreq(0)
+
     assert isinstance(df_res.index, pd.DatetimeIndex), f"Unexpected data format: {df}"
 
     # Group by date to get one column per day and one row per time
     df_res["date"] = df_res.index.date  # extract day
     df_res[TIME_COL] = df_res.index.time
-    reshaped = df_res.pivot(
-        index=TIME_COL, columns="date", values=DFColumnsPoi.PRESENCE
-    )
+    reshaped = df_res.pivot(index=TIME_COL, columns="date", values=col)
 
     # fill missing values (before first and after last POI presence log entry)
     reshaped.fillna(0, inplace=True)
-    return PoiDailyProfiles(poi_log.poi_id, reshaped)  # type: ignore
+    return PoiDailyProfiles(poi_log.poi_id, reshaped, col)  # type: ignore
 
 
 def raster_plot(
-    plot_dir: Path, daily_presence: PoiDailyProfiles, max_presence: int | None = None
+    plot_dir: Path, daily_profile: PoiDailyProfiles, max_presence: int | None = None
 ):
     # don't use seaborn style here, looks bad for raster plots
     plt.style.use("classic")
 
-    df = daily_presence.day_profiles
+    df = daily_profile.day_profiles
     fig, ax = plt.subplots()  # (figsize=(15, 6), dpi=400)
     im = ax.imshow(df, aspect="auto", origin="upper", cmap="viridis", vmax=max_presence)
 
@@ -218,10 +224,13 @@ def raster_plot(
     # ax.set_xlabel(f"{daily_presence.index[0].year}")
     ax.set_ylabel("Uhrzeit")
     fig.tight_layout()
-    subdir = plot_dir / "visitors_raster"
+    col_txt = utils.slugify(daily_profile.column)
+    subdir = plot_dir / f"raster_{col_txt}"
     subdir.mkdir(exist_ok=True, parents=True)
     fig.savefig(
-        subdir / f"{daily_presence.poi_id}_raster.svg", transparent=True, dpi="figure"
+        subdir / f"{daily_profile.poi_id}_{col_txt}_raster.svg",
+        transparent=True,
+        dpi="figure",
     )
     plt.close(fig)
 
@@ -345,7 +354,9 @@ def violin_plot_per_hour(
     mean_x = np.linspace(xstart, xstart + length, len(mean_pres))
 
     # use another style to avoid white grid line above the violins
-    with sns.axes_style("ticks"):
+    with sns.axes_style(
+        "ticks"
+    ):  # TODO: this probably causes black borders around the plot; remove them
         ax2 = ax.twinx()
         ax2.plot(
             mean_x,
@@ -440,13 +451,16 @@ class PoiPlotter:
     def create_poi_presence_plots(
         self, plot_subdir: Path, poi_log: PoiLog, max_presence: int | None
     ):
-        # create daily presence profiles and store them
-        daily = get_daily_presence_profiles(poi_log)
-        self.presence_daily[poi_log.poi_id] = daily
-        # plot_daily_profiles(plot_subdir, daily, max_presence)
+        # create daily profiles and store them
+        daily_pres = get_daily_profiles(poi_log, DFColumnsPoi.PRESENCE, True)
+        self.presence_daily[poi_log.poi_id] = daily_pres
+        daily_arrive = get_daily_profiles(poi_log, DFColumnsPoi.ARRIVE)
+        daily_cancel = get_daily_profiles(poi_log, DFColumnsPoi.CANCEL)
 
-        # use another style for raster plots
-        raster_plot(plot_subdir, daily, max_presence)
+        raster_plot(plot_subdir, daily_pres, max_presence)
+        raster_plot(plot_subdir, daily_arrive)
+        raster_plot(plot_subdir, daily_cancel)
+
         sns.set_theme()  # reenable seaborn theme
 
         # plot histograms of daily means
