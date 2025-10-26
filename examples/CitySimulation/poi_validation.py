@@ -454,12 +454,15 @@ class PoiPlotter:
         # create daily profiles and store them
         daily_pres = get_daily_profiles(poi_log, DFColumnsPoi.PRESENCE, True)
         self.presence_daily[poi_log.poi_id] = daily_pres
-        daily_arrive = get_daily_profiles(poi_log, DFColumnsPoi.ARRIVE)
-        daily_cancel = get_daily_profiles(poi_log, DFColumnsPoi.CANCEL)
-
         raster_plot(plot_subdir, daily_pres, max_presence)
+
+        daily_arrive = get_daily_profiles(poi_log, DFColumnsPoi.ARRIVE)
         raster_plot(plot_subdir, daily_arrive)
-        raster_plot(plot_subdir, daily_cancel)
+
+        if DFColumnsPoi.CANCEL in poi_log.data:
+            # additional plot for queue POIs
+            daily_cancel = get_daily_profiles(poi_log, DFColumnsPoi.CANCEL)
+            raster_plot(plot_subdir, daily_cancel)
 
         sns.set_theme()  # reenable seaborn theme
 
