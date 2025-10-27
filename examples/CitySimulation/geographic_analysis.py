@@ -226,6 +226,7 @@ def add_house_geodata(scenario_dir: Path, data: pd.DataFrame) -> gpd.GeoDataFram
     """
     geodf = get_house_geodf(scenario_dir)
     df = pd.concat([geodf, data], axis="columns")
+    df.dropna(inplace=True)
     return df  # pyright: ignore[reportReturnType]
 
 
