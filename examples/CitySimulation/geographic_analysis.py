@@ -27,6 +27,9 @@ LOAD_MIN, LOAD_MAX = None, None
 # core city coordinate range for Jülich (including Koslar)
 XLIM = 702500, 712500
 YLIM = 6605000, 6610000
+# whole city coordinate range for Jülich, including all buildings
+XLIM_FULL = 698683.8054464592, 717455.3717942354
+YLIM_FULL = 6600861.002313202, 6614854.611616367
 
 
 def get_load_limits(city_result_dir: Path) -> tuple[float, float]:
@@ -118,9 +121,34 @@ def plot_map_data(
     xlim=None,
     ylim=None,
 ):
+    # custom formatting to include whole JÜlich map area
+    # xlim = XLIM_FULL
+    # ylim = YLIM_FULL
+
     # compute aspect ratio of the map area
     x_range = df.geometry.x.max() - df.geometry.x.min()
     y_range = df.geometry.y.max() - df.geometry.y.min()
+
+    # adapt map boundaries
+    if not xlim and not ylim:
+        # no specific boundaries set, so calculate the extent of the data
+        xlim_data = (df.geometry.x.min(), df.geometry.x.max())
+        ylim_data = (df.geometry.y.min(), df.geometry.y.max())
+
+        # get the maximum extent of the data and the defined city area of XLIM/YLIM
+        xlim_merged = (min(xlim_data[0], XLIM[0]), max(xlim_data[1], XLIM[1]))
+        ylim_merged = (min(ylim_data[0], YLIM[0]), max(ylim_data[1], YLIM[1]))
+
+        # use the merged range, unless the data extent is larger anyways, then leave it at None
+        if xlim_data != xlim_merged:
+            xlim = xlim_merged
+        if ylim_data != ylim_merged:
+            ylim = ylim_merged
+
+    if xlim and ylim:
+        x_range = xlim[1] - xlim[0]
+        y_range = ylim[1] - ylim[0]
+
     aspect_ratio = y_range / x_range
 
     # set figure size accordingly
@@ -144,21 +172,6 @@ def plot_map_data(
         markersize = 30
         edgecolor = "black"
         linewidth = 1
-
-    if not xlim and not ylim:
-        # no specific boundaries set, so calculate the extent of the data
-        xlim_data = (df.geometry.x.min(), df.geometry.x.max())
-        ylim_data = (df.geometry.y.min(), df.geometry.y.max())
-
-        # get the maximum extent of the data and the defined city area of XLIM/YLIM
-        xlim_merged = (min(xlim_data[0], XLIM[0]), max(xlim_data[1], XLIM[1]))
-        ylim_merged = (min(ylim_data[0], YLIM[0]), max(ylim_data[1], YLIM[1]))
-
-        # use the merged range, unless the data extent is larger anyways, then leave it at None
-        if xlim_data != xlim_merged:
-            xlim = xlim_merged
-        if ylim_data != ylim_merged:
-            ylim = ylim_merged
 
     # create the map plot
     df.plot(
@@ -319,6 +332,43 @@ def persons_per_house(
     # plot_hex_bins(df, PERSON_COUNT_COL, output_dir / "persons_per_house.svg")
 
 
+def eplpo_selected_sites(
+    model_result_dir: Path,
+    existing_scenario: Path,
+    output_dir: Path,
+):
+    """Shows selected sites from eplpo results, both POIs and residential
+    buildings selected to be POIs.
+
+    :param model_result_dir: directory with model result files
+    :param existing_scenario: existing scenario dir to get house/POI geodata from
+    :param output_dir: output directory for created maps
+    """
+    # if set, use the other scenario path to get house and POI geodata
+    # model_result_dir = scenario_dir / "instances/results"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for result_file in model_result_dir.iterdir():
+        if not result_file.is_file():
+            continue
+        # load selected sites
+        with open(result_file, "r", encoding="utf8") as f:
+            results = json.load(f)
+        sites = results["selected_sites"]
+        sites_df = pd.DataFrame({"Dummy": [1] * len(sites)}, index=sites)
+        # join with both POIs and
+        df_houses = add_house_geodata(existing_scenario, sites_df)
+        df_houses["Source"] = 1
+        df_orig_pois = add_poi_geodata(existing_scenario, sites_df)
+        df_orig_pois["Source"] = 2
+        # merge both DFs
+        joined: gpd.GeoDataFrame = pd.concat([df_houses, df_orig_pois])  # type: ignore
+        if len(joined) < 2:
+            logging.warning(f"Less than two selected sites in result: {result_file}")
+            continue
+        filename = f"eplpo_results_{result_file.stem}"
+        plot_map_data(joined, "Source", output_dir / f"{filename}.svg")
+
+
 def total_house_demand(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     filename = "total_demand_per_profile.csv"
     filepath = (
@@ -451,10 +501,12 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    city_result_dir = Path("R:/phd_dir/results/scenario_juelich_03_1month")
+    city_result_dir = Path("R:/phd_dir/results/scenario_juelich_04_baseline")
     scenario_dir = city_result_dir / "scenario"
     assert scenario_dir.is_dir(), f"Missing scenario symlink: {scenario_dir}"
     output_dir = (
         city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.PLOTS / SubDirs.MAPS
     )
     main(scenario_dir, city_result_dir, output_dir)
+    # results_path = Path("R:/phd_dir/pharmacy_data/results_mapped")
+    # eplpo_selected_sites(results_path, scenario_dir, results_path / "maps")
