@@ -382,5 +382,7 @@
     "go shopping for various items (1 h)": "not at home",
     "travel for education": "education",
     "travel for work": "work",
-    "visit pharmacy": "not at home"
+    "visit pharmacy": "not at home",
+    "Visit friends (1h)": "not at home",
+    "Visit friends (3h)": "not at home"
 }
