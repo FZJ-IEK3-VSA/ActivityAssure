@@ -6,6 +6,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import timedelta
+import functools
 import json
 import logging
 from pathlib import Path
@@ -70,16 +71,29 @@ class PoiLog:
         return " ".join(parts[:-1])
 
     @staticmethod
-    def load(poi_file: Path) -> "PoiLog":
+    def load(poi_file: Path, index=None) -> "PoiLog":
         """
         Parse a POI log from file
 
         :param poi_file: path of the log file to load
         :return: the parsed POI log
         """
-        df = pd.read_csv(poi_file, parse_dates=[1])
+        df = pd.read_csv(poi_file, parse_dates=[1], index_col=index)
+        df.drop(columns=[DFColumnsPoi.TIMESTEP], inplace=True)
         poi_type = PoiLog.poi_type_from_filename(poi_file.stem)
         return PoiLog(poi_file.stem, df, poi_type)
+
+
+def combine_poi_presence_logs(logs: list[PoiLog]) -> PoiLog:
+    dfs = [p.data for p in logs]
+    merged = functools.reduce(lambda left, right: left.add(right, fill_value=0), dfs)
+    return PoiLog("all", merged, logs[0].poi_type)
+
+
+def combine_poi_queue_logs(logs: list[PoiLog]) -> PoiLog:
+    dfs = [p.data for p in logs]
+    merged = pd.concat(dfs, ignore_index=True)
+    return PoiLog("all", merged, logs[0].poi_type)
 
 
 @dataclass
@@ -93,7 +107,9 @@ class PoiDailyProfiles:
     column: str
 
 
-def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
+def load_poi_logs(
+    poi_log_path: Path, filter: str = "", index_col: str | None = None
+) -> dict[str, PoiLog]:
     """
     Loads POI logs from CitySimulation result files. These can be presence or
     queue logs.
@@ -114,7 +130,7 @@ def load_poi_logs(poi_log_path: Path, filter: str = "") -> dict[str, PoiLog]:
         if filter not in poi_file.stem:
             # skip this file
             continue
-        poi_log = PoiLog.load(poi_file)
+        poi_log = PoiLog.load(poi_file, index_col)
 
         if len(poi_log.data) == 0:
             # poi log is empty, skip it
@@ -162,7 +178,7 @@ def get_daily_profiles(
     :return: a PoiDailyProfiles object containing the daily profiles
     """
     # create a presence dataframe with datetime index
-    df = poi_log.data.set_index(DFColumnsPoi.DATETIME)[[col]]
+    df = poi_log.data[[col]]
     # resample to daily frequency and sum the presence values
     df_res = df.resample("1min")
     if ffill:
@@ -248,7 +264,7 @@ def plot_daily_sum_histogram(
     :param dir: directory to save the plots
     :param poi_log: the PoiLog to plot
     """
-    df = poi_log.data.set_index(DFColumnsPoi.DATETIME)
+    df = poi_log.data
     assert isinstance(df.index, pd.DatetimeIndex), f"Unexpected data format: {df}"
     vals_per_day = df.groupby(df.index.date).sum()[col]
 
@@ -449,7 +465,7 @@ class PoiPlotter:
         self.presence_daily: dict[str, PoiDailyProfiles] = {}
 
     def create_poi_presence_plots(
-        self, plot_subdir: Path, poi_log: PoiLog, max_presence: int | None
+        self, plot_subdir: Path, poi_log: PoiLog, max_presence: int | None = None
     ):
         # create daily profiles and store them
         daily_pres = get_daily_profiles(poi_log, DFColumnsPoi.PRESENCE, True)
@@ -477,7 +493,7 @@ class PoiPlotter:
             )
 
     def create_poi_queue_plots(
-        self, plot_subdir: Path, poi_log: PoiLog, max_wait_time: int | None
+        self, plot_subdir: Path, poi_log: PoiLog, max_wait_time: int | None = None
     ):
         plot_subdir.mkdir(parents=True, exist_ok=True)
         waiting_times_histogram(plot_subdir, poi_log)
@@ -487,7 +503,7 @@ class PoiPlotter:
     def process_poi_presence(self, poi_type: str = ""):
         # collect all POI logs
         poi_log_path = self.city_result_dir / SubDirs.LOGS / SubDirs.POI_PRESENCE
-        self.poi_presence = load_poi_logs(poi_log_path, poi_type)
+        self.poi_presence = load_poi_logs(poi_log_path, poi_type, DFColumnsPoi.DATETIME)
         if not self.poi_presence:
             logging.warning(f"Found no POI logs in {poi_log_path}")
             return
@@ -523,6 +539,8 @@ class PoiPlotter:
             poi_type_subdir = self.plot_dir / poi_type
             for poi in pois_of_type:
                 self.create_poi_presence_plots(poi_type_subdir, poi, max_presence)
+            combined = combine_poi_presence_logs(pois_of_type)
+            self.create_poi_presence_plots(poi_type_subdir, combined)
 
     def process_poi_queues(self, poi_type: str = ""):
         # collect all POI queue logs
@@ -555,6 +573,8 @@ class PoiPlotter:
             poi_type_subdir = self.plot_dir / poi_type
             for poi in pois_of_type:
                 self.create_poi_queue_plots(poi_type_subdir, poi, max_wait_time)
+            combined = combine_poi_queue_logs(pois_of_type)
+            self.create_poi_queue_plots(poi_type_subdir, combined)
 
 
 def main(city_result_dir: Path, plot_dir: Path):
