@@ -529,6 +529,7 @@ class PoiPlotter:
 
         # create plots for all relevant POI types
         pois_by_type = group_pois_by_type(self.poi_presence.values())
+        poi_type_sums: dict[str, PoiLog] = {}
         for poi_type in RELEVANT_POI_TYPES:
             if poi_type not in pois_by_type:
                 logging.warning(f"No POI of type {poi_type} found")
@@ -540,7 +541,22 @@ class PoiPlotter:
             for poi in pois_of_type:
                 self.create_poi_presence_plots(poi_type_subdir, poi, max_presence)
             combined = combine_poi_presence_logs(pois_of_type)
+            poi_type_sums[poi_type] = combined
             self.create_poi_presence_plots(poi_type_subdir, combined)
+
+        # calculate aggregated statistics per POI type
+        visitors = {
+            p: pl.data[DFColumnsPoi.ARRIVE].sum() for p, pl in poi_type_sums.items()
+        }
+        utils.create_json_file(self.output_dir / "visit_counts_by_type.json", visitors)
+        cancels = {
+            p: pl.data[DFColumnsPoi.CANCEL].sum() for p, pl in poi_type_sums.items()
+        }
+        utils.create_json_file(self.output_dir / "cancel_counts_by_type.json", cancels)
+        cancels_per_vis = {k: c / visitors[k] for k, c in cancels.items()}
+        utils.create_json_file(
+            self.output_dir / "cancels_per_visit_by_type.json", cancels_per_vis
+        )
 
     def process_poi_queues(self, poi_type: str = ""):
         # collect all POI queue logs
