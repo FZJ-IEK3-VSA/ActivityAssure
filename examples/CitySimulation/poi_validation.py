@@ -550,7 +550,9 @@ class PoiPlotter:
         }
         utils.create_json_file(self.output_dir / "visit_counts_by_type.json", visitors)
         cancels = {
-            p: pl.data[DFColumnsPoi.CANCEL].sum() for p, pl in poi_type_sums.items()
+            p: pl.data[DFColumnsPoi.CANCEL].sum()
+            for p, pl in poi_type_sums.items()
+            if DFColumnsPoi.CANCEL in pl.data
         }
         utils.create_json_file(self.output_dir / "cancel_counts_by_type.json", cancels)
         cancels_per_vis = {k: c / visitors[k] for k, c in cancels.items()}
