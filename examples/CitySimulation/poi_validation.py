@@ -202,15 +202,26 @@ def raster_plot(
     plot_dir: Path, daily_profile: PoiDailyProfiles, max_presence: int | None = None
 ):
     # don't use seaborn style here, looks bad for raster plots
-    plt.style.use("classic")
+    with sns.axes_style("ticks"):
 
-    df = daily_profile.day_profiles
-    fig, ax = plt.subplots()  # (figsize=(15, 6), dpi=400)
-    im = ax.imshow(df, aspect="auto", origin="upper", cmap="viridis", vmax=max_presence)
+        df = daily_profile.day_profiles
 
-    # Add colorbar
-    cbar = fig.colorbar(im, ax=ax)
-    cbar.set_label("Anzahl anwesender Kunden")
+        # only show the relevant time frame
+        df = df.loc[datetime.time(7, 0) : datetime.time(18, 59), :]
+
+        fig, ax = plt.subplots()  # (figsize=(15, 6), dpi=400)
+        im = ax.imshow(
+            df,
+            aspect="auto",
+            origin="upper",
+            cmap="jet",
+            vmax=max_presence,
+            interpolation="none",
+        )
+
+        # Add colorbar
+        cbar = fig.colorbar(im, ax=ax)
+        cbar.set_label("Anzahl anwesender Kunden")
 
     # draw major ticks, but label minor ticks to put each label between two major ticks
     date_formatter = mdates.DateFormatter("%b")
@@ -226,29 +237,33 @@ def raster_plot(
 
     vals_per_day = len(df.index)
 
-    # define y-ticks (time)
-    def hour_formatter(x, pos):
-        x = x * 24 / vals_per_day
-        h = int(x)
-        m = int((x - h) * 60)
-        return f"{h % 24:02d}:{m:02d}"
+        # define y-ticks (time)
+        vals_per_day = len(df.index)
+        start_hour = df.index.min().hour
+        hour_range = df.index.max().hour - start_hour + 1
 
-    ax.yaxis.set_major_formatter(ticker.FuncFormatter(hour_formatter))
-    ax.set_yticks(np.linspace(0, vals_per_day, num=7))
+        def hour_formatter(x, pos):
+            x = x * hour_range / vals_per_day + start_hour
+            h = int(x)
+            m = int((x - h) * 60)
+            return f"{h % 24:02d}:{m:02d}"
 
-    # Labels and title
-    # ax.set_xlabel(f"{daily_presence.index[0].year}")
-    ax.set_ylabel("Uhrzeit")
-    fig.tight_layout()
-    col_txt = utils.slugify(daily_profile.column)
-    subdir = plot_dir / f"raster_{col_txt}"
-    subdir.mkdir(exist_ok=True, parents=True)
-    fig.savefig(
-        subdir / f"{daily_profile.poi_id}_{col_txt}_raster.svg",
-        transparent=True,
-        dpi="figure",
-    )
-    plt.close(fig)
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(hour_formatter))
+        ax.set_yticks(np.linspace(0, vals_per_day, num=7))
+
+        # Labels and title
+        # ax.set_xlabel(f"{daily_presence.index[0].year}")
+        ax.set_ylabel("Uhrzeit")
+        fig.tight_layout()
+        col_txt = utils.slugify(daily_profile.column)
+        subdir = plot_dir / f"raster_{col_txt}"
+        subdir.mkdir(exist_ok=True, parents=True)
+        fig.savefig(
+            subdir / f"{daily_profile.poi_id}_{col_txt}_raster.svg",
+            transparent=True,
+            dpi="figure",
+        )
+        plt.close(fig)
 
 
 def plot_daily_sum_histogram(
