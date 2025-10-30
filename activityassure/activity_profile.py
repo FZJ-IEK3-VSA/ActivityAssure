@@ -96,6 +96,8 @@ class SparseActivityProfile:
     filename: str = ""
     #: weight of this profile for calculating statistics
     weight: float | None = None
+    #: start datetime of the profile, if available
+    start_datetime: datetime | None = None
 
     @utils.timing
     @staticmethod
@@ -126,6 +128,7 @@ class SparseActivityProfile:
             lambda row: ActivityProfileEntry(row[activity_col], row[timestep_col]),  # type: ignore
             axis=1,
         ).to_list()
+        first_date = None
         if date_col in data.columns:
             # calculate offset based on the datetime column in the data (timedelta since last midnight)
             first_date = datetime.fromisoformat(data[date_col][0])
@@ -140,7 +143,9 @@ class SparseActivityProfile:
         assert offset % resolution == timedelta(
             0
         ), "Start time has to be a divisor of the resolution"
-        profile = SparseActivityProfile(entries, offset, resolution, profile_type)
+        profile = SparseActivityProfile(
+            entries, offset, resolution, profile_type, start_datetime=first_date
+        )
         profile.remove_timestep_offset()
         profile.calc_durations()
         # remove the last activity (duration is unknown)

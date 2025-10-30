@@ -2,6 +2,7 @@
 mappings or aggregations."""
 
 # load and preprocess all input data
+from dataclasses import dataclass
 import logging
 import sys
 from collections import Counter, defaultdict
@@ -31,6 +32,31 @@ def dur_dict_to_strs(d: dict[str, int], resolution: timedelta) -> dict[str, str]
     :return: the resulting dict with timedelta strings
     """
     return {k: str(v * resolution) for k, v in d.items()}
+
+
+@dataclass
+class PersonId:
+    """Scenario-wide unique ID object for a person"""
+
+    house: str
+    hh_index: int
+    name: str
+
+
+def parse_person_id(person_id: str) -> PersonId:
+    """Parses person ID strs in the format "CHR42 Jessica_DEA_DENW40AL10000B7u-0_HH1".
+
+    :param person_id: the person ID str
+    :returns: the person ID object
+    """
+    # components are separated by an underscore; name is first, HH number last
+    parts = person_id.split("_")
+    name = parts[0]
+    hh = parts[-1]
+    hh_index = int(hh.removeprefix("HH"))
+    # the rest is the house ID
+    house = "_".join(parts[1:-1])
+    return PersonId(house, hh_index, name)
 
 
 def act_filename_to_person_id(filename: str) -> str:
@@ -108,24 +134,56 @@ def per_person_statistics_for_activity(
     """
     frequencies = defaultdict(int)
     durations = defaultdict(int)
+    freq_person_type = defaultdict(int)
+    dur_person_type = defaultdict(int)
     files = list(profile_dir.iterdir())
+    start_times = {}
     for csv_file in tqdm(files):
         assert csv_file.is_file(), f"Unexpected directory: {csv_file}"
         # load the activity profile from csv
         activity_profile = SparseActivityProfile.load_from_csv(
             csv_file, None, resolution  # type: ignore
         )
+        assert activity_profile.start_datetime
         person_id = act_filename_to_person_id(csv_file.stem)
 
         # filter matching activities
         fitting_acts = [a for a in activity_profile.activities if a.name == activity]
+        start_times[person_id] = [
+            activity_profile.start_datetime + a.start * activity_profile.resolution
+            for a in fitting_acts
+        ]
+        total_dur = sum(a.duration for a in fitting_acts if a.duration >= 0)
+
         frequencies[person_id] += len(fitting_acts)
-        durations[person_id] += sum(a.duration for a in fitting_acts if a.duration >= 0)
+        durations[person_id] += total_dur
+
+        # aggregated statistics per LPG person
+        person = parse_person_id(person_id)
+        freq_person_type[person.name] += len(fitting_acts)
+        dur_person_type[person.name] += total_dur
 
     output_dir /= utils.slugify(activity)
     output_dir.mkdir(parents=True, exist_ok=True)
-    utils.create_json_file(output_dir / "frequency_by_person.json", frequencies)
-    utils.create_json_file(output_dir / "duration_by_person.json", durations)
+    utils.create_json_file(
+        output_dir / "frequency_by_person.json", sort_by_val(frequencies)
+    )
+    utils.create_json_file(
+        output_dir / "duration_by_person.json", sort_by_val(durations)
+    )
+    utils.create_json_file(
+        output_dir / "frequency_by_lpg_person.json", sort_by_val(freq_person_type)
+    )
+    utils.create_json_file(
+        output_dir / "duration_by_lpg_person.json", sort_by_val(dur_person_type)
+    )
+
+    # store all activity start datetimes
+    start_times = dict(
+        sorted(start_times.items(), key=lambda pair: len(pair[1]), reverse=True)
+    )
+    start_times_str = {k: str(v) for k, v in start_times.items()}
+    utils.create_json_file(output_dir / "activity_datetimes.json", start_times_str)
 
 
 if __name__ == "__main__":
