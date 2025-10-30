@@ -76,7 +76,7 @@ def get_travel_activity_type(
 
 def adapt_travel_affordance(
     before: str, after: str, to_home: bool, mapping: dict[str, str]
-) -> str:
+) -> tuple[str, bool]:
     """Special handling for travels: checks whether the travel is
     related to some specific purposes, and if so, sets a new specific
     affordance name. If necessary, updates the affordance mapping.
@@ -89,7 +89,8 @@ def adapt_travel_affordance(
     :param after: name of the affordance after the travel
     :param to_home: whether the travel leads towards Home
     :param mapping: the affordance mapping
-    :return: the travel affordance name to use
+    :return: the travel affordance name to use, and a bool whether it was missing in
+             the affordance mapping
     """
     # get the respective affordance types
     activity_type = mapping.get(before, "")
@@ -97,9 +98,10 @@ def adapt_travel_affordance(
     travel_cat = get_travel_activity_type(activity_type, activity_type, to_home)
     affordance = "travel" if travel_cat == "travel" else f"travel for {travel_cat}"
     # add the special affordance to the mapping, if necessary
-    if affordance not in mapping:
+    not_in_mapping = affordance not in mapping
+    if not_in_mapping:
         mapping[affordance] = travel_cat
-    return affordance
+    return affordance, not_in_mapping
 
 
 def load_lpg_result_table_sql(database_file: Path, table: str) -> list[dict]:
@@ -211,9 +213,12 @@ def load_activity_profiles_from_db(
                 after = entries[i + 1]["AffordanceName"] if i < len(entries) - 1 else ""
                 to_home = "to Home" in entry["AffordanceName"]
                 # check whether to use the generic "travel" affordance or a more specific one
-                new_aff = adapt_travel_affordance(before, after, to_home, mapping)
+                new_aff, unmapped = adapt_travel_affordance(
+                    before, after, to_home, mapping
+                )
                 if new_aff != affordance:
                     affordance = new_aff
+                if unmapped:
                     unmapped_affordances += 1
 
             # check for unmapped affordances
