@@ -48,10 +48,15 @@ def postprocess_city_results(city_result_dir: Path):
         activity_profiles_dir, postproc_dir / SubDirs.RAW_ACTIVITY_STATS
     )
     # add per-person statistics for specific activities
-    activity = "visit pharmacy"
-    activity_statistics.per_person_statistics_for_activity(
-        activity_profiles_dir, activity, postproc_dir / SubDirs.RAW_ACTIVITY_STATS
-    )
+    relevant_activities = [
+        "visit pharmacy",
+        "'visit friends (1h)",
+        "visit friends (3h)",
+    ]
+    for activity in relevant_activities:
+        activity_statistics.per_person_statistics_for_activity(
+            activity_profiles_dir, activity, postproc_dir / SubDirs.RAW_ACTIVITY_STATS
+        )
 
 
 def main():
