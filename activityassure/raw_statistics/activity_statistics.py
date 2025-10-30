@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import logging
 import sys
 from collections import Counter, defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from tqdm import tqdm
@@ -179,10 +179,12 @@ def per_person_statistics_for_activity(
     )
 
     # store all activity start datetimes
-    start_times = dict(
+    start_times: dict[str, list[datetime]] = dict(
         sorted(start_times.items(), key=lambda pair: len(pair[1]), reverse=True)
     )
-    start_times_str = {k: str(v) for k, v in start_times.items()}
+    start_times_str = {
+        k: [d.isoformat() for d in datevals] for k, datevals in start_times.items()
+    }
     utils.create_json_file(output_dir / "activity_datetimes.json", start_times_str)
 
 
