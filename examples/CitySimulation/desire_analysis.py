@@ -40,18 +40,24 @@ def main(city_result_dir: Path, visits_file: Path):
     files = list(houses_subdir.rglob(filepattern))
 
     dfs = {}
+    not_in_visits_file = 0
     for file in tqdm(files):
         house = file.parent.parent.name
         parts = file.stem.removeprefix(file_prefix).split(".")
         assert len(parts) == 2, f"Unexpected filename: {file.stem}"
-        person, hh = parts
-        person_id = f"{person}_{house}_{hh}"
+        hh, person = parts
+        person_name = person.split(" (")[0]
+        person_id = f"{person_name}_{house}_{hh}"
+        if person_id not in visits_per_person:
+            not_in_visits_file += 1
+            continue
         if visits_per_person[person_id] > 0:
             df = load_desire_values(file)
             df.rename({"Special / Pharmacy Visit": person_id}, inplace=True)
             dfs[person_id] = df
 
     logging.info(f"Loaded {len(dfs)} desire files of pharmacy visitors")
+    logging.info(f"Person IDs missing in the visits file: {not_in_visits_file}")
 
     # save the merged desires file
     merged = pd.concat(dfs.values(), axis="columns")
