@@ -46,7 +46,7 @@ def main(city_result_dir: Path, visits_file: Path):
         assert len(parts) == 2, f"Unexpected filename: {file.stem}"
         person, hh = parts
         person_id = f"{person}_{house}_{hh}"
-        if True or visits_per_person[person_id] > 0:
+        if visits_per_person[person_id] > 0:
             df = load_desire_values(file)
             df.rename({"Special / Pharmacy Visit": person_id}, inplace=True)
             dfs[person_id] = df
