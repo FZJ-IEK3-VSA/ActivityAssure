@@ -28,3 +28,6 @@ pandas-stubs
 types-setuptools
 types-tabulate
 types-tqdm
+
+# colormaps
+cmcrameri
