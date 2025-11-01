@@ -4,11 +4,14 @@ import json
 import logging
 from pathlib import Path
 import pickle
+from matplotlib import pyplot as plt
+import matplotlib.ticker as ticker
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from cmcrameri import cm
 
-from activityassure.raw_statistics import activity_statistics
-
+from paths import SubDirs
 import load_profile_processing
 
 
@@ -21,12 +24,17 @@ def load_desire_values(filepath: Path):
         sep=";",
         usecols=["Time", "Special / Pharmacy Visit"],
         index_col="Time",
+        parse_dates=["Time"],
         date_format=load_profile_processing.DATEFORMAT_EN,
     )
     return df
 
 
-def main(city_result_dir: Path, visits_file: Path):
+def collect_desire_profiles(city_result_dir: Path):
+    visits_file = (
+        city_result_dir
+        / "Postprocessed/raw_activity_statistics/visit-pharmacy/frequency_by_person.json"
+    )
 
     with open(visits_file) as f:
         visits_per_person = json.load(f)
@@ -69,6 +77,69 @@ def main(city_result_dir: Path, visits_file: Path):
     mean.to_csv(city_result_dir / "Postprocessed/desires_mean.csv")
 
 
+def plot_desire_profiles(city_result_dir: Path):
+    filepath = city_result_dir / SubDirs.POSTPROCESSED_DIR / "merged_desires_pharma.csv"
+    full_df = pd.read_csv(filepath, index_col="Time", parse_dates=["Time"])
+
+    df = full_df.mean(axis="columns").to_frame("mean")
+
+    # Reshape data to hours × days
+    assert isinstance(df.index, pd.DatetimeIndex), "Datetimes not parsed correctly"
+    # df["day"] = df.index.dayofyear
+    # df["time"] = df.index.time  # or use hour/minute if finer
+    # df["hour"] = df.index.hour + df.index.minute / 60
+    # # Pivot: rows = time, columns = day, values = load
+    # reshaped = df.pivot_table(index="hour", columns="day", values="mean")
+
+    TIME_COL = "Time"
+    df["date"] = df.index.date  # extract day
+    df[TIME_COL] = df.index.time
+    reshaped = df.pivot(index=TIME_COL, columns="date", values="mean")
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(
+        reshaped,
+        aspect="auto",
+        origin="upper",
+        cmap=cm.batlow,  # type: ignore
+        interpolation="none",
+    )
+
+    # Add colorbar
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.set_label("Desire Pharmacy Visit")
+
+    # Set the x-axis to the correct dates
+
+    # Optionally, highlight Mondays
+    mondays = [i for i, col in enumerate(reshaped.columns) if col.weekday() == 0]  # type: ignore
+    ax.set_xticks(mondays)
+    xlabels = [reshaped.columns[i].strftime("%a, %d.%m.") for i in mondays]  # type: ignore
+    ax.set_xticklabels(xlabels, rotation=90)
+
+    # define y-ticks (time)
+    vals_per_day = len(reshaped.index)
+    start_hour = reshaped.index.min().hour
+    hour_range = reshaped.index.max().hour - start_hour + 1
+
+    def hour_formatter(x, pos):
+        x = x * hour_range / vals_per_day + start_hour
+        h = int(x)
+        m = int((x - h) * 60)
+        return f"{h % 24:02d}:{m:02d}"
+
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(hour_formatter))
+    ax.set_yticks(np.linspace(0, vals_per_day, num=7))
+
+    fig.tight_layout()
+    plt.show()
+
+
+def main(city_result_dir: Path):
+    # collect_desire_profiles(city_result_dir, visits_file)
+    plot_desire_profiles(city_result_dir)
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
@@ -76,13 +147,9 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    # city_result_dir = Path("R:/phd_dir/results/scenario_juelich_04_eplpo_fair_100_1")
     city_result_dir = Path(
         "/fast/home/d-neuroth/phd_dir/results/scenario_juelich_04_eplpo_fair_100_1"
     )
-    visits_file = (
-        city_result_dir
-        / "Postprocessed/raw_activity_statistics/visit-pharmacy/frequency_by_person.json"
-    )
+    # city_result_dir = Path("R:/phd_dir/results/scenario_juelich_04_eplpo_fair_100_1")
 
-    main(city_result_dir, visits_file)
+    main(city_result_dir)
