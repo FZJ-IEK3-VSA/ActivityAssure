@@ -17,6 +17,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 import seaborn as sns
 import pandas as pd
+from cmcrameri import cm
 
 from tqdm import tqdm
 
@@ -214,7 +215,7 @@ def raster_plot(
             df,
             aspect="auto",
             origin="upper",
-            cmap="jet",
+            cmap=cm.batlow,  # type: ignore
             vmax=max_presence,
             interpolation="none",
         )

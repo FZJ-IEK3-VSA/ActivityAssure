@@ -13,6 +13,7 @@ import pandas as pd
 from matplotlib.colors import LogNorm
 from shapely.geometry import Point  # type: ignore
 import seaborn as sns
+from cmcrameri import cm
 
 from activityassure.loadprofiles import utils
 from paths import LoadFiles, SubDirs
@@ -180,7 +181,7 @@ def plot_map_data(
         markersize=markersize,
         edgecolor=edgecolor,
         linewidth=linewidth,
-        cmap="jet",
+        cmap=cm.batlow,  # type: ignore
         norm=norm,
         legend=True,
         legend_kwds={"shrink": 0.7, "label": col},  # modify colorbar
@@ -214,7 +215,7 @@ def plot_hex_bins(df: gpd.GeoDataFrame, col: str, filepath: Path):
         y,
         C=values,
         gridsize=100,
-        cmap="jet",
+        cmap=cm.batlow,  # type: ignore
         norm=LogNorm(),
         reduce_C_function=np.sum,
         mincnt=1,  # ignore empty bins
