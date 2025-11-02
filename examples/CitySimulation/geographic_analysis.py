@@ -357,9 +357,9 @@ def eplpo_selected_sites(
         sites_df = pd.DataFrame({"Dummy": [1] * len(sites)}, index=sites)
         # join with both POIs and
         df_houses = add_house_geodata(existing_scenario, sites_df)
-        df_houses["Source"] = 1
+        df_houses["Source"] = "Residential"
         df_orig_pois = add_poi_geodata(existing_scenario, sites_df)
-        df_orig_pois["Source"] = 2
+        df_orig_pois["Source"] = "Original POI"
         # merge both DFs
         joined: gpd.GeoDataFrame = pd.concat([df_houses, df_orig_pois])  # type: ignore
         if len(joined) < 2:
