@@ -5,7 +5,7 @@ Analyze POI presence logs and create daily profiles.
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta, time
 import functools
 import json
 import logging
@@ -207,7 +207,7 @@ def raster_plot(
         df = daily_profile.day_profiles
 
         # only show the relevant time frame
-        df = df.loc[datetime.time(7, 0) : datetime.time(18, 59), :]
+        df = df.loc[time(7, 0) : time(18, 59), :]
 
         fig, ax = plt.subplots()  # (figsize=(15, 6), dpi=400)
         im = ax.imshow(
@@ -223,19 +223,25 @@ def raster_plot(
         cbar = fig.colorbar(im, ax=ax)
         cbar.set_label("Anzahl anwesender Kunden")
 
-    # draw major ticks, but label minor ticks to put each label between two major ticks
-    date_formatter = mdates.DateFormatter("%b")
-    ax.xaxis.set_major_locator(mdates.MonthLocator())
-    ax.xaxis.set_major_formatter(ticker.NullFormatter())
-    ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=16))
-    ax.xaxis.set_minor_formatter(date_formatter)
-    # remove the minor ticks
-    for tick in ax.xaxis.get_minor_ticks():
-        tick.tick1line.set_markersize(0)
-        tick.tick2line.set_markersize(0)
-        tick.label1.set_horizontalalignment("center")
+        # define x-axis ticks and labels
+        # one tick for each Monday; suitable for short time frames, e.g., one month
+        # mondays = [i for i, col in enumerate(df.columns) if col.weekday() == 0]  # type: ignore
+        # ax.set_xticks(mondays)
+        # xlabels = [df.columns[i].strftime("%a, %d.%m.") for i in mondays]  # type: ignore
+        # ax.set_xticklabels(xlabels, rotation=90)
+        # plt.xticks(rotation=90)
 
-    vals_per_day = len(df.index)
+        # alternative: months ticks for a full-year plot
+        date_formatter = mdates.DateFormatter("%b")
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(ticker.NullFormatter())
+        ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=16))
+        ax.xaxis.set_minor_formatter(date_formatter)
+        # remove the minor ticks
+        for tick in ax.xaxis.get_minor_ticks():
+            tick.tick1line.set_markersize(0)
+            tick.tick2line.set_markersize(0)
+            tick.label1.set_horizontalalignment("center")
 
     # define y-ticks (time)
     vals_per_day = len(df.index)
@@ -623,6 +629,6 @@ if __name__ == "__main__":
         level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    city_result_dir2 = Path("R:/phd_dir/results/scenario_juelich_03_1month")
+    city_result_dir2 = Path("R:/phd_dir/results/scenario_juelich_04_eplpo_fair_100_1")
     plot_dir2 = city_result_dir2 / "Postprocessed/plots/pois"
     main(city_result_dir2, plot_dir2)
