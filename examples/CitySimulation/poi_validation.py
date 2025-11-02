@@ -5,7 +5,7 @@ Analyze POI presence logs and create daily profiles.
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 import functools
 import json
 import logging
@@ -237,33 +237,33 @@ def raster_plot(
 
     vals_per_day = len(df.index)
 
-        # define y-ticks (time)
-        vals_per_day = len(df.index)
-        start_hour = df.index.min().hour
-        hour_range = df.index.max().hour - start_hour + 1
+    # define y-ticks (time)
+    vals_per_day = len(df.index)
+    start_hour = df.index.min().hour
+    hour_range = df.index.max().hour - start_hour + 1
 
-        def hour_formatter(x, pos):
-            x = x * hour_range / vals_per_day + start_hour
-            h = int(x)
-            m = int((x - h) * 60)
-            return f"{h % 24:02d}:{m:02d}"
+    def hour_formatter(x, pos):
+        x = x * hour_range / vals_per_day + start_hour
+        h = int(x)
+        m = int((x - h) * 60)
+        return f"{h % 24:02d}:{m:02d}"
 
-        ax.yaxis.set_major_formatter(ticker.FuncFormatter(hour_formatter))
-        ax.set_yticks(np.linspace(0, vals_per_day, num=7))
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(hour_formatter))
+    ax.set_yticks(np.linspace(0, vals_per_day, num=7))
 
-        # Labels and title
-        # ax.set_xlabel(f"{daily_presence.index[0].year}")
-        ax.set_ylabel("Uhrzeit")
-        fig.tight_layout()
-        col_txt = utils.slugify(daily_profile.column)
-        subdir = plot_dir / f"raster_{col_txt}"
-        subdir.mkdir(exist_ok=True, parents=True)
-        fig.savefig(
-            subdir / f"{daily_profile.poi_id}_{col_txt}_raster.svg",
-            transparent=True,
-            dpi="figure",
-        )
-        plt.close(fig)
+    # Labels and title
+    # ax.set_xlabel(f"{daily_presence.index[0].year}")
+    ax.set_ylabel("Uhrzeit")
+    fig.tight_layout()
+    col_txt = utils.slugify(daily_profile.column)
+    subdir = plot_dir / f"raster_{col_txt}"
+    subdir.mkdir(exist_ok=True, parents=True)
+    fig.savefig(
+        subdir / f"{daily_profile.poi_id}_{col_txt}_raster.svg",
+        transparent=True,
+        dpi="figure",
+    )
+    plt.close(fig)
 
 
 def plot_daily_sum_histogram(
