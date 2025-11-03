@@ -592,7 +592,7 @@ class PoiPlotter:
 
         # calculate some aggregated statistics
         avg_wait_time = {
-            poi_log.poi_id: int(poi_log.data[DFColumnsPoi.WAITING].mean())
+            poi_log.poi_id: poi_log.data[DFColumnsPoi.WAITING].mean()
             for poi_log in self.poi_queues.values()
         }
         with open(
@@ -602,6 +602,7 @@ class PoiPlotter:
 
         # create plots for all POI types
         pois_by_type = group_pois_by_type(self.poi_queues.values())
+        combined_logs: dict[str, PoiLog] = {}
         for poi_type in RELEVANT_POI_TYPES:
             if poi_type not in pois_by_type:
                 continue
@@ -614,7 +615,18 @@ class PoiPlotter:
             for poi in pois_of_type:
                 self.create_poi_queue_plots(poi_type_subdir, poi, max_wait_time)
             combined = combine_poi_queue_logs(pois_of_type)
+            combined_logs[poi_type] = combined
             self.create_poi_queue_plots(poi_type_subdir, combined)
+
+        # calculate some aggregated statistics by POI type
+        avg_wait_time_by_type = {
+            poi_log.poi_type: poi_log.data[DFColumnsPoi.WAITING].mean()
+            for poi_log in combined_logs.values()
+        }
+        with open(
+            self.output_dir / "average_waiting_times_by_type.json", "w", encoding="utf8"
+        ) as f:
+            json.dump(avg_wait_time_by_type, f, indent=4)
 
 
 def main(city_result_dir: Path, plot_dir: Path):
