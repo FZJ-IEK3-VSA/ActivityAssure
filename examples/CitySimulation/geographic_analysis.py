@@ -24,6 +24,25 @@ PERSON_COUNT_COL = "Number of persons"
 #: global min and max limits for load plots
 LOAD_MIN, LOAD_MAX = None, None
 
+# POIs to exclude for some plots
+POI_BLACKLIST = {
+    "Office Workplace",
+    "Workplace (shift worker)",
+    "Volunteer Workplace",
+    "House of friends or relatives",
+    "Home",
+    "Hiking Location",
+    "Walking Location",
+    "Mountain Road",
+    "Running Path",
+    "Bicycle Route",
+    "Fishing Location",
+    "Hunting Forest",
+    "Festival Location",
+    "Flea Market Location",
+    "Local Recreational Area",
+}
+
 
 # core city coordinate range for Jülich (including Koslar)
 XLIM = 702500, 712500
@@ -277,15 +296,24 @@ def get_person_count(scenario_dir: Path) -> pd.DataFrame:
 
 
 def visits_per_poi(
-    scenario_dir: Path, city_result_dir: Path, output_dir: Path, filter: str = ""
+    scenario_dir: Path,
+    city_result_dir: Path,
+    output_dir: Path,
+    filter: str = "",
+    blacklist: set = set(),
 ):
     filename = "total_visitor_counts.json"
     filepath = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.POIS / filename
     with open(filepath, "r", encoding="utf8") as f:
         visitor_counts = json.load(f)
     # filter pois by type
-    visitor_counts_filt = {k: v for k, v in visitor_counts.items() if filter in k}
+    visitor_counts_filt = {
+        k: v
+        for k, v in visitor_counts.items()
+        if filter in k and not any(x in k for x in blacklist)
+    }
     filter_txt = f"_{filter}" if filter else ""
+    filter_txt += f"_blacklist_{len(blacklist)}" if blacklist else ""
     if not visitor_counts_filt:
         logging.warning(f"Found no {filter} POIs in {filepath}")
     col = "Number of visitor"
@@ -483,6 +511,7 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     sns.reset_orig()
 
     visits_per_poi(scenario_dir, city_result_dir, output_dir)
+    visits_per_poi(scenario_dir, city_result_dir, output_dir, blacklist=POI_BLACKLIST)
     visits_per_poi(scenario_dir, city_result_dir, output_dir, "Pharmacy")
     persons_per_house(scenario_dir, city_result_dir, output_dir)
     total_house_demand(scenario_dir, city_result_dir, output_dir)
