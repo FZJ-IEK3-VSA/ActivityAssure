@@ -503,10 +503,6 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     assert scenario_dir.is_dir() and city_result_dir.is_dir(), "Invalid input paths"
     output_dir.parent.mkdir(parents=True, exist_ok=True)
 
-    # determine min and max house loads to get a consistent scale across map plots
-    global LOAD_MIN, LOAD_MAX
-    LOAD_MIN, LOAD_MAX = get_load_limits(city_result_dir)
-
     # don't use seaborn style here, does not work well for map plots
     sns.reset_orig()
 
@@ -514,6 +510,11 @@ def main(scenario_dir: Path, city_result_dir: Path, output_dir: Path):
     visits_per_poi(scenario_dir, city_result_dir, output_dir, blacklist=POI_BLACKLIST)
     visits_per_poi(scenario_dir, city_result_dir, output_dir, "Pharmacy")
     persons_per_house(scenario_dir, city_result_dir, output_dir)
+
+    # determine min and max house loads to get a consistent scale across load map plots
+    global LOAD_MIN, LOAD_MAX
+    LOAD_MIN, LOAD_MAX = get_load_limits(city_result_dir)
+
     total_house_demand(scenario_dir, city_result_dir, output_dir)
     load_profile_stats(scenario_dir, city_result_dir, output_dir)
     sim_timesteps(scenario_dir, city_result_dir, output_dir)
