@@ -50,6 +50,13 @@ POI_PRESENCE_COLS = {
 sns.set_theme()
 
 
+def poi_type_from_filename(filename: str) -> str:
+    # assume the building ID does not contain a space, so everything behind the
+    # last space is the ID, the rest is the POI type
+    parts = filename.split(" ")
+    return " ".join(parts[:-1])
+
+
 @dataclass
 class PoiLog:
     """
@@ -65,13 +72,6 @@ class PoiLog:
         return self.data[DFColumnsPoi.PRESENCE]
 
     @staticmethod
-    def poi_type_from_filename(filename: str) -> str:
-        # assume the building ID does not contain a space, so everything behind the
-        # last space is the ID, the rest is the POI type
-        parts = filename.split(" ")
-        return " ".join(parts[:-1])
-
-    @staticmethod
     def load(poi_file: Path, index=None) -> "PoiLog":
         """
         Parse a POI log from file
@@ -81,7 +81,7 @@ class PoiLog:
         """
         df = pd.read_csv(poi_file, parse_dates=[1], index_col=index)
         df.drop(columns=[DFColumnsPoi.TIMESTEP], inplace=True)
-        poi_type = PoiLog.poi_type_from_filename(poi_file.stem)
+        poi_type = poi_type_from_filename(poi_file.stem)
         return PoiLog(poi_file.stem, df, poi_type)
 
 
