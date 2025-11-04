@@ -14,7 +14,7 @@ from paths import SubDirs
 import poi_validation
 
 
-def prepare_df(df):
+def prepare_df(df, city_result_dir: Path):
     # remove travels to custom POIs
     start_custom = df["start_site"].str.contains("Custom")
     dest_custom = df["dest_site"].str.contains("Custom")
@@ -27,6 +27,8 @@ def prepare_df(df):
     df.insert(
         0, "dest_type", df["dest_site"].apply(poi_validation.poi_type_from_filename)
     )
+    df["start_type"] = df["start_type"].str.replace(" Generated", "")
+    df["dest_type"] = df["dest_type"].str.replace(" Generated", "")
 
     # Determine trip type
     df.insert(
@@ -39,6 +41,19 @@ def prepare_df(df):
     )
 
     df.insert(0, "distance_km", df["distance_in_m"] / 1000)
+
+    # find and save outliers
+    outliers = df[df["distance_km"] > 200]
+    if len(outliers) > 0:
+        logging.info(f"Found {len(outliers)} travels with >200km distance.")
+        outliers.to_csv(
+            city_result_dir
+            / SubDirs.POSTPROCESSED_DIR
+            / SubDirs.TRANSPORT
+            / "trips_over_200km.csv"
+        )
+    df = df[df["distance_km"] <= 200]
+
     return df
 
 
@@ -119,7 +134,7 @@ def main(city_result_dir: Path, output_dir: Path):
     output_dir.mkdir(parents=True, exist_ok=True)
     sns.set_theme()
 
-    df = prepare_df(df)
+    df = prepare_df(df, city_result_dir)
 
     distance_per_type_violins(df, output_dir)
     plot_general_hist(df, output_dir)
