@@ -7,6 +7,7 @@ from pathlib import Path
 from paths import SubDirs
 import load_profile_analysis
 import poi_validation
+import transport_analysis
 import geographic_analysis
 
 
@@ -45,6 +46,8 @@ def main():
 
     load_profile_analysis.main(postproc_dir, plot_path / SubDirs.LOADS_DIR)
     poi_validation.main(city_result_dir, plot_path / SubDirs.POIS)
+    transport_analysis.main(city_result_dir, plot_path / SubDirs.TRANSPORT)
+
     # geo analysis requires House and POI data from the other analyses, so do this last
     geographic_analysis.main(scenario_dir, city_result_dir, plot_path / SubDirs.MAPS)
 
