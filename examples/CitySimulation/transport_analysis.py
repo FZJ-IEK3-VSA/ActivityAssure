@@ -110,6 +110,7 @@ def main(city_result_dir: Path, output_dir: Path):
     elif pkl_path.is_file():
         with open(pkl_path, "rb") as f:
             df = pickle.load(f)
+        df.to_csv(filepath)
     else:
         assert False, f"No travels file found: {filepath}"
 
