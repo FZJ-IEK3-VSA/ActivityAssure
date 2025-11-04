@@ -1,5 +1,6 @@
 """Create plots for travel distances"""
 
+from dataclasses import asdict
 import logging
 from pathlib import Path
 import pickle
@@ -109,7 +110,8 @@ def main(city_result_dir: Path, output_dir: Path):
         df = pd.read_csv(filepath, index_col=0)
     elif pkl_path.is_file():
         with open(pkl_path, "rb") as f:
-            df = pickle.load(f)
+            all_travels = pickle.load(f)
+        df = pd.DataFrame([asdict(d) for d in all_travels])
         df.to_csv(filepath)
     else:
         assert False, f"No travels file found: {filepath}"
