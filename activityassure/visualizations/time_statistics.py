@@ -99,7 +99,7 @@ def plot_total_time_spent(
     # add labels to the bars
     for i, c in enumerate(ax.containers):
         # if the segment is small, don't add a label
-        labels = [round(v, 1) if v > 1 else "" for v in df_to_plot.iloc[:, i]]
+        labels = [round(v, 1) if v > 1.5 else "" for v in df_to_plot.iloc[:, i]]
 
         # remove the labels parameter if it's not needed for customized labels
         assert isinstance(c, mplcontainer.BarContainer)
