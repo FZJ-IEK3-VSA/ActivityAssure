@@ -393,8 +393,14 @@ def violin_plot_per_hour(
 
     # use another style to avoid white grid line above the violins
     with sns.axes_style(
-        "ticks"
-    ):  # TODO: this probably causes black borders around the plot; remove them
+        "ticks",
+        rc={
+            "axes.spines.left": False,
+            "axes.spines.bottom": False,
+            "axes.spines.right": False,
+            "axes.spines.top": False,
+        },
+    ):
         ax2 = ax.twinx()
         ax2.plot(
             mean_x,
