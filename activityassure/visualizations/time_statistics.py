@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import matplotlib.patheffects as path_effects
 from matplotlib import container as mplcontainer
 import pandas as pd
+import seaborn as sns
 
 from activityassure.profile_category import ProfileCategory
 from activityassure.validation_statistics import ValidationSet, ValidationStatistics
@@ -28,11 +29,17 @@ def profile_sorting_key(key: str | tuple[str, ProfileCategory]) -> str:
     return category_parts[1] + "_" + category_parts[0]
 
 
-def convert_key_to_label(key: str | tuple[str, ProfileCategory]) -> str:
+def convert_key_to_label(
+    key: str | ProfileCategory | tuple[str, ProfileCategory],
+) -> str:
     if isinstance(key, str):
         return key
 
-    name, category = key
+    if isinstance(key, ProfileCategory):
+        name = ""
+        category = key
+    else:
+        name, category = key
     category_str = replace_substrings(str(category), LABEL_DICT).replace("_", " ")
     name_prefix = (f"{name} ") if name else ""
     return name_prefix + category_str
@@ -63,6 +70,20 @@ def plot_total_time_spent(
             )
 
     combined_df = pd.DataFrame(time_activity_distribution)
+
+    plot_filepath.parent.mkdir(parents=True, exist_ok=True)
+
+    # calculate percentage of correctly allocated time
+    correct_time_per_act = combined_df.T.groupby(level=1, sort=False).min()
+    correct_shares = correct_time_per_act.T.sum() * 100 / 24
+    correct_shares.sort_values(ascending=False, inplace=True)
+    # set suitable label texts
+    label_texts = [convert_key_to_label(k) for k in correct_shares.index]
+    correct_shares.index = label_texts  # type: ignore
+
+    # show correct percentage per category as an additional bar plot
+    shares_plotpath = plot_filepath.parent / f"{plot_filepath.name}_correct_share.svg"
+    correct_percentage_bar_plot(shares_plotpath, correct_shares)
 
     # if there is only one category per dataset, drop the category information
     if len(combined_df.columns) == 2:
@@ -118,8 +139,32 @@ def plot_total_time_spent(
     ax.legend(loc="lower right", bbox_to_anchor=(1, 1), ncol=3)
     ax.set_xlim(0, 24)
     fig.tight_layout()
-    plot_filepath.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(plot_filepath)
+
+
+def correct_percentage_bar_plot(plot_filepath: Path, correct_shares: pd.Series):
+    """Creates a bar plot showing the percentage of correctly allocated time for
+    each category.
+
+    :param plot_filepath: filename for the plot
+    :param correct_shares: series containing the correct share per category in percent
+    """
+    with sns.axes_style("darkgrid"):
+        fig, ax = plt.subplots()
+        sns.barplot(
+            x=correct_shares.values, y=correct_shares.index, palette="crest", ax=ax
+        )
+        ax.set_xlabel("Anteil der korrekt verteilten Zeit in Prozent")
+        ax.set_ylabel("")
+        ax.set_xlim(0, 100)
+        ax.set_xticks(range(0, 101, 10))
+        # add a value label to each bar
+        for container in ax.containers:
+            ax.bar_label(
+                container, padding=-15, fmt="%.0f", color="white"  # type: ignore
+            )
+        fig.tight_layout()
+        fig.savefig(plot_filepath)
 
 
 def plot_total_time_bar_chart_countries(
