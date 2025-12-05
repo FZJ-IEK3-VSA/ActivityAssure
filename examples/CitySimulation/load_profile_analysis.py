@@ -129,6 +129,85 @@ def total_demand_distribution(path: Path, result_dir: Path, instance_name: str):
     fig.savefig(result_dir / "total_demand_per_profile.svg")
 
 
+def total_demand_distribution_by_hh_type(path: Path, result_dir: Path, instances: str):
+    if instances != "Haushalte":
+        return  # these plots are only for households
+
+    # determine the corresponding scenario directory using the symlink
+    scenario_dir = path.parents[2] / "scenario"
+    assert scenario_dir.is_dir(), f"Scenario directory not found: {scenario_dir}"
+    hh_data_dir = scenario_dir / "statistics/households"
+
+    # load size and type info for each household
+    with open(hh_data_dir / "size_of_each_hh.json", "r") as f:
+        size_per_hh = json.load(f)
+    with open(hh_data_dir / "type_of_each_hh.json", "r") as f:
+        type_per_hh = json.load(f)
+        type_per_hh = {k: v.split(" ")[0] for k, v in type_per_hh.items()}
+
+    # load the total demands
+    total_demand = pd.read_csv(path / LoadFiles.TOTALS)
+    total_demand.sort_values(DFColumnsLoad.TOTAL_DEMAND, inplace=True, ascending=False)
+
+    size_col = "Anzahl Personen"
+    total_demand[size_col] = total_demand["Household"].map(size_per_hh)
+    type_col = "Typ"
+    total_demand[type_col] = total_demand["Household"].map(type_per_hh)
+    df = total_demand  # shorter name
+
+    # Define bin width for total demand
+    bin_width = 400
+
+    # Determine min and max to create bins
+    min_val = 0
+    max_val = df[DFColumnsLoad.TOTAL_DEMAND].max()
+
+    # Create bin edges
+    bins = np.arange(min_val, max_val + bin_width, bin_width)  # Bin the data
+    df["binned"] = pd.cut(df[DFColumnsLoad.TOTAL_DEMAND], bins=bins, right=False)
+
+    # Count values in each bin
+    bin_counts = df["binned"].value_counts().sort_index().reset_index()
+    bin_counts.columns = ["Range", "Count"]
+
+    # Optionally, use bin centers for a cleaner x-axis
+    bin_counts["Center"] = bin_counts["Range"].apply(lambda x: x.left + bin_width / 2)
+    bin_counts["Center_rd"] = bin_counts["Center"].round().astype(np.int32)
+
+    # plot load per household size as stacked bar chart
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+
+    pivot = df.groupby(["binned", size_col]).size().unstack(fill_value=0)
+    # use range centers as x labels
+    pivot.index = bin_counts["Center_rd"]  # type: ignore
+    pivot.plot(kind="bar", stacked=True, ax=ax)
+    ax.set_xlabel("Jährlicher Verbrauch [kWh]")
+    ax.set_ylabel("Anzahl Haushalte")
+    plt.xticks(rotation=90)
+    fig.tight_layout()
+    fig.savefig(result_dir / "total_demand_dist_by_size_stacked.svg")
+
+    # plot load per household type
+    fig, ax = plt.subplots()
+    sns.barplot(
+        data=df,
+        x=type_col,
+        y=DFColumnsLoad.TOTAL_DEMAND,
+        hue=size_col,  # groups the bars
+        estimator="mean",
+        # errorbar=None,
+        ax=ax,
+    )
+    ax.set_xlabel("Jährlicher Verbrauch [kWh]")
+    ax.set_ylabel("Anzahl Haushalte")
+    plt.xticks(rotation=90)
+    fig.tight_layout()
+    fig.savefig(result_dir / "total_demand_dist_by_hh_type.svg")
+
+    pass
+
+
 def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
     sumcurve = pd.read_csv(path / LoadFiles.SUMPROFILE, parse_dates=[0])
     start_day = sumcurve[DFColumnsLoad.TIME].min().date()
@@ -209,13 +288,6 @@ def simultaneity_curves(path: Path, result_dir: Path, instances: str):
 def raster_plot(path: Path, result_dir: Path):
     # load the city sum profile
     df = pd.read_csv(path / LoadFiles.SUMPROFILE, parse_dates=[0], index_col=0)
-    # df = pd.read_csv(
-    #     r"C:\Users\d.neuroth\Downloads\juelich_solar.csv",
-    #     parse_dates=[0],
-    #     date_format="%d.%m.%Y %H:%M:%S",
-    #     delimiter=";",
-    #     index_col=0,
-    # )
     unit, _ = adapt_scaling(df, DFColumnsLoad.TOTAL_LOAD, "W")
 
     # Reshape data to hours × days
@@ -274,6 +346,7 @@ def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
     stat_curves(path, result_dir, h25, True)
     stat_curves(path, result_dir, h25, False)
     total_demand_distribution(path, result_dir, instances)
+    total_demand_distribution_by_hh_type(path, result_dir, instances)
     simultaneity_curves(path, result_dir, instances)
 
 
