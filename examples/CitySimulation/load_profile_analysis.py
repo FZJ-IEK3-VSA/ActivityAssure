@@ -278,6 +278,7 @@ def create_load_stat_plots(path: Path, result_dir: Path, instances: str):
 
 
 def main(postproc_path: Path, plot_path: Path):
+    sns.set_theme()
     hh_data_path = postproc_path / "loads/aggregated_household"
     create_load_stat_plots(hh_data_path, plot_path / "household", "Haushalte")
     house_data_path = postproc_path / "loads/aggregated_house"
