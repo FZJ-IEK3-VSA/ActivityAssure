@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from datetime import datetime
+import json
 from pathlib import Path
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
@@ -188,24 +189,31 @@ def total_demand_distribution_by_hh_type(path: Path, result_dir: Path, instances
     fig.tight_layout()
     fig.savefig(result_dir / "total_demand_dist_by_size_stacked.svg")
 
+    type_order = (
+        df.groupby(type_col)[DFColumnsLoad.TOTAL_DEMAND]
+        .mean()
+        .sort_values(ascending=False)  # descending
+        .index
+    )
+
     # plot load per household type
     fig, ax = plt.subplots()
     sns.barplot(
-        data=df,
+        data=total_demand,
         x=type_col,
         y=DFColumnsLoad.TOTAL_DEMAND,
         hue=size_col,  # groups the bars
         estimator="mean",
-        # errorbar=None,
+        order=type_order,
+        err_kws={"linewidth": 1},  # << thinner error bars
         ax=ax,
     )
-    ax.set_xlabel("Jährlicher Verbrauch [kWh]")
-    ax.set_ylabel("Anzahl Haushalte")
+    ax.set_xlabel("Haushaltstyp")
+    ax.set_ylabel("Jährlicher Verbrauch [kWh]")
+    ax.xaxis.set_tick_params(labelsize=6)
     plt.xticks(rotation=90)
     fig.tight_layout()
     fig.savefig(result_dir / "total_demand_dist_by_hh_type.svg")
-
-    pass
 
 
 def sum_duration_curve(path: Path, result_dir: Path) -> pd.Series:
