@@ -69,9 +69,9 @@ def adapt_scaling(sumcurve: pd.DataFrame, col: str, unit: str = "W") -> tuple[st
 def stat_curves(path, result_dir, h25: pd.Series, with_max: bool = True):
     statpath = path / LoadFiles.DAYPROFILESTATS
     stats = pd.read_csv(statpath, index_col=0, parse_dates=[0], date_format="%H:%M:%S")
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    colormap = defaultdict(lambda: "grey", {"mean": "blue", "median": "green"})
+    with sns.color_palette("tab10"):
+        fig, ax = plt.subplots()
+    colormap = defaultdict(lambda: "C7", {"median": "C1", "mean": "C2"})
     for stat in stats.columns:
         if not with_max and stat == "max":
             continue
@@ -87,7 +87,7 @@ def stat_curves(path, result_dir, h25: pd.Series, with_max: bool = True):
     )
     # scale h25 to the mean profile
     h25meanday = scale_profile(h25meanday, stats["mean"])
-    ax.plot(h25meanday, label="H25 Standardprofil", color="red")
+    ax.plot(h25meanday, label="H25 Standardprofil", color="C3")
 
     filename = "dayprofile_stats"
     if with_max:
