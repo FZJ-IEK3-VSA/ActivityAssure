@@ -24,7 +24,7 @@ def compare_two_city_results():
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    base_dir = Path("C:/LPG/Results/scenario_julich-grosse-rurstr/Postprocessed")
+    base_dir = Path("C:/LPG/Results/scenario_juelich-grosse-rurstr/Postprocessed")
     base_dir = Path("C:/Users/d.neuroth/Downloads/comparison")
     # validation_subdir = "Postprocessed/activityassure_statistics"
     scenario1 = base_dir / "fullroutes"
@@ -63,8 +63,8 @@ if __name__ == "__main__":
     # input: directory of one city simulation with test routes and one with full
     # routes from MODE.Regional
     base_result_dir = Path("R:/city_simulation_results/grosse-rurstr")
-    path_test = base_result_dir / "scenario_julich-grosse-rurstr_1_testroutes"
-    path_full = base_result_dir / "scenario_julich-grosse-rurstr_2"
+    path_test = base_result_dir / "scenario_juelich-grosse-rurstr_1_testroutes"
+    path_full = base_result_dir / "scenario_juelich-grosse-rurstr_2"
 
     results_test = load_validation_results(path_test)
     results_full = load_validation_results(path_full)
@@ -99,12 +99,8 @@ if __name__ == "__main__":
     plt.savefig("transport_influence_on_activity.svg")
     plt.show()
 
-
     # TODO: compare for the most relevant activities (not at home, pc)
-
-
 
     # TODO: especially look at full time working day categories
     # filter by category
     # data = data[(data.iloc[:, 0].str.contains("unemployed_rest"))]
-

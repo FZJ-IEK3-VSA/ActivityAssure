@@ -148,7 +148,7 @@ if __name__ == "__main__":
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    city_res_dir = Path("R:/phd_dir/results/scenario_juelich_04_del3")
+    city_res_dir = Path("R:/phd_dir/results/scenario_juelich_04_baseline")
     # city_res_dir = Path("C:/LPG/Results/plottest")
     output_dir = (
         city_res_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.PLOTS / SubDirs.TRANSPORT

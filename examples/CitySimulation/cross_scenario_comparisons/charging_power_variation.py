@@ -16,8 +16,8 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from load_profile_analysis import datetime_to_hours, adapt_scaling
 from paths import DFColumnsLoad, LoadFiles, SubDirs
 
-SCENARIO_NAME_3KW = "scenario_julich_3"
-SCENARIO_NAME_11KW = "scenario_julich_11"
+SCENARIO_NAME_3KW = "scenario_juelich_02_3kW"
+SCENARIO_NAME_11KW = "scenario_juelich_02"
 
 
 def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
@@ -149,8 +149,8 @@ def car_state_comparison(base_results: Path, output: Path):
     :param output: output directory for plots
     """
     # use the special simulations with additional transport output files
-    scenario_3kW = "scenario_julich_02_3kW_transport"
-    scenario_11kW = "scenario_julich_02_transport"
+    scenario_3kW = "scenario_juelich_02_3kW_transport"
+    scenario_11kW = "scenario_juelich_02_transport"
     # read the car state files
     rel_filepath = f"{SubDirs.POSTPROCESSED_DIR}/transport/car_state_counts.csv"
     path3kW = base_results / scenario_3kW / rel_filepath
@@ -227,4 +227,7 @@ if __name__ == "__main__":
         level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
+    sns.set_theme()
+
     main()

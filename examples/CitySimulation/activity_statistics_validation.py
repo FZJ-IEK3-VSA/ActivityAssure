@@ -131,11 +131,11 @@ def calc_citysim_statistics_and_validate(
 def main():
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
-        level=logging.DEBUG,
+        level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    postproc_path = Path("C:/LPG/Results/scenario_julich-grosse-rurstr/Postprocessed")
+    postproc_path = Path("R:/phd_dir/results/scenario_juelich_02/Postprocessed")
     profiles_dir = postproc_path / "activity_profiles"
     statistics_path = postproc_path / "activityassure_statistics"
 

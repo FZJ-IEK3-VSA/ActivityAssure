@@ -397,7 +397,7 @@ if __name__ == "__main__":
     city_result_dir = Path(
         "/fast/home/d-neuroth/city_simulation_results/scenario_city-julich_25"
     )
-    city_result_dir = Path("R:/phd_dir/results/scenario_julich_100_3kW")
+    city_result_dir = Path("R:/phd_dir/results/scenario_juelich_100_3kW")
     output_dir = city_result_dir / "Postprocessed/loads"
 
     main(city_result_dir, output_dir)

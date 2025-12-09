@@ -368,6 +368,6 @@ def main(postproc_path: Path, plot_path: Path):
 
 
 if __name__ == "__main__":
-    postproc_path = Path("R:/phd_dir/results/scenario_julich_02/Postprocessed")
+    postproc_path = Path("R:/phd_dir/results/scenario_juelich_02/Postprocessed")
     plot_path = postproc_path / "plots/loads"
     main(postproc_path, plot_path)

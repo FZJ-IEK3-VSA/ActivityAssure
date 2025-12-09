@@ -94,7 +94,7 @@ if __name__ == "__main__":
     )
 
     city_result_dir = Path(
-        "/projects4/2022-d-neuroth-phd/results/scenario_julich_02_transport"
+        "/projects4/2022-d-neuroth-phd/results/scenario_juelich_02_transport"
     )
     output_dir = city_result_dir / SubDirs.POSTPROCESSED_DIR / SubDirs.TRANSPORT
 
