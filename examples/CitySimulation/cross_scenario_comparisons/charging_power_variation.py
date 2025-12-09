@@ -39,8 +39,7 @@ def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
     data3kW.reset_index(drop=True, inplace=True)
     data11kW.reset_index(drop=True, inplace=True)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
+    fig, ax = plt.subplots()
     txt = "kW Ladestationen"
     sns.lineplot(
         data11kW, y=DFColumnsLoad.TOTAL_LOAD, x=hours, ax=ax, label=f"11 {txt}"
@@ -48,6 +47,7 @@ def charging_power_comparison_sumprofiles(base_results: Path, output: Path):
     sns.lineplot(data3kW, y=DFColumnsLoad.TOTAL_LOAD, x=hours, ax=ax, label=f"3 {txt}")
     ax.xaxis.set_label_text("Dauer [h]")
     ax.yaxis.set_label_text(f"Elektrische Last [{unit3}]")
+    fig.tight_layout()
     fig.savefig(output / "sum_duration.svg")
 
     # define charging powers in the scenarios
@@ -92,13 +92,13 @@ def charging_power_comparison_maxloads(base_results: Path, output: Path):
     data3kW.reset_index(drop=True, inplace=True)
     data11kW.reset_index(drop=True, inplace=True)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
+    fig, ax = plt.subplots()
     txt = "kW Ladestationen"
     sns.lineplot(data3kW, y="max", x=hours, ax=ax, label=f"3 {txt}")
     sns.lineplot(data11kW, y="max", x=hours, ax=ax, label=f"11 {txt}")
     ax.xaxis.set_label_text("Dauer [h]")
     ax.yaxis.set_label_text("Elektrische Spitzenlast [W]")
+    fig.tight_layout()
     fig.savefig(output / "peak_duration.svg")
 
 
@@ -116,9 +116,7 @@ def charging_power_comparison_total_demand(base_results: Path, output: Path):
     assert len(data3kW) == len(data11kW), "Different lengths"
     hh_numbers = range(len(data3kW))
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-
+    fig, ax = plt.subplots()
     txt = "kW Ladestationen"
     sns.lineplot(
         data3kW, ax=ax, y=DFColumnsLoad.TOTAL_DEMAND, x=hh_numbers, label=f"3 {txt}"
@@ -126,8 +124,17 @@ def charging_power_comparison_total_demand(base_results: Path, output: Path):
     sns.lineplot(
         data11kW, ax=ax, y=DFColumnsLoad.TOTAL_DEMAND, x=hh_numbers, label=f"11 {txt}"
     )
-    # add a second axis for the average load
-    ax2 = ax.twinx()
+    # add a second axis for the average load, buth without additional grid lines
+    with sns.axes_style(
+        "ticks",
+        rc={
+            "axes.spines.left": False,
+            "axes.spines.bottom": False,
+            "axes.spines.right": False,
+            "axes.spines.top": False,
+        },
+    ):
+        ax2 = ax.twinx()
     sns.lineplot(
         data3kW,
         ax=ax2,  # type: ignore
