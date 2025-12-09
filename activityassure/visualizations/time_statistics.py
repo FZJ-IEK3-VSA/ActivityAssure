@@ -82,7 +82,7 @@ def plot_total_time_spent(
     correct_shares.index = label_texts  # type: ignore
 
     # show correct percentage per category as an additional bar plot
-    shares_plotpath = plot_filepath.parent / f"{plot_filepath.name}_correct_share.svg"
+    shares_plotpath = plot_filepath.parent / f"{plot_filepath.stem}_correct_share.svg"
     correct_percentage_bar_plot(shares_plotpath, correct_shares)
 
     # if there is only one category per dataset, drop the category information
