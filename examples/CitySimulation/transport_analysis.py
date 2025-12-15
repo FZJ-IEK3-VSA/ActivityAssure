@@ -53,24 +53,15 @@ def prepare_df(df, city_result_dir: Path):
             / "trips_over_200km.csv"
         )
     df = df[df["distance_km"] <= 200]
-
     return df
 
 
 def plot_general_hist(df, output_dir: Path):
     fig, ax = plt.subplots()
+    sns.histplot(df["distance_km"], bins=20, ax=ax)
 
-    sns.histplot(
-        df["distance_km"],  # convert to km for readability
-        bins=20,
-        kde=True,
-        ax=ax,
-    )
-
-    # ax.set_xscale("log")  # apply logarithmic scaling
     ax.set_xlabel("Distanz in km")
     ax.set_ylabel("Anzahl Reisen")
-    # ax.grid(True, linestyle="--", alpha=0.5)
 
     fig.tight_layout()
     filepath = output_dir / "travel_dist_hist.svg"
